@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:orchestration:inbound-event-receipt:v1",
+  "title": "Avuhz Slice 1 Inbound Event Receipt v1",
+  "description": "Append-oriented evidence that an inbound event reached a trusted ingress boundary. It records verification and correlation outcomes only; it never stores raw payloads, signatures, request headers, credentials, normalized commands, or authoritative lifecycle state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_id", "source_type", "source_name", "environment", "received_at", "authentication_result", "replay_result", "schema_validation_result", "correlation_status", "processing_status", "idempotency_identity", "redacted_evidence_reference"],
+  "properties": {
+    "receipt_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"},
+    "source_type": {"type": "string", "enum": ["ACQUISITION_SYSTEM", "PROVIDER", "INTERNAL_SERVICE"]},
+    "source_name": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "environment": {"$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"},
+    "provider_event_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "received_at": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "authentication_result": {"type": "string", "enum": ["VERIFIED", "FAILED", "NOT_APPLICABLE"]},
+    "replay_result": {"type": "string", "enum": ["ORIGINAL", "DUPLICATE", "REPLAY_BLOCKED", "NOT_APPLICABLE"]},
+    "schema_validation_result": {"type": "string", "enum": ["VALID", "INVALID", "UNSUPPORTED"]},
+    "correlation_status": {"type": "string", "enum": ["CORRELATED", "UNCORRELATED", "QUARANTINED", "NOT_APPLICABLE"]},
+    "correlated_tenant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
+    "correlated_subject_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"},
+    "processing_status": {"type": "string", "enum": ["RECEIVED", "REJECTED", "QUARANTINED", "PROCESSING", "PROCESSED", "FAILED"]},
+    "idempotency_identity": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "redacted_evidence_reference": {"$ref": "#/$defs/evidenceReference"}
+  },
+  "$defs": {
+    "evidenceReference": {"oneOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}]}
+  },
+  "allOf": [
+    {"if": {"properties": {"source_type": {"const": "PROVIDER"}}, "required": ["source_type"]}, "then": {"required": ["provider_event_id"]}},
+    {"if": {"properties": {"correlation_status": {"const": "CORRELATED"}}, "required": ["correlation_status"]}, "then": {"required": ["correlated_tenant_id", "correlated_subject_reference"]}},
+    {"if": {"properties": {"authentication_result": {"const": "FAILED"}}, "required": ["authentication_result"]}, "then": {"not": {"properties": {"processing_status": {"const": "PROCESSED"}}, "required": ["processing_status"]}}}
+  ]
+}

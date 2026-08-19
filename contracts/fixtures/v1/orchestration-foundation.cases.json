@@ -1,0 +1,74 @@
+{
+  "fixture_set": "orchestration-foundation.v1",
+  "fictional_only": true,
+  "inbound_receipt": {
+    "positive": [
+      {"name": "verified correlated acquisition", "value": {"receipt_id": "a2000000-0000-4000-8000-000000000001", "source_type": "ACQUISITION_SYSTEM", "source_name": "sekinfra-acquisition", "environment": "TEST", "received_at": "2030-01-15T15:00:00Z", "authentication_result": "VERIFIED", "replay_result": "ORIGINAL", "schema_validation_result": "VALID", "correlation_status": "CORRELATED", "correlated_tenant_id": "a2000000-0000-4000-8000-000000000002", "correlated_subject_reference": {"reference_type": "ACQUISITION_HANDOFF", "reference_id": "a2000000-0000-4000-8000-000000000003"}, "processing_status": "PROCESSED", "idempotency_identity": "receipt-identity-001", "redacted_evidence_reference": {"source_system": "sekinfra-acquisition", "object_type": "SOURCE_RECORD", "external_id": "receipt-evidence-001", "environment": "TEST"}}},
+      {"name": "verified uncorrelated provider", "value": {"receipt_id": "a2000000-0000-4000-8000-000000000004", "source_type": "PROVIDER", "source_name": "fictional-provider", "environment": "TEST", "provider_event_id": "provider-event-001", "received_at": "2030-01-15T15:01:00Z", "authentication_result": "VERIFIED", "replay_result": "ORIGINAL", "schema_validation_result": "VALID", "correlation_status": "UNCORRELATED", "processing_status": "RECEIVED", "idempotency_identity": "receipt-identity-002", "redacted_evidence_reference": {"source_system": "fictional-provider", "object_type": "SOURCE_RECORD", "external_id": "receipt-evidence-002", "environment": "TEST"}}},
+      {"name": "quarantined provider", "value": {"receipt_id": "a2000000-0000-4000-8000-000000000005", "source_type": "PROVIDER", "source_name": "fictional-provider", "environment": "TEST", "provider_event_id": "provider-event-002", "received_at": "2030-01-15T15:02:00Z", "authentication_result": "VERIFIED", "replay_result": "DUPLICATE", "schema_validation_result": "VALID", "correlation_status": "QUARANTINED", "processing_status": "QUARANTINED", "idempotency_identity": "receipt-identity-003", "redacted_evidence_reference": {"source_system": "fictional-provider", "object_type": "SOURCE_RECORD", "external_id": "receipt-evidence-003", "environment": "TEST"}}},
+      {"name": "rejected failed auth", "value": {"receipt_id": "a2000000-0000-4000-8000-000000000006", "source_type": "PROVIDER", "source_name": "fictional-provider", "environment": "TEST", "provider_event_id": "provider-event-003", "received_at": "2030-01-15T15:03:00Z", "authentication_result": "FAILED", "replay_result": "NOT_APPLICABLE", "schema_validation_result": "UNSUPPORTED", "correlation_status": "NOT_APPLICABLE", "processing_status": "REJECTED", "idempotency_identity": "receipt-identity-004", "redacted_evidence_reference": {"source_system": "fictional-provider", "object_type": "SOURCE_RECORD", "external_id": "receipt-evidence-004", "environment": "TEST"}}}
+    ],
+    "negative": [
+      {"name": "raw payload", "mutate": {"raw_payload": {}}},
+      {"name": "auth header", "mutate": {"authorization": "short"}},
+      {"name": "correlated missing tenant", "mutate": {"correlated_tenant_id": null}},
+      {"name": "correlated missing subject", "mutate": {"correlated_subject_reference": null}},
+      {"name": "unknown status", "mutate": {"processing_status": "ACCEPTED"}},
+      {"name": "malformed provider id", "mutate": {"provider_event_id": ""}, "base": 1},
+      {"name": "invalid environment", "mutate": {"environment": "prod"}},
+      {"name": "failed auth processed", "mutate": {"authentication_result": "FAILED", "processing_status": "PROCESSED"}}
+    ]
+  },
+  "idempotency": {
+    "positive": [
+      {"name": "reserved", "value": {"id": "b2000000-0000-4000-8000-000000000001", "tenant_id": "b2000000-0000-4000-8000-000000000002", "caller_reference": "internal.service-01", "command_type": "OpenEngagement", "subject_reference": {"reference_type": "ENGAGEMENT", "reference_id": "b2000000-0000-4000-8000-000000000003", "reference_version": 1}, "idempotency_key": "slice1-idempotency-record-0001", "semantic_request_fingerprint": "fpv1:fictional-request-fingerprint-0001", "fingerprint_schema_version": "v1", "processing_status": "RESERVED", "first_seen_at": "2030-01-15T15:00:00Z", "retention_class": "OPERATIONAL_DEDUPLICATION", "attempt_count": 0}},
+      {"name": "processing", "value": {"id": "b2000000-0000-4000-8000-000000000004", "tenant_id": "b2000000-0000-4000-8000-000000000005", "caller_reference": "internal.service-02", "command_type": "SubmitDiagnosticScope", "subject_reference": {"reference_type": "DIAGNOSTIC_SCOPE", "reference_id": "b2000000-0000-4000-8000-000000000006", "reference_version": 1}, "idempotency_key": "slice1-idempotency-record-0002", "semantic_request_fingerprint": "fpv1:fictional-request-fingerprint-0002", "fingerprint_schema_version": "v1", "processing_status": "PROCESSING", "first_seen_at": "2030-01-15T15:01:00Z", "retention_class": "OPERATIONAL_DEDUPLICATION", "attempt_count": 1}},
+      {"name": "completed", "value": {"id": "b2000000-0000-4000-8000-000000000007", "tenant_id": "b2000000-0000-4000-8000-000000000008", "caller_reference": "internal.service-03", "command_type": "ApproveDiagnosticScope", "subject_reference": {"reference_type": "DIAGNOSTIC_SCOPE", "reference_id": "b2000000-0000-4000-8000-000000000009", "reference_version": 1}, "idempotency_key": "slice1-idempotency-record-0003", "semantic_request_fingerprint": "fpv1:fictional-request-fingerprint-0003", "fingerprint_schema_version": "v1", "processing_status": "COMPLETED", "result_reference": {"reference_type": "COMMAND", "reference_id": "b2000000-0000-4000-8000-000000000010"}, "first_seen_at": "2030-01-15T15:02:00Z", "completed_at": "2030-01-15T15:03:00Z", "retention_class": "AUDIT_HISTORY", "attempt_count": 1}},
+      {"name": "retryable failure", "value": {"id": "b2000000-0000-4000-8000-000000000011", "tenant_id": "b2000000-0000-4000-8000-000000000012", "caller_reference": "internal.service-04", "command_type": "AcceptAcquisitionHandoff", "subject_reference": {"reference_type": "ACQUISITION_HANDOFF", "reference_id": "b2000000-0000-4000-8000-000000000013", "reference_version": 1}, "idempotency_key": "slice1-idempotency-record-0004", "semantic_request_fingerprint": "fpv1:fictional-request-fingerprint-0004", "fingerprint_schema_version": "v1", "processing_status": "FAILED_RETRYABLE", "first_seen_at": "2030-01-15T15:04:00Z", "retention_class": "OPERATIONAL_DEDUPLICATION", "attempt_count": 2}}
+    ],
+    "negative": [
+      {"name": "raw request", "mutate": {"request_payload": {}}},
+      {"name": "negative attempts", "mutate": {"attempt_count": -1}},
+      {"name": "arbitrary expiry", "mutate": {"expires_at": "2030-02-01T00:00:00Z"}},
+      {"name": "malformed key", "mutate": {"idempotency_key": "short"}},
+      {"name": "unknown processing", "mutate": {"processing_status": "DONE"}},
+      {"name": "missing tenant", "mutate": {"tenant_id": null}},
+      {"name": "metadata", "mutate": {"metadata": {}}},
+      {"name": "completed no result", "mutate": {"processing_status": "COMPLETED", "completed_at": "2030-01-15T15:01:00Z"}}
+    ]
+  },
+  "lifecycle_event": {
+    "positive": [
+      {"name": "handoff accepted", "value": {"event_id": "c2000000-0000-4000-8000-000000000001", "event_type": "engagement.handoff.accepted", "event_schema_version": 1, "tenant_id": "c2000000-0000-4000-8000-000000000002", "authoritative_subject_reference": {"reference_type": "ACQUISITION_HANDOFF", "reference_id": "c2000000-0000-4000-8000-000000000003"}, "authoritative_subject_version": 1, "occurred_at": "2030-01-15T15:00:00Z", "producer_reference": "command.service-01", "correlation_id": "c2000000-0000-4000-8000-000000000004", "idempotency_key": "slice1-lifecycle-event-0001", "visibility": "INTEGRATION_INTERNAL", "sanitized_metadata": {"handoff_version": 1}}},
+      {"name": "engagement opened", "value": {"event_id": "c2000000-0000-4000-8000-000000000005", "event_type": "engagement.opened", "event_schema_version": 1, "tenant_id": "c2000000-0000-4000-8000-000000000006", "engagement_id": "c2000000-0000-4000-8000-000000000007", "authoritative_subject_reference": {"reference_type": "ENGAGEMENT", "reference_id": "c2000000-0000-4000-8000-000000000007"}, "authoritative_subject_version": 1, "occurred_at": "2030-01-15T15:01:00Z", "producer_reference": "command.service-01", "correlation_id": "c2000000-0000-4000-8000-000000000008", "idempotency_key": "slice1-lifecycle-event-0002", "visibility": "TENANT_OPERATIONAL", "sanitized_metadata": {"engagement_state": "OPEN", "engagement_version": 1}}},
+      {"name": "scope submitted", "value": {"event_id": "c2000000-0000-4000-8000-000000000009", "event_type": "diagnostic_scope.submitted", "event_schema_version": 1, "tenant_id": "c2000000-0000-4000-8000-000000000010", "engagement_id": "c2000000-0000-4000-8000-000000000011", "authoritative_subject_reference": {"reference_type": "DIAGNOSTIC_SCOPE", "reference_id": "c2000000-0000-4000-8000-000000000012"}, "authoritative_subject_version": 1, "occurred_at": "2030-01-15T15:02:00Z", "producer_reference": "command.service-01", "correlation_id": "c2000000-0000-4000-8000-000000000013", "idempotency_key": "slice1-lifecycle-event-0003", "visibility": "SEKINFRA_INTERNAL", "sanitized_metadata": {"scope_version": 1}}},
+      {"name": "scope approved", "value": {"event_id": "c2000000-0000-4000-8000-000000000014", "event_type": "diagnostic_scope.approved", "event_schema_version": 1, "tenant_id": "c2000000-0000-4000-8000-000000000015", "engagement_id": "c2000000-0000-4000-8000-000000000016", "authoritative_subject_reference": {"reference_type": "DIAGNOSTIC_SCOPE", "reference_id": "c2000000-0000-4000-8000-000000000017"}, "authoritative_subject_version": 2, "occurred_at": "2030-01-15T15:03:00Z", "producer_reference": "command.service-01", "correlation_id": "c2000000-0000-4000-8000-000000000018", "idempotency_key": "slice1-lifecycle-event-0004", "visibility": "TENANT_OPERATIONAL", "sanitized_metadata": {"scope_version": 2}}},
+      {"name": "scope rejected", "value": {"event_id": "c2000000-0000-4000-8000-000000000019", "event_type": "diagnostic_scope.rejected", "event_schema_version": 1, "tenant_id": "c2000000-0000-4000-8000-000000000020", "engagement_id": "c2000000-0000-4000-8000-000000000021", "authoritative_subject_reference": {"reference_type": "DIAGNOSTIC_SCOPE", "reference_id": "c2000000-0000-4000-8000-000000000022"}, "authoritative_subject_version": 1, "occurred_at": "2030-01-15T15:04:00Z", "producer_reference": "command.service-01", "correlation_id": "c2000000-0000-4000-8000-000000000023", "idempotency_key": "slice1-lifecycle-event-0005", "visibility": "TENANT_OPERATIONAL", "sanitized_metadata": {"scope_version": 1}}}
+    ],
+    "negative": [
+      {"name": "future event", "mutate": {"event_type": "payment.verified"}},
+      {"name": "snapshot field", "mutate": {"domain_snapshot": {}}},
+      {"name": "raw evidence", "mutate": {"raw_evidence": {}}},
+      {"name": "malformed subject", "mutate": {"authoritative_subject_reference": {"reference_type": "ENGAGEMENT", "reference_id": "not-a-uuid"}}},
+      {"name": "invalid visibility", "mutate": {"visibility": "SECURITY_RESTRICTED"}},
+      {"name": "metadata", "mutate": {"metadata": {}}},
+      {"name": "wrong event metadata", "mutate": {"sanitized_metadata": {"scope_version": 1}}}
+    ]
+  },
+  "outbox_delivery": {
+    "positive": [
+      {"name": "pending", "value": {"outbox_delivery_id": "d2000000-0000-4000-8000-000000000001", "event_reference": {"reference_type": "LIFECYCLE_EVENT", "reference_id": "d2000000-0000-4000-8000-000000000002"}, "destination_reference": "internal-outbox-consumer", "status": "PENDING", "attempt_count": 0, "last_safe_error_code": null, "delivery_idempotency_key": "slice1-outbox-delivery-0001", "created_at": "2030-01-15T15:00:00Z", "updated_at": "2030-01-15T15:00:00Z"}},
+      {"name": "published", "value": {"outbox_delivery_id": "d2000000-0000-4000-8000-000000000003", "event_reference": {"reference_type": "LIFECYCLE_EVENT", "reference_id": "d2000000-0000-4000-8000-000000000004"}, "destination_reference": "internal-outbox-consumer", "status": "PUBLISHED", "attempt_count": 1, "published_at": "2030-01-15T15:01:00Z", "last_safe_error_code": null, "delivery_idempotency_key": "slice1-outbox-delivery-0002", "created_at": "2030-01-15T15:00:00Z", "updated_at": "2030-01-15T15:01:00Z"}},
+      {"name": "retryable failure", "value": {"outbox_delivery_id": "d2000000-0000-4000-8000-000000000005", "event_reference": {"reference_type": "LIFECYCLE_EVENT", "reference_id": "d2000000-0000-4000-8000-000000000006"}, "destination_reference": "internal-outbox-consumer", "status": "FAILED_RETRYABLE", "attempt_count": 2, "next_attempt_at": "2030-01-15T15:05:00Z", "last_safe_error_code": "OUTBOX_COMMIT_FAILED", "delivery_idempotency_key": "slice1-outbox-delivery-0003", "created_at": "2030-01-15T15:00:00Z", "updated_at": "2030-01-15T15:02:00Z"}}
+    ],
+    "negative": [
+      {"name": "published missing time", "mutate": {"status": "PUBLISHED"}},
+      {"name": "negative attempts", "mutate": {"attempt_count": -1}},
+      {"name": "raw response", "mutate": {"provider_response": {}}},
+      {"name": "stack trace", "mutate": {"stack_trace": "not-allowed"}},
+      {"name": "unknown status", "mutate": {"status": "UNKNOWN"}},
+      {"name": "malformed event reference", "mutate": {"event_reference": {"reference_type": "LIFECYCLE_EVENT", "reference_id": "not-a-uuid"}}},
+      {"name": "terminal with retry", "mutate": {"status": "FAILED_TERMINAL", "next_attempt_at": "2030-01-15T15:05:00Z"}}
+    ]
+  }
+}

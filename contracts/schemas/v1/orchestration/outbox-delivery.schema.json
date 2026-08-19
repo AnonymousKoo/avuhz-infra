@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:orchestration:outbox-delivery:v1",
+  "title": "Avuhz Slice 1 Outbox Delivery v1",
+  "description": "Mutable delivery-tracking record for an immutable LifecycleEvent. It records bounded status and safe error classification only; it never stores destination responses, payloads, credentials, stack traces, or arbitrary metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["outbox_delivery_id", "event_reference", "destination_reference", "status", "attempt_count", "last_safe_error_code", "delivery_idempotency_key", "created_at", "updated_at"],
+  "properties": {
+    "outbox_delivery_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"},
+    "event_reference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"properties": {"reference_type": {"const": "LIFECYCLE_EVENT"}}}]},
+    "destination_reference": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "status": {"type": "string", "enum": ["PENDING", "PUBLISHING", "PUBLISHED", "FAILED_RETRYABLE", "FAILED_TERMINAL"]},
+    "attempt_count": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+    "next_attempt_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "published_at": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "last_safe_error_code": {"type": ["string", "null"], "enum": [null, "OUTBOX_COMMIT_FAILED", "COMMAND_REJECTED", "SECURITY_BLOCKED"]},
+    "delivery_idempotency_key": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"},
+    "created_at": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "updated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "PUBLISHED"}}, "required": ["status"]}, "then": {"required": ["published_at"], "not": {"required": ["next_attempt_at"]}}},
+    {"if": {"properties": {"status": {"const": "FAILED_RETRYABLE"}}, "required": ["status"]}, "then": {"required": ["next_attempt_at"]}},
+    {"if": {"properties": {"status": {"const": "FAILED_TERMINAL"}}, "required": ["status"]}, "then": {"not": {"required": ["next_attempt_at"]}}}
+  ]
+}

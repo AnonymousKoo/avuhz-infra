@@ -1,0 +1,339 @@
+{
+  "fixture_set": "caller-identity.v1",
+  "fictional_only": true,
+  "positive": [
+    {
+      "name": "client user with step up",
+      "value": {
+        "subject": "client.subject-01",
+        "audience": "avuhz-command-api",
+        "caller_type": "CLIENT_USER",
+        "tenant_ids": ["11111111-1111-4111-8111-111111111111"],
+        "organization_id": "client.organization-01",
+        "role": "CLIENT_DECISION_AUTHORITY",
+        "capabilities": ["engagement:read", "scope:submit", "approval:create"],
+        "environment": "TEST",
+        "authentication_strength": "STEP_UP",
+        "step_up_performed": true,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "sekinfra user",
+      "value": {
+        "subject": "sekinfra.subject-01",
+        "audience": "avuhz-command-api",
+        "caller_type": "SEKINFRA_USER",
+        "tenant_ids": ["22222222-2222-4222-8222-222222222222"],
+        "organization_id": "sekinfra.organization-01",
+        "role": "SEKINFRA_ENGAGEMENT_AUTHORITY",
+        "capabilities": ["engagement:accept_handoff", "engagement:open", "scope:approve"],
+        "environment": "TEST",
+        "authentication_strength": "STRONG",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00.123Z",
+        "expires_at": "2030-01-15T17:00:00.123Z"
+      }
+    },
+    {
+      "name": "internal service",
+      "value": {
+        "subject": "internal.service-01",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": ["33333333-3333-4333-8333-333333333333"],
+        "capabilities": ["engagement:open"],
+        "environment": "TEST",
+        "authentication_strength": "STRONG",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "n8n orchestrator without command capability",
+      "value": {
+        "subject": "orchestrator.n8n-01",
+        "audience": "avuhz-command-api",
+        "caller_type": "N8N_ORCHESTRATOR",
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T15:30:00Z"
+      }
+    },
+    {
+      "name": "provider adapter",
+      "value": {
+        "subject": "adapter.provider-01",
+        "audience": "avuhz-command-api",
+        "caller_type": "PROVIDER_ADAPTER",
+        "tenant_ids": [],
+        "capabilities": ["inbound_event:record"],
+        "environment": "TEST",
+        "authentication_strength": "STRONG",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T15:45:00Z"
+      }
+    }
+  ],
+  "negative": [
+    {
+      "name": "caller type used as capability",
+      "value": {
+        "subject": "client.subject-02",
+        "audience": "avuhz-command-api",
+        "caller_type": "CLIENT_USER",
+        "tenant_ids": ["44444444-4444-4444-8444-444444444444"],
+        "organization_id": "client.organization-02",
+        "role": "CLIENT_DECISION_AUTHORITY",
+        "capabilities": ["SEKINFRA_USER"],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "wildcard capability",
+      "value": {
+        "subject": "client.subject-03",
+        "audience": "avuhz-command-api",
+        "caller_type": "CLIENT_USER",
+        "tenant_ids": ["55555555-5555-4555-8555-555555555555"],
+        "organization_id": "client.organization-03",
+        "role": "CLIENT_DECISION_AUTHORITY",
+        "capabilities": ["scope:*"],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "duplicate tenant ids",
+      "value": {
+        "subject": "service.subject-01",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": ["66666666-6666-4666-8666-666666666666", "66666666-6666-4666-8666-666666666666"],
+        "capabilities": ["engagement:open"],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "invalid tenant id",
+      "value": {
+        "subject": "service.subject-02",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": ["tenant-not-a-uuid"],
+        "capabilities": ["engagement:open"],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "human missing organization",
+      "value": {
+        "subject": "client.subject-04",
+        "audience": "avuhz-command-api",
+        "caller_type": "CLIENT_USER",
+        "tenant_ids": ["77777777-7777-4777-8777-777777777777"],
+        "role": "CLIENT_DECISION_AUTHORITY",
+        "capabilities": ["scope:submit"],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "human role on workload",
+      "value": {
+        "subject": "service.subject-03",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "role": "CLIENT_DECISION_AUTHORITY",
+        "capabilities": ["engagement:open"],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "invalid environment",
+      "value": {
+        "subject": "service.subject-04",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "prod",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "invalid authentication strength",
+      "value": {
+        "subject": "service.subject-05",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "PASSWORD_ONLY",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "step up strength without step up evidence",
+      "value": {
+        "subject": "client.subject-05",
+        "audience": "avuhz-command-api",
+        "caller_type": "CLIENT_USER",
+        "tenant_ids": ["88888888-8888-4888-8888-888888888888"],
+        "organization_id": "client.organization-05",
+        "role": "CLIENT_DECISION_AUTHORITY",
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STEP_UP",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "step up evidence with non step up strength",
+      "value": {
+        "subject": "client.subject-06",
+        "audience": "avuhz-command-api",
+        "caller_type": "CLIENT_USER",
+        "tenant_ids": ["99999999-9999-4999-8999-999999999999"],
+        "organization_id": "client.organization-06",
+        "role": "CLIENT_DECISION_AUTHORITY",
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STRONG",
+        "step_up_performed": true,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "expires at authenticated time",
+      "value": {
+        "subject": "service.subject-06",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T16:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      },
+      "semantic_failure": "expires_at must be later than authenticated_at"
+    },
+    {
+      "name": "unknown field",
+      "value": {
+        "subject": "service.subject-07",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z",
+        "unverified_claim": "not-allowed"
+      }
+    },
+    {
+      "name": "malformed timestamp",
+      "value": {
+        "subject": "service.subject-08",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15 15:00:00",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "object caller type",
+      "value": {
+        "subject": "service.subject-09",
+        "audience": "avuhz-command-api",
+        "caller_type": { "value": "INTERNAL_SERVICE" },
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "null subject",
+      "value": {
+        "subject": null,
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "capabilities": [],
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    },
+    {
+      "name": "array capabilities",
+      "value": {
+        "subject": "service.subject-10",
+        "audience": "avuhz-command-api",
+        "caller_type": "INTERNAL_SERVICE",
+        "tenant_ids": [],
+        "capabilities": "engagement:open",
+        "environment": "TEST",
+        "authentication_strength": "STANDARD",
+        "step_up_performed": false,
+        "authenticated_at": "2030-01-15T15:00:00Z",
+        "expires_at": "2030-01-15T16:00:00Z"
+      }
+    }
+  ]
+}

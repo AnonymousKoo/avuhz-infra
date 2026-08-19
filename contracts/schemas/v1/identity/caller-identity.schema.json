@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:identity:caller-identity:v1",
+  "title": "Avuhz Slice 1 Caller Identity v1",
+  "description": "Server-derived and verified identity context for a request. It is never trusted merely because a caller supplies it. Caller type does not imply capabilities, capabilities do not imply tenant membership or human authority, and step-up status does not grant a capability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "subject",
+    "audience",
+    "caller_type",
+    "tenant_ids",
+    "capabilities",
+    "environment",
+    "authentication_strength",
+    "step_up_performed",
+    "authenticated_at",
+    "expires_at"
+  ],
+  "properties": {
+    "subject": {
+      "description": "Bounded opaque reference to the verified authenticated subject; never a credential or provider secret.",
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "audience": {
+      "description": "Exact bounded audience reference for this identity; wildcards are not permitted.",
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "caller_type": {
+      "$ref": "urn:avuhz:schema:contracts:identity:caller-type:v1"
+    },
+    "tenant_ids": {
+      "description": "Verified tenant memberships or workload scope. An empty list is permitted only for disabled, readless, or uncorrelated identities; a command must separately require its tenant context.",
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+      }
+    },
+    "organization_id": {
+      "description": "Bounded opaque reference to the verified organization represented by a human caller.",
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "role": {
+      "$ref": "#/$defs/humanRole"
+    },
+    "capabilities": {
+      "description": "Verified bounded action claims. The list may be empty for an identity that is not authorized to invoke commands; command access requires an applicable capability.",
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:identity:capability:v1"
+      }
+    },
+    "environment": {
+      "$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"
+    },
+    "authentication_strength": {
+      "$ref": "#/$defs/authenticationStrength"
+    },
+    "step_up_performed": {
+      "type": "boolean"
+    },
+    "authenticated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "expires_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  },
+  "$defs": {
+    "humanRole": {
+      "title": "Slice 1 Human Role",
+      "description": "Minimal bounded role vocabulary. Roles identify a human authority context but do not themselves create an approval or capability.",
+      "type": "string",
+      "minLength": 25,
+      "maxLength": 31,
+      "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$",
+      "enum": [
+        "CLIENT_DECISION_AUTHORITY",
+        "SEKINFRA_ENGAGEMENT_AUTHORITY"
+      ]
+    },
+    "authenticationStrength": {
+      "title": "Authentication Strength",
+      "description": "Verified authentication assurance classification; it never grants a capability.",
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 8,
+      "enum": [
+        "STANDARD",
+        "STRONG",
+        "STEP_UP"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "caller_type": {
+            "enum": [
+              "CLIENT_USER",
+              "SEKINFRA_USER"
+            ]
+          }
+        },
+        "required": [
+          "caller_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "organization_id",
+          "role"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "caller_type": {
+                  "const": "CLIENT_USER"
+                }
+              },
+              "required": [
+                "caller_type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "role": {
+                  "const": "CLIENT_DECISION_AUTHORITY"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "caller_type": {
+                  "const": "SEKINFRA_USER"
+                }
+              },
+              "required": [
+                "caller_type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "role": {
+                  "const": "SEKINFRA_ENGAGEMENT_AUTHORITY"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "organization_id"
+              ]
+            },
+            {
+              "required": [
+                "role"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "authentication_strength": {
+            "const": "STEP_UP"
+          }
+        },
+        "required": [
+          "authentication_strength"
+        ]
+      },
+      "then": {
+        "properties": {
+          "step_up_performed": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "step_up_performed": {
+            "const": true
+          }
+        },
+        "required": [
+          "step_up_performed"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authentication_strength": {
+            "const": "STEP_UP"
+          }
+        }
+      }
+    }
+  ]
+}

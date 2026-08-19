@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:command-envelope:v1",
+  "title": "Avuhz Slice 1 Command Envelope v1",
+  "description": "Strict transport envelope for a requested Slice 1 command. Caller-supplied identity is never proof: the server must derive and verify authenticated identity, caller type, capabilities, tenant membership, audience, effective authority, and server time. This base envelope is not sufficient to validate or execute a command until a registered command-specific payload schema composes the reusable envelope core.",
+  "allOf": [
+    {"$ref": "#/$defs/envelopeCore"},
+    {"type": "object", "required": ["payload"], "properties": {"payload": {"description": "Temporary empty placeholder. Arbitrary payload content is rejected until a command-specific payload schema is registered and composed with envelopeCore.", "type": "object", "additionalProperties": false, "maxProperties": 0}}}
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "envelopeCore": {
+      "type": "object",
+      "required": ["command_id", "command_type", "command_schema_version", "tenant_id", "subject_type", "subject_id", "requested_by", "caller_type", "caller_identity", "correlation_id", "idempotency_key", "requested_at", "environment", "payload_schema", "payload_version"],
+      "properties": {
+        "command_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/commandId"},
+        "command_type": {"$ref": "#/$defs/commandType"},
+        "command_schema_version": {"$ref": "#/$defs/schemaVersion"},
+        "tenant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
+        "engagement_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
+        "subject_type": {"$ref": "#/$defs/subjectType"},
+        "subject_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"},
+        "expected_record_version": {"$ref": "#/$defs/positiveRecordVersion"},
+        "requested_by": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+        "caller_type": {"$ref": "urn:avuhz:schema:contracts:identity:caller-type:v1"},
+        "caller_identity": {"$ref": "urn:avuhz:schema:contracts:identity:caller-identity:v1"},
+        "authority_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        "correlation_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId"},
+        "causation_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/causationId"},
+        "idempotency_key": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"},
+        "requested_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+        "environment": {"$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"},
+        "payload_schema": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/schemaIdentifier"},
+        "payload_version": {"$ref": "#/$defs/schemaVersion"}
+      },
+      "allOf": [
+        {"if": {"properties": {"command_type": {"const": "AcceptAcquisitionHandoff"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ACQUISITION_HANDOFF"}}}},
+        {"if": {"properties": {"command_type": {"const": "OpenEngagement"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ENGAGEMENT"}}}},
+        {"if": {"properties": {"command_type": {"const": "SubmitDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
+        {"if": {"properties": {"command_type": {"const": "ApproveDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}}
+      ]
+    },
+    "commandType": {"type": "string", "minLength": 14, "maxLength": 24, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "ApproveDiagnosticScope"]},
+    "subjectType": {"type": "string", "minLength": 10, "maxLength": 19, "enum": ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE"]},
+    "schemaVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+    "positiveRecordVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647}
+  }
+}

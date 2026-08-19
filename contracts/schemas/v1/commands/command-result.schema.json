@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:command-result:v1",
+  "title": "Avuhz Slice 1 Command Result v1",
+  "description": "Safe, bounded result of command processing. It contains no stack trace, SQL, provider payload, credential material, or arbitrary metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["command_id", "result", "reason_code", "message", "retryability", "correlation_id", "server_time"],
+  "properties": {
+    "command_id": { "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/commandId" },
+    "result": { "$ref": "#/$defs/result" },
+    "reason_code": { "$ref": "urn:avuhz:schema:contracts:commands:reason-code:v1" },
+    "message": { "description": "Safe human-readable result message; never an internal trace or sensitive detail.", "type": "string", "minLength": 1, "maxLength": 512, "pattern": "^[^\\u0000-\\u001F\\u007F]{1,512}$" },
+    "retryability": { "$ref": "#/$defs/retryability" },
+    "authoritative_record_reference": { "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference" },
+    "authoritative_record_version": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+    "lifecycle_event_reference": { "allOf": [{ "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference" }, { "properties": { "reference_type": { "const": "LIFECYCLE_EVENT" } } }] },
+    "prior_result_reference": { "allOf": [{ "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference" }, { "properties": { "reference_type": { "const": "COMMAND" } } }] },
+    "correlation_id": { "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId" },
+    "server_time": { "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp" }
+  },
+  "$defs": {
+    "result": { "type": "string", "minLength": 8, "maxLength": 17, "enum": ["ACCEPTED", "REJECTED", "CONFLICT", "DUPLICATE", "NOT_AUTHORIZED", "INVALID_STATE", "VALIDATION_FAILED", "SECURITY_BLOCKED"] },
+    "retryability": { "type": "string", "minLength": 12, "maxLength": 17, "enum": ["NOT_RETRYABLE", "RETRY_SAME_KEY", "RETRY_NEW_ATTEMPT", "HUMAN_REVIEW"] }
+  },
+  "allOf": [
+    { "if": { "properties": { "result": { "const": "ACCEPTED" } }, "required": ["result"] }, "then": { "properties": { "reason_code": { "const": "COMMAND_ACCEPTED" } } } },
+    { "if": { "properties": { "result": { "const": "DUPLICATE" } }, "required": ["result"] }, "then": { "required": ["prior_result_reference"], "properties": { "reason_code": { "const": "DUPLICATE_REQUEST" } }, "not": { "required": ["lifecycle_event_reference"] } } },
+    { "if": { "properties": { "result": { "const": "CONFLICT" } }, "required": ["result"] }, "then": { "not": { "required": ["lifecycle_event_reference"] } } }
+  ]
+}

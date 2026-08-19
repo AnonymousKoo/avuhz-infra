@@ -29,6 +29,7 @@ class EngagementMemoryRepository(_TenantRepo):
     def exists(self,tenant_id,record_id):return self.get(tenant_id,record_id) is not None
 class DiagnosticScopeMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"scopes")
+    def save(self,record):self.u.failpoint("AUTHORITATIVE_WRITE");self.data[record["diagnostic_scope_id"]]=record
     def mark_approved(self,record):self.u.failpoint("AUTHORITATIVE_WRITE");record["status"]="APPROVED"
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
@@ -68,26 +69,26 @@ class Executor:
         except (ValueError,RuntimeError) as error:return {"result":"REJECTED","reason_code":"PREREQUISITE_STATE_INVALID"}
         return {"result":"ACCEPTED","reason_code":"COMMAND_ACCEPTED","authoritative_record_reference":p.subject_id}
     def _handle(self,u,p,raw):
-        w=u.working; now=self.clock(); payload=p.payload
+        now=self.clock(); payload=p.payload
         if p.command_type=="AcceptAcquisitionHandoff":
-            r=w.handoffs.get(p.subject_id)
+            r=u.handoffs.get(p.tenant_id,p.subject_id)
             if not r or r.get("accepted"):raise ValueError()
-            r["accepted"]=True;r["accepted_at"]=now
+            r["accepted_at"]=now;u.handoffs.save_accepted(r)
         elif p.command_type=="OpenEngagement":
-            h=payload["accepted_handoff_reference"]; source=w.handoffs.get(h["reference_id"])
-            if not source or not source.get("accepted") or h["reference_version"]!=source["handoff_version"]:raise ValueError()
-            if p.subject_id in w.engagements or payload["canonical_account_reference"]!=source["canonical_account_reference"] or payload["acquisition_opportunity_reference"]!=source["acquisition_opportunity_reference"]:raise ValueError()
-            w.engagements[p.subject_id]={"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"engagement_state":"OPEN","record_version":1,"engagement_version":1,"opened_at":now,**payload}
+            h=payload["accepted_handoff_reference"];source=u.handoffs.get(p.tenant_id,h["reference_id"])
+            if not source or not source.get("accepted") or h["reference_version"]!=source["handoff_version"] or u.engagements.exists(p.tenant_id,p.subject_id):raise ValueError()
+            if payload["canonical_account_reference"]!=source["canonical_account_reference"] or payload["acquisition_opportunity_reference"]!=source["acquisition_opportunity_reference"]:raise ValueError()
+            u.engagements.save({"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"engagement_state":"OPEN","record_version":1,"engagement_version":1,"opened_at":now,**payload})
         elif p.command_type=="SubmitDiagnosticScope":
-            e=w.engagements.get(p.subject_id);sid=payload["proposed_diagnostic_scope_id"]
-            if not e or e["engagement_state"] not in ("OPEN","ONBOARDING") or sid in w.scopes:raise ValueError()
-            w.scopes[sid]={"diagnostic_scope_id":sid,"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"scope_version":payload["scope_version"],"record_version":1,"status":"REVIEW_PENDING",**payload}
+            e=u.engagements.get(p.tenant_id,p.subject_id);sid=payload["proposed_diagnostic_scope_id"]
+            if not e or e["engagement_state"] not in ("OPEN","ONBOARDING") or u.diagnostic_scopes.get(p.tenant_id,sid):raise ValueError()
+            u.diagnostic_scopes.save({"diagnostic_scope_id":sid,"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"scope_version":payload["scope_version"],"record_version":1,"status":"REVIEW_PENDING",**payload})
         else:
-            s=w.scopes.get(p.subject_id);a=payload["client_approval_reference"];b=payload["sekinfra_approval_reference"];x=w.approvals.get(a["reference_id"]);y=w.approvals.get(b["reference_id"])
+            s=u.diagnostic_scopes.get(p.tenant_id,p.subject_id);a=payload["client_approval_reference"];b=payload["sekinfra_approval_reference"];x=u.human_approvals.get(p.tenant_id,a["reference_id"]);y=u.human_approvals.get(p.tenant_id,b["reference_id"])
             if not s or s["status"]!="REVIEW_PENDING" or not x or not y or x.get("authority_category")!="CLIENT_AUTHORITY" or y.get("authority_category")!="SEKINFRA_AUTHORITY":raise ValueError()
             for z in (x,y):
-                if z.get("status")!="ACTIVE" or z.get("tenant_id")!=p.tenant_id or z.get("subject_id")!=p.subject_id or z.get("subject_version")!=payload["scope_version"] or z["scope"]["scope_digest"]!=payload["scope_content_digest"]:raise ValueError()
-            s.update(status="APPROVED",client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1)
+                if z.get("status")!="ACTIVE" or z.get("subject_id")!=p.subject_id or z.get("subject_version")!=payload["scope_version"] or z["scope"]["scope_digest"]!=payload["scope_content_digest"]:raise ValueError()
+            s.update(client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1);u.diagnostic_scopes.mark_approved(s)
     def _event(self,p):
         typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","ApproveDiagnosticScope":"diagnostic_scope.approved"}[p.command_type]
         return {"event_id":self.ids(),"event_type":typ,"subject_id":p.subject_id,"tenant_id":p.tenant_id,"idempotency_key":p.idempotency_key}

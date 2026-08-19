@@ -11,9 +11,11 @@ This is a read-only inventory of the approved linked project. Current public-sch
 
 ## 2. Migration continuity and schema capture
 
-Local and remote migration history are aligned at `20260816120000`. The committed historical file, `supabase/migrations/20260816120000_create_onboarding_engagements.sql`, is schema-only continuity evidence; it is not a new Avuhz migration.
+Remote migration history remains `20260816120000`; the committed historical engagement migration is schema-only continuity evidence. No exact earlier `tenant_users` migration version or body could be recovered from clean Git history, fetched remote migration metadata, or current inventory artifacts. Provenance classification is **CURRENT_STATE_ONLY**.
 
-A prior `db pull` shadow retry cleared the transient local port collision but stopped on the missing historical `tenant_users` dependency. This does not invalidate the current schema dump. No migration repair, apply/revert, history update, or remote mutation occurred.
+A clearly labeled local-only continuity migration, `20260816115959_reconstruct_tenant_users_continuity.sql`, was derived from current schema evidence. It is not original historical SQL, is never to be pushed to the existing linked project, and creates only the current `tenant_users` dependency required by the historical engagement migration: table, primary key, tenant index, auth-user FK, and RLS enablement. Option B was selected because the CLI documents seeds as post-migration and exposes no documented pre-migration bootstrap hook.
+
+Local replay could not be proved in this environment: `db reset --local` required a local stack, and `supabase start` was blocked by Docker registry rate limiting before any repository-local container started. No new historical dependency was reached, no local containers remain, and `db pull` was not retried. No migration repair, apply/revert, history update, or remote mutation occurred.
 
 The current dump is a 973-line, schema-only inventory artifact. It contains 16 public tables, three custom enums, two trigger functions, two triggers, eleven indexes, four foreign keys, 31 policies, and grants/default privileges. It contains no `COPY`, direct row-data DML, secret-bearing literal, or client row export.
 
@@ -92,19 +94,20 @@ A future additive migration should create only the seven `avuhz_*` tables, their
 
 ## 9. Migration provenance and implementation safety
 
-Missing historical `tenant_users` provenance does **not** prevent designing a non-colliding additive migration, because the current schema is now known. It **does** block reproducible local shadow replay and durable adapter integration tests through the standard migration pipeline.
+The reconstructed continuity file is **RECONSTRUCTED_CONTINUITY_NOT_YET_REPLAYABLE**, not exact provenance. Current schema evidence supports its minimum dependency shape, but Docker registry rate limiting prevented local replay proof.
 
-Therefore: **NEW Slice 1 additive migration is not yet safe to implement in this repository.** Prerequisite: owner-approved historical tenant-membership provenance/reconciliation or an explicitly approved durable-test strategy that proves new migrations and RLS without reconstructing legacy history. No remote repair is authorized.
+Missing historical provenance does not create a table-name collision, but it still blocks reproducible local shadow replay and durable adapter integration tests. **NEW Slice 1 additive migration is not yet safe to implement in this repository.** Prerequisites are: successful local replay of the reconstructed artifact, owner acceptance of its local-only/non-push status or recovery of exact provenance, and the already-recorded command-service tenant/RLS identity decision. No remote repair is authorized.
 
 ## 10. Owner input and exact next batch
 
 | Question | Recommended default | Consequence |
 | --- | --- | --- |
-| What is the authoritative historical source for `tenant_users`, and may it be committed as local continuity evidence? | Recover/review the original schema migration or owner-approved equivalent; do not create a synthetic replacement. | Enables reproducible shadow replay and migration testing. |
+| Is the reconstructed current-state continuity migration acceptable as local-only/non-push evidence, or must exact original provenance be recovered? | Preserve the reconstructed file as explicitly non-original and local-only until an owner decides. | Governs whether local replay can become the approved durable-test path. |
+| When may the local Supabase image registry retry occur? | Retry only after the Docker registry is available; do not modify remote history or local ports. | Blocks replay proof in the current environment. |
 | Who confirms whether legacy public tables are active production dependencies? | Treat all as active and preserved until confirmed otherwise. | Controls later migration/backfill/deprecation only. |
 | What trusted command-service identity and tenant/RLS claim model is approved for new tables? | Use separate command-service workload identity; browsers/n8n do not write authoritative tables. | Required before durable RLS/grant implementation. |
 
-**Exact next batch:** historical tenant-membership provenance reconciliation only, followed by a local shadow replay check. It must not create new Avuhz tables, change legacy RLS, or mutate the remote project.
+**Exact next batch:** rerun local-only Supabase start/reset when Docker registry availability is restored, prove the two-migration chain, then retry read-only `db pull` while declining any remote-history update. It must not create new Avuhz tables, change legacy RLS, or mutate the remote project.
 
 ## 11. Inventory artifact policy
 

@@ -18,8 +18,10 @@ class MemoryStore:
         return None if not r else AuthoritativeSubjectSnapshot(command.subject_type,command.subject_id,r["tenant_id"],r.get("record_version",1),True,r.get("engagement_id"),r.get("status") or r.get("engagement_state"))
 class UnitOfWork:
     def __init__(self,store):self.store=store;self.working=copy.deepcopy(store)
+    def failpoint(self,name):
+        if self.working.fail_stage==name: raise RuntimeError("injected failpoint")
     def commit(self):
-        if self.working.fail_stage:raise RuntimeError("injected staging failure")
+        self.failpoint("COMMIT")
         self.store.__dict__.update(self.working.__dict__)
 class Executor:
     def __init__(self,validator,pipeline,store,clock=lambda:"2030-01-15T15:00:00Z",ids=lambda:str(uuid.uuid4())):self.validator=validator;self.pipeline=pipeline;self.store=store;self.clock=clock;self.ids=ids
@@ -32,7 +34,7 @@ class Executor:
         if not hasattr(guarded,"guarded"):return {"result":"REJECTED","reason_code":guarded.reason.value}
         u=UnitOfWork(self.store)
         try:
-            self._handle(u,p,raw); event=self._event(p);u.working.events.append(event);u.working.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.working.idempotency[key]={"fingerprint":fp,"command_id":p.command_id};u.commit()
+            u.failpoint("IDEMPOTENCY_RESERVE");u.failpoint("AUTHORITATIVE_WRITE");self._handle(u,p,raw); event=self._event(p);u.failpoint("LIFECYCLE_EVENT_APPEND");u.working.events.append(event);u.failpoint("OUTBOX_APPEND");u.working.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.failpoint("IDEMPOTENCY_COMPLETE");u.working.idempotency[key]={"fingerprint":fp,"command_id":p.command_id};u.commit()
         except (ValueError,RuntimeError) as error:return {"result":"REJECTED","reason_code":"PREREQUISITE_STATE_INVALID"}
         return {"result":"ACCEPTED","reason_code":"COMMAND_ACCEPTED","authoritative_record_reference":p.subject_id}
     def _handle(self,u,p,raw):

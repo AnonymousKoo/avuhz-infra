@@ -1,0 +1,33 @@
+import copy,sys,unittest
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[2];sys.path[:0]=[str(ROOT/"src"),str(ROOT/"tests/contracts")]
+from avuhz_runtime.errors import RuntimeReason
+from avuhz_runtime.guards import *
+from avuhz_runtime.runtime import prepare_and_guard_command
+from avuhz_runtime.validation import CommandValidator
+from avuhz_runtime.models import ValidationFailure
+from validate_command_payloads import envelope,payloads
+T="a3000000-0000-4000-8000-000000000002";E="a3000000-0000-4000-8000-000000000004";S="a3000000-0000-4000-8000-000000000005"
+def ctx(cmd,**x):
+ d=dict(authenticated=True,principal_id="fictional-principal",caller_type="INTERNAL_SERVICE",tenant_id=T,organization_id=None,capabilities=frozenset({COMMAND_CAPABILITIES[cmd]}),authority_roles=frozenset(),environment="TEST",audience="avuhz-command-api",authentication_strength="STRONG",step_up_satisfied=False,authenticated_at="2030-01-15T15:00:00Z",expires_at="2030-01-15T16:00:00Z");d.update(x);return TrustedExecutionContext(**d)
+def snap(cmd,**x):
+ if cmd=="SubmitDiagnosticScope":d=dict(subject_type="ENGAGEMENT",subject_id=E,tenant_id=T,record_version=1,exists=True,engagement_id=E)
+ elif cmd=="ApproveDiagnosticScope":d=dict(subject_type="DIAGNOSTIC_SCOPE",subject_id=S,tenant_id=T,record_version=1,exists=True,engagement_id=E)
+ elif cmd=="AcceptAcquisitionHandoff":d=dict(subject_type="ACQUISITION_HANDOFF",subject_id="a3000000-0000-4000-8000-000000000001",tenant_id=T,record_version=1,exists=True)
+ else:return None
+ d.update(x);return AuthoritativeSubjectSnapshot(**d)
+class Tests(unittest.TestCase):
+ def setUp(self):self.v=CommandValidator(ROOT/"contracts/schemas/v1");self.p=GuardPipeline()
+ def go(self,c,co=None,so="DEFAULT"):return prepare_and_guard_command(self.v,self.p,envelope(c,copy.deepcopy(payloads()[c])),co or ctx(c),snap(c) if so=="DEFAULT" else so,"2030-01-15T15:30:00Z")
+ def bad(self,c,co=None,so=None,r=None):
+  z=self.go(c,co,so);self.assertIsInstance(z,GuardFailure);self.assertEqual(z.reason,r)
+ def test_positive(self):
+  for c in COMMAND_CAPABILITIES:self.assertIsInstance(self.go(c),GuardSuccess)
+ def test_mapping(self):self.assertEqual(COMMAND_CAPABILITIES,{"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","ApproveDiagnosticScope":"scope:approve"})
+ def test_negative(self):
+  self.bad("OpenEngagement",ctx("OpenEngagement",authenticated=False),r=RuntimeReason.AUTH_MISSING);self.bad("OpenEngagement",ctx("OpenEngagement",principal_id=None),r=RuntimeReason.AUTH_INVALID);self.bad("OpenEngagement",ctx("OpenEngagement",caller_type="N8N_ORCHESTRATOR"),r=RuntimeReason.AUTH_INVALID);self.bad("OpenEngagement",ctx("OpenEngagement",audience="wrong"),r=RuntimeReason.AUTH_AUDIENCE_INVALID);self.bad("OpenEngagement",ctx("OpenEngagement",environment="STAGING"),r=RuntimeReason.AUTH_INVALID);self.bad("OpenEngagement",ctx("OpenEngagement",tenant_id=None),r=RuntimeReason.TENANT_CONTEXT_MISSING);self.bad("OpenEngagement",ctx("OpenEngagement",tenant_id="a3000000-0000-4000-8000-000000000099"),r=RuntimeReason.TENANT_ACCESS_DENIED);self.bad("SubmitDiagnosticScope",so=snap("SubmitDiagnosticScope",tenant_id="a3000000-0000-4000-8000-000000000099"),r=RuntimeReason.TENANT_SUBJECT_MISMATCH);self.bad("ApproveDiagnosticScope",so=snap("ApproveDiagnosticScope",engagement_id="a3000000-0000-4000-8000-000000000099"),r=RuntimeReason.CROSS_TENANT_ATTEMPT);self.bad("OpenEngagement",ctx("OpenEngagement",capabilities=frozenset()),r=RuntimeReason.AUTH_CAPABILITY_MISSING);self.bad("OpenEngagement",ctx("OpenEngagement",capabilities=frozenset({"scope:read"})),r=RuntimeReason.AUTH_CAPABILITY_MISSING);self.bad("SubmitDiagnosticScope",so=None,r=RuntimeReason.TENANT_SUBJECT_MISMATCH);self.bad("ApproveDiagnosticScope",so=None,r=RuntimeReason.TENANT_SUBJECT_MISMATCH);self.bad("SubmitDiagnosticScope",so=snap("SubmitDiagnosticScope",record_version=2),r=RuntimeReason.VERSION_STALE);self.bad("ApproveDiagnosticScope",so=snap("ApproveDiagnosticScope",record_version=2),r=RuntimeReason.VERSION_STALE);self.bad("SubmitDiagnosticScope",so=snap("SubmitDiagnosticScope",subject_type="DIAGNOSTIC_SCOPE"),r=RuntimeReason.TENANT_SUBJECT_MISMATCH);self.bad("ApproveDiagnosticScope",so=snap("ApproveDiagnosticScope",subject_id=E),r=RuntimeReason.TENANT_SUBJECT_MISMATCH);self.bad("SubmitDiagnosticScope",ctx("SubmitDiagnosticScope",authenticated=False),r=RuntimeReason.AUTH_MISSING)
+ def test_claims_do_not_elevate(self):
+  raw=envelope("ApproveDiagnosticScope",copy.deepcopy(payloads()["ApproveDiagnosticScope"]));raw["caller_identity"]["capabilities"]=["scope:approve"]
+  z=prepare_and_guard_command(self.v,self.p,raw,ctx("ApproveDiagnosticScope",capabilities=frozenset()),snap("ApproveDiagnosticScope"),"2030-01-15T15:30:00Z");self.assertIsInstance(z,GuardFailure);self.assertEqual(z.reason,RuntimeReason.AUTH_CAPABILITY_MISSING)
+  raw["command_type"]="UnknownCommand";self.assertIsInstance(prepare_and_guard_command(self.v,self.p,raw,ctx("ApproveDiagnosticScope"),snap("ApproveDiagnosticScope"),"2030-01-15T15:30:00Z"),ValidationFailure)
+if __name__=="__main__":unittest.main()

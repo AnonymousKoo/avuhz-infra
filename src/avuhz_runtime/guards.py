@@ -1,0 +1,51 @@
+"""Pure deterministic guards; no I/O, persistence, or state mutation."""
+from dataclasses import dataclass
+from .errors import RuntimeReason
+
+COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","ApproveDiagnosticScope":"scope:approve"}
+
+@dataclass(frozen=True)
+class TrustedExecutionContext:
+    authenticated: bool; principal_id: str|None; caller_type: str|None; tenant_id: str|None; organization_id: str|None; capabilities: frozenset[str]; authority_roles: frozenset[str]; environment: str|None; audience: str|None; authentication_strength: str|None; step_up_satisfied: bool; authenticated_at: str|None; expires_at: str|None=None
+@dataclass(frozen=True)
+class AuthoritativeSubjectSnapshot:
+    subject_type: str; subject_id: str; tenant_id: str; record_version: int; exists: bool; engagement_id: str|None=None; state: str|None=None
+@dataclass(frozen=True)
+class GuardFailure:
+    reason: RuntimeReason; message: str; guard_name: str
+@dataclass(frozen=True)
+class GuardedCommand:
+    prepared: object; trusted_principal_id: str; trusted_caller_type: str; trusted_tenant_id: str; effective_capabilities: frozenset[str]; subject_snapshot: AuthoritativeSubjectSnapshot|None
+@dataclass(frozen=True)
+class GuardSuccess: guarded: GuardedCommand
+
+class GuardPipeline:
+    """Order: authentication, environment, tenant, capability, subject, version."""
+    def evaluate(self,p,c,s,evaluated_at):
+        for name,fn in (("authentication",self.auth),("environment",self.env),("tenant",self.tenant),("capability",self.cap),("subject",self.subject),("version",self.version)):
+            r=fn(p,c,s,evaluated_at)
+            if r:return r
+        return GuardSuccess(GuardedCommand(p,c.principal_id or "",c.caller_type or "",c.tenant_id or "",c.capabilities,s))
+    def fail(self,r,m,n):return GuardFailure(r,m,n)
+    def auth(self,p,c,s,t):
+        if not c.authenticated:return self.fail(RuntimeReason.AUTH_MISSING,"trusted authentication is required","authentication")
+        if not c.principal_id or not c.caller_type or not c.authenticated_at or c.caller_type!=p.caller_identity_claim.get("caller_type"):return self.fail(RuntimeReason.AUTH_INVALID,"trusted identity context is invalid","authentication")
+        if c.audience!="avuhz-command-api":return self.fail(RuntimeReason.AUTH_AUDIENCE_INVALID,"trusted audience is not accepted","authentication")
+        if c.expires_at and c.expires_at<=t:return self.fail(RuntimeReason.AUTH_EXPIRED,"trusted identity is expired","authentication")
+    def env(self,p,c,s,t):
+        if not c.environment or c.environment!=p.environment:return self.fail(RuntimeReason.AUTH_INVALID,"trusted environment does not match command","environment")
+    def tenant(self,p,c,s,t):
+        if not c.tenant_id:return self.fail(RuntimeReason.TENANT_CONTEXT_MISSING,"trusted tenant context is required","tenant")
+        if c.tenant_id!=p.tenant_id:return self.fail(RuntimeReason.TENANT_ACCESS_DENIED,"trusted tenant cannot act for command tenant","tenant")
+        if s and s.tenant_id!=p.tenant_id:return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"subject tenant does not match command","tenant")
+        if s and p.engagement_id and s.engagement_id and s.engagement_id!=p.engagement_id:return self.fail(RuntimeReason.CROSS_TENANT_ATTEMPT,"engagement context does not match subject","tenant")
+    def cap(self,p,c,s,t):
+        need=COMMAND_CAPABILITIES.get(p.command_type)
+        if not need:return self.fail(RuntimeReason.INTERNAL_INVARIANT_VIOLATION,"registered command policy is incomplete","capability")
+        if need not in c.capabilities:return self.fail(RuntimeReason.AUTH_CAPABILITY_MISSING,"trusted capability is required","capability")
+    def subject(self,p,c,s,t):
+        if p.command_type=="OpenEngagement" and s and s.exists:return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"proposed engagement already exists","subject")
+        if p.command_type in ("SubmitDiagnosticScope","ApproveDiagnosticScope"):
+            if not s or not s.exists or s.subject_type!=p.subject_type or s.subject_id!=p.subject_id:return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"authoritative subject is required and must match","subject")
+    def version(self,p,c,s,t):
+        if p.command_type in ("SubmitDiagnosticScope","ApproveDiagnosticScope") and (not s or p.expected_record_version!=s.record_version):return self.fail(RuntimeReason.VERSION_STALE,"authoritative record version is stale","version")

@@ -1,0 +1,134 @@
+{
+  "fixture_set": "timestamps-environment.v1",
+  "fictional_only": true,
+  "positive": [
+    {
+      "name": "UTC timestamp without fractional seconds",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-01-15T15:00:00Z"
+    },
+    {
+      "name": "UTC timestamp with fractional seconds",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-01-15T15:00:00.123456789Z"
+    },
+    {
+      "name": "local environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "LOCAL"
+    },
+    {
+      "name": "test environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "TEST"
+    },
+    {
+      "name": "development environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "DEVELOPMENT"
+    },
+    {
+      "name": "staging environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "STAGING"
+    },
+    {
+      "name": "production classification",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "PRODUCTION"
+    }
+  ],
+  "negative": [
+    {
+      "name": "timestamp missing timezone",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-01-15T15:00:00"
+    },
+    {
+      "name": "timestamp with non-UTC offset",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-01-15T10:00:00-05:00"
+    },
+    {
+      "name": "timestamp with malformed date",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-02-30T15:00:00Z"
+    },
+    {
+      "name": "timestamp with malformed time",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-01-15T25:00:00Z"
+    },
+    {
+      "name": "timestamp with lowercase UTC suffix",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-01-15T15:00:00z"
+    },
+    {
+      "name": "timestamp with leading whitespace",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": " 2030-01-15T15:00:00Z"
+    },
+    {
+      "name": "timestamp with trailing whitespace",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "2030-01-15T15:00:00Z "
+    },
+    {
+      "name": "arbitrary timestamp text",
+      "schema": "timestamps",
+      "definition": "utcTimestamp",
+      "value": "sometime-later"
+    },
+    {
+      "name": "lowercase local environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "local"
+    },
+    {
+      "name": "environment alias prod",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "prod"
+    },
+    {
+      "name": "environment alias DEV",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "DEV"
+    },
+    {
+      "name": "empty environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": ""
+    },
+    {
+      "name": "unknown environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": "SANDBOX"
+    },
+    {
+      "name": "whitespace-padded environment",
+      "schema": "environment",
+      "definition": "environment",
+      "value": " TEST "
+    }
+  ]
+}

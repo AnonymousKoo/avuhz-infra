@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:common:environment:v1",
+  "title": "Avuhz Slice 1 Environment Primitive v1",
+  "description": "Provider-neutral environment classification only. A value does not authorize access to or use of an environment.",
+  "$defs": {
+    "environment": {
+      "title": "Environment",
+      "description": "Closed, case-sensitive environment classification used by Slice 1 contracts.",
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 11,
+      "enum": [
+        "LOCAL",
+        "TEST",
+        "DEVELOPMENT",
+        "STAGING",
+        "PRODUCTION"
+      ]
+    }
+  }
+}

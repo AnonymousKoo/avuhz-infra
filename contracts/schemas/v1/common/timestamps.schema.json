@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:common:timestamps:v1",
+  "title": "Avuhz Slice 1 Timestamp Primitives v1",
+  "description": "Provider-neutral UTC timestamp primitives for Slice 1 contracts. Server-recorded semantics are enforced by command processing and are not established by caller-supplied values.",
+  "$defs": {
+    "utcTimestamp": {
+      "title": "UTC RFC 3339 Timestamp",
+      "description": "An RFC 3339 date-time written in unambiguous UTC Z form, optionally with one to nine fractional-second digits.",
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 30,
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]{1,9})?Z$"
+    }
+  }
+}

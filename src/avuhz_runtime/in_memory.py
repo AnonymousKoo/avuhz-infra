@@ -16,8 +16,39 @@ class MemoryStore:
     def snapshot(self,command):
         r={"ACQUISITION_HANDOFF":self.handoffs,"ENGAGEMENT":self.engagements,"DIAGNOSTIC_SCOPE":self.scopes}.get(command.subject_type,{ }).get(command.subject_id)
         return None if not r else AuthoritativeSubjectSnapshot(command.subject_type,command.subject_id,r["tenant_id"],r.get("record_version",1),True,r.get("engagement_id"),r.get("status") or r.get("engagement_state"))
+class _TenantRepo:
+    def __init__(self,u,name):self.u=u;self.data=getattr(u.working,name)
+    def get(self,tenant_id,record_id):
+        r=self.data.get(record_id);return r if r and r.get("tenant_id")==tenant_id else None
+    def save(self,record):self.u.failpoint("AUTHORITATIVE_WRITE");self.data[record.get("handoff_id") or record.get("engagement_id") or record.get("diagnostic_scope_id") or record.get("approval_id")]=record
+class AcquisitionHandoffMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"handoffs")
+    def save_accepted(self,record):self.u.failpoint("AUTHORITATIVE_WRITE");record["accepted"]=True
+class EngagementMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"engagements")
+    def exists(self,tenant_id,record_id):return self.get(tenant_id,record_id) is not None
+class DiagnosticScopeMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"scopes")
+    def mark_approved(self,record):self.u.failpoint("AUTHORITATIVE_WRITE");record["status"]="APPROVED"
+class HumanApprovalMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"approvals")
+class IdempotencyMemoryRepository:
+    def __init__(self,u):self.u=u;self.data=u.working.idempotency
+    def get(self,key):return self.data.get(key)
+    def reserve(self,key):self.u.failpoint("IDEMPOTENCY_RESERVE")
+    def save_result(self,key,result):self.u.failpoint("IDEMPOTENCY_COMPLETE");self.data[key]=result
+class LifecycleEventMemoryRepository:
+    def __init__(self,u):self.u=u
+    def append(self,event):self.u.failpoint("LIFECYCLE_EVENT_APPEND");self.u.working.events.append(event)
+    def list(self):return tuple(self.u.working.events)
+class OutboxMemoryRepository:
+    def __init__(self,u):self.u=u
+    def append(self,intent):self.u.failpoint("OUTBOX_APPEND");self.u.working.outbox.append(intent)
+    def list(self):return tuple(self.u.working.outbox)
 class UnitOfWork:
-    def __init__(self,store):self.store=store;self.working=copy.deepcopy(store)
+    def __init__(self,store):
+        self.store=store;self.working=copy.deepcopy(store)
+        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
     def failpoint(self,name):
         if self.working.fail_stage==name: raise RuntimeError("injected failpoint")
     def commit(self):

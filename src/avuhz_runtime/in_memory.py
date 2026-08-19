@@ -59,13 +59,12 @@ class Executor:
     def execute(self,raw,context):
         first=self.validator.prepare(raw)
         if isinstance(first,ValidationFailure):return {"result":"VALIDATION_FAILED","reason_code":first.reason.value}
-        p=first.prepared; key=(p.tenant_id,context.principal_id,p.command_type,p.subject_type,p.subject_id,p.idempotency_key); fp=fingerprint(raw); prior=self.store.idempotency.get(key)
+        p=first.prepared; u=self.uow_factory(self.store); key=(p.tenant_id,context.principal_id,p.command_type,p.subject_type,p.subject_id,p.idempotency_key); fp=fingerprint(raw); prior=u.idempotency.get(key)
         if prior:return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":prior["command_id"]} if prior["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
         guarded=prepare_and_guard_command(self.validator,self.pipeline,raw,context,self.store.snapshot(p),self.clock())
         if not hasattr(guarded,"guarded"):return {"result":"REJECTED","reason_code":guarded.reason.value}
-        u=self.uow_factory(self.store)
         try:
-            u.failpoint("IDEMPOTENCY_RESERVE");u.failpoint("AUTHORITATIVE_WRITE");self._handle(u,p,raw); event=self._event(p);u.failpoint("LIFECYCLE_EVENT_APPEND");u.working.events.append(event);u.failpoint("OUTBOX_APPEND");u.working.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.failpoint("IDEMPOTENCY_COMPLETE");u.working.idempotency[key]={"fingerprint":fp,"command_id":p.command_id};u.commit()
+            u.idempotency.reserve(key);u.failpoint("AUTHORITATIVE_WRITE");self._handle(u,p,raw); event=self._event(p);u.lifecycle_events.append(event);u.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.idempotency.save_result(key,{"fingerprint":fp,"command_id":p.command_id});u.commit()
         except (ValueError,RuntimeError) as error:return {"result":"REJECTED","reason_code":"PREREQUISITE_STATE_INVALID"}
         return {"result":"ACCEPTED","reason_code":"COMMAND_ACCEPTED","authoritative_record_reference":p.subject_id}
     def _handle(self,u,p,raw):

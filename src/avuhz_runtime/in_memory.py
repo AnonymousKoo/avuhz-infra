@@ -24,7 +24,7 @@ class UnitOfWork:
         self.failpoint("COMMIT")
         self.store.__dict__.update(self.working.__dict__)
 class Executor:
-    def __init__(self,validator,pipeline,store,clock=lambda:"2030-01-15T15:00:00Z",ids=lambda:str(uuid.uuid4())):self.validator=validator;self.pipeline=pipeline;self.store=store;self.clock=clock;self.ids=ids
+    def __init__(self,validator,pipeline,store,clock=lambda:"2030-01-15T15:00:00Z",ids=lambda:str(uuid.uuid4()),uow_factory=UnitOfWork):self.validator=validator;self.pipeline=pipeline;self.store=store;self.clock=clock;self.ids=ids;self.uow_factory=uow_factory
     def execute(self,raw,context):
         first=self.validator.prepare(raw)
         if isinstance(first,ValidationFailure):return {"result":"VALIDATION_FAILED","reason_code":first.reason.value}
@@ -32,7 +32,7 @@ class Executor:
         if prior:return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":prior["command_id"]} if prior["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
         guarded=prepare_and_guard_command(self.validator,self.pipeline,raw,context,self.store.snapshot(p),self.clock())
         if not hasattr(guarded,"guarded"):return {"result":"REJECTED","reason_code":guarded.reason.value}
-        u=UnitOfWork(self.store)
+        u=self.uow_factory(self.store)
         try:
             u.failpoint("IDEMPOTENCY_RESERVE");u.failpoint("AUTHORITATIVE_WRITE");self._handle(u,p,raw); event=self._event(p);u.failpoint("LIFECYCLE_EVENT_APPEND");u.working.events.append(event);u.failpoint("OUTBOX_APPEND");u.working.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.failpoint("IDEMPOTENCY_COMPLETE");u.working.idempotency[key]={"fingerprint":fp,"command_id":p.command_id};u.commit()
         except (ValueError,RuntimeError) as error:return {"result":"REJECTED","reason_code":"PREREQUISITE_STATE_INVALID"}

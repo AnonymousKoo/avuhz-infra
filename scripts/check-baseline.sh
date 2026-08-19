@@ -38,8 +38,8 @@ printf 'check: approved migration SQL and prohibited resource classes\n'
 sql_candidates="$(mktemp)"
 trap 'rm -f "$tracked_candidates" "$sql_candidates"' EXIT
 find . -path ./.git -prune -o -path ./supabase/.temp -prune -o -type f -name '*.sql' -printf '%P\n' | sort > "$sql_candidates"
-if grep -Ev '^supabase/migrations/[0-9]{14}_[A-Za-z0-9][A-Za-z0-9_-]*\.sql$' "$sql_candidates" | grep -q .; then
-  printf 'error: SQL is permitted only in conventionally named supabase migrations\n' >&2
+if grep -Ev '^(supabase/migrations/[0-9]{14}_[A-Za-z0-9][A-Za-z0-9_-]*\.sql|supabase/inventory/current_public_schema\.sql)$' "$sql_candidates" | grep -q .; then
+  printf 'error: SQL is permitted only in approved Supabase migrations or the exact schema inventory artifact\n' >&2
   exit 1
 fi
 while IFS= read -r migration; do

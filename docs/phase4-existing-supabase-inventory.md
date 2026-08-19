@@ -1,100 +1,111 @@
 # Existing Supabase project inventory (A0)
 
-## 1. Scope and safety boundary
+## 1. Scope and evidence status
 
-This is a schema-only, read-only inventory of the approved existing Supabase project. It records local migration-history reconciliation and a blocked schema-pull attempt. It does not apply migrations, inspect application rows, alter remote configuration, or approve the remote schema as the Avuhz target.
-
-## 2. Confirmed target and local link state
+This is a read-only inventory of the approved linked project. Current public-schema evidence comes from the schema-only artifact [current_public_schema.sql](../supabase/inventory/current_public_schema.sql), captured with `db dump --linked --schema public` and without `--data-only`. No customer rows, auth users, storage objects, credentials, or remote changes were read or made.
 
 - Approved linked project ref: `gnuqaefotwgkwurjpyik`.
-- Operator-provided local CLI authentication was usable.
-- Project-local Supabase CLI: `2.115.0`.
-- CLI linkage is confined to ignored `supabase/.temp/`; it is not committed.
+- Project-local CLI: `2.115.0`; existing operator authentication was usable.
+- **CURRENT SCHEMA KNOWN:** YES, for `public` as captured by the dump.
+- **HISTORICAL MIGRATION CHAIN COMPLETE:** NO. The local shadow database cannot replay the committed historical migration because its `public.tenant_users` dependency has no recovered historical provenance.
 
-## 3. Migration-history reconciliation
+## 2. Migration continuity and schema capture
 
-Before fetch, migration history contained no local versions and one remote-only version, `20260816120000`. The authorized local-only fetch created:
+Local and remote migration history are aligned at `20260816120000`. The committed historical file, `supabase/migrations/20260816120000_create_onboarding_engagements.sql`, is schema-only continuity evidence; it is not a new Avuhz migration.
 
-| File | Local version | Remote version | Post-fetch status |
+A prior `db pull` shadow retry cleared the transient local port collision but stopped on the missing historical `tenant_users` dependency. This does not invalidate the current schema dump. No migration repair, apply/revert, history update, or remote mutation occurred.
+
+The current dump is a 973-line, schema-only inventory artifact. It contains 16 public tables, three custom enums, two trigger functions, two triggers, eleven indexes, four foreign keys, 31 policies, and grants/default privileges. It contains no `COPY`, direct row-data DML, secret-bearing literal, or client row export.
+
+## 3. Current public-table inventory
+
+| Table | Current schema role and key evidence | RLS/access evidence | Slice 1 / preservation classification |
 | --- | --- | --- | --- |
-| `supabase/migrations/20260816120000_create_onboarding_engagements.sql` | `20260816120000` | `20260816120000` | aligned |
+| `alerts` | UUID PK; lead/client/tenant IDs; severity, resolution, JSONB metadata, timestamp | RLS; authenticated full access; broad anon/auth/service grants | Legacy monitoring; KEEP / DO_NOT_TOUCH; HIGH |
+| `automation_logs` | UUID PK; lead/client/tenant IDs; severity/message/timestamp | RLS; authenticated `USING/WITH CHECK true`; duplicate service-role log policies; broad grants | Legacy operational logging; KEEP; MEDIUM |
+| `client_config` | UUID PK; client/contact/configuration URLs and operational settings | RLS; authenticated full access; broad grants | Legacy configuration; DO_NOT_TOUCH; HIGH |
+| `demo_assets` | UUID PK; optional `sekinfra` client FK; tenant ID; multiple JSONB demo/finding fields; unique demo slug | RLS; anon/authenticated read policy; select grants | Legacy/demo assets; KEEP; MEDIUM |
+| `engagement_events` | UUID PK; tenant + engagement ID; legacy enum; JSONB event data; global idempotency-key unique; composite FK to engagements | RLS; tenant_users-based authenticated SELECT/INSERT; broad table grants | Legacy event stream; PARALLELIZE; HIGH |
+| `engagements` | UUID PK; tenant ID; company/contact PII; legacy urgency/status enums; timestamps; `(id, tenant_id)` unique | RLS; tenant_users-based authenticated SELECT/INSERT/UPDATE; timestamp trigger; broad table grants | EXISTS_INCOMPATIBLE; DO_NOT_TOUCH / PARALLELIZE; HIGH |
+| `event_logs` | UUID PK; lead/client/tenant IDs; JSONB metadata/timestamp | RLS; authenticated full access; broad grants | Legacy events; KEEP; MEDIUM |
+| `events` | UUID PK; tenant FK to client_config; aggregate fields; JSONB payload; global idempotency-key unique | RLS; authenticated full access; service-role policy; broad grants | Generic legacy events; PARALLELIZE, not LifecycleEvent; HIGH |
+| `incident_logs` | UUID PK; workflow/node/error/payload/metadata/status and tenant/client IDs | RLS; authenticated full access; broad grants | Legacy incidents; KEEP; MEDIUM |
+| `infrastructure_events` | UUID PK; source/event/severity/host/service/metric fields; client ID | RLS; authenticated full access; broad grants | Legacy monitoring; KEEP; MEDIUM |
+| `oia_submissions` | UUID PK; extensive intake/OIA/PII text fields; JSONB submission; tenant/client IDs; unique submission ID | RLS; authenticated full access; broad grants | Legacy OIA intake; DO_NOT_TOUCH; HIGH |
+| `pipeline_stages` | UUID PK; name/order/timeout/timestamp | RLS; authenticated full access/read; service-role policy; broad grants | Legacy pipeline; KEEP; MEDIUM |
+| `revenue_events` | UUID PK; lead ID, amount, status/timestamp | RLS; authenticated full access; service-role policy; broad grants | Payment/revenue legacy; DO_NOT_TOUCH; HIGH |
+| `sekinfra` | UUID PK; extensive lead/contact, payment, agreement, OIA, deployment, monitoring, tenant/demo fields; unique email | RLS; authenticated full access; anon demo read; broad grants; timestamp trigger | Legacy aggregate; DO_NOT_TOUCH; HIGH |
+| `sla_rules` | UUID PK; client/stage/severity/action/tenant fields | RLS; authenticated full access; service-role read; broad grants | Legacy operational policy; KEEP; MEDIUM |
+| `tenant_users` | UUID PK; tenant UUID; nullable auth-user UUID FK to `auth.users`; role, full name, created timestamp; tenant index | RLS enabled, no table-specific policy in dump; broad grants | Current membership bridge; PARTIAL; HIGH |
 
-`migration list --linked` confirmed the version on both sides after fetch. No migration repair, migration apply/revert, or remote migration-history update occurred.
+No table-row data was inspected. Defaults, constraints, JSONB column presence, unique keys, foreign keys, indexes, triggers, policies, and grants above are schema evidence only.
 
-## 4. Fetched migration review
+## 4. Tenant-users assessment and dependencies
 
-The fetched file is **SCHEMA_ONLY_BASELINE historical evidence**, not a new Avuhz migration and not a complete current-schema baseline.
+`public.tenant_users` exists in the current remote schema and is the bridge used by legacy engagement/event policies: `auth.uid() = tenant_users.auth_user_id` and tenant IDs must match the protected row.
 
-- 156 lines; two `CREATE TABLE` statements, three enum types, three indexes, one composite foreign key, one trigger function, one trigger, two RLS enablements, and five policies.
-- No `DROP`, `GRANT`, extension, or `SECURITY DEFINER` statement.
-- No executable row-data `INSERT`, `UPDATE`, or `DELETE` statement.
-- No secret, token, API key, password, connection string, auth-user data, or client row data was present.
-- It contains schema fields for contact details and legacy lifecycle/payment/credential concepts, but no values from any customer record.
+It is **PARTIAL**, not reusable as-is for the Phase 4 target: it has an auth-user FK and tenant field but no visible uniqueness constraint on `(tenant_id, auth_user_id)`, nullable `auth_user_id`, unbounded text role, no current table-specific policy in the dump, and broad grants. It may remain untouched while future Slice 1 tables use a separately approved tenant/identity/RLS design.
 
-The migration creates the legacy `public.engagements` and `public.engagement_events` tables plus `engagement_urgency`, `engagement_status`, and `engagement_event_type` enums. It references `public.tenant_users` in policies but does not define that dependency.
+Schema dependencies observed: `engagement_events(engagement_id, tenant_id)` has a cascading composite FK to `engagements`; `demo_assets.client_id` references `sekinfra`; `events.tenant_id` references `client_config`; `tenant_users.auth_user_id` references `auth.users`. The engagement and engagement-event policies depend on `tenant_users`. No views were present in the public dump.
 
-## 5. Schema-pull result
+## 5. Slice 1 collision matrix
 
-Docker was available. Port inspection found no current listener or Docker owner for `54320`; the earlier collision was transient Supabase shadow-startup state, so no container was stopped and no local config was changed. The retry created its local shadow database, then stopped while applying the fetched migration because `public.tenant_users` does not exist in the historical migration set.
-
-Classification: **E — BLOCKED_BY_REMOTE_HISTORY_OR_SCHEMA_ISSUE**. No additional migration/diff file exists. No prompt to update remote migration history was presented; therefore no update was accepted or performed.
-
-## 6. Historical public-schema inventory (limited)
-
-This table inventory is evidence from the fetched historical migration only. Current remote state remains unverified until a successful schema-only pull is possible.
-
-| Object | Historical shape and access evidence | Avuhz relevance | Classification | Data risk | Future strategy |
-| --- | --- | --- | --- | --- | --- |
-| `public.engagements` | UUID PK; tenant ID; company/contact PII fields; broad legacy status enum; urgency; timestamps; authenticated tenant-scoped SELECT/INSERT/UPDATE policies; update timestamp trigger | Conflicts with Slice 1’s narrow Avuhz Engagement ownership and lifecycle | REPLACE | HIGH | ADD_PARALLEL_NEW_TABLE |
-| `public.engagement_events` | UUID PK; tenant and engagement IDs; JSONB event body; globally unique idempotency key; composite tenant-aware FK with cascade; authenticated SELECT/INSERT policies | Historical event overlap, but not the bounded LifecycleEvent/Outbox model | REPLACE | HIGH | ADD_PARALLEL_NEW_TABLE |
-| `public.tenant_users` | Referenced by RLS predicates only; definition unavailable | Tenant/identity bridge dependency | UNKNOWN | UNKNOWN | DO_NOT_TOUCH / NEEDS_OWNER_REVIEW |
-| legacy enum types | Include payment, credentials, conversion, ongoing-service, and other future-slice lifecycle terms | Outside Slice 1 | DEPRECATE (later) | HIGH | DO_NOT_TOUCH until dependency review |
-
-## 7. Slice 1 collision matrix
-
-The current remote schema cannot be asserted without a completed pull. `engagements` is historical evidence only; all exact current-name checks remain `UNKNOWN` unless shown below.
-
-| Planned durable resource | Remote status | Evidence / implication |
+| Planned resource | Current status | Evidence / recommendation |
 | --- | --- | --- |
-| `acquisition_handoffs` | UNKNOWN | not created by fetched history; current schema unverified |
-| `engagements` | EXISTS_INCOMPATIBLE (historical evidence) | legacy PII and lifecycle/payment/credential model conflicts with Slice 1 |
-| `diagnostic_scopes` | UNKNOWN | current schema unverified |
-| `human_approvals` | UNKNOWN | current schema unverified |
-| `idempotency_records` | UNKNOWN | legacy event key is global and not the required tenant/principal/subject model |
-| `lifecycle_events` | UNKNOWN | historical `engagement_events` is semantic overlap, not a confirmed exact table collision |
-| `outbox_deliveries` | UNKNOWN | current schema unverified |
+| `acquisition_handoffs` | ABSENT | use a new Avuhz-prefixed table |
+| `engagements` | EXISTS_INCOMPATIBLE | legacy PII/lifecycle model, no handoff/account/opportunity/record-version semantics; keep and parallelize |
+| `diagnostic_scopes` | ABSENT | use a new Avuhz-prefixed table |
+| `human_approvals` | ABSENT | use a new Avuhz-prefixed table |
+| `idempotency_records` | ABSENT | legacy global event keys are not the tenant/principal/subject model |
+| `lifecycle_events` | ABSENT | `events` and `engagement_events` are unrelated legacy alternatives |
+| `outbox_deliveries` | ABSENT | use a new Avuhz-prefixed table |
 
-## 8. RLS, functions, storage, and privileges
+## 6. Engagement compatibility and parallel naming
 
-- **RLS:** historical migration enables RLS on both legacy tables. Five policies derive tenant access by joining `public.tenant_users` with `auth.uid()`. They are tenant-shaped, but give authenticated clients direct authoritative engagement writes; that conflicts with the Phase 4 command-service write model. Events have SELECT/INSERT only in the fetched policy set.
-- **Function/trigger:** `set_engagements_updated_at` is a non-SECURITY-DEFINER timestamp trigger function with an empty `search_path`; it does not evidence a lifecycle/RLS bypass.
-- **Auth:** no custom auth schema baseline was pulled; auth bridge details remain unknown beyond the historical `tenant_users` reference.
-- **Storage:** not required for Slice 1 and not inspected.
-- **Grants:** no grant statements appear in fetched history; current privilege state is unverified.
+Current `public.engagements` is not compatible with Slice 1: it lacks acquisition handoff/account/opportunity references, engagement and record versions, Slice 1 state vocabulary, and scoped authority semantics; it mixes legacy contact PII and future payment/credential/OIA/deployment lifecycle states. Its direct authenticated write policy and update trigger are legacy behavior, not an authority model for new records.
 
-## 9. Design gap and preservation strategy
+Use one clear ownership prefix consistently:
 
-The planned Phase 4 tables and invariants remain those in [Phase 4 persistence design](phase4-persistence-design.md). The historical tables should not be altered or reused as authoritative Slice 1 tables without a current schema baseline and owner dependency review. The preferred future approach is additive: introduce the seven tenant-scoped Slice 1 tables in parallel, then consider backfill/switch/deprecation only with explicit data and application dependency approval.
+- `avuhz_acquisition_handoffs`
+- `avuhz_engagements`
+- `avuhz_diagnostic_scopes`
+- `avuhz_human_approvals`
+- `avuhz_idempotency_records`
+- `avuhz_lifecycle_events`
+- `avuhz_outbox_deliveries`
 
-## 10. Objects not to touch
+This avoids all current table-name collisions, clearly distinguishes Avuhz authoritative records from legacy data, and maps predictably to the existing repository ports.
 
-- Remote migration history, schema, data, RLS, grants, functions/triggers, auth, storage, and project settings.
-- Local Docker containers and host processes; no container was stopped or reconfigured.
-- `public.engagements`, `public.engagement_events`, `public.tenant_users`, and related legacy enum types until owner review.
-- Ignored local CLI linkage state.
+## 7. RLS, command-service, functions, types, and grants
 
-## 11. Owner input required
+All 16 current public tables have RLS enabled, but the current model is not suitable to reuse for Slice 1 authority writes. Twelve legacy tables have `authenticated_full_access` policies using `true` predicates; automation logs also have broad authenticated/service-role policies. Legacy engagements/events have tenant-shaped policies but directly permit authenticated writes. The dump also shows broad grants, including `ALL` on many tables for `anon`, `authenticated`, and `service_role`, plus default privileges that grant maintenance capabilities. RLS may narrow some paths, but these grants/policies are material legacy direct-write risks.
+
+The target remains: browser/session callers issue bounded commands and reads; command service is the authoritative write path; future n8n has no direct authoritative-table write access. Existing legacy policies are preservation concerns, not a reason to weaken the new-table model.
+
+Two public trigger functions only maintain `updated_at` for legacy engagements and sekinfra. Neither is `SECURITY DEFINER`; no application RPC/view was found in this public-schema dump. The three custom enums are legacy engagement urgency/status/event vocabularies and include payment, credential, conversion, and ongoing-service values. New Slice 1 tables must use new narrow governed checks/enums rather than reuse them.
+
+## 8. Data-preservation and additive strategy
+
+Keep and do not alter legacy engagements, engagement_events, sekinfra, oia_submissions, client_config, revenue_events, and tenant_users pending owner review. High-risk data/identity/lifecycle tables should not be renamed, backfilled, or deprecated in the first durable Slice 1 batch.
+
+A future additive migration should create only the seven `avuhz_*` tables, their tenant-aware foreign keys, narrow state/check constraints, idempotency uniqueness, append-only lifecycle-event constraints, and outbox linkage. It must not reference or mutate legacy tables. New-table RLS/grants must implement command-service-controlled writes from the start.
+
+## 9. Migration provenance and implementation safety
+
+Missing historical `tenant_users` provenance does **not** prevent designing a non-colliding additive migration, because the current schema is now known. It **does** block reproducible local shadow replay and durable adapter integration tests through the standard migration pipeline.
+
+Therefore: **NEW Slice 1 additive migration is not yet safe to implement in this repository.** Prerequisite: owner-approved historical tenant-membership provenance/reconciliation or an explicitly approved durable-test strategy that proves new migrations and RLS without reconstructing legacy history. No remote repair is authorized.
+
+## 10. Owner input and exact next batch
 
 | Question | Recommended default | Consequence |
 | --- | --- | --- |
-| What is the authoritative historical source of `public.tenant_users` required by the fetched migration? | Identify and review its historical migration or approved schema provenance; do not create a local stub or repair remote history. | Blocks reproducible shadow migration application and current schema baseline capture. |
-| Must legacy engagements/events and their dependencies be preserved for an active application? | Treat all legacy records and dependencies as preserved pending explicit application-owner review. | Determines later parallel/backfill/deprecation work. |
-| What is the authoritative `tenant_users`/human identity bridge and its RLS ownership? | Keep it untouched until its full schema and claim model are reviewed. | Blocks durable RLS design and connected authorization tests. |
+| What is the authoritative historical source for `tenant_users`, and may it be committed as local continuity evidence? | Recover/review the original schema migration or owner-approved equivalent; do not create a synthetic replacement. | Enables reproducible shadow replay and migration testing. |
+| Who confirms whether legacy public tables are active production dependencies? | Treat all as active and preserved until confirmed otherwise. | Controls later migration/backfill/deprecation only. |
+| What trusted command-service identity and tenant/RLS claim model is approved for new tables? | Use separate command-service workload identity; browsers/n8n do not write authoritative tables. | Required before durable RLS/grant implementation. |
 
-## 12. Exact recommended next batch
+**Exact next batch:** historical tenant-membership provenance reconciliation only, followed by a local shadow replay check. It must not create new Avuhz tables, change legacy RLS, or mutate the remote project.
 
-**Historical tenant-membership provenance only:** identify the reviewed historical source for `public.tenant_users`, add it only as faithful local migration continuity evidence if approved, then retry the same schema-only `db pull` without repair or remote history update. Do not create a replacement tenant table, Avuhz durable table, RLS change, or data backfill in that batch.
+## 11. Inventory artifact policy
 
-## 13. Local migration-file disposition
-
-The fetched historical migration is schema-only, secret-free, row-data-free, matches aligned remote history, and is necessary for migration continuity. It is eligible for commit. The baseline policy now permits only conventionally named `supabase/migrations/*.sql` files, continues rejecting SQL elsewhere, and rejects direct row-data DML in approved baseline migrations. No fetched migration is to be applied or edited casually.
+The current schema dump is an inventory artifact, not a migration. The narrow baseline policy permits only this exact inventory file and conventionally named migration files, while continuing to reject SQL elsewhere, dump-like content, direct row-data DML, and credential-shaped material.

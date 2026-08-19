@@ -18,6 +18,8 @@ supabase/.temp/
 !supabase/
 !supabase/migrations/
 !supabase/migrations/*.sql
+!supabase/inventory/
+!supabase/inventory/current_public_schema.sql
 
 # n8n legacy/local artifacts and execution data
 n8n-workflows/

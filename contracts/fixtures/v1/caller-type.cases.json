@@ -1,0 +1,29 @@
+{
+  "fixture_set": "caller-type.v1",
+  "fictional_only": true,
+  "positive": [
+    { "name": "client user", "value": "CLIENT_USER" },
+    { "name": "sekinfra user", "value": "SEKINFRA_USER" },
+    { "name": "internal service", "value": "INTERNAL_SERVICE" },
+    { "name": "n8n orchestrator", "value": "N8N_ORCHESTRATOR" },
+    { "name": "provider adapter", "value": "PROVIDER_ADAPTER" },
+    { "name": "scheduled automation", "value": "SCHEDULED_AUTOMATION" },
+    { "name": "security automation", "value": "SECURITY_AUTOMATION" }
+  ],
+  "negative": [
+    { "name": "lowercase alias", "value": "client_user" },
+    { "name": "admin alias", "value": "ADMIN" },
+    { "name": "superuser alias", "value": "SUPERUSER" },
+    { "name": "service alias", "value": "SERVICE" },
+    { "name": "n8n alias", "value": "N8N" },
+    { "name": "internal alias", "value": "INTERNAL" },
+    { "name": "empty string", "value": "" },
+    { "name": "leading whitespace", "value": " CLIENT_USER" },
+    { "name": "trailing whitespace", "value": "CLIENT_USER " },
+    { "name": "unknown future value", "value": "FUTURE_AUTOMATION" },
+    { "name": "null", "value": null },
+    { "name": "integer", "value": 7 },
+    { "name": "object", "value": { "caller_type": "CLIENT_USER" } },
+    { "name": "array", "value": ["CLIENT_USER"] }
+  ]
+}

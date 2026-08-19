@@ -35,9 +35,9 @@ The migration creates the legacy `public.engagements` and `public.engagement_eve
 
 ## 5. Schema-pull result
 
-Docker was available. The first `db pull` completed local shadow-image preparation without a migration-history prompt or a generated schema-drift file. A final retry stopped before schema capture with a local Docker shadow-database port collision on `54320`. No local configuration or unrelated container was changed.
+Docker was available. Port inspection found no current listener or Docker owner for `54320`; the earlier collision was transient Supabase shadow-startup state, so no container was stopped and no local config was changed. The retry created its local shadow database, then stopped while applying the fetched migration because `public.tenant_users` does not exist in the historical migration set.
 
-Classification: **DB_PULL_STILL_BLOCKED**. No additional migration/diff file exists. No prompt to update remote migration history was presented; therefore no update was accepted or performed.
+Classification: **E — BLOCKED_BY_REMOTE_HISTORY_OR_SCHEMA_ISSUE**. No additional migration/diff file exists. No prompt to update remote migration history was presented; therefore no update was accepted or performed.
 
 ## 6. Historical public-schema inventory (limited)
 
@@ -79,7 +79,7 @@ The planned Phase 4 tables and invariants remain those in [Phase 4 persistence d
 ## 10. Objects not to touch
 
 - Remote migration history, schema, data, RLS, grants, functions/triggers, auth, storage, and project settings.
-- The local Docker process/container holding the shadow port; this inventory did not stop or reconfigure it.
+- Local Docker containers and host processes; no container was stopped or reconfigured.
 - `public.engagements`, `public.engagement_events`, `public.tenant_users`, and related legacy enum types until owner review.
 - Ignored local CLI linkage state.
 
@@ -87,14 +87,14 @@ The planned Phase 4 tables and invariants remain those in [Phase 4 persistence d
 
 | Question | Recommended default | Consequence |
 | --- | --- | --- |
-| Who may resolve the local Docker shadow-port collision, and may this repository use a separate approved local shadow port? | Do not stop unknown containers; approve an isolated unused shadow port or have the owner resolve the conflict. | Blocks a current remote schema baseline. |
+| What is the authoritative historical source of `public.tenant_users` required by the fetched migration? | Identify and review its historical migration or approved schema provenance; do not create a local stub or repair remote history. | Blocks reproducible shadow migration application and current schema baseline capture. |
 | Must legacy engagements/events and their dependencies be preserved for an active application? | Treat all legacy records and dependencies as preserved pending explicit application-owner review. | Determines later parallel/backfill/deprecation work. |
 | What is the authoritative `tenant_users`/human identity bridge and its RLS ownership? | Keep it untouched until its full schema and claim model are reviewed. | Blocks durable RLS design and connected authorization tests. |
 
 ## 12. Exact recommended next batch
 
-**Local shadow-database readiness only:** with owner approval, resolve the unrelated local `54320` conflict or choose an isolated local shadow port, then retry the same schema-only `db pull` without repairing or updating remote migration history. Review the resulting local drift snapshot before any Avuhz migration, RLS change, or data/backfill decision.
+**Historical tenant-membership provenance only:** identify the reviewed historical source for `public.tenant_users`, add it only as faithful local migration continuity evidence if approved, then retry the same schema-only `db pull` without repair or remote history update. Do not create a replacement tenant table, Avuhz durable table, RLS change, or data backfill in that batch.
 
 ## 13. Local migration-file disposition
 
-The fetched historical migration is preserved locally for review but intentionally not staged in this batch. The repository’s existing baseline checker treats every `*.sql` file as prohibited, including this authorized historical fetch. Changing that security rule is outside this reconciliation step. No fetched migration is to be applied or edited casually.
+The fetched historical migration is schema-only, secret-free, row-data-free, matches aligned remote history, and is necessary for migration continuity. It is eligible for commit. The baseline policy now permits only conventionally named `supabase/migrations/*.sql` files, continues rejecting SQL elsewhere, and rejects direct row-data DML in approved baseline migrations. No fetched migration is to be applied or edited casually.

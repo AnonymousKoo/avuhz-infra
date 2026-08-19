@@ -15,6 +15,9 @@ supabase/.temp/
 **/linked-project.json
 *.dump
 *.sql
+!supabase/
+!supabase/migrations/
+!supabase/migrations/*.sql
 
 # n8n legacy/local artifacts and execution data
 n8n-workflows/

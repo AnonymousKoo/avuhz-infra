@@ -5,7 +5,6 @@
 (^|/)n8n-workflows(/|$)
 (^|/)legacy[^/]*/
 (^|/)forensic(s)?/
-\.sql$
 \.dump$
 \.pem$
 \.p12$

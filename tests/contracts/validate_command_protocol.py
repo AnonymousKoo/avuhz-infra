@@ -138,6 +138,18 @@ def main():
         fail("command vocabulary drifted")
     if schemas[ENVELOPE_ID]["$defs"]["subjectType"]["enum"] != EXPECTED_SUBJECTS:
         fail("subject vocabulary drifted")
+    expected_bindings = {
+        "AcceptAcquisitionHandoff": "ACQUISITION_HANDOFF",
+        "OpenEngagement": "ENGAGEMENT",
+        "SubmitDiagnosticScope": "ENGAGEMENT",
+        "ApproveDiagnosticScope": "DIAGNOSTIC_SCOPE",
+    }
+    bindings = schemas[ENVELOPE_ID]["$defs"]["envelopeCore"]["allOf"]
+    for binding in bindings:
+        command_type = binding["if"]["properties"]["command_type"]["const"]
+        subject_type = binding["then"]["properties"]["subject_type"]["const"]
+        if expected_bindings.get(command_type) != subject_type:
+            fail(f"command subject binding drifted: {command_type}")
     if schemas[ENVELOPE_ID]["allOf"][1]["properties"]["payload"]["maxProperties"] != 0:
         fail("base envelope payload must remain a strict placeholder")
     if "metadata" in schemas[RESULT_ID]["properties"] or "metadata" in schemas[ENVELOPE_ID]["$defs"]["envelopeCore"]["properties"]:
@@ -170,6 +182,14 @@ def main():
         if value["caller_type"] != value["caller_identity"]["caller_type"]:
             fail(f"caller type mismatch in positive: {case['name']}")
         utc_datetime(value["requested_at"])
+    submit_scope = next(case["value"] for case in positives if case["value"]["command_type"] == "SubmitDiagnosticScope")
+    if submit_scope["subject_type"] != "ENGAGEMENT" or submit_scope["subject_id"] != submit_scope["engagement_id"]:
+        fail("scope submission must target its existing engagement subject")
+    for invalid_subject in ("DIAGNOSTIC_SCOPE", "ACQUISITION_HANDOFF"):
+        invalid_submit_scope = copy.deepcopy(submit_scope)
+        invalid_submit_scope["subject_type"] = invalid_subject
+        if not list(envelope_validator.iter_errors(invalid_submit_scope)):
+            fail(f"scope submission accepted invalid subject: {invalid_subject}")
     base = positives[0]["value"]
     for case in fixtures["command_envelope"]["negative"]:
         value = apply_mutation(base, case["mutate"])

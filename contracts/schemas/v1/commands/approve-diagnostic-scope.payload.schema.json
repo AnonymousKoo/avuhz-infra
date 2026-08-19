@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:approve-diagnostic-scope-payload:v1",
+  "title": "Approve Diagnostic Scope Payload v1",
+  "description": "Strict approval-binding payload for an existing DiagnosticScope. It carries only the exact scope version, two distinct approval references, and canonical content digest; runtime guards must verify authority, status, tenant, subject, and expiry conditions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scope_version", "client_approval_reference", "sekinfra_approval_reference", "scope_content_digest"],
+  "properties": {
+    "scope_version": {"$ref": "urn:avuhz:schema:contracts:domain:diagnostic-scope:v1#/$defs/positiveVersion"},
+    "client_approval_reference": {"$ref": "urn:avuhz:schema:contracts:domain:diagnostic-scope:v1#/$defs/approvalReference"},
+    "sekinfra_approval_reference": {"$ref": "urn:avuhz:schema:contracts:domain:diagnostic-scope:v1#/$defs/approvalReference"},
+    "scope_content_digest": {"$ref": "urn:avuhz:schema:contracts:domain:human-approval:v1#/$defs/scopeDigest"}
+  }
+}

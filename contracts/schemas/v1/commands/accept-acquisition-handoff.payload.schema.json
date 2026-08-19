@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:accept-acquisition-handoff-payload:v1",
+  "title": "Accept Acquisition Handoff Payload v1",
+  "description": "Strict request payload for accepting one exact AcquisitionHandoff snapshot. Acceptance records governed intake only and grants no client-system, commercial, access, implementation, or deployment authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["acquisition_handoff"],
+  "properties": {
+    "acquisition_handoff": {"$ref": "urn:avuhz:schema:contracts:domain:acquisition-handoff:v1"}
+  }
+}

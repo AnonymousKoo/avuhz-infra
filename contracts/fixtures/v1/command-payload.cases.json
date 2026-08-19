@@ -1,0 +1,12 @@
+{
+  "fixture_set": "slice1-command-payloads.v1",
+  "fictional_only": true,
+  "positive": ["accept acquisition handoff", "open engagement", "submit diagnostic scope", "approve diagnostic scope"],
+  "negative": [
+    "accept wrong subject", "accept engagement context", "accept expected version", "accept history", "accept credential field", "accept metadata",
+    "open wrong subject", "open missing handoff", "open invalid type", "open embedded handoff", "open account object", "open expected version", "open metadata",
+    "submit diagnostic scope subject", "submit missing engagement", "submit missing version", "submit approval reference", "submit approved status", "submit write action", "submit missing prohibition", "submit no system", "submit malformed supersession", "submit metadata",
+    "approve wrong subject", "approve one approval", "approve same approvals", "approve embedded approval", "approve replacement content", "approve malformed digest", "approve missing version", "approve metadata",
+    "payload schema mismatch", "payload command mismatch", "base envelope unregistered payload", "future authority field"
+  ]
+}

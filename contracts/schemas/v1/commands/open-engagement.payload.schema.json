@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:open-engagement-payload:v1",
+  "title": "Open Engagement Payload v1",
+  "description": "Strict request payload for creating one Avuhz engagement identity from an exact accepted acquisition handoff. It contains references only and grants no diagnostic, commercial, access, implementation, or deployment authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["proposed_engagement_id", "accepted_handoff_reference", "canonical_account_reference", "acquisition_opportunity_reference", "engagement_type"],
+  "properties": {
+    "proposed_engagement_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
+    "accepted_handoff_reference": {"$ref": "urn:avuhz:schema:contracts:domain:engagement:v1#/$defs/sourceHandoffReference"},
+    "canonical_account_reference": {"$ref": "urn:avuhz:schema:contracts:domain:engagement:v1#/$defs/canonicalAccountReference"},
+    "acquisition_opportunity_reference": {"$ref": "urn:avuhz:schema:contracts:domain:engagement:v1#/$defs/acquisitionOpportunityReference"},
+    "engagement_type": {"$ref": "urn:avuhz:schema:contracts:domain:engagement:v1#/properties/engagement_type"}
+  }
+}

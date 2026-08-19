@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:common:references:v1",
+  "title": "Avuhz Slice 1 Typed Reference Primitives v1",
+  "description": "Bounded provider-neutral references to canonical Avuhz records and externally owned objects. References contain identity and version binding only, never embedded domain data, credentials, secret paths, or arbitrary metadata.",
+  "$defs": {
+    "internalReferenceType": {
+      "title": "Internal Reference Type",
+      "description": "Closed Slice 1 vocabulary for canonical Avuhz-owned record references. Tenant identity remains a direct tenant_id rather than a typed reference.",
+      "type": "string",
+      "enum": [
+        "ENGAGEMENT",
+        "ACQUISITION_HANDOFF",
+        "DIAGNOSTIC_SCOPE",
+        "HUMAN_APPROVAL",
+        "COMMAND",
+        "LIFECYCLE_EVENT",
+        "INBOUND_EVENT_RECEIPT"
+      ]
+    },
+    "internalReference": {
+      "title": "Internal Reference",
+      "description": "Reference to a canonical Avuhz-owned record when exact version binding is not required by the parent contract.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_type",
+        "reference_id"
+      ],
+      "properties": {
+        "reference_type": {
+          "$ref": "#/$defs/internalReferenceType"
+        },
+        "reference_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+        }
+      }
+    },
+    "versionedInternalReference": {
+      "title": "Versioned Internal Reference",
+      "description": "Reference binding an exact canonical Avuhz-owned record version for approval, authority, concurrency, or audit semantics.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_type",
+        "reference_id",
+        "reference_version"
+      ],
+      "properties": {
+        "reference_type": {
+          "$ref": "#/$defs/internalReferenceType"
+        },
+        "reference_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+        },
+        "reference_version": {
+          "title": "Internal Record Version",
+          "description": "Exact positive integer version of an authoritative internal record.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "externalReferenceObjectType": {
+      "title": "External Reference Object Type",
+      "description": "Closed Slice 1 vocabulary for externally owned acquisition objects.",
+      "type": "string",
+      "enum": [
+        "CANONICAL_ACCOUNT",
+        "ACQUISITION_OPPORTUNITY",
+        "SOURCE_RECORD"
+      ]
+    },
+    "externalVersion": {
+      "title": "External Version",
+      "description": "Bounded opaque version identifier supplied by an external system. It does not weaken internal positive-integer record versioning.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$"
+    },
+    "externalReference": {
+      "title": "External Reference",
+      "description": "Provider-neutral reference to an object owned outside Avuhz, bound to its source and environment. It is never a canonical Avuhz internal identity.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_system",
+        "object_type",
+        "external_id",
+        "environment"
+      ],
+      "properties": {
+        "source_system": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "object_type": {
+          "$ref": "#/$defs/externalReferenceObjectType"
+        },
+        "external_id": {
+          "allOf": [
+            {
+              "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+            },
+            {
+              "not": {
+                "pattern": "(?:[Bb][Ee][Aa][Rr][Ee][Rr]|[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Kk][Ee][Nn]|[Aa][Pp][Ii][_-]?[Kk][Ee][Yy])"
+              }
+            }
+          ]
+        },
+        "external_version": {
+          "$ref": "#/$defs/externalVersion"
+        },
+        "environment": {
+          "$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"
+        }
+      }
+    }
+  }
+}

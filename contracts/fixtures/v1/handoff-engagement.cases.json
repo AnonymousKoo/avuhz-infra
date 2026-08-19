@@ -1,0 +1,124 @@
+{
+  "fixture_set": "handoff-engagement.v1",
+  "fictional_only": true,
+  "acquisition_handoff": {
+    "positive": [
+      {
+        "name": "qualified handoff with bounded evidence",
+        "value": {
+          "handoff_id": "c1000000-0000-4000-8000-000000000001",
+          "handoff_version": 1,
+          "tenant_id": "c1000000-0000-4000-8000-000000000002",
+          "canonical_account_reference": {"source_system": "sekinfra-acquisition", "object_type": "CANONICAL_ACCOUNT", "external_id": "account-001", "external_version": "v1", "environment": "TEST"},
+          "acquisition_opportunity_reference": {"source_system": "sekinfra-acquisition", "object_type": "ACQUISITION_OPPORTUNITY", "external_id": "opportunity-001", "external_version": "v2", "environment": "TEST"},
+          "qualification_status": "QUALIFIED",
+          "target_outcome": "Establish a governed diagnostic engagement for a fictional organization.",
+          "validated_constraints": [
+            {"constraint_id": "constraint-001", "category": {"taxonomy_source": "sekinfra-acquisition", "taxonomy_id": "operational-constraint", "taxonomy_version": "v1"}, "statement": "A bounded diagnostic review is required before implementation planning.", "validation_status": "VALIDATED", "evidence_references": [{"source_system": "sekinfra-acquisition", "object_type": "SOURCE_RECORD", "external_id": "evidence-001", "environment": "TEST"}]}
+          ],
+          "stakeholder_context": [
+            {"stakeholder_reference": "stakeholder-001", "role_reference": {"taxonomy_source": "sekinfra-acquisition", "taxonomy_id": "decision-authority", "taxonomy_version": "v1"}, "context": "Identified as the fictional engagement decision path reference."}
+          ],
+          "assumptions": ["The fictional source record remains current at handoff."],
+          "exclusions": ["No client-system authority is granted by this handoff."],
+          "requested_engagement_type": "DIAGNOSTIC_OIA",
+          "source_system": "sekinfra-acquisition",
+          "source_record_version": "v2",
+          "producer_identity": "acquisition.service-01",
+          "produced_at": "2030-01-15T15:00:00Z",
+          "correlation_id": "c1000000-0000-4000-8000-000000000003",
+          "idempotency_key": "slice1-handoff-transfer-0001"
+        }
+      },
+      {
+        "name": "qualified with conditions handoff",
+        "value": {
+          "handoff_id": "c1000000-0000-4000-8000-000000000004",
+          "handoff_version": 2,
+          "tenant_id": "c1000000-0000-4000-8000-000000000005",
+          "canonical_account_reference": {"source_system": "sekinfra-acquisition", "object_type": "CANONICAL_ACCOUNT", "external_id": "account-002", "environment": "TEST"},
+          "acquisition_opportunity_reference": {"source_system": "sekinfra-acquisition", "object_type": "ACQUISITION_OPPORTUNITY", "external_id": "opportunity-002", "environment": "TEST"},
+          "qualification_status": "QUALIFIED_WITH_CONDITIONS",
+          "target_outcome": "Validate the bounded diagnostic scope against stated conditions.",
+          "validated_constraints": [],
+          "stakeholder_context": [],
+          "assumptions": [],
+          "exclusions": [],
+          "requested_engagement_type": "DIAGNOSTIC_OIA",
+          "source_system": "sekinfra-acquisition",
+          "source_record_version": "v3",
+          "producer_identity": "acquisition.service-02",
+          "produced_at": "2030-01-15T15:00:00.123Z",
+          "correlation_id": "c1000000-0000-4000-8000-000000000006",
+          "idempotency_key": "slice1-handoff-transfer-0002"
+        }
+      }
+    ],
+    "negative": [
+      {"name": "malformed handoff id", "mutate": {"handoff_id": "not-a-handoff"}},
+      {"name": "zero handoff version", "mutate": {"handoff_version": 0}},
+      {"name": "unknown qualification", "mutate": {"qualification_status": "PENDING"}},
+      {"name": "unknown engagement type", "mutate": {"requested_engagement_type": "ONGOING_SERVICE"}},
+      {"name": "oversized target outcome", "operation": "oversize_target"},
+      {"name": "too many constraints", "operation": "too_many_constraints"},
+      {"name": "metadata escape hatch", "mutate": {"metadata": {}}},
+      {"name": "credential shaped field", "mutate": {"authorization": "short"}},
+      {"name": "malformed account reference", "mutate": {"canonical_account_reference.external_id": ""}},
+      {"name": "malformed opportunity reference", "mutate": {"acquisition_opportunity_reference.object_type": "CANONICAL_ACCOUNT"}},
+      {"name": "communication history leak", "mutate": {"communication_history": []}},
+      {"name": "invalid produced at", "mutate": {"produced_at": "2030-01-15 15:00:00"}},
+      {"name": "malformed idempotency", "mutate": {"idempotency_key": "short"}}
+    ]
+  },
+  "engagement": {
+    "positive": [
+      {
+        "name": "open engagement",
+        "value": {
+          "engagement_id": "d1000000-0000-4000-8000-000000000001",
+          "tenant_id": "d1000000-0000-4000-8000-000000000002",
+          "account_reference": {"source_system": "sekinfra-acquisition", "object_type": "CANONICAL_ACCOUNT", "external_id": "account-003", "environment": "TEST"},
+          "acquisition_opportunity_reference": {"source_system": "sekinfra-acquisition", "object_type": "ACQUISITION_OPPORTUNITY", "external_id": "opportunity-003", "environment": "TEST"},
+          "source_handoff_reference": {"reference_type": "ACQUISITION_HANDOFF", "reference_id": "d1000000-0000-4000-8000-000000000003", "reference_version": 1},
+          "engagement_type": "DIAGNOSTIC_OIA",
+          "engagement_state": "OPEN",
+          "engagement_version": 1,
+          "record_version": 1,
+          "opened_at": "2030-01-15T15:00:00Z",
+          "created_at": "2030-01-15T15:00:00Z",
+          "updated_at": "2030-01-15T15:00:00Z"
+        }
+      },
+      {
+        "name": "onboarding engagement",
+        "value": {
+          "engagement_id": "d1000000-0000-4000-8000-000000000004",
+          "tenant_id": "d1000000-0000-4000-8000-000000000005",
+          "account_reference": {"source_system": "sekinfra-acquisition", "object_type": "CANONICAL_ACCOUNT", "external_id": "account-004", "environment": "TEST"},
+          "acquisition_opportunity_reference": {"source_system": "sekinfra-acquisition", "object_type": "ACQUISITION_OPPORTUNITY", "external_id": "opportunity-004", "environment": "TEST"},
+          "source_handoff_reference": {"reference_type": "ACQUISITION_HANDOFF", "reference_id": "d1000000-0000-4000-8000-000000000006", "reference_version": 2},
+          "engagement_type": "DIAGNOSTIC_OIA",
+          "engagement_state": "ONBOARDING",
+          "engagement_version": 2,
+          "record_version": 3,
+          "opened_at": "2030-01-15T15:00:00Z",
+          "created_at": "2030-01-15T15:00:00Z",
+          "updated_at": "2030-01-16T15:00:00Z"
+        }
+      }
+    ],
+    "negative": [
+      {"name": "unknown state", "mutate": {"engagement_state": "PENDING"}},
+      {"name": "future state", "mutate": {"engagement_state": "ASSESSMENT"}},
+      {"name": "unknown type", "mutate": {"engagement_type": "ONGOING_SERVICE"}},
+      {"name": "malformed engagement id", "mutate": {"engagement_id": "not-an-engagement"}},
+      {"name": "malformed tenant id", "mutate": {"tenant_id": "not-a-tenant"}},
+      {"name": "zero engagement version", "mutate": {"engagement_version": 0}},
+      {"name": "zero record version", "mutate": {"record_version": 0}},
+      {"name": "invalid timestamp", "mutate": {"updated_at": "2030-01-16 15:00:00"}},
+      {"name": "arbitrary field", "mutate": {"metadata": {}}},
+      {"name": "duplicated account data", "mutate": {"account": {"name": "fictional"}}},
+      {"name": "malformed source handoff", "mutate": {"source_handoff_reference.reference_version": 0}}
+    ]
+  }
+}

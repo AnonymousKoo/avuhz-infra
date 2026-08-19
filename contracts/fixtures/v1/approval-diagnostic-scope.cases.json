@@ -1,0 +1,196 @@
+{
+  "fixture_set": "approval-diagnostic-scope.v1",
+  "fictional_only": true,
+  "human_approval": {
+    "positive": [
+      {
+        "name": "client approve",
+        "value": {
+          "approval_id": "e1000000-0000-4000-8000-000000000001",
+          "tenant_id": "e1000000-0000-4000-8000-000000000002",
+          "engagement_id": "e1000000-0000-4000-8000-000000000003",
+          "subject_type": "DIAGNOSTIC_SCOPE",
+          "subject_id": "e1000000-0000-4000-8000-000000000004",
+          "subject_version": 1,
+          "approval_category": "DIAGNOSTIC_SCOPE",
+          "authority_category": "CLIENT_AUTHORITY",
+          "actor_identity": "client.actor-01",
+          "actor_organization": "client.organization-01",
+          "actor_role": "CLIENT_DECISION_AUTHORITY",
+          "decision": "APPROVE",
+          "scope": {"subject_type": "DIAGNOSTIC_SCOPE", "subject_id": "e1000000-0000-4000-8000-000000000004", "subject_version": 1, "scope_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "approved_action_set_version": 1},
+          "conditions": ["Approval applies only to the fictional diagnostic scope."],
+          "effective_at": "2030-01-15T15:00:00Z",
+          "expires_at": "2030-02-15T15:00:00Z",
+          "evidence_reference": {"source_system": "approval-source", "object_type": "SOURCE_RECORD", "external_id": "approval-evidence-01", "environment": "TEST"},
+          "status": "ACTIVE",
+          "correlation_id": "e1000000-0000-4000-8000-000000000005",
+          "idempotency_key": "slice1-client-approval-0001",
+          "created_at": "2030-01-15T15:00:00Z"
+        }
+      },
+      {
+        "name": "sekinfra approve",
+        "value": {
+          "approval_id": "e1000000-0000-4000-8000-000000000006",
+          "tenant_id": "e1000000-0000-4000-8000-000000000002",
+          "engagement_id": "e1000000-0000-4000-8000-000000000003",
+          "subject_type": "DIAGNOSTIC_SCOPE",
+          "subject_id": "e1000000-0000-4000-8000-000000000004",
+          "subject_version": 1,
+          "approval_category": "DIAGNOSTIC_SCOPE",
+          "authority_category": "SEKINFRA_AUTHORITY",
+          "actor_identity": "sekinfra.actor-01",
+          "actor_organization": "sekinfra.organization-01",
+          "actor_role": "SEKINFRA_ENGAGEMENT_AUTHORITY",
+          "decision": "APPROVE",
+          "scope": {"subject_type": "DIAGNOSTIC_SCOPE", "subject_id": "e1000000-0000-4000-8000-000000000004", "subject_version": 1, "scope_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "approved_action_set_version": 1},
+          "conditions": [],
+          "effective_at": "2030-01-15T15:05:00Z",
+          "expires_at": "2030-02-15T15:00:00Z",
+          "evidence_reference": {"source_system": "approval-source", "object_type": "SOURCE_RECORD", "external_id": "approval-evidence-02", "environment": "TEST"},
+          "status": "ACTIVE",
+          "correlation_id": "e1000000-0000-4000-8000-000000000007",
+          "idempotency_key": "slice1-sekinfra-approval-0001",
+          "created_at": "2030-01-15T15:05:00Z"
+        }
+      },
+      {
+        "name": "client reject",
+        "value": {
+          "approval_id": "e1000000-0000-4000-8000-000000000008",
+          "tenant_id": "e1000000-0000-4000-8000-000000000002",
+          "engagement_id": "e1000000-0000-4000-8000-000000000003",
+          "subject_type": "DIAGNOSTIC_SCOPE",
+          "subject_id": "e1000000-0000-4000-8000-000000000004",
+          "subject_version": 1,
+          "approval_category": "DIAGNOSTIC_SCOPE",
+          "authority_category": "CLIENT_AUTHORITY",
+          "actor_identity": "client.actor-02",
+          "actor_organization": "client.organization-01",
+          "actor_role": "CLIENT_DECISION_AUTHORITY",
+          "decision": "REJECT",
+          "scope": {"subject_type": "DIAGNOSTIC_SCOPE", "subject_id": "e1000000-0000-4000-8000-000000000004", "subject_version": 1, "scope_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "approved_action_set_version": 1},
+          "conditions": [],
+          "effective_at": "2030-01-15T16:00:00Z",
+          "evidence_reference": {"source_system": "approval-source", "object_type": "SOURCE_RECORD", "external_id": "approval-evidence-03", "environment": "TEST"},
+          "status": "ACTIVE",
+          "correlation_id": "e1000000-0000-4000-8000-000000000009",
+          "idempotency_key": "slice1-client-rejection-0001",
+          "created_at": "2030-01-15T16:00:00Z"
+        }
+      },
+      {
+        "name": "superseding approval",
+        "value": {
+          "approval_id": "e1000000-0000-4000-8000-000000000010",
+          "tenant_id": "e1000000-0000-4000-8000-000000000002",
+          "engagement_id": "e1000000-0000-4000-8000-000000000003",
+          "subject_type": "DIAGNOSTIC_SCOPE",
+          "subject_id": "e1000000-0000-4000-8000-000000000004",
+          "subject_version": 1,
+          "approval_category": "DIAGNOSTIC_SCOPE",
+          "authority_category": "CLIENT_AUTHORITY",
+          "actor_identity": "client.actor-03",
+          "actor_organization": "client.organization-01",
+          "actor_role": "CLIENT_DECISION_AUTHORITY",
+          "decision": "SUPERSEDE",
+          "scope": {"subject_type": "DIAGNOSTIC_SCOPE", "subject_id": "e1000000-0000-4000-8000-000000000004", "subject_version": 1, "scope_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "approved_action_set_version": 1},
+          "conditions": [],
+          "effective_at": "2030-01-16T15:00:00Z",
+          "evidence_reference": {"source_system": "approval-source", "object_type": "SOURCE_RECORD", "external_id": "approval-evidence-04", "environment": "TEST"},
+          "status": "SUPERSEDED",
+          "supersedes_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "e1000000-0000-4000-8000-000000000001", "reference_version": 1},
+          "correlation_id": "e1000000-0000-4000-8000-000000000011",
+          "idempotency_key": "slice1-client-supersede-0001",
+          "created_at": "2030-01-16T15:00:00Z"
+        }
+      }
+    ],
+    "negative": [
+      {"name": "joint authority", "mutate": {"authority_category": "JOINT_AUTHORITY"}},
+      {"name": "wrong role", "mutate": {"actor_role": "SEKINFRA_ENGAGEMENT_AUTHORITY"}},
+      {"name": "unknown category", "mutate": {"approval_category": "DEPLOYMENT"}},
+      {"name": "unknown subject", "mutate": {"subject_type": "ENGAGEMENT"}},
+      {"name": "zero subject version", "mutate": {"subject_version": 0}},
+      {"name": "malformed subject id", "mutate": {"subject_id": "not-a-scope"}},
+      {"name": "metadata", "mutate": {"metadata": {}}},
+      {"name": "embedded scope", "mutate": {"scope": {"diagnostic_scope_id": "e1000000-0000-4000-8000-000000000004"}}},
+      {"name": "expiry ordering", "mutate": {"expires_at": "2030-01-15T14:00:00Z"}, "semantic_failure": "expires_at must be later than effective_at"},
+      {"name": "scope binding mismatch", "mutate": {"scope.subject_version": 2}, "semantic_failure": "scope must bind exact subject version"},
+      {"name": "credential shaped", "mutate": {"authorization": "short"}},
+      {"name": "unsupported role", "mutate": {"actor_role": "CLIENT_SECURITY_AUTHORITY"}},
+      {"name": "invalid decision", "mutate": {"decision": "PENDING"}},
+      {"name": "invalid status", "mutate": {"status": "PENDING"}},
+      {"name": "self supersession", "mutate": {"supersedes_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "e1000000-0000-4000-8000-000000000001", "reference_version": 1}}, "semantic_failure": "supersession cannot self-reference"}
+    ]
+  },
+  "diagnostic_scope": {
+    "positive": [
+      {
+        "name": "review pending scope with exclusions and actions",
+        "value": {
+          "diagnostic_scope_id": "f1000000-0000-4000-8000-000000000001",
+          "engagement_id": "f1000000-0000-4000-8000-000000000002",
+          "tenant_id": "f1000000-0000-4000-8000-000000000003",
+          "scope_version": 1,
+          "record_version": 1,
+          "status": "REVIEW_PENDING",
+          "target_outcome": "Assess fictional operational constraints using read-only diagnostic actions.",
+          "in_scope_systems": [{"system_reference_id": "system-001", "system_type": {"taxonomy_source": "system-taxonomy", "taxonomy_id": "infrastructure-system", "taxonomy_version": "v1"}, "account_reference": {"source_system": "sekinfra-acquisition", "object_type": "CANONICAL_ACCOUNT", "external_id": "account-005", "environment": "TEST"}, "environment": "TEST", "label": "Fictional primary system"}],
+          "excluded_systems": [{"system_reference": {"system_reference_id": "system-002", "system_type": {"taxonomy_source": "system-taxonomy", "taxonomy_id": "infrastructure-system", "taxonomy_version": "v1"}, "account_reference": {"source_system": "sekinfra-acquisition", "object_type": "CANONICAL_ACCOUNT", "external_id": "account-005", "environment": "TEST"}, "environment": "TEST"}, "reason": "Excluded from the fictional diagnostic boundary."}],
+          "permitted_diagnostic_actions": ["VIEW_CONFIGURATION", "VIEW_LOGS", "NON_DESTRUCTIVE_CONNECTIVITY_TEST"],
+          "prohibited_actions": ["CREATE", "MODIFY", "DELETE", "DEPLOY", "RESTART", "ROTATE", "GRANT", "REVOKE", "CHANGE_CONFIGURATION", "PRODUCTION_CHANGE"],
+          "assumptions": ["The fictional account reference is correctly correlated."],
+          "constraints": [{"source_system": "sekinfra-acquisition", "object_type": "SOURCE_RECORD", "external_id": "constraint-evidence-001", "environment": "TEST"}],
+          "effective_at": "2030-01-15T15:00:00Z",
+          "created_at": "2030-01-15T15:00:00Z",
+          "updated_at": "2030-01-15T15:00:00Z"
+        }
+      },
+      {
+        "name": "approved shaped scope with distinct approvals",
+        "value": {
+          "diagnostic_scope_id": "f1000000-0000-4000-8000-000000000004",
+          "engagement_id": "f1000000-0000-4000-8000-000000000005",
+          "tenant_id": "f1000000-0000-4000-8000-000000000006",
+          "scope_version": 2,
+          "record_version": 2,
+          "status": "APPROVED",
+          "target_outcome": "Assess a fictional scope after separate attributable approvals.",
+          "in_scope_systems": [{"system_reference_id": "system-003", "system_type": {"taxonomy_source": "system-taxonomy", "taxonomy_id": "infrastructure-system"}, "account_reference": {"source_system": "sekinfra-acquisition", "object_type": "CANONICAL_ACCOUNT", "external_id": "account-006", "environment": "TEST"}, "environment": "TEST"}],
+          "excluded_systems": [],
+          "permitted_diagnostic_actions": ["VIEW_METRICS", "VIEW_SECURITY_CONFIGURATION"],
+          "prohibited_actions": ["CREATE", "MODIFY", "DELETE", "DEPLOY", "RESTART", "ROTATE", "GRANT", "REVOKE", "CHANGE_CONFIGURATION", "PRODUCTION_CHANGE"],
+          "assumptions": [],
+          "constraints": [],
+          "client_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "f1000000-0000-4000-8000-000000000007", "reference_version": 1},
+          "sekinfra_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "f1000000-0000-4000-8000-000000000008", "reference_version": 1},
+          "effective_at": "2030-01-16T15:00:00Z",
+          "created_at": "2030-01-16T15:00:00Z",
+          "updated_at": "2030-01-16T15:00:00Z"
+        }
+      }
+    ],
+    "negative": [
+      {"name": "no systems", "mutate": {"in_scope_systems": []}},
+      {"name": "unknown status", "mutate": {"status": "PENDING"}},
+      {"name": "access status", "mutate": {"status": "ACCESS_GRANTED"}},
+      {"name": "unknown action", "mutate": {"permitted_diagnostic_actions": ["VIEW_DATABASE"]}},
+      {"name": "write action permitted", "mutate": {"permitted_diagnostic_actions": ["MODIFY"]}},
+      {"name": "missing mandatory prohibition", "operation": "missing_prohibition"},
+      {"name": "metadata", "mutate": {"metadata": {}}},
+      {"name": "credential shaped", "mutate": {"authorization": "short"}},
+      {"name": "malformed system reference", "mutate": {"in_scope_systems.0.system_reference_id": ""}},
+      {"name": "invalid environment", "mutate": {"in_scope_systems.0.environment": "prod"}},
+      {"name": "zero scope version", "mutate": {"scope_version": 0}},
+      {"name": "zero record version", "mutate": {"record_version": 0}},
+      {"name": "duplicate permitted action", "mutate": {"permitted_diagnostic_actions": ["VIEW_LOGS", "VIEW_LOGS"]}},
+      {"name": "malformed approval reference", "mutate": {"status": "APPROVED", "client_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "f1000000-0000-4000-8000-000000000009", "reference_version": 0}, "sekinfra_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "f1000000-0000-4000-8000-000000000010", "reference_version": 1}}},
+      {"name": "embedded approval", "mutate": {"status": "APPROVED", "client_approval_reference": {"approval_id": "f1000000-0000-4000-8000-000000000009"}, "sekinfra_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "f1000000-0000-4000-8000-000000000010", "reference_version": 1}}},
+      {"name": "oversized target", "operation": "oversize_target"},
+      {"name": "same approvals", "mutate": {"status": "APPROVED", "client_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "f1000000-0000-4000-8000-000000000009", "reference_version": 1}, "sekinfra_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": "f1000000-0000-4000-8000-000000000009", "reference_version": 1}}, "semantic_failure": "approval references must be distinct"},
+      {"name": "self supersedes", "mutate": {"supersedes_reference": {"reference_type": "DIAGNOSTIC_SCOPE", "reference_id": "f1000000-0000-4000-8000-000000000001", "reference_version": 1}}, "semantic_failure": "scope supersession cannot self-reference"}
+    ]
+  }
+}

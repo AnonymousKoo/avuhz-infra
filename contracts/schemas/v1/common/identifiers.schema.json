@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:common:identifiers:v1",
+  "title": "Avuhz Slice 1 Foundational Identifiers v1",
+  "description": "Provider-neutral, bounded identifier primitives for the Avuhz Slice 1 contract boundary. Canonical internal UUIDs are distinct from opaque external references.",
+  "$defs": {
+    "canonicalUuid": {
+      "title": "Canonical UUID",
+      "description": "Lowercase RFC 4122/9562 textual UUID used for Avuhz-owned canonical identities.",
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "tenantId": {
+      "title": "Tenant ID",
+      "description": "Canonical Avuhz tenant identity.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "engagementId": {
+      "title": "Engagement ID",
+      "description": "Canonical Avuhz engagement identity; never an acquisition or provider account ID.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "commandId": {
+      "title": "Command ID",
+      "description": "Unique identity for one command attempt.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "correlationId": {
+      "title": "Correlation ID",
+      "description": "Identity correlating one bounded business interaction.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "causationId": {
+      "title": "Causation ID",
+      "description": "Identity of the accepted command or event that directly caused another action.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "eventId": {
+      "title": "Event ID",
+      "description": "Unique identity for one immutable lifecycle event.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "approvalId": {
+      "title": "Approval ID",
+      "description": "Canonical identity for one attributable human approval record.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "scopeId": {
+      "title": "Diagnostic Scope ID",
+      "description": "Canonical identity for a diagnostic scope aggregate.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "handoffId": {
+      "title": "Acquisition Handoff ID",
+      "description": "Canonical Avuhz identity for an accepted handoff snapshot; provider/source references remain separate.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "opaqueReferenceId": {
+      "title": "Opaque Provider-Neutral Reference Identifier",
+      "description": "Bounded opaque reference for an external or provider-owned object. It is never a canonical Avuhz internal identity and carries no credential material.",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$"
+    },
+    "schemaIdentifier": {
+      "title": "Schema Identifier",
+      "description": "Immutable Avuhz contract schema URN with an explicit major version.",
+      "type": "string",
+      "minLength": 24,
+      "maxLength": 160,
+      "pattern": "^urn:avuhz:schema:[a-z0-9]+(?:[:_-][a-z0-9]+)*:v[1-9][0-9]*$"
+    },
+    "idempotencyKey": {
+      "title": "Idempotency Key",
+      "description": "Caller-generated bounded key for one semantic command request. It must not contain credential material.",
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "(?:[Bb][Ee][Aa][Rr][Ee][Rr]|[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Kk][Ee][Nn]|[Aa][Pp][Ii][_-]?[Kk][Ee][Yy])"
+          }
+        }
+      ]
+    }
+  }
+}

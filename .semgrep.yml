@@ -1,0 +1,13 @@
+rules:
+  - id: avuhz-potential-literal-secret-assignment
+    languages: [generic]
+    message: Potential literal authentication or credential material is forbidden.
+    severity: ERROR
+    patterns:
+      - pattern-regex: '(?i)(authorization|api[_-]?key|password|passwd|client[_-]?secret|access[_-]?token|bearer)\s*[=:]\s*["'']?[A-Za-z0-9_./:+-]{16,}'
+      - pattern-not-regex: 'TEST_ONLY_NOT_A_SECRET'
+  - id: avuhz-authenticated-url
+    languages: [generic]
+    message: Authenticated URLs are forbidden.
+    severity: ERROR
+    pattern-regex: 'https?://[^/@[:space:]]+:[^/@[:space:]]+@'

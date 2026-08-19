@@ -1,0 +1,48 @@
+# Secrets and environment configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+credentials*
+secrets*
+
+# Supabase local/link state and database artifacts
+supabase/.temp/
+**/linked-project.json
+*.dump
+*.sql
+
+# n8n legacy/local artifacts and execution data
+n8n-workflows/
+.n8n/
+*execution-log*
+*provider-payload*
+
+# Legacy/forensic material
+legacy/
+legacy-*/
+forensic/
+forensics/
+*.archive
+
+# Package/build/cache output
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+.cache/
+__pycache__/
+*.pyc
+
+# Editor/OS/temp files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.log

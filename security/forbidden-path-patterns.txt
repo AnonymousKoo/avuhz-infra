@@ -1,0 +1,17 @@
+# Extended regular expressions matched against repository-relative paths.
+(^|/)\.env($|\.)
+(^|/)supabase/\.temp(/|$)
+(^|/)linked-project\.json$
+(^|/)n8n-workflows(/|$)
+(^|/)legacy[^/]*/
+(^|/)forensic(s)?/
+\.sql$
+\.dump$
+\.pem$
+\.p12$
+\.pfx$
+\.key$
+(^|/)node_modules/
+(^|/)\.n8n/
+execution-log
+provider-payload

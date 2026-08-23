@@ -56,15 +56,34 @@ def accepts_diagnostic_scope_canonicalized_event_type():
 def rejects_unknown_idempotency_command_type():
     dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
     if not dsn:
-        return True
+        try:
+            query("begin; insert into public.avuhz_idempotency_records (id, tenant_id, trusted_principal_id, command_type, subject_type, subject_id, subject_version, idempotency_key, semantic_request_fingerprint, fingerprint_schema_version, processing_status, retention_class, attempt_count) values ('f5000000-0000-4000-8000-000000000001', 'f5000000-0000-4000-8000-000000000002', 'schema-assertion-principal', 'FutureCanonicalizeCommand', 'DIAGNOSTIC_SCOPE', 'f5000000-0000-4000-8000-000000000003', 1, 'schema-assertion-unknown-command', 'fpv1:schemaassertionunknowncommand', 'v1', 'RESERVED', 'OPERATIONAL_DEDUPLICATION', 0); rollback;")
+        except subprocess.CalledProcessError:
+            return True
+        return False
     import psycopg
     from psycopg.errors import CheckViolation
     try:
         with psycopg.connect(dsn) as connection:
-            connection.execute("insert into public.avuhz_idempotency_records (id, tenant_id, trusted_principal_id, command_type, subject_type, subject_id, subject_version, idempotency_key, semantic_request_fingerprint, fingerprint_schema_version, processing_status, retention_class, attempt_count) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", ("f5000000-0000-4000-8000-000000000001", "f5000000-0000-4000-8000-000000000002", "schema-assertion-principal", "FutureCommand", "DIAGNOSTIC_SCOPE", "f5000000-0000-4000-8000-000000000003", 1, "schema-assertion-unknown-command", "fpv1:schemaassertionunknowncommand", "v1", "RESERVED", "OPERATIONAL_DEDUPLICATION", 0))
+            connection.execute("insert into public.avuhz_idempotency_records (id, tenant_id, trusted_principal_id, command_type, subject_type, subject_id, subject_version, idempotency_key, semantic_request_fingerprint, fingerprint_schema_version, processing_status, retention_class, attempt_count) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", ("f5000000-0000-4000-8000-000000000001", "f5000000-0000-4000-8000-000000000002", "schema-assertion-principal", "FutureCanonicalizeCommand", "DIAGNOSTIC_SCOPE", "f5000000-0000-4000-8000-000000000003", 1, "schema-assertion-unknown-command", "fpv1:schemaassertionunknowncommand", "v1", "RESERVED", "OPERATIONAL_DEDUPLICATION", 0))
     except CheckViolation:
         return True
     return False
+
+def accepts_canonicalize_diagnostic_scope_command_type():
+    dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
+    if not dsn:
+        try:
+            query("begin; insert into public.avuhz_idempotency_records (id, tenant_id, trusted_principal_id, command_type, subject_type, subject_id, subject_version, idempotency_key, semantic_request_fingerprint, fingerprint_schema_version, processing_status, retention_class, attempt_count) values ('f5000000-0000-4000-8000-000000000004', 'f5000000-0000-4000-8000-000000000005', 'schema-assertion-principal', 'CanonicalizeDiagnosticScope', 'DIAGNOSTIC_SCOPE', 'f5000000-0000-4000-8000-000000000006', 1, 'schema-assertion-canonicalize-command', 'fpv1:schemaassertioncanonicalizecmd', 'v1', 'RESERVED', 'OPERATIONAL_DEDUPLICATION', 0); rollback;")
+        except subprocess.CalledProcessError:
+            return False
+        return True
+    import psycopg
+    with psycopg.connect(dsn) as connection:
+        connection.execute("insert into public.avuhz_idempotency_records (id, tenant_id, trusted_principal_id, command_type, subject_type, subject_id, subject_version, idempotency_key, semantic_request_fingerprint, fingerprint_schema_version, processing_status, retention_class, attempt_count) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", ("f5000000-0000-4000-8000-000000000004", "f5000000-0000-4000-8000-000000000005", "schema-assertion-principal", "CanonicalizeDiagnosticScope", "DIAGNOSTIC_SCOPE", "f5000000-0000-4000-8000-000000000006", 1, "schema-assertion-canonicalize-command", "fpv1:schemaassertioncanonicalizecmd", "v1", "RESERVED", "OPERATIONAL_DEDUPLICATION", 0))
+        connection.rollback()
+    return True
+
 
 def require(ok, message):
     if not ok: raise AssertionError(message)
@@ -100,8 +119,12 @@ def main():
     require(accepts_diagnostic_scope_canonicalized_event_type(), 'diagnostic_scope.canonicalized lifecycle event type was rejected')
     require(rejects_unknown_lifecycle_event_type(), 'unsupported lifecycle event type was accepted')
     idempotency_check = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_idempotency_records'::regclass and conname = 'avuhz_idempotency_records_command_type_check'")
+    idempotency_unique = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_idempotency_records'::regclass and contype = 'u'")
+    require(any('UNIQUE (tenant_id, trusted_principal_id, command_type, subject_type, subject_id, idempotency_key)' in definition for definition in idempotency_unique), 'tenant-scoped idempotency uniqueness drifted')
     require(len(idempotency_check) == 1 and 'RecordHumanApproval' in idempotency_check[0], 'RecordHumanApproval idempotency command type is not allowed')
-    require('FutureCommand' not in idempotency_check[0], 'idempotency command type check is not closed')
+    require('CanonicalizeDiagnosticScope' in idempotency_check[0], 'CanonicalizeDiagnosticScope idempotency command type is not allowed')
+    require(accepts_canonicalize_diagnostic_scope_command_type(), 'CanonicalizeDiagnosticScope idempotency command type was rejected')
+    require('FutureCanonicalizeCommand' not in idempotency_check[0], 'idempotency command type check is not closed')
     require(rejects_unknown_idempotency_command_type(), 'unsupported idempotency command type was accepted')
     require(query("select column_default is not null from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_outbox_deliveries' and column_name = 'outbox_delivery_id'") == ['t'], 'outbox ID requires persistence-owned default')
     for column in ('approving_principal_reference', 'approving_organization_reference', 'decision', 'conditions', 'effective_at', 'evidence_reference', 'correlation_id', 'idempotency_key'):

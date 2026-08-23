@@ -23,6 +23,9 @@ def main():
     approval_idempotency = {'command_type': 'RecordHumanApproval', 'tenant_id': h['tenant_id'], 'idempotency_key': 'slice1-runtime-approval-0001', 'semantic_request_fingerprint': 'fpv1:runtimeapprovalfingerprint0001'}
     require(approval_idempotency['command_type'] == 'RecordHumanApproval', 'approval idempotency vocabulary drifted')
     require(not ({'payload', 'credentials', 'authorization'} & approval_idempotency.keys()), 'idempotency record must not persist raw command data')
+    canonicalization_idempotency = {"command_type": "CanonicalizeDiagnosticScope", "tenant_id": h["tenant_id"], "idempotency_key": "slice1-runtime-canonicalization-0001", "semantic_request_fingerprint": "fpv1:runtimecanonicalizationfp0001"}
+    require(canonicalization_idempotency["command_type"] == "CanonicalizeDiagnosticScope", "canonicalization idempotency vocabulary drifted")
+    require(not ({"payload", "credentials", "authorization", "provider_blob"} & canonicalization_idempotency.keys()), "canonicalization idempotency record must not persist raw command data")
     approval_event = {**event, 'event_type': 'human_approval.recorded', 'subject_id': payloads()['SubmitDiagnosticScope']['proposed_diagnostic_scope_id']}
     require(set(approval_event) == {'event_id', 'event_type', 'subject_id', 'tenant_id', 'idempotency_key'}, 'approval event must use only the current runtime envelope')
     require(approval_event['event_type'] == 'human_approval.recorded', 'approval event vocabulary drifted')

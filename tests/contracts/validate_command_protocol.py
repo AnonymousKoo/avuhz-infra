@@ -33,7 +33,7 @@ EXPECTED_REASONS = [
 ]
 EXPECTED_RESULTS = ["ACCEPTED", "REJECTED", "CONFLICT", "DUPLICATE", "NOT_AUTHORIZED", "INVALID_STATE", "VALIDATION_FAILED", "SECURITY_BLOCKED"]
 EXPECTED_RETRYABILITY = ["NOT_RETRYABLE", "RETRY_SAME_KEY", "RETRY_NEW_ATTEMPT", "HUMAN_REVIEW"]
-EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"]
+EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"]
 EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE"]
 
 
@@ -142,6 +142,7 @@ def main():
         "AcceptAcquisitionHandoff": "ACQUISITION_HANDOFF",
         "OpenEngagement": "ENGAGEMENT",
         "SubmitDiagnosticScope": "ENGAGEMENT",
+        "RecordHumanApproval": "DIAGNOSTIC_SCOPE",
         "ApproveDiagnosticScope": "DIAGNOSTIC_SCOPE",
         "CanonicalizeDiagnosticScope": "DIAGNOSTIC_SCOPE",
     }

@@ -2,6 +2,7 @@
   "fixture_set": "caller-type.v1",
   "fictional_only": true,
   "positive": [
+    { "name": "trusted human", "value": "HUMAN" },
     { "name": "client user", "value": "CLIENT_USER" },
     { "name": "sekinfra user", "value": "SEKINFRA_USER" },
     { "name": "internal service", "value": "INTERNAL_SERVICE" },

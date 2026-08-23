@@ -4,9 +4,10 @@
   "title": "Avuhz Slice 1 Caller Type v1",
   "description": "Closed classification of the actor that originates a request. Caller type is descriptive only and never grants capabilities, roles, tenant assignments, or approval authority.",
   "type": "string",
-  "minLength": 11,
+  "minLength": 5,
   "maxLength": 20,
   "enum": [
+    "HUMAN",
     "CLIENT_USER",
     "SEKINFRA_USER",
     "INTERNAL_SERVICE",

@@ -5,6 +5,7 @@
     "accept acquisition handoff",
     "open engagement",
     "submit diagnostic scope",
+    "record human approval",
     "approve diagnostic scope",
     "canonicalize diagnostic scope"
   ],
@@ -55,6 +56,14 @@
     "canonicalize organization",
     "canonicalize authority role",
     "canonicalize credentials",
-    "canonicalize provider payload"
+    "canonicalize provider payload",
+    "record approval wrong subject",
+    "record approval missing authority role",
+    "record approval unsupported authority role",
+    "record approval supplied digest",
+    "record approval supplied human principal",
+    "record approval supplied organization",
+    "record approval supplied credentials",
+    "record approval missing expected version"
   ]
 }

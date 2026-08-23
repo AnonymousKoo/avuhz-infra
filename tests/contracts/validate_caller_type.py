@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "contracts/schemas/v1/identity/caller-type.schema.json"
 FIXTURE_PATH = ROOT / "contracts/fixtures/v1/caller-type.cases.json"
 EXPECTED_ENUM = [
+    "HUMAN",
     "CLIENT_USER",
     "SEKINFRA_USER",
     "INTERNAL_SERVICE",

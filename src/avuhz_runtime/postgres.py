@@ -73,9 +73,15 @@ class DiagnosticScopePostgresRepository(_TenantRepository):
         return digest
 
 class HumanApprovalPostgresRepository(_TenantRepository):
-    table="avuhz_human_approvals"; identifier="approval_id"; columns="tenant_id,approval_id,authority_category,status,diagnostic_scope_id,approved_scope_version,canonical_scope_digest"
+    table="avuhz_human_approvals"; identifier="approval_id"; columns="tenant_id,approval_id,engagement_id,approval_role,authority_category,status,diagnostic_scope_id,approved_scope_version,canonical_scope_digest,action_set_version,approving_principal_reference,approving_organization_reference,decision"
     def map_row(self,r):
-        return {"approval_id":str(r["approval_id"]),"tenant_id":str(r["tenant_id"]),"authority_category":r["authority_category"],"status":r["status"],"subject_id":str(r["diagnostic_scope_id"]),"subject_version":r["approved_scope_version"],"scope":{"scope_digest":r["canonical_scope_digest"]}}
+        return {"approval_id":str(r["approval_id"]),"tenant_id":str(r["tenant_id"]),"engagement_id":str(r["engagement_id"]),"authority_role":r["approval_role"],"authority_category":r["authority_category"],"status":r["status"],"subject_id":str(r["diagnostic_scope_id"]),"subject_version":r["approved_scope_version"],"canonical_scope_digest":r["canonical_scope_digest"],"action_set_version":r["action_set_version"],"approving_principal_reference":r["approving_principal_reference"],"approving_organization_reference":r["approving_organization_reference"],"decision":r["decision"]}
+    def find_active_binding(self,tenant_id,scope_id,scope_version,authority_role,digest,action_set_version):
+        row=self._one("select a.tenant_id,a.approval_id,a.engagement_id,a.approval_role,a.authority_category,a.status,a.diagnostic_scope_id,a.approved_scope_version,a.canonical_scope_digest,a.action_set_version,a.approving_principal_reference,a.approving_organization_reference,a.decision from public.avuhz_diagnostic_scopes s left join public.avuhz_human_approvals a on a.tenant_id=s.tenant_id and a.diagnostic_scope_id=s.diagnostic_scope_id and a.approved_scope_version=s.scope_version and a.approval_role=%s and a.canonical_scope_digest=%s and a.action_set_version=%s and a.status='ACTIVE' where s.tenant_id=%s and s.diagnostic_scope_id=%s and s.scope_version=%s for update of s",(authority_role,digest,action_set_version,tenant_id,scope_id,scope_version))
+        return self.map_row(row) if row and row["approval_id"] else None
+    def save(self,record):
+        self.uow.failpoint("AUTHORITATIVE_WRITE")
+        self.uow.connection.execute("insert into public.avuhz_human_approvals (approval_id,tenant_id,engagement_id,diagnostic_scope_id,approved_scope_version,approval_role,authority_category,approving_principal_reference,approving_organization_reference,canonical_scope_digest,action_set_version,decision,status,conditions,effective_at,correlation_id,idempotency_key) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(record["approval_id"],record["tenant_id"],record["engagement_id"],record["subject_id"],record["subject_version"],record["authority_role"],record["authority_category"],record["approving_principal_reference"],record["approving_organization_reference"],record["canonical_scope_digest"],record["action_set_version"],record["decision"],record["status"],_json(record["conditions"]),record["effective_at"],record["correlation_id"],record["idempotency_key"]))
 
 class IdempotencyPostgresRepository:
     def __init__(self,uow): self.uow=uow

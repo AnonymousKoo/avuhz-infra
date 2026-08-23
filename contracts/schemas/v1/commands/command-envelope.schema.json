@@ -37,11 +37,12 @@
         {"if": {"properties": {"command_type": {"const": "AcceptAcquisitionHandoff"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ACQUISITION_HANDOFF"}}}},
         {"if": {"properties": {"command_type": {"const": "OpenEngagement"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ENGAGEMENT"}}}},
         {"if": {"properties": {"command_type": {"const": "SubmitDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ENGAGEMENT"}}}},
+        {"if": {"properties": {"command_type": {"const": "RecordHumanApproval"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
         {"if": {"properties": {"command_type": {"const": "ApproveDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
         {"if": {"properties": {"command_type": {"const": "CanonicalizeDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}}
       ]
     },
-    "commandType": {"type": "string", "minLength": 14, "maxLength": 27, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"]},
+    "commandType": {"type": "string", "minLength": 14, "maxLength": 27, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"]},
     "subjectType": {"type": "string", "minLength": 10, "maxLength": 19, "enum": ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE"]},
     "schemaVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
     "positiveRecordVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647}

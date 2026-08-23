@@ -41,6 +41,12 @@ class DiagnosticScopeMemoryRepository(_TenantRepo):
         self.u.failpoint("AUTHORITATIVE_WRITE");record["canonical_scope_digest"]=digest;record["record_version"]+=1;return digest
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
+    def save(self,record):
+        self.u.failpoint("AUTHORITATIVE_WRITE")
+        if self.get(record["tenant_id"],record["approval_id"]):raise ValueError("approval already exists")
+        self.data[record["approval_id"]]=record
+    def find_active_binding(self,tenant_id,scope_id,scope_version,authority_role,digest,action_set_version):
+        return next((a for a in self.data.values() if a.get("tenant_id")==tenant_id and a.get("subject_id")==scope_id and a.get("subject_version")==scope_version and a.get("authority_role")==authority_role and a.get("canonical_scope_digest")==digest and a.get("action_set_version")==action_set_version and a.get("status")=="ACTIVE"),None)
 class IdempotencyMemoryRepository:
     def __init__(self,u):self.u=u;self.data=u.working.idempotency
     def get(self,key):return self.data.get(key)
@@ -72,14 +78,18 @@ class Executor:
         if prior:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":prior["command_id"]} if prior["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
         guarded=prepare_and_guard_command(self.validator,self.pipeline,raw,context,self.store.snapshot(p),self.clock())
         if not hasattr(guarded,"guarded"):getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"REJECTED","reason_code":guarded.reason.value}
+        if p.command_type=="RecordHumanApproval":
+            authority=self.pipeline.human_approval_authority(context,p.payload["authority_role"])
+            if authority:
+                getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"REJECTED","reason_code":authority.reason.value}
         try:
             race=u.idempotency.reserve(key,fp,p)
             if race:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":race["command_id"]} if race["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
-            u.failpoint("AUTHORITATIVE_WRITE");self._handle(u,p,raw); event=self._event(p);u.lifecycle_events.append(event);u.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.idempotency.save_result(key,{"fingerprint":fp,"command_id":p.command_id});u.commit();getattr(u,"close",lambda:None)()
+            u.failpoint("AUTHORITATIVE_WRITE");self._handle(u,p,raw,context); event=self._event(p);u.lifecycle_events.append(event);u.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.idempotency.save_result(key,{"fingerprint":fp,"command_id":p.command_id});u.commit();getattr(u,"close",lambda:None)()
         except CanonicalScopeDigestConflict:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"CONFLICT","reason_code":"INTERNAL_INVARIANT_VIOLATION"}
         except (ValueError,RuntimeError) as error:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"REJECTED","reason_code":"PREREQUISITE_STATE_INVALID"}
         return {"result":"ACCEPTED","reason_code":"COMMAND_ACCEPTED","authoritative_record_reference":p.subject_id}
-    def _handle(self,u,p,raw):
+    def _handle(self,u,p,raw,raw_context=None):
         now=self.clock(); payload=p.payload
         if p.command_type=="AcceptAcquisitionHandoff":
             r=u.handoffs.get(p.tenant_id,p.subject_id)
@@ -93,19 +103,26 @@ class Executor:
         elif p.command_type=="SubmitDiagnosticScope":
             e=u.engagements.get(p.tenant_id,p.subject_id);sid=payload["proposed_diagnostic_scope_id"]
             if not e or e["engagement_state"] not in ("OPEN","ONBOARDING") or u.diagnostic_scopes.get(p.tenant_id,sid):raise ValueError()
-            u.diagnostic_scopes.save({"diagnostic_scope_id":sid,"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"scope_version":payload["scope_version"],"record_version":1,"status":"REVIEW_PENDING",**payload})
+            u.diagnostic_scopes.save({"diagnostic_scope_id":sid,"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"scope_version":payload["scope_version"],"record_version":1,"status":"REVIEW_PENDING","action_set_version":1,**payload})
         elif p.command_type=="CanonicalizeDiagnosticScope":
             s=u.diagnostic_scopes.get(p.tenant_id,p.subject_id)
             if not s or payload["diagnostic_scope_id"]!=p.subject_id or payload["scope_version"]!=s.get("scope_version") or s.get("status")!="REVIEW_PENDING":raise ValueError()
             digest=compute_canonical_scope_digest(s);existing=s.get("canonical_scope_digest")
             if existing is None:u.diagnostic_scopes.set_canonical_scope_digest(p.tenant_id,p.subject_id,payload["scope_version"],p.expected_record_version,digest)
             elif existing!=digest:raise CanonicalScopeDigestConflict()
+        elif p.command_type=="RecordHumanApproval":
+            s=u.diagnostic_scopes.get(p.tenant_id,p.subject_id); role=payload["authority_role"]
+            if not s or payload["diagnostic_scope_id"]!=p.subject_id or s.get("status")!="REVIEW_PENDING" or payload["scope_version"]!=s.get("scope_version") or payload["action_set_version"]!=s.get("action_set_version") or not s.get("canonical_scope_digest"):raise ValueError()
+            if u.human_approvals.find_active_binding(p.tenant_id,p.subject_id,payload["scope_version"],role,s["canonical_scope_digest"],payload["action_set_version"]):raise ValueError("duplicate active authority")
+            category="CLIENT_AUTHORITY" if role=="CLIENT_DECISION_AUTHORITY" else "SEKINFRA_AUTHORITY"
+            u.human_approvals.save({"approval_id":p.command_id,"tenant_id":p.tenant_id,"engagement_id":s["engagement_id"],"subject_id":p.subject_id,"subject_version":s["scope_version"],"authority_role":role,"authority_category":category,"approving_principal_reference":raw_context.human_principal_reference,"approving_organization_reference":raw_context.human_organization_reference,"canonical_scope_digest":s["canonical_scope_digest"],"action_set_version":s["action_set_version"],"decision":"APPROVE","status":"ACTIVE","conditions":[],"effective_at":now,"correlation_id":p.correlation_id,"idempotency_key":p.idempotency_key})
         else:
             s=u.diagnostic_scopes.get(p.tenant_id,p.subject_id);a=payload["client_approval_reference"];b=payload["sekinfra_approval_reference"];x=u.human_approvals.get(p.tenant_id,a["reference_id"]);y=u.human_approvals.get(p.tenant_id,b["reference_id"])
-            if not s or s["status"]!="REVIEW_PENDING" or not x or not y or x.get("authority_category")!="CLIENT_AUTHORITY" or y.get("authority_category")!="SEKINFRA_AUTHORITY":raise ValueError()
+            if not s or not s.get("canonical_scope_digest") or s["status"]!="REVIEW_PENDING" or not x or not y or x.get("authority_role")!="CLIENT_DECISION_AUTHORITY" or y.get("authority_role")!="SEKINFRA_ENGAGEMENT_AUTHORITY":raise ValueError()
             for z in (x,y):
-                if z.get("status")!="ACTIVE" or z.get("subject_id")!=p.subject_id or z.get("subject_version")!=payload["scope_version"] or z["scope"]["scope_digest"]!=payload["scope_content_digest"]:raise ValueError()
+                if z.get("status")!="ACTIVE" or z.get("subject_id")!=p.subject_id or z.get("subject_version")!=payload["scope_version"] or z.get("canonical_scope_digest")!=s["canonical_scope_digest"] or z.get("action_set_version")!=s.get("action_set_version"):raise ValueError()
+            if payload["scope_content_digest"]!=s["canonical_scope_digest"]:raise ValueError()
             s.update(client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1);u.diagnostic_scopes.mark_approved(s)
     def _event(self,p):
-        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized"}[p.command_type]
+        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized"}[p.command_type]
         return {"event_id":self.ids(),"event_type":typ,"subject_id":p.subject_id,"tenant_id":p.tenant_id,"idempotency_key":p.idempotency_key}

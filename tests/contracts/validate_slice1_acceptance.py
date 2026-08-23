@@ -49,7 +49,7 @@ def main():
     # Happy path structural evidence and executable command composition.
     h=handoff();h.update(handoff_id=IDS["handoff"],tenant_id=IDS["tenant"])
     if not valid("urn:avuhz:schema:contracts:domain:acquisition-handoff:v1",h,ss):fail("handoff invalid")
-    mapping={"AcceptAcquisitionHandoff":"ACQUISITION_HANDOFF","OpenEngagement":"ENGAGEMENT","SubmitDiagnosticScope":"ENGAGEMENT","ApproveDiagnosticScope":"DIAGNOSTIC_SCOPE","CanonicalizeDiagnosticScope":"DIAGNOSTIC_SCOPE"}
+    mapping={"AcceptAcquisitionHandoff":"ACQUISITION_HANDOFF","OpenEngagement":"ENGAGEMENT","SubmitDiagnosticScope":"ENGAGEMENT","RecordHumanApproval":"DIAGNOSTIC_SCOPE","ApproveDiagnosticScope":"DIAGNOSTIC_SCOPE","CanonicalizeDiagnosticScope":"DIAGNOSTIC_SCOPE"}
     if SUBJECTS!=mapping:fail("command subject mapping drift")
     for command in mapping:
         if not executable(command,envelope(command,payloads()[command]),ss):fail(f"composed command invalid: {command}")
@@ -68,9 +68,10 @@ def main():
     if any(k in review for k in ["implementation_authorized","deployment_authorized","credential_reference","access_grant"]):fail("scope leaked authority")
     # Ingress, event, outbox, idempotency, and derived read models.
     if not valid("urn:avuhz:schema:contracts:orchestration:inbound-event-receipt:v1",receipt(),ss):fail("receipt invalid")
-    events=[event("engagement.handoff.accepted",ref("ACQUISITION_HANDOFF",IDS["handoff"]),1),event("engagement.opened",ref("ENGAGEMENT",IDS["engagement"]),1),event("diagnostic_scope.submitted",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),1),event("diagnostic_scope.canonicalized",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),2),event("diagnostic_scope.approved",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),1)]
+    events=[event("engagement.handoff.accepted",ref("ACQUISITION_HANDOFF",IDS["handoff"]),1),event("engagement.opened",ref("ENGAGEMENT",IDS["engagement"]),1),event("diagnostic_scope.submitted",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),1),event("diagnostic_scope.canonicalized",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),2),event("human_approval.recorded",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),2),event("human_approval.recorded",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),2),event("diagnostic_scope.approved",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),3)]
     for e in events:
         if not valid("urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1",e,ss):fail("event invalid")
+    if [e["event_type"] for e in events][3:6]!=["diagnostic_scope.canonicalized","human_approval.recorded","human_approval.recorded"]:fail("approval lifecycle event order drifted")
     outbox={"outbox_delivery_id":"c5000000-0000-4000-8000-000000000010","event_reference":ref("LIFECYCLE_EVENT",IDS["event"]),"destination_reference":"fictional-internal-destination","status":"PUBLISHED","attempt_count":1,"published_at":"2030-01-15T15:01:00Z","last_safe_error_code":None,"delivery_idempotency_key":"slice1-acceptance-delivery-0001","created_at":"2030-01-15T15:00:00Z","updated_at":"2030-01-15T15:01:00Z"}
     if not valid("urn:avuhz:schema:contracts:orchestration:outbox-delivery:v1",outbox,ss):fail("outbox invalid")
     idem={"id":"c5000000-0000-4000-8000-000000000011","tenant_id":IDS["tenant"],"caller_reference":"fictional-command-service","command_type":"ApproveDiagnosticScope","subject_reference":ref("DIAGNOSTIC_SCOPE",IDS["scope"],1),"idempotency_key":"slice1-acceptance-command-0001","semantic_request_fingerprint":"fpv1:fictionalsemanticfingerprint0001","fingerprint_schema_version":"v1","processing_status":"COMPLETED","result_reference":ref("COMMAND","c5000000-0000-4000-8000-000000000012"),"first_seen_at":"2030-01-15T15:00:00Z","completed_at":"2030-01-15T15:00:00Z","retention_class":"OPERATIONAL_DEDUPLICATION","attempt_count":1}

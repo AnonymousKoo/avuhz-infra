@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from .errors import RuntimeReason
 
-COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit"}
+COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","RecordHumanApproval":"scope:approve","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit"}
 HUMAN_AUTHORITY_ROLES=frozenset({"CLIENT_DECISION_AUTHORITY","SEKINFRA_ENGAGEMENT_AUTHORITY"})
 
 @dataclass(frozen=True)
@@ -53,7 +53,7 @@ class GuardPipeline:
         if need not in c.capabilities:return self.fail(RuntimeReason.AUTH_CAPABILITY_MISSING,"trusted capability is required","capability")
     def subject(self,p,c,s,t):
         if p.command_type=="OpenEngagement" and s and s.exists:return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"proposed engagement already exists","subject")
-        if p.command_type in ("SubmitDiagnosticScope","ApproveDiagnosticScope","CanonicalizeDiagnosticScope"):
+        if p.command_type in ("SubmitDiagnosticScope","RecordHumanApproval","ApproveDiagnosticScope","CanonicalizeDiagnosticScope"):
             if not s or not s.exists or s.subject_type!=p.subject_type or s.subject_id!=p.subject_id:return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"authoritative subject is required and must match","subject")
     def version(self,p,c,s,t):
-        if p.command_type in ("SubmitDiagnosticScope","ApproveDiagnosticScope","CanonicalizeDiagnosticScope") and (not s or p.expected_record_version!=s.record_version):return self.fail(RuntimeReason.VERSION_STALE,"authoritative record version is stale","version")
+        if p.command_type in ("SubmitDiagnosticScope","RecordHumanApproval","ApproveDiagnosticScope","CanonicalizeDiagnosticScope") and (not s or p.expected_record_version!=s.record_version):return self.fail(RuntimeReason.VERSION_STALE,"authoritative record version is stale","version")

@@ -18,7 +18,7 @@ class CommandValidationTests(unittest.TestCase):
         self.assertNotIsInstance(result, ValidationSuccess)
         if reason: self.assertEqual(result.reason, reason)
     def test_all_five_commands_prepare(self):
-        for command in ("AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"):
+        for command in ("AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"):
             result=self.validator.prepare(self.request(command)); self.assertIsInstance(result, ValidationSuccess)
             self.assertEqual(result.prepared.command_type, command)
             self.assertFalse(hasattr(result.prepared, "authenticated_identity"))

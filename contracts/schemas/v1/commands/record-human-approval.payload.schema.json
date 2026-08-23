@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:record-human-approval-payload:v1",
+  "title": "Record Human Approval Payload v1",
+  "description": "Strict target and binding assertion for one trusted human approval. Human identity, organization, authority membership, and canonical digest are derived only from trusted context and authoritative DiagnosticScope state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["diagnostic_scope_id", "scope_version", "authority_role", "action_set_version"],
+  "properties": {
+    "diagnostic_scope_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/scopeId"},
+    "scope_version": {"$ref": "urn:avuhz:schema:contracts:domain:diagnostic-scope:v1#/$defs/positiveVersion"},
+    "authority_role": {"type": "string", "enum": ["CLIENT_DECISION_AUTHORITY", "SEKINFRA_ENGAGEMENT_AUTHORITY"]},
+    "action_set_version": {"$ref": "urn:avuhz:schema:contracts:domain:diagnostic-scope:v1#/$defs/positiveVersion"}
+  }
+}

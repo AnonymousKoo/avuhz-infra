@@ -23,7 +23,11 @@ def query(sql):
 def rejects_unknown_lifecycle_event_type():
     dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
     if not dsn:
-        return True
+        try:
+            query("begin; insert into public.avuhz_lifecycle_events (lifecycle_event_id, tenant_id, event_type, idempotency_key) values ('f4000000-0000-4000-8000-000000000001', 'f4000000-0000-4000-8000-000000000002', 'payment.verified', 'schema-assertion-unknown-event'); rollback;")
+        except subprocess.CalledProcessError:
+            return True
+        return False
     import psycopg
     from psycopg.errors import CheckViolation
     try:
@@ -32,6 +36,22 @@ def rejects_unknown_lifecycle_event_type():
     except CheckViolation:
         return True
     return False
+
+def accepts_diagnostic_scope_canonicalized_event_type():
+    dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
+    if not dsn:
+        try:
+            query("begin; insert into public.avuhz_lifecycle_events (lifecycle_event_id, tenant_id, event_type, idempotency_key) values ('f4000000-0000-4000-8000-000000000003', 'f4000000-0000-4000-8000-000000000004', 'diagnostic_scope.canonicalized', 'schema-assertion-canonicalized-event'); rollback;")
+        except subprocess.CalledProcessError:
+            return False
+        return True
+    import psycopg
+    with psycopg.connect(dsn) as connection:
+        connection.execute("insert into public.avuhz_lifecycle_events (lifecycle_event_id, tenant_id, event_type, idempotency_key) values (%s, %s, %s, %s)", ("f4000000-0000-4000-8000-000000000003", "f4000000-0000-4000-8000-000000000004", "diagnostic_scope.canonicalized", "schema-assertion-canonicalized-event"))
+        connection.rollback()
+    return True
+
+
 
 def rejects_unknown_idempotency_command_type():
     dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
@@ -60,6 +80,7 @@ def main():
         require(query(f"select conname from pg_constraint where contype = 'p' and conrelid = 'public.{table}'::regclass"), f'{table} lacks primary key')
         require(query(f"select rowsecurity::text from pg_tables where schemaname = 'public' and tablename = '{table}'") == ['true'], f'{table} RLS disabled')
         require(not query(f"select policyname from pg_policies where schemaname = 'public' and tablename = '{table}' and (qual = 'true' or with_check = 'true')"), f'{table} has broad direct-write policy')
+        require(not query(f"select privilege_type from information_schema.role_table_grants where table_schema = 'public' and table_name = '{table}' and grantee in ('anon', 'authenticated', 'PUBLIC') and privilege_type in ('SELECT', 'INSERT', 'UPDATE', 'DELETE')"), f'{table} has broad application data grant')
     for table in VERSIONED:
         require(query(f"select column_name from information_schema.columns where table_schema = 'public' and table_name = '{table}' and column_name = 'record_version'") == ['record_version'], f'{table} lacks record_version')
     for table, target in FK_TARGETS.items():
@@ -73,9 +94,10 @@ def main():
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_lifecycle_events' and column_name = '{column}'") == ['YES'], f'lifecycle event envelope cannot represent {column}')
     event_check = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_lifecycle_events'::regclass and conname = 'avuhz_lifecycle_events_event_type_check'")
     require(len(event_check) == 1, 'lifecycle event type check is missing')
-    for event_type in ('engagement.handoff.accepted', 'engagement.opened', 'diagnostic_scope.submitted', 'diagnostic_scope.approved', 'diagnostic_scope.rejected', 'human_approval.recorded'):
+    for event_type in ('engagement.handoff.accepted', 'engagement.opened', 'diagnostic_scope.submitted', 'diagnostic_scope.approved', 'diagnostic_scope.rejected', 'human_approval.recorded', 'diagnostic_scope.canonicalized'):
         require(event_type in event_check[0], f'lifecycle event type {event_type} is not allowed')
     require('payment.verified' not in event_check[0], 'lifecycle event type check is not closed')
+    require(accepts_diagnostic_scope_canonicalized_event_type(), 'diagnostic_scope.canonicalized lifecycle event type was rejected')
     require(rejects_unknown_lifecycle_event_type(), 'unsupported lifecycle event type was accepted')
     idempotency_check = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_idempotency_records'::regclass and conname = 'avuhz_idempotency_records_command_type_check'")
     require(len(idempotency_check) == 1 and 'RecordHumanApproval' in idempotency_check[0], 'RecordHumanApproval idempotency command type is not allowed')

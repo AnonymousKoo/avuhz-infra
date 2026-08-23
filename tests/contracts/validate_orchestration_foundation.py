@@ -147,7 +147,7 @@ def main():
         fail("receipt source vocabulary drifted")
     if schemas[IDS["idempotency"]]["properties"]["command_type"]["enum"] != ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope"]:
         fail("idempotency command vocabulary drifted")
-    if schemas[IDS["event"]]["properties"]["event_type"]["enum"] != ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded"]:
+    if schemas[IDS["event"]]["properties"]["event_type"]["enum"] != ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized"]:
         fail("event vocabulary drifted")
     for schema_id in IDS.values():
         if "metadata" in schemas[schema_id]["properties"]:

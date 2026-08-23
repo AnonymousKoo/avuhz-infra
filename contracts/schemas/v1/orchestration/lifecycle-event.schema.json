@@ -8,7 +8,7 @@
   "required": ["event_id", "event_type", "event_schema_version", "tenant_id", "authoritative_subject_reference", "authoritative_subject_version", "occurred_at", "producer_reference", "correlation_id", "idempotency_key", "visibility", "sanitized_metadata"],
   "properties": {
     "event_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/eventId"},
-    "event_type": {"type": "string", "enum": ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded"]},
+    "event_type": {"type": "string", "enum": ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized"]},
     "event_schema_version": {"type": "integer", "minimum": 1, "maximum": 2147483647},
     "tenant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
     "engagement_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
@@ -33,6 +33,7 @@
     {"if": {"properties": {"event_type": {"const": "diagnostic_scope.submitted"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
     {"if": {"properties": {"event_type": {"const": "diagnostic_scope.approved"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
     {"if": {"properties": {"event_type": {"const": "diagnostic_scope.rejected"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "human_approval.recorded"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}}
+    {"if": {"properties": {"event_type": {"const": "human_approval.recorded"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
+    {"if": {"properties": {"event_type": {"const": "diagnostic_scope.canonicalized"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}}
   ]
 }

@@ -16,6 +16,13 @@ This design persists Slice 1 only: governed acquisition handoff, engagement, dia
 | `lifecycle_events` | Append-only evidence | `(tenant_id, event_id)` | LifecycleEventRepository |
 | `outbox_deliveries` | Operational mutable delivery state | delivery ID plus event FK | OutboxRepository |
 
+The canonical forward migration uses the parallel `public.avuhz_*` names:
+`avuhz_acquisition_handoffs`, `avuhz_engagements`, `avuhz_diagnostic_scopes`,
+`avuhz_human_approvals`, `avuhz_idempotency_records`,
+`avuhz_lifecycle_events`, and `avuhz_outbox_deliveries`. These coexist with,
+and do not alter, legacy `public.engagements`, `public.engagement_events`, or
+`public.tenant_users`.
+
 All authoritative tables carry `tenant_id` directly. Use composite tenant-aware foreign keys where a child references a tenant-owned parent, so cross-tenant references are structurally impossible. Provider/account/opportunity identities remain bounded external references, not canonical Avuhz IDs. Contract-shaped composite scope structures may use bounded JSONB after schema validation; core IDs, state, version, timestamps, approval references, and uniqueness-critical fields remain relational columns.
 
 ## 3. Table ownership and invariants
@@ -36,6 +43,18 @@ All authoritative tables carry `tenant_id` directly. Use composite tenant-aware 
 | LifecycleEventRepository | lifecycle_events | append/list | append in command transaction |
 | OutboxRepository | outbox_deliveries | append/update delivery | append intent in command transaction |
 | UnitOfWork | all above | one command boundary | one database transaction |
+
+## 4.1 Contract-to-schema traceability
+
+| Contract resource | Durable table / primary key | Important constraints | Repository port |
+| --- | --- | --- | --- |
+| AcquisitionHandoff | `avuhz_acquisition_handoffs` / `(tenant_id, handoff_id, handoff_version)` | immutable accepted snapshot; bounded acquisition references | AcquisitionHandoffRepository |
+| Engagement | `avuhz_engagements` / `engagement_id` | tenant-aware handoff FK; `DIAGNOSTIC_OIA`; `OPEN`/`ONBOARDING`; record version | EngagementRepository |
+| DiagnosticScope | `avuhz_diagnostic_scopes` / `diagnostic_scope_id` | tenant-aware engagement FK; allowlisted actions; exact prohibited set; digest | DiagnosticScopeRepository |
+| HumanApproval | `avuhz_human_approvals` / `approval_id` | tenant-aware scope/version FK; one attributable authority role per row | HumanApprovalRepository |
+| IdempotencyRecord | `avuhz_idempotency_records` / `id` | tenant/principal/command/subject/key uniqueness; opaque fingerprint only | IdempotencyRepository |
+| LifecycleEvent | `avuhz_lifecycle_events` / `lifecycle_event_id` | append-only evidence; bounded vocabulary and sanitized JSON object | LifecycleEventRepository |
+| OutboxDelivery | `avuhz_outbox_deliveries` / `outbox_delivery_id` | tenant-aware lifecycle-event FK; bounded delivery state/error | OutboxRepository |
 
 No normal repository loads authoritative data by object ID alone: tenant is required in every lookup.
 

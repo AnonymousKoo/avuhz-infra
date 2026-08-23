@@ -49,7 +49,7 @@ def main():
     # Happy path structural evidence and executable command composition.
     h=handoff();h.update(handoff_id=IDS["handoff"],tenant_id=IDS["tenant"])
     if not valid("urn:avuhz:schema:contracts:domain:acquisition-handoff:v1",h,ss):fail("handoff invalid")
-    mapping={"AcceptAcquisitionHandoff":"ACQUISITION_HANDOFF","OpenEngagement":"ENGAGEMENT","SubmitDiagnosticScope":"ENGAGEMENT","ApproveDiagnosticScope":"DIAGNOSTIC_SCOPE"}
+    mapping={"AcceptAcquisitionHandoff":"ACQUISITION_HANDOFF","OpenEngagement":"ENGAGEMENT","SubmitDiagnosticScope":"ENGAGEMENT","ApproveDiagnosticScope":"DIAGNOSTIC_SCOPE","CanonicalizeDiagnosticScope":"DIAGNOSTIC_SCOPE"}
     if SUBJECTS!=mapping:fail("command subject mapping drift")
     for command in mapping:
         if not executable(command,envelope(command,payloads()[command]),ss):fail(f"composed command invalid: {command}")
@@ -68,7 +68,7 @@ def main():
     if any(k in review for k in ["implementation_authorized","deployment_authorized","credential_reference","access_grant"]):fail("scope leaked authority")
     # Ingress, event, outbox, idempotency, and derived read models.
     if not valid("urn:avuhz:schema:contracts:orchestration:inbound-event-receipt:v1",receipt(),ss):fail("receipt invalid")
-    events=[event("engagement.handoff.accepted",ref("ACQUISITION_HANDOFF",IDS["handoff"]),1),event("engagement.opened",ref("ENGAGEMENT",IDS["engagement"]),1),event("diagnostic_scope.submitted",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),1),event("diagnostic_scope.approved",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),1)]
+    events=[event("engagement.handoff.accepted",ref("ACQUISITION_HANDOFF",IDS["handoff"]),1),event("engagement.opened",ref("ENGAGEMENT",IDS["engagement"]),1),event("diagnostic_scope.submitted",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),1),event("diagnostic_scope.canonicalized",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),2),event("diagnostic_scope.approved",ref("DIAGNOSTIC_SCOPE",IDS["scope"]),1)]
     for e in events:
         if not valid("urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1",e,ss):fail("event invalid")
     outbox={"outbox_delivery_id":"c5000000-0000-4000-8000-000000000010","event_reference":ref("LIFECYCLE_EVENT",IDS["event"]),"destination_reference":"fictional-internal-destination","status":"PUBLISHED","attempt_count":1,"published_at":"2030-01-15T15:01:00Z","last_safe_error_code":None,"delivery_idempotency_key":"slice1-acceptance-delivery-0001","created_at":"2030-01-15T15:00:00Z","updated_at":"2030-01-15T15:01:00Z"}
@@ -85,6 +85,6 @@ def main():
     if len(negatives)!=20 or not all(ok for _,ok in negatives):fail("negative acceptance path did not reject")
     if any(k in sm or k in rd for k in ["payload","command_type","deployment_authorized","access_ready"]):fail("read model writable/authority leakage")
     fx=load(FP)
-    if len(fx["happy_path"])!=1 or len(fx["negative"])!=20:fail("fixture inventory drift")
+    if len(fx["happy_path"])!=2 or len(fx["negative"])!=20:fail("fixture inventory drift")
     print(f"slice1 acceptance: PASS ({len(fx['happy_path'])} happy path, {len(fx['negative'])} negative paths, {len(ss)} unique schema IDs, pure guard semantics)")
 if __name__=="__main__":main()

@@ -65,6 +65,8 @@ class CommandValidator:
             payload = raw["payload"]
             if payload["client_approval_reference"] == payload["sekinfra_approval_reference"]:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "approval references must be distinct")
+        if definition.command_type == "CanonicalizeDiagnosticScope" and raw["payload"]["diagnostic_scope_id"] != raw["subject_id"]:
+            return self._failure(RuntimeReason.PAYLOAD_INVALID, "canonicalization payload must identify the command subject")
         return None
 
     @staticmethod

@@ -1,6 +1,28 @@
 {
-  "happy_path": ["trusted-handoff-to-approved-scope"],
+  "happy_path": [
+    "trusted-handoff-to-approved-scope",
+    "trusted-handoff-to-canonicalized-scope"
+  ],
   "negative": [
-    "handoff-wrong-subject", "open-malformed-handoff-reference", "submit-scope-wrong-subject", "submit-scope-write-permission", "submit-scope-missing-prohibition", "approve-client-only", "approve-duplicate-approval-reference", "approve-old-scope-version", "approve-digest-mismatch", "approve-revoked", "cross-tenant-approval", "duplicate-semantic-mismatch", "failed-auth-processing", "replay-blocked-second-transition", "event-authoritative-snapshot", "outbox-provider-response", "summary-deployment-authority", "readiness-future-state", "base-envelope-executable", "unknown-command"
+    "handoff-wrong-subject",
+    "open-malformed-handoff-reference",
+    "submit-scope-wrong-subject",
+    "submit-scope-write-permission",
+    "submit-scope-missing-prohibition",
+    "approve-client-only",
+    "approve-duplicate-approval-reference",
+    "approve-old-scope-version",
+    "approve-digest-mismatch",
+    "approve-revoked",
+    "cross-tenant-approval",
+    "duplicate-semantic-mismatch",
+    "failed-auth-processing",
+    "replay-blocked-second-transition",
+    "event-authoritative-snapshot",
+    "outbox-provider-response",
+    "summary-deployment-authority",
+    "readiness-future-state",
+    "base-envelope-executable",
+    "unknown-command"
   ]
 }

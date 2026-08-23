@@ -19,6 +19,7 @@ COMMANDS = {
     "OpenEngagement": CommandDefinition("OpenEngagement", "ENGAGEMENT", 1, "urn:avuhz:schema:contracts:commands:open-engagement-payload:v1", 1),
     "SubmitDiagnosticScope": CommandDefinition("SubmitDiagnosticScope", "ENGAGEMENT", 1, "urn:avuhz:schema:contracts:commands:submit-diagnostic-scope-payload:v1", 1),
     "ApproveDiagnosticScope": CommandDefinition("ApproveDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:approve-diagnostic-scope-payload:v1", 1),
+    "CanonicalizeDiagnosticScope": CommandDefinition("CanonicalizeDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:canonicalize-diagnostic-scope-payload:v1", 1),
 }
 
 

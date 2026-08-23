@@ -12,7 +12,7 @@ SCHEMA_FILES = (
     "common/identifiers.schema.json", "common/timestamps.schema.json", "common/environment.schema.json", "common/references.schema.json",
     "identity/caller-type.schema.json", "identity/capability.schema.json", "identity/caller-identity.schema.json",
     "commands/reason-code.schema.json", "commands/command-result.schema.json", "commands/command-envelope.schema.json",
-    "commands/accept-acquisition-handoff.payload.schema.json", "commands/open-engagement.payload.schema.json", "commands/submit-diagnostic-scope.payload.schema.json", "commands/approve-diagnostic-scope.payload.schema.json",
+    "commands/accept-acquisition-handoff.payload.schema.json", "commands/open-engagement.payload.schema.json", "commands/submit-diagnostic-scope.payload.schema.json", "commands/approve-diagnostic-scope.payload.schema.json", "commands/canonicalize-diagnostic-scope.payload.schema.json",
     "domain/acquisition-handoff.schema.json", "domain/engagement.schema.json", "domain/human-approval.schema.json", "domain/diagnostic-scope.schema.json",
     "orchestration/inbound-event-receipt.schema.json", "orchestration/idempotency-record.schema.json", "orchestration/lifecycle-event.schema.json", "orchestration/outbox-delivery.schema.json",
     "read-models/engagement-summary.schema.json", "read-models/onboarding-readiness.schema.json",

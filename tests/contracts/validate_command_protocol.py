@@ -33,7 +33,7 @@ EXPECTED_REASONS = [
 ]
 EXPECTED_RESULTS = ["ACCEPTED", "REJECTED", "CONFLICT", "DUPLICATE", "NOT_AUTHORIZED", "INVALID_STATE", "VALIDATION_FAILED", "SECURITY_BLOCKED"]
 EXPECTED_RETRYABILITY = ["NOT_RETRYABLE", "RETRY_SAME_KEY", "RETRY_NEW_ATTEMPT", "HUMAN_REVIEW"]
-EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "ApproveDiagnosticScope"]
+EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"]
 EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE"]
 
 
@@ -143,6 +143,7 @@ def main():
         "OpenEngagement": "ENGAGEMENT",
         "SubmitDiagnosticScope": "ENGAGEMENT",
         "ApproveDiagnosticScope": "DIAGNOSTIC_SCOPE",
+        "CanonicalizeDiagnosticScope": "DIAGNOSTIC_SCOPE",
     }
     bindings = schemas[ENVELOPE_ID]["$defs"]["envelopeCore"]["allOf"]
     for binding in bindings:

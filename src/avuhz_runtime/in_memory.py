@@ -4,6 +4,9 @@ import copy, hashlib, json, uuid
 from dataclasses import dataclass, field
 from .guards import AuthoritativeSubjectSnapshot
 from .models import ValidationFailure
+from .canonical_scope import compute_canonical_scope_digest
+
+class CanonicalScopeDigestConflict(ValueError): pass
 from .runtime import prepare_and_guard_command
 
 def fingerprint(command):
@@ -31,6 +34,11 @@ class DiagnosticScopeMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"scopes")
     def save(self,record):self.u.failpoint("AUTHORITATIVE_WRITE");self.data[record["diagnostic_scope_id"]]=record
     def mark_approved(self,record):self.u.failpoint("AUTHORITATIVE_WRITE");record["status"]="APPROVED"
+    def set_canonical_scope_digest(self,tenant_id,scope_id,scope_version,expected_record_version,digest):
+        record=self.get(tenant_id,scope_id)
+        if not record or record.get("scope_version")!=scope_version or record.get("record_version")!=expected_record_version:raise ValueError()
+        if record.get("canonical_scope_digest") is not None:return record["canonical_scope_digest"]
+        self.u.failpoint("AUTHORITATIVE_WRITE");record["canonical_scope_digest"]=digest;record["record_version"]+=1;return digest
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
 class IdempotencyMemoryRepository:
@@ -68,6 +76,7 @@ class Executor:
             race=u.idempotency.reserve(key,fp,p)
             if race:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":race["command_id"]} if race["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
             u.failpoint("AUTHORITATIVE_WRITE");self._handle(u,p,raw); event=self._event(p);u.lifecycle_events.append(event);u.outbox.append({"event_id":event["event_id"],"status":"PENDING"});u.idempotency.save_result(key,{"fingerprint":fp,"command_id":p.command_id});u.commit();getattr(u,"close",lambda:None)()
+        except CanonicalScopeDigestConflict:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"CONFLICT","reason_code":"INTERNAL_INVARIANT_VIOLATION"}
         except (ValueError,RuntimeError) as error:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"REJECTED","reason_code":"PREREQUISITE_STATE_INVALID"}
         return {"result":"ACCEPTED","reason_code":"COMMAND_ACCEPTED","authoritative_record_reference":p.subject_id}
     def _handle(self,u,p,raw):
@@ -85,6 +94,12 @@ class Executor:
             e=u.engagements.get(p.tenant_id,p.subject_id);sid=payload["proposed_diagnostic_scope_id"]
             if not e or e["engagement_state"] not in ("OPEN","ONBOARDING") or u.diagnostic_scopes.get(p.tenant_id,sid):raise ValueError()
             u.diagnostic_scopes.save({"diagnostic_scope_id":sid,"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"scope_version":payload["scope_version"],"record_version":1,"status":"REVIEW_PENDING",**payload})
+        elif p.command_type=="CanonicalizeDiagnosticScope":
+            s=u.diagnostic_scopes.get(p.tenant_id,p.subject_id)
+            if not s or payload["diagnostic_scope_id"]!=p.subject_id or payload["scope_version"]!=s.get("scope_version") or s.get("status")!="REVIEW_PENDING":raise ValueError()
+            digest=compute_canonical_scope_digest(s);existing=s.get("canonical_scope_digest")
+            if existing is None:u.diagnostic_scopes.set_canonical_scope_digest(p.tenant_id,p.subject_id,payload["scope_version"],p.expected_record_version,digest)
+            elif existing!=digest:raise CanonicalScopeDigestConflict()
         else:
             s=u.diagnostic_scopes.get(p.tenant_id,p.subject_id);a=payload["client_approval_reference"];b=payload["sekinfra_approval_reference"];x=u.human_approvals.get(p.tenant_id,a["reference_id"]);y=u.human_approvals.get(p.tenant_id,b["reference_id"])
             if not s or s["status"]!="REVIEW_PENDING" or not x or not y or x.get("authority_category")!="CLIENT_AUTHORITY" or y.get("authority_category")!="SEKINFRA_AUTHORITY":raise ValueError()
@@ -92,5 +107,5 @@ class Executor:
                 if z.get("status")!="ACTIVE" or z.get("subject_id")!=p.subject_id or z.get("subject_version")!=payload["scope_version"] or z["scope"]["scope_digest"]!=payload["scope_content_digest"]:raise ValueError()
             s.update(client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1);u.diagnostic_scopes.mark_approved(s)
     def _event(self,p):
-        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","ApproveDiagnosticScope":"diagnostic_scope.approved"}[p.command_type]
+        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized"}[p.command_type]
         return {"event_id":self.ids(),"event_type":typ,"subject_id":p.subject_id,"tenant_id":p.tenant_id,"idempotency_key":p.idempotency_key}

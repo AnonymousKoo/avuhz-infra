@@ -39,6 +39,10 @@ def main():
     for column in ('event_schema_version', 'authoritative_subject_type', 'authoritative_subject_id', 'authoritative_subject_version', 'occurred_at', 'producer_reference', 'correlation_id', 'visibility', 'sanitized_metadata'):
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_lifecycle_events' and column_name = '{column}'") == ['YES'], f'lifecycle event envelope cannot represent {column}')
     require(query("select column_default is not null from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_outbox_deliveries' and column_name = 'outbox_delivery_id'") == ['t'], 'outbox ID requires persistence-owned default')
+    for column in ('approving_principal_reference', 'approving_organization_reference', 'decision', 'conditions', 'effective_at', 'evidence_reference', 'correlation_id', 'idempotency_key'):
+        require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_human_approvals' and column_name = '{column}'") == ['YES'], f'human approval future field {column} must be optional')
+    for column in ('tenant_id', 'diagnostic_scope_id', 'approved_scope_version', 'approval_role', 'authority_category', 'canonical_scope_digest', 'action_set_version', 'status'):
+        require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_human_approvals' and column_name = '{column}'") == ['NO'], f'human approval authority binding {column} must be required')
     print('avuhz Slice 1 schema assertion: PASS')
 
 if __name__ == '__main__':

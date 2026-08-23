@@ -33,6 +33,19 @@ def rejects_unknown_lifecycle_event_type():
         return True
     return False
 
+def rejects_unknown_idempotency_command_type():
+    dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
+    if not dsn:
+        return True
+    import psycopg
+    from psycopg.errors import CheckViolation
+    try:
+        with psycopg.connect(dsn) as connection:
+            connection.execute("insert into public.avuhz_idempotency_records (id, tenant_id, trusted_principal_id, command_type, subject_type, subject_id, subject_version, idempotency_key, semantic_request_fingerprint, fingerprint_schema_version, processing_status, retention_class, attempt_count) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", ("f5000000-0000-4000-8000-000000000001", "f5000000-0000-4000-8000-000000000002", "schema-assertion-principal", "FutureCommand", "DIAGNOSTIC_SCOPE", "f5000000-0000-4000-8000-000000000003", 1, "schema-assertion-unknown-command", "fpv1:schemaassertionunknowncommand", "v1", "RESERVED", "OPERATIONAL_DEDUPLICATION", 0))
+    except CheckViolation:
+        return True
+    return False
+
 def require(ok, message):
     if not ok: raise AssertionError(message)
 
@@ -64,6 +77,10 @@ def main():
         require(event_type in event_check[0], f'lifecycle event type {event_type} is not allowed')
     require('payment.verified' not in event_check[0], 'lifecycle event type check is not closed')
     require(rejects_unknown_lifecycle_event_type(), 'unsupported lifecycle event type was accepted')
+    idempotency_check = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_idempotency_records'::regclass and conname = 'avuhz_idempotency_records_command_type_check'")
+    require(len(idempotency_check) == 1 and 'RecordHumanApproval' in idempotency_check[0], 'RecordHumanApproval idempotency command type is not allowed')
+    require('FutureCommand' not in idempotency_check[0], 'idempotency command type check is not closed')
+    require(rejects_unknown_idempotency_command_type(), 'unsupported idempotency command type was accepted')
     require(query("select column_default is not null from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_outbox_deliveries' and column_name = 'outbox_delivery_id'") == ['t'], 'outbox ID requires persistence-owned default')
     for column in ('approving_principal_reference', 'approving_organization_reference', 'decision', 'conditions', 'effective_at', 'evidence_reference', 'correlation_id', 'idempotency_key'):
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_human_approvals' and column_name = '{column}'") == ['YES'], f'human approval future field {column} must be optional')

@@ -20,6 +20,9 @@ def main():
     require({'event_id', 'event_type', 'subject_id', 'tenant_id', 'idempotency_key'} <= event.keys(), 'runtime event shape drifted')
     require(set(outbox) == {'event_id', 'status'}, 'runtime outbox intent shape drifted')
     require(event['tenant_id'] == h['tenant_id'], 'outbox tenant must be derivable from event, not fabricated')
+    approval_idempotency = {'command_type': 'RecordHumanApproval', 'tenant_id': h['tenant_id'], 'idempotency_key': 'slice1-runtime-approval-0001', 'semantic_request_fingerprint': 'fpv1:runtimeapprovalfingerprint0001'}
+    require(approval_idempotency['command_type'] == 'RecordHumanApproval', 'approval idempotency vocabulary drifted')
+    require(not ({'payload', 'credentials', 'authorization'} & approval_idempotency.keys()), 'idempotency record must not persist raw command data')
     approval_event = {**event, 'event_type': 'human_approval.recorded', 'subject_id': payloads()['SubmitDiagnosticScope']['proposed_diagnostic_scope_id']}
     require(set(approval_event) == {'event_id', 'event_type', 'subject_id', 'tenant_id', 'idempotency_key'}, 'approval event must use only the current runtime envelope')
     require(approval_event['event_type'] == 'human_approval.recorded', 'approval event vocabulary drifted')

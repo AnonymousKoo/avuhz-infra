@@ -34,6 +34,11 @@ def main():
         require(target in fks or f'public.{target}' in fks, f'{table} lacks FK to {target}')
     checks = query("select conname from pg_constraint where contype = 'c' and conrelid in ('public.avuhz_engagements'::regclass, 'public.avuhz_diagnostic_scopes'::regclass)")
     require(len(checks) >= 3, 'closed vocabulary checks missing')
+    for table, column in (('avuhz_acquisition_handoffs', 'accepted_at'), ('avuhz_diagnostic_scopes', 'canonical_scope_digest'), ('avuhz_outbox_deliveries', 'destination_reference'), ('avuhz_outbox_deliveries', 'delivery_idempotency_key')):
+        require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = '{table}' and column_name = '{column}'") == ['YES'], f'{table}.{column} must represent absent runtime value')
+    for column in ('event_schema_version', 'authoritative_subject_type', 'authoritative_subject_id', 'authoritative_subject_version', 'occurred_at', 'producer_reference', 'correlation_id', 'visibility', 'sanitized_metadata'):
+        require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_lifecycle_events' and column_name = '{column}'") == ['YES'], f'lifecycle event envelope cannot represent {column}')
+    require(query("select column_default is not null from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_outbox_deliveries' and column_name = 'outbox_delivery_id'") == ['t'], 'outbox ID requires persistence-owned default')
     print('avuhz Slice 1 schema assertion: PASS')
 
 if __name__ == '__main__':

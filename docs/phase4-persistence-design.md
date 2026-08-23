@@ -66,6 +66,10 @@ Idempotency uniqueness is `(tenant_id, trusted_principal_id, command_type, subje
 
 For engagements and scopes, durable mutation requires tenant, ID, and expected `record_version` to match in one update. Zero affected rows is stale/conflict. The check and mutation must not be split. Handoffs are immutable/versioned; approvals bind exact subject/version/digest.
 
+## 5.1 Runtime Compatibility Remediation
+
+The forward remediation preserves the approved contracts and runtime shapes: an unaccepted handoff has accepted_at set to NULL; a submitted scope may have no persisted canonical digest because the existing scope record does not emit one; lifecycle-event fields absent from the current minimal event envelope are nullable; and outbox destination and delivery idempotency are nullable until a future delivery worker supplies them. The outbox_delivery_id is persistence-owned with a UUID default. The outbox tenant remains required and is derived from its tenant-aware lifecycle-event relationship. Human approvals continue to bind the exact digest, scope version, and action-set version.
+
 ## 6. Tenant and RLS/access model
 
 Canonical `tenant_id` is the UUID contract primitive. Every Slice 1 table carries it; relationships should use tenant-aware composite constraints where practical. Command repositories always apply tenant filters.

@@ -3,10 +3,11 @@ from dataclasses import dataclass
 from .errors import RuntimeReason
 
 COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","ApproveDiagnosticScope":"scope:approve"}
+HUMAN_AUTHORITY_ROLES=frozenset({"CLIENT_DECISION_AUTHORITY","SEKINFRA_ENGAGEMENT_AUTHORITY"})
 
 @dataclass(frozen=True)
 class TrustedExecutionContext:
-    authenticated: bool; principal_id: str|None; caller_type: str|None; tenant_id: str|None; organization_id: str|None; capabilities: frozenset[str]; authority_roles: frozenset[str]; environment: str|None; audience: str|None; authentication_strength: str|None; step_up_satisfied: bool; authenticated_at: str|None; expires_at: str|None=None
+    authenticated: bool; principal_id: str|None; caller_type: str|None; tenant_id: str|None; organization_id: str|None; capabilities: frozenset[str]; authority_roles: frozenset[str]; environment: str|None; audience: str|None; authentication_strength: str|None; step_up_satisfied: bool; authenticated_at: str|None; expires_at: str|None=None; human_principal_reference: str|None=None; human_organization_reference: str|None=None; human_authority_role: str|None=None
 @dataclass(frozen=True)
 class AuthoritativeSubjectSnapshot:
     subject_type: str; subject_id: str; tenant_id: str; record_version: int; exists: bool; engagement_id: str|None=None; state: str|None=None
@@ -27,6 +28,13 @@ class GuardPipeline:
             if r:return r
         return GuardSuccess(GuardedCommand(p,c.principal_id or "",c.caller_type or "",c.tenant_id or "",c.capabilities,s))
     def fail(self,r,m,n):return GuardFailure(r,m,n)
+    def human_approval_authority(self,c,requested_role):
+        if c.caller_type!="HUMAN":return self.fail(RuntimeReason.AUTH_INVALID,"human caller is required","human_authority")
+        if not c.human_principal_reference:return self.fail(RuntimeReason.AUTH_INVALID,"trusted human principal is required","human_authority")
+        if not c.human_organization_reference:return self.fail(RuntimeReason.AUTH_INVALID,"trusted human organization is required","human_authority")
+        if not c.tenant_id:return self.fail(RuntimeReason.TENANT_CONTEXT_MISSING,"trusted tenant context is required","human_authority")
+        if c.human_authority_role not in HUMAN_AUTHORITY_ROLES:return self.fail(RuntimeReason.AUTH_INVALID,"trusted human authority is invalid","human_authority")
+        if requested_role!=c.human_authority_role:return self.fail(RuntimeReason.AUTH_INVALID,"requested authority does not match trusted authority","human_authority")
     def auth(self,p,c,s,t):
         if not c.authenticated:return self.fail(RuntimeReason.AUTH_MISSING,"trusted authentication is required","authentication")
         if not c.principal_id or not c.caller_type or not c.authenticated_at or c.caller_type!=p.caller_identity_claim.get("caller_type"):return self.fail(RuntimeReason.AUTH_INVALID,"trusted identity context is invalid","authentication")

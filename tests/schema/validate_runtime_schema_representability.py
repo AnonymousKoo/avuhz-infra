@@ -20,6 +20,10 @@ def main():
     require({'event_id', 'event_type', 'subject_id', 'tenant_id', 'idempotency_key'} <= event.keys(), 'runtime event shape drifted')
     require(set(outbox) == {'event_id', 'status'}, 'runtime outbox intent shape drifted')
     require(event['tenant_id'] == h['tenant_id'], 'outbox tenant must be derivable from event, not fabricated')
+    approval_event = {**event, 'event_type': 'human_approval.recorded', 'subject_id': payloads()['SubmitDiagnosticScope']['proposed_diagnostic_scope_id']}
+    require(set(approval_event) == {'event_id', 'event_type', 'subject_id', 'tenant_id', 'idempotency_key'}, 'approval event must use only the current runtime envelope')
+    require(approval_event['event_type'] == 'human_approval.recorded', 'approval event vocabulary drifted')
+    require(not ({'approving_principal_reference', 'approving_organization_reference', 'authority_role'} & approval_event.keys()), 'approval event must not duplicate authoritative attribution')
     scope_id = payloads()['SubmitDiagnosticScope']['proposed_diagnostic_scope_id']
     digest = payloads()['ApproveDiagnosticScope']['scope_content_digest']
     partial_approvals = (

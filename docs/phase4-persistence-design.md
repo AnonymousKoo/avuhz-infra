@@ -70,6 +70,10 @@ For engagements and scopes, durable mutation requires tenant, ID, and expected `
 
 The forward remediation preserves the approved contracts and runtime shapes: an unaccepted handoff has accepted_at set to NULL; a submitted scope may have no persisted canonical digest because the existing scope record does not emit one; lifecycle-event fields absent from the current minimal event envelope are nullable; and outbox destination and delivery idempotency are nullable until a future delivery worker supplies them. The outbox_delivery_id is persistence-owned with a UUID default. The outbox tenant remains required and is derived from its tenant-aware lifecycle-event relationship. Human approvals continue to bind the exact digest, scope version, and action-set version. Current partial runtime approvals retain required tenant, distinct authority category and role, scope/version/digest, and active status; the engagement and action-set values are derived from the bound persisted scope. Principal and organization references, decision, conditions, effective time, evidence, correlation, and idempotency are optional future identity or audit enrichment rather than fabricated values.
 
+## 5.2 Human approval lifecycle event
+
+`human_approval.recorded` is the bounded LifecycleEvent value for one trusted human approval recorded against a `DIAGNOSTIC_SCOPE`. It does not mean that the scope is approved or that both authorities have acted. The authoritative, attributable evidence remains the separate `avuhz_human_approvals` row; the append-only `avuhz_lifecycle_events` row records that the acceptance occurred, and its `PENDING` outbox row is the corresponding delivery intent. The event uses the existing sanitized scope/correlation envelope and carries no duplicate principal, organization, credential, or provider payload data.
+
 ## 6. Tenant and RLS/access model
 
 Canonical `tenant_id` is the UUID contract primitive. Every Slice 1 table carries it; relationships should use tenant-aware composite constraints where practical. Command repositories always apply tenant filters.

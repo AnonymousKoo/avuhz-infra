@@ -8,10 +8,30 @@ VERSIONED = ('avuhz_engagements', 'avuhz_diagnostic_scopes', 'avuhz_idempotency_
 FK_TARGETS = {'avuhz_engagements': 'avuhz_acquisition_handoffs', 'avuhz_diagnostic_scopes': 'avuhz_engagements', 'avuhz_human_approvals': 'avuhz_diagnostic_scopes', 'avuhz_outbox_deliveries': 'avuhz_lifecycle_events'}
 
 def query(sql):
-    command = os.environ.get('SCHEMA_ASSERTION_PSQL')
-    if not command: raise RuntimeError('SCHEMA_ASSERTION_PSQL must name a local PostgreSQL psql command')
-    result = subprocess.run(['bash', '-lc', f'{command} -At -v ON_ERROR_STOP=1 -c "{sql}"'], check=True, capture_output=True, text=True)
+    dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
+    if dsn:
+        import psycopg
+        with psycopg.connect(dsn) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(sql)
+                return ["t" if row[0] is True else "f" if row[0] is False else str(row[0]) for row in cursor.fetchall() if row[0] is not None]
+    command = os.environ.get("SCHEMA_ASSERTION_PSQL")
+    if not command: raise RuntimeError("AVUHZ_POSTGRES_DSN or SCHEMA_ASSERTION_PSQL must name a local PostgreSQL connection")
+    result = subprocess.run(["bash", "-lc", f"{command} -At -v ON_ERROR_STOP=1 -c \"{sql}\""], check=True, capture_output=True, text=True)
     return [line for line in result.stdout.splitlines() if line]
+
+def rejects_unknown_lifecycle_event_type():
+    dsn = os.environ.get("AVUHZ_POSTGRES_DSN")
+    if not dsn:
+        return True
+    import psycopg
+    from psycopg.errors import CheckViolation
+    try:
+        with psycopg.connect(dsn) as connection:
+            connection.execute("insert into public.avuhz_lifecycle_events (lifecycle_event_id, tenant_id, event_type, idempotency_key) values (%s, %s, %s, %s)", ("f4000000-0000-4000-8000-000000000001", "f4000000-0000-4000-8000-000000000002", "payment.verified", "schema-assertion-unknown-event"))
+    except CheckViolation:
+        return True
+    return False
 
 def require(ok, message):
     if not ok: raise AssertionError(message)
@@ -38,6 +58,12 @@ def main():
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = '{table}' and column_name = '{column}'") == ['YES'], f'{table}.{column} must represent absent runtime value')
     for column in ('event_schema_version', 'authoritative_subject_type', 'authoritative_subject_id', 'authoritative_subject_version', 'occurred_at', 'producer_reference', 'correlation_id', 'visibility', 'sanitized_metadata'):
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_lifecycle_events' and column_name = '{column}'") == ['YES'], f'lifecycle event envelope cannot represent {column}')
+    event_check = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_lifecycle_events'::regclass and conname = 'avuhz_lifecycle_events_event_type_check'")
+    require(len(event_check) == 1, 'lifecycle event type check is missing')
+    for event_type in ('engagement.handoff.accepted', 'engagement.opened', 'diagnostic_scope.submitted', 'diagnostic_scope.approved', 'diagnostic_scope.rejected', 'human_approval.recorded'):
+        require(event_type in event_check[0], f'lifecycle event type {event_type} is not allowed')
+    require('payment.verified' not in event_check[0], 'lifecycle event type check is not closed')
+    require(rejects_unknown_lifecycle_event_type(), 'unsupported lifecycle event type was accepted')
     require(query("select column_default is not null from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_outbox_deliveries' and column_name = 'outbox_delivery_id'") == ['t'], 'outbox ID requires persistence-owned default')
     for column in ('approving_principal_reference', 'approving_organization_reference', 'decision', 'conditions', 'effective_at', 'evidence_reference', 'correlation_id', 'idempotency_key'):
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_human_approvals' and column_name = '{column}'") == ['YES'], f'human approval future field {column} must be optional')

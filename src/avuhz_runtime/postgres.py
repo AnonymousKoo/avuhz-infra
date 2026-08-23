@@ -56,9 +56,9 @@ class EngagementPostgresRepository(_TenantRepository):
         self.uow.connection.execute("insert into public.avuhz_engagements (engagement_id,tenant_id,acquisition_handoff_id,acquisition_handoff_version,account_reference,acquisition_opportunity_reference,engagement_type,engagement_state,engagement_version,record_version,opened_at) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", (record["engagement_id"],record["tenant_id"],h["reference_id"],h["reference_version"],_json(record["canonical_account_reference"]),_json(record["acquisition_opportunity_reference"]),record["engagement_type"],record["engagement_state"],record["engagement_version"],record["record_version"],record["opened_at"]))
 
 class DiagnosticScopePostgresRepository(_TenantRepository):
-    table="avuhz_diagnostic_scopes"; identifier="diagnostic_scope_id"; columns="tenant_id,diagnostic_scope_id,engagement_id,scope_version,record_version,status,canonical_scope_digest,action_set_version"
+    table="avuhz_diagnostic_scopes"; identifier="diagnostic_scope_id"; columns="tenant_id,diagnostic_scope_id,engagement_id,scope_version,record_version,status,canonical_scope_digest,action_set_version,target_outcome,in_scope_systems,excluded_systems,permitted_actions,prohibited_actions,assumptions,constraint_references"
     def map_row(self,r):
-        return {"diagnostic_scope_id":str(r["diagnostic_scope_id"]),"engagement_id":str(r["engagement_id"]),"tenant_id":str(r["tenant_id"]),"scope_version":r["scope_version"],"record_version":r["record_version"],"status":r["status"],"canonical_scope_digest":r["canonical_scope_digest"],"action_set_version":r["action_set_version"]}
+        return {"diagnostic_scope_id":str(r["diagnostic_scope_id"]),"engagement_id":str(r["engagement_id"]),"tenant_id":str(r["tenant_id"]),"scope_version":r["scope_version"],"record_version":r["record_version"],"status":r["status"],"canonical_scope_digest":r["canonical_scope_digest"],"action_set_version":r["action_set_version"],"target_outcome":r["target_outcome"],"in_scope_systems":_load(r["in_scope_systems"]),"excluded_systems":_load(r["excluded_systems"]),"permitted_diagnostic_actions":r["permitted_actions"],"prohibited_actions":r["prohibited_actions"],"assumptions":_load(r["assumptions"]),"constraints":_load(r["constraint_references"])}
     def save(self, record):
         self.uow.failpoint("AUTHORITATIVE_WRITE")
         self.uow.connection.execute("insert into public.avuhz_diagnostic_scopes (diagnostic_scope_id,tenant_id,engagement_id,scope_version,record_version,status,canonical_scope_digest,action_set_version,target_outcome,in_scope_systems,excluded_systems,permitted_actions,prohibited_actions,assumptions,constraint_references,effective_at) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,now())", (record["diagnostic_scope_id"],record["tenant_id"],record["engagement_id"],record["scope_version"],record["record_version"],record["status"],record.get("canonical_scope_digest"),record.get("action_set_version",1),record["target_outcome"],_json(record["in_scope_systems"]),_json(record["excluded_systems"]),record["permitted_diagnostic_actions"],record["prohibited_actions"],_json(record["assumptions"]),_json(record["constraints"])))
@@ -66,6 +66,11 @@ class DiagnosticScopePostgresRepository(_TenantRepository):
         self.uow.failpoint("AUTHORITATIVE_WRITE"); expected=record["record_version"]-1
         cur=self.uow.connection.execute("update public.avuhz_diagnostic_scopes set status = 'APPROVED', effective_at = %s, record_version = %s, updated_at = now() where tenant_id = %s and diagnostic_scope_id = %s and record_version = %s", (record["effective_at"],record["record_version"],record["tenant_id"],record["diagnostic_scope_id"],expected))
         if cur.rowcount != 1: raise ValueError("scope concurrency conflict")
+    def set_canonical_scope_digest(self, tenant_id, scope_id, scope_version, expected_record_version, digest):
+        self.uow.failpoint("AUTHORITATIVE_WRITE")
+        cur=self.uow.connection.execute("update public.avuhz_diagnostic_scopes set canonical_scope_digest = %s, record_version = record_version + 1, updated_at = now() where tenant_id = %s and diagnostic_scope_id = %s and scope_version = %s and record_version = %s and canonical_scope_digest is null", (digest,tenant_id,scope_id,scope_version,expected_record_version))
+        if cur.rowcount != 1: raise ValueError("scope canonicalization concurrency conflict")
+        return digest
 
 class HumanApprovalPostgresRepository(_TenantRepository):
     table="avuhz_human_approvals"; identifier="approval_id"; columns="tenant_id,approval_id,authority_category,status,diagnostic_scope_id,approved_scope_version,canonical_scope_digest"

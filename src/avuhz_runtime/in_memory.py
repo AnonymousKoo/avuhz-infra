@@ -48,7 +48,17 @@ class DiagnosticPaymentVerificationMemoryRepository(_TenantRepo):
 
 class AssessmentAccessProposalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"proposals")
-    def save(self,record):self.data[record["assessment_access_proposal_id"]]=record
+    def get(self,tenant_id,assessment_access_proposal_id):
+        record=self.data.get((tenant_id,assessment_access_proposal_id))
+        return copy.deepcopy(record) if record else None
+    def create(self,proposal):
+        tenant_id=proposal["tenant_id"];proposal_id=proposal["assessment_access_proposal_id"];key=(tenant_id,proposal_id);existing=self.data.get(key)
+        if existing:
+            if existing!=proposal:raise ValueError("assessment access proposal identity conflicts")
+            return copy.deepcopy(existing)
+        self.u.failpoint("AUTHORITATIVE_WRITE")
+        self.data[key]=copy.deepcopy(proposal)
+        return copy.deepcopy(proposal)
 
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")

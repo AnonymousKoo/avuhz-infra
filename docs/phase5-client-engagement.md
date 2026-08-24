@@ -33,7 +33,7 @@ Raw credentials are prohibited from commands, business records, events, outbox, 
 
 ## Deferred work
 
-No Phase 5B, 5C, or 5D resource is implemented here. No migration, Postgres repository, remote Supabase operation, provider integration, or runtime command execution is included. The next prerequisite is a narrow `HumanApproval` extension able to attribute approvals for `AssessmentAccessGrant`; no access-grant runtime command can precede it.
+No Phase 5B, 5C, or 5D resource is implemented here. No migration, Postgres repository, remote Supabase operation, provider integration, or runtime command execution is included. The authority-contract prerequisite is complete; future access-grant runtime commands must consume both exact assessment approvals and the complete commercial eligibility chain.
 
 ## Assessment access authority
 
@@ -45,4 +45,14 @@ Future runtime must enforce a maximum TTL of 30 calendar days from successful ve
 
 The grant deliberately holds no credential or credential reference. Credential/access provisioning is a separate future resource. A payment invalidation or invalid/expired/revoked agreement makes an otherwise ACTIVE grant unusable and requires termination through future runtime workflow.
 
-The current `HumanApproval` contract is exclusively bound to `DIAGNOSTIC_SCOPE`; therefore `ASSESSMENT_ACCESS_HUMAN_APPROVAL_EXTENSION_REQUIRED = YES`. That extension is the next prerequisite before Phase 5A access-grant activation command contracts. Future runtime tests must enforce: tenant and engagement equality across grant/scope/agreement/payment; approved scope status; exact digest and action-set binding; payment `VERIFIED`; agreement validity; in-scope targets; action subset; verification-before-active; 30-day TTL; terminal-state denial; and no authority-tier widening.
+Before this batch, `HumanApproval` was exclusively bound to `DIAGNOSTIC_SCOPE`; the assessment-access branch below resolves that contract prerequisite without changing the existing Phase 4 command. Future runtime tests must enforce: tenant and engagement equality across grant/scope/agreement/payment; approved scope status; exact digest and action-set binding; payment `VERIFIED`; agreement validity; in-scope targets; action subset; verification-before-active; 30-day TTL; terminal-state denial; and no authority-tier widening.
+
+## Assessment access human approval
+
+`HumanApproval` now has two closed, mutually exclusive subject families: `DIAGNOSTIC_SCOPE` and `ASSESSMENT_ACCESS_GRANT`. The DiagnosticScope branch preserves its exact scope/version/digest/action-set binding unchanged. The assessment branch binds the exact grant ID and its `assessment_access_authority_digest`; neither branch may carry the other branch's binding fields.
+
+The digest is server-derived from canonical compact UTF-8 JSON and SHA-256 over the immutable authority projection: grant, tenant, engagement, exact scope/version/digest/action-set binding, exact agreement and payment references, target system references, and permitted actions. Object keys are sorted; target and action collections are sorted semantic sets and duplicates are rejected. The digest excludes status, verification, activation, expiry, revocation, closure, and record version, as well as credentials, secrets, and provider payloads. An immutable-authority change produces a new digest and requires new exact CLIENT and SEKINFRA approval; lifecycle transition alone does not.
+
+Assessment authority requires separate active `CLIENT_DECISION_AUTHORITY` and `SEKINFRA_ENGAGEMENT_AUTHORITY` approvals for the same tenant, grant, and authority digest. Future persistence/runtime must reject a duplicate active approval for that binding and role. Human approval never overrides commercial validity: invalidated payment or invalid agreement prevents authorization/use through separate cross-resource checks.
+
+The existing `RecordHumanApproval` command remains DiagnosticScope-only. The recommended next command contract is a new narrow `RecordAssessmentAccessApproval`, preserving the frozen Phase 4 scope command, trusted execution-context attribution, and workload-forgery protections. No credential provisioning is implied.

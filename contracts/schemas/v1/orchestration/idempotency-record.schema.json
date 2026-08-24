@@ -10,7 +10,7 @@
     "id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"},
     "tenant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
     "caller_reference": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-    "command_type": {"type": "string", "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "CreateAssessmentAccessProposal"]},
+    "command_type": {"type": "string", "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "CreateAssessmentAccessProposal", "RecordAssessmentAccessApproval"]},
     "subject_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
     "idempotency_key": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"},
     "semantic_request_fingerprint": {"description": "Opaque trusted-service fingerprint representation; no public hashing algorithm or raw request semantics are exposed.", "type": "string", "minLength": 20, "maxLength": 220, "pattern": "^fpv[1-9][0-9]*:[A-Za-z0-9._-]{16,200}$"},

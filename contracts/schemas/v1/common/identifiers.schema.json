@@ -48,6 +48,11 @@
       "description": "Canonical identity for one attributable human approval record.",
       "$ref": "#/$defs/canonicalUuid"
     },
+    "diagnosticAgreementAuthorityId": {
+      "title": "Diagnostic Agreement Authority ID",
+      "description": "Canonical identity for one verified diagnostic/OIA agreement-authority record.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
     "scopeId": {
       "title": "Diagnostic Scope ID",
       "description": "Canonical identity for a diagnostic scope aggregate.",

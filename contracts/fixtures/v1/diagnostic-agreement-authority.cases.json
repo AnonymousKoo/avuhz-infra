@@ -1,0 +1,18 @@
+{
+  "fixture_set": "diagnostic-agreement-authority.v1", "fictional_only": true,
+  "positive": [{"name": "verified active diagnostic agreement authority", "value": {"diagnostic_agreement_authority_id": "a5000000-0000-4000-8000-000000000001", "tenant_id": "a5000000-0000-4000-8000-000000000002", "engagement_id": "a5000000-0000-4000-8000-000000000003", "agreement_type": "DIAGNOSTIC_OIA", "agreement_reference": "agreement.test-0001", "status": "VERIFIED_ACTIVE", "scope_reference": {"reference_type": "DIAGNOSTIC_SCOPE", "reference_id": "a5000000-0000-4000-8000-000000000004", "reference_version": 3}, "canonical_scope_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "effective_at": "2030-01-15T15:00:00Z", "ends_at": "2030-02-15T15:00:00Z", "verified_at": "2030-01-15T15:05:00Z", "recorded_at": "2030-01-15T15:06:00Z", "record_version": 1}}],
+  "negative": [
+    {"name": "unknown agreement type", "mutate": {"agreement_type": "ONGOING_SERVICE"}},
+    {"name": "unknown status", "mutate": {"status": "PENDING"}},
+    {"name": "missing scope digest", "remove": "canonical_scope_digest"},
+    {"name": "wrong scope reference type", "mutate": {"scope_reference.reference_type": "ENGAGEMENT"}},
+    {"name": "malformed scope digest", "mutate": {"canonical_scope_digest": "sha256:not-a-canonical-digest"}},
+    {"name": "zero record version", "mutate": {"record_version": 0}},
+    {"name": "credential-shaped field", "mutate": {"authorization": "short"}},
+    {"name": "embedded contract", "mutate": {"contract_document": {}}},
+    {"name": "ends before effective", "mutate": {"ends_at": "2030-01-15T14:59:00Z"}, "semantic_failure": true},
+    {"name": "verified before effective", "mutate": {"verified_at": "2030-01-15T14:59:00Z"}, "semantic_failure": true},
+    {"name": "recorded before verification", "mutate": {"recorded_at": "2030-01-15T15:04:00Z"}, "semantic_failure": true},
+    {"name": "self supersession", "mutate": {"supersedes_reference": {"reference_type": "DIAGNOSTIC_AGREEMENT_AUTHORITY", "reference_id": "a5000000-0000-4000-8000-000000000001", "reference_version": 1}}, "semantic_failure": true}
+  ]
+}

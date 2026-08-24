@@ -33,8 +33,8 @@ EXPECTED_REASONS = [
 ]
 EXPECTED_RESULTS = ["ACCEPTED", "REJECTED", "CONFLICT", "DUPLICATE", "NOT_AUTHORIZED", "INVALID_STATE", "VALIDATION_FAILED", "SECURITY_BLOCKED"]
 EXPECTED_RETRYABILITY = ["NOT_RETRYABLE", "RETRY_SAME_KEY", "RETRY_NEW_ATTEMPT", "HUMAN_REVIEW"]
-EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"]
-EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE"]
+EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal"]
+EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL"]
 
 
 def load(path):
@@ -145,6 +145,8 @@ def main():
         "RecordHumanApproval": "DIAGNOSTIC_SCOPE",
         "ApproveDiagnosticScope": "DIAGNOSTIC_SCOPE",
         "CanonicalizeDiagnosticScope": "DIAGNOSTIC_SCOPE",
+        "RecordAssessmentAccessApproval": "ASSESSMENT_ACCESS_PROPOSAL",
+        "CreateAssessmentAccessProposal": "ASSESSMENT_ACCESS_PROPOSAL",
     }
     bindings = schemas[ENVELOPE_ID]["$defs"]["envelopeCore"]["allOf"]
     for binding in bindings:

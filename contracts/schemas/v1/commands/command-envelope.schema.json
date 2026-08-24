@@ -40,11 +40,12 @@
         {"if": {"properties": {"command_type": {"const": "RecordHumanApproval"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
         {"if": {"properties": {"command_type": {"const": "ApproveDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
         {"if": {"properties": {"command_type": {"const": "CanonicalizeDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordAssessmentAccessApproval"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}}
+        {"if": {"properties": {"command_type": {"const": "RecordAssessmentAccessApproval"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}},
+        {"if": {"properties": {"command_type": {"const": "CreateAssessmentAccessProposal"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}}
       ]
     },
-    "commandType": {"type": "string", "minLength": 14, "maxLength": 27, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval"]},
-    "subjectType": {"type": "string", "minLength": 10, "maxLength": 19, "enum": ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL"]},
+    "commandType": {"type": "string", "minLength": 14, "maxLength": 30, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal"]},
+    "subjectType": {"type": "string", "minLength": 10, "maxLength": 26, "enum": ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL"]},
     "schemaVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
     "positiveRecordVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647}
   }

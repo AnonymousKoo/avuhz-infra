@@ -49,7 +49,7 @@ def main():
     # Happy path structural evidence and executable command composition.
     h=handoff();h.update(handoff_id=IDS["handoff"],tenant_id=IDS["tenant"])
     if not valid("urn:avuhz:schema:contracts:domain:acquisition-handoff:v1",h,ss):fail("handoff invalid")
-    mapping={"AcceptAcquisitionHandoff":"ACQUISITION_HANDOFF","OpenEngagement":"ENGAGEMENT","SubmitDiagnosticScope":"ENGAGEMENT","RecordHumanApproval":"DIAGNOSTIC_SCOPE","ApproveDiagnosticScope":"DIAGNOSTIC_SCOPE","CanonicalizeDiagnosticScope":"DIAGNOSTIC_SCOPE"}
+    mapping={"AcceptAcquisitionHandoff":"ACQUISITION_HANDOFF","OpenEngagement":"ENGAGEMENT","SubmitDiagnosticScope":"ENGAGEMENT","RecordHumanApproval":"DIAGNOSTIC_SCOPE","ApproveDiagnosticScope":"DIAGNOSTIC_SCOPE","CanonicalizeDiagnosticScope":"DIAGNOSTIC_SCOPE","CreateAssessmentAccessProposal":"ASSESSMENT_ACCESS_PROPOSAL"}
     if SUBJECTS!=mapping:fail("command subject mapping drift")
     for command in mapping:
         if not executable(command,envelope(command,payloads()[command]),ss):fail(f"composed command invalid: {command}")

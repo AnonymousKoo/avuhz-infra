@@ -7,7 +7,8 @@
     "submit diagnostic scope",
     "record human approval",
     "approve diagnostic scope",
-    "canonicalize diagnostic scope"
+    "canonicalize diagnostic scope",
+    "create assessment access proposal"
   ],
   "negative": [
     "accept wrong subject",
@@ -64,6 +65,23 @@
     "record approval supplied human principal",
     "record approval supplied organization",
     "record approval supplied credentials",
-    "record approval missing expected version"
+    "record approval missing expected version",
+    "proposal missing proposal ID",
+    "proposal missing engagement ID",
+    "proposal missing scope ID",
+    "proposal missing scope version",
+    "proposal missing agreement reference",
+    "proposal missing payment reference",
+    "proposal empty targets",
+    "proposal duplicate targets",
+    "proposal empty actions",
+    "proposal duplicate actions",
+    "proposal prohibited action",
+    "proposal supplied authority digest",
+    "proposal supplied canonical scope digest",
+    "proposal supplied tenant ID",
+    "proposal credential-like field",
+    "proposal metadata",
+    "proposal arbitrary extra property"
   ]
 }

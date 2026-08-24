@@ -18,7 +18,7 @@ class CommandValidationTests(unittest.TestCase):
         self.assertNotIsInstance(result, ValidationSuccess)
         if reason: self.assertEqual(result.reason, reason)
     def test_all_five_commands_prepare(self):
-        for command in ("AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"):
+        for command in ("AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "CreateAssessmentAccessProposal"):
             result=self.validator.prepare(self.request(command)); self.assertIsInstance(result, ValidationSuccess)
             self.assertEqual(result.prepared.command_type, command)
             self.assertFalse(hasattr(result.prepared, "authenticated_identity"))
@@ -41,6 +41,7 @@ class CommandValidationTests(unittest.TestCase):
         self.reject("CanonicalizeDiagnosticScope", lambda x:x.pop("expected_record_version"), RuntimeReason.VERSION_REQUIRED)
         self.reject("CanonicalizeDiagnosticScope", lambda x:x["payload"].update(diagnostic_scope_id="a3000000-0000-4000-8000-000000000099"), RuntimeReason.PAYLOAD_INVALID)
         self.reject("OpenEngagement", lambda x:x.update(extra="field"), RuntimeReason.FIELD_FORBIDDEN)
+        self.reject("CreateAssessmentAccessProposal", lambda x:x["payload"].update(assessment_access_authority_digest="sha256:"+"a"*64), RuntimeReason.FIELD_FORBIDDEN)
         self.reject("OpenEngagement", lambda x:x.update(subject_type="FUTURE_SUBJECT"))
         self.reject("OpenEngagement", lambda x:x.update(subject_id="not-a-uuid"))
         self.reject("OpenEngagement", lambda x:x.update(requested_at="2030-01-15T15:00:00+01:00"))

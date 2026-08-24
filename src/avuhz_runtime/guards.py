@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from .errors import RuntimeReason
 
-COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","RecordHumanApproval":"scope:approve","RecordAssessmentAccessApproval":"assessment_access:approve","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit"}
+COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","RecordHumanApproval":"scope:approve","RecordAssessmentAccessApproval":"assessment_access:approve","CreateAssessmentAccessProposal":"assessment_access:propose","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit"}
 HUMAN_AUTHORITY_ROLES=frozenset({"CLIENT_DECISION_AUTHORITY","SEKINFRA_ENGAGEMENT_AUTHORITY"})
 
 @dataclass(frozen=True)

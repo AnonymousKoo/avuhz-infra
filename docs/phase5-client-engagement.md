@@ -69,6 +69,12 @@ The existing `RecordHumanApproval` command remains DiagnosticScope-only. The rec
 
 
 AssessmentAccessProposal is now the authoritative proposal source. Its content digest excludes proposal and grant identity; AssessmentAccessGrant retains a required versioned source-proposal reference. Future runtime must require OPEN proposal, tenant-scoped read, exact dual approvals, and equality of proposal/grant immutable authority and digest. Historical non-OPEN proposals remain readable.
+## Dual approval grant prerequisite
+
+`evaluate_assessment_access_dual_approval` is a provider-neutral, read-only predicate over the authoritative tenant-scoped proposal and HumanApproval records. It is satisfied only when the proposal is `OPEN` and it has one attributable ACTIVE CLIENT approval and one attributable ACTIVE SEKINFRA approval bound to that same proposal ID and server-derived authority digest. It creates no finalization state, event, outbox record, or grant.
+
+Future `IssueAssessmentAccessGrant` must require: OPEN proposal, this predicate satisfied, current `evaluate_assessment_eligibility(...).eligible`, and exact proposal/grant immutable-authority equality. Only successful future grant issuance may consume the proposal (`OPEN` to `CONSUMED`).
+
 
 
 Commercial eligibility is now evaluated in memory from authoritative Engagement, approved canonical scope, valid DiagnosticAgreementAuthority, and VERIFIED DiagnosticPaymentVerification. Future trusted ingress commands are `RecordDiagnosticAgreementAuthority` and `RecordDiagnosticPaymentVerification`; neither may accept untrusted browser, n8n, or caller authority claims.

@@ -78,6 +78,8 @@ class HumanApprovalMemoryRepository(_TenantRepo):
         self.data[record["approval_id"]]=record
     def find_active_assessment_access_binding(self,tenant_id,proposal_id,digest,authority_role):
         return next((copy.deepcopy(approval) for approval in self.data.values() if approval.get("tenant_id")==tenant_id and approval.get("subject_type")=="ASSESSMENT_ACCESS_PROPOSAL" and approval.get("subject_id")==proposal_id and approval.get("assessment_access",{}).get("assessment_access_authority_digest")==digest and approval.get("actor_role")==authority_role and approval.get("status")=="ACTIVE"),None)
+    def list_active_assessment_access_bindings(self,tenant_id,proposal_id,digest,authority_role):
+        return tuple(copy.deepcopy(approval) for approval in self.data.values() if approval.get("tenant_id")==tenant_id and approval.get("subject_type")=="ASSESSMENT_ACCESS_PROPOSAL" and approval.get("subject_id")==proposal_id and approval.get("assessment_access",{}).get("assessment_access_authority_digest")==digest and approval.get("actor_role")==authority_role and approval.get("status")=="ACTIVE")
     def record_assessment_access(self,record):
         binding=record["assessment_access"]
         if self.find_active_assessment_access_binding(record["tenant_id"],record["subject_id"],binding["assessment_access_authority_digest"],record["actor_role"]):raise ValueError("duplicate active assessment access authority")

@@ -6,6 +6,7 @@ from .guards import AuthoritativeSubjectSnapshot
 from .models import ValidationFailure
 from .canonical_scope import compute_canonical_scope_digest
 from .assessment_access_proposal import CreateAssessmentAccessProposalHandler
+from .issue_assessment_access_grant import IssueAssessmentAccessGrantHandler
 from .assessment_access_approval import RecordAssessmentAccessApprovalHandler
 
 class CanonicalScopeDigestConflict(ValueError): pass
@@ -20,6 +21,8 @@ def fingerprint(command):
         value["payload"]=payload
     if command.get("command_type")=="RecordAssessmentAccessApproval":
         value={"command_type":command["command_type"],"payload":{"assessment_access_proposal_id":command["payload"]["assessment_access_proposal_id"],"authority_role":command["payload"]["authority_role"]}}
+    if command.get("command_type")=="IssueAssessmentAccessGrant":
+        value={"command_type":command["command_type"],"payload":{"assessment_access_grant_id":command["payload"]["assessment_access_grant_id"],"assessment_access_proposal_id":command["payload"]["assessment_access_proposal_id"]}}
     return "fpv1:"+hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=True).encode()).hexdigest()
 @dataclass
 class MemoryStore:
@@ -161,6 +164,8 @@ class Executor:
             e=u.engagements.get(p.tenant_id,p.subject_id);sid=payload["proposed_diagnostic_scope_id"]
             if not e or e["engagement_state"] not in ("OPEN","ONBOARDING") or u.diagnostic_scopes.get(p.tenant_id,sid):raise ValueError()
             u.diagnostic_scopes.save({"diagnostic_scope_id":sid,"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"scope_version":payload["scope_version"],"record_version":1,"status":"REVIEW_PENDING","action_set_version":1,**payload})
+        elif p.command_type=="IssueAssessmentAccessGrant":
+            IssueAssessmentAccessGrantHandler(u).issue(raw_context,payload,now)
         elif p.command_type=="CreateAssessmentAccessProposal":
             CreateAssessmentAccessProposalHandler(u).create(raw_context,payload,now)
         elif p.command_type=="CanonicalizeDiagnosticScope":
@@ -185,9 +190,11 @@ class Executor:
             if payload["scope_content_digest"]!=s["canonical_scope_digest"]:raise ValueError()
             s.update(client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1);u.diagnostic_scopes.mark_approved(s)
     def _event(self,p):
-        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded"}[p.command_type]
+        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued"}[p.command_type]
         if p.command_type=="CreateAssessmentAccessProposal":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_PROPOSAL","reference_id":p.subject_id},"authoritative_subject_version":1,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_proposal_id":p.subject_id}}
+        if p.command_type=="IssueAssessmentAccessGrant":
+            return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_GRANT","reference_id":p.subject_id},"authoritative_subject_version":1,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_grant_id":p.subject_id,"assessment_access_proposal_id":p.payload["assessment_access_proposal_id"]}}
         if p.command_type=="RecordAssessmentAccessApproval":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_PROPOSAL","reference_id":p.subject_id},"authoritative_subject_version":p.expected_record_version,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_proposal_id":p.subject_id,"authority_role":p.payload["authority_role"],"approval_id":p.command_id}}
         return {"event_id":self.ids(),"event_type":typ,"subject_id":p.subject_id,"tenant_id":p.tenant_id,"idempotency_key":p.idempotency_key}

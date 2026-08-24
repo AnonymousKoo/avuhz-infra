@@ -22,7 +22,7 @@ COMMANDS = {
     "RecordHumanApproval": CommandDefinition("RecordHumanApproval", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:record-human-approval-payload:v1", 1),
     "RecordAssessmentAccessApproval": CommandDefinition("RecordAssessmentAccessApproval", "ASSESSMENT_ACCESS_PROPOSAL", 1, "urn:avuhz:schema:contracts:commands:record-assessment-access-approval-payload:v1", 1, required_capability="assessment_access:approve", executable=True),
     "CreateAssessmentAccessProposal": CommandDefinition("CreateAssessmentAccessProposal", "ASSESSMENT_ACCESS_PROPOSAL", 1, "urn:avuhz:schema:contracts:commands:create-assessment-access-proposal-payload:v1", 1, required_capability="assessment_access:propose", executable=True),
-    "IssueAssessmentAccessGrant": CommandDefinition("IssueAssessmentAccessGrant", "ASSESSMENT_ACCESS_GRANT", 1, "urn:avuhz:schema:contracts:commands:issue-assessment-access-grant-payload:v1", 1, required_capability="assessment_access:issue"),
+    "IssueAssessmentAccessGrant": CommandDefinition("IssueAssessmentAccessGrant", "ASSESSMENT_ACCESS_GRANT", 1, "urn:avuhz:schema:contracts:commands:issue-assessment-access-grant-payload:v1", 1, required_capability="assessment_access:issue", executable=True),
     "ApproveDiagnosticScope": CommandDefinition("ApproveDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:approve-diagnostic-scope-payload:v1", 1),
     "CanonicalizeDiagnosticScope": CommandDefinition("CanonicalizeDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:canonicalize-diagnostic-scope-payload:v1", 1),
 }

@@ -27,7 +27,7 @@ class IssueAssessmentAccessGrantTests(unittest.TestCase):
         return flow, uow, IssueAssessmentAccessGrantHandler(uow)
 
     def context(self, tenant=None):
-        return TrustedExecutionContext(True, "issuer", "WORKLOAD", tenant or self.tenant, None, frozenset({"assessment_access:issue"}), frozenset(), "TEST", "avuhz-command-api", "STRONG", False, "2030-01-15T15:00:00Z")
+        return TrustedExecutionContext(True, "issuer", "INTERNAL_SERVICE", tenant or self.tenant, None, frozenset({"assessment_access:issue"}), frozenset(), "TEST", "avuhz-command-api", "STRONG", False, "2030-01-15T15:00:00Z")
 
     def payload(self, grant_id=None):
         return {"assessment_access_grant_id": grant_id or self.grant_id, "assessment_access_proposal_id": self.proposal_id}
@@ -58,3 +58,17 @@ class IssueAssessmentAccessGrantTests(unittest.TestCase):
         self.assertEqual(len(uow.working.grants), 1)
         _, other_uow, other_handler = self.setup_flow()
         with self.assertRaises(AssessmentAccessGrantRejected): other_handler.issue(self.context("a3000000-0000-4000-8000-000000000099"), self.payload(), "2030-01-15T15:00:00Z")
+
+    def test_executor_issues_once_and_replays_without_duplicates(self):
+        helper = AssessmentApprovalExecutorTests(); flow = helper.established()
+        self.assertEqual(flow.x.execute(helper.raw(flow), helper.human())["result"], "ACCEPTED")
+        self.assertEqual(flow.x.execute(helper.raw(flow, "assessment-approval-key-0002", "SEKINFRA_ENGAGEMENT_AUTHORITY", "b9000000-0000-4000-8000-000000000101"), helper.human("SEKINFRA_ENGAGEMENT_AUTHORITY", principal="human:sekinfra", organization="org:sekinfra"))["result"], "ACCEPTED")
+        raw = flow.raw("RecordHumanApproval", "grant-executor-key-0001", "b9000000-0000-4000-8000-000000000120")
+        raw.update(command_type="IssueAssessmentAccessGrant", subject_type="ASSESSMENT_ACCESS_GRANT", subject_id=self.grant_id, payload_schema="urn:avuhz:schema:contracts:commands:issue-assessment-access-grant-payload:v1", payload=self.payload())
+        raw["caller_type"] = "INTERNAL_SERVICE"; raw["caller_identity"].update(caller_type="INTERNAL_SERVICE", capabilities=["assessment_access:issue"])
+        self.assertEqual(flow.x.execute(raw, self.context())["result"], "ACCEPTED")
+        self.assertEqual(flow.x.execute(raw, self.context())["result"], "DUPLICATE")
+        self.assertEqual(flow.s.grants[(self.tenant, self.grant_id)]["status"], "APPROVED")
+        self.assertEqual(flow.s.proposals[(self.tenant, self.proposal_id)]["status"], "CONSUMED")
+        self.assertEqual(flow.s.events[-1]["event_type"], "assessment_access.grant_issued")
+        self.assertEqual(flow.s.outbox[-1]["status"], "PENDING")

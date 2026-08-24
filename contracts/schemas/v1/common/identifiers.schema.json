@@ -48,6 +48,11 @@
       "description": "Canonical identity for one attributable human approval record.",
       "$ref": "#/$defs/canonicalUuid"
     },
+    "assessmentAccessGrantId": {
+      "title": "Assessment Access Grant ID",
+      "description": "Canonical identity for one temporary diagnostic assessment access authority record.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
     "diagnosticPaymentVerificationId": {
       "title": "Diagnostic Payment Verification ID",
       "description": "Canonical identity for one diagnostic/OIA payment verification record.",

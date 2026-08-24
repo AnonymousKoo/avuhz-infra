@@ -33,4 +33,16 @@ Raw credentials are prohibited from commands, business records, events, outbox, 
 
 ## Deferred work
 
-No Phase 5B, 5C, or 5D resource is implemented here. No migration, Postgres repository, remote Supabase operation, provider integration, or runtime command execution is included. The next batch is exactly the `AssessmentAccessGrant` contract, bound to the now-explicit scope, agreement, and payment eligibility chain.
+No Phase 5B, 5C, or 5D resource is implemented here. No migration, Postgres repository, remote Supabase operation, provider integration, or runtime command execution is included. The next prerequisite is a narrow `HumanApproval` extension able to attribute approvals for `AssessmentAccessGrant`; no access-grant runtime command can precede it.
+
+## Assessment access authority
+
+`AssessmentAccessGrant` is the separate, authoritative, temporary diagnostic-only authority. Scope approval, agreement authority, and payment verification never equal access. The grant binds one tenant and engagement, exact versioned DiagnosticScope reference, canonical scope digest, action-set version, exact DiagnosticAgreementAuthority reference, and exact DiagnosticPaymentVerification reference. It binds one or more opaque in-scope system references and only the frozen permitted diagnostic actions; future runtime must prove targets are in scope and actions are a subset of that exact approved scope.
+
+Its complete closed state model is `APPROVED`, `ACTIVE`, `EXPIRED`, `REVOKED`, and `CLOSED`. `APPROVED` exists but is not usable access. `ACTIVE` requires successful `verified_at`, with `active_from` equal to that verification time. `EXPIRED` retains verified access history after its usable period ends. `REVOKED` requires `revoked_at`. `CLOSED` requires `closed_at` and exactly one closed reason: `FINDINGS_DELIVERED`, `ASSESSMENT_CLOSED`, or `AGREEMENT_ENDED`.
+
+Future runtime must enforce a maximum TTL of 30 calendar days from successful verification, with no grace period or silent extension. The earliest of findings delivery, assessment closure, agreement end, explicit revocation, or expiry terminates authority. Extension requires separate future client and Sekinfra authorization. Assessment access cannot become ongoing, implementation, deployment, or managed-operations access.
+
+The grant deliberately holds no credential or credential reference. Credential/access provisioning is a separate future resource. A payment invalidation or invalid/expired/revoked agreement makes an otherwise ACTIVE grant unusable and requires termination through future runtime workflow.
+
+The current `HumanApproval` contract is exclusively bound to `DIAGNOSTIC_SCOPE`; therefore `ASSESSMENT_ACCESS_HUMAN_APPROVAL_EXTENSION_REQUIRED = YES`. That extension is the next prerequisite before Phase 5A access-grant activation command contracts. Future runtime tests must enforce: tenant and engagement equality across grant/scope/agreement/payment; approved scope status; exact digest and action-set binding; payment `VERIFIED`; agreement validity; in-scope targets; action subset; verification-before-active; 30-day TTL; terminal-state denial; and no authority-tier widening.

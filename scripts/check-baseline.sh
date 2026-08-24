@@ -12,6 +12,7 @@ printf 'check: JSON Schema and fixtures\n'
 python3 tests/contracts/validate_identifiers.py
 python3 tests/contracts/validate_diagnostic_agreement_authority.py
 python3 tests/contracts/validate_diagnostic_payment_verification.py
+python3 tests/contracts/validate_assessment_access_grant.py
 
 printf 'check: forbidden paths\n'
 tracked_candidates="$(mktemp)"

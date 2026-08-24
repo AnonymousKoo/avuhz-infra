@@ -114,7 +114,7 @@ def idempotency_semantics(value):
 def event_semantics(value):
     event_type = value["event_type"]
     metadata = value["sanitized_metadata"]
-    expected = "handoff_version" if event_type == "engagement.handoff.accepted" else "engagement_version" if event_type == "engagement.opened" else "scope_version"
+    expected = "handoff_version" if event_type == "engagement.handoff.accepted" else "engagement_version" if event_type == "engagement.opened" else "assessment_access_proposal_id" if event_type == "assessment_access.proposal_created" else "scope_version"
     return set(metadata) == ({"engagement_state", "engagement_version"} if expected == "engagement_version" else {expected})
 
 
@@ -145,9 +145,9 @@ def main():
                 fail(f"unresolved reference: {reference}")
     if schemas[IDS["receipt"]]["properties"]["source_type"]["enum"] != ["ACQUISITION_SYSTEM", "PROVIDER", "INTERNAL_SERVICE"]:
         fail("receipt source vocabulary drifted")
-    if schemas[IDS["idempotency"]]["properties"]["command_type"]["enum"] != ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope"]:
+    if schemas[IDS["idempotency"]]["properties"]["command_type"]["enum"] != ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "CreateAssessmentAccessProposal"]:
         fail("idempotency command vocabulary drifted")
-    if schemas[IDS["event"]]["properties"]["event_type"]["enum"] != ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized"]:
+    if schemas[IDS["event"]]["properties"]["event_type"]["enum"] != ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized", "assessment_access.proposal_created"]:
         fail("event vocabulary drifted")
     for schema_id in IDS.values():
         if "metadata" in schemas[schema_id]["properties"]:

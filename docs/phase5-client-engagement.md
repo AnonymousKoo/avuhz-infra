@@ -56,3 +56,9 @@ The digest is server-derived from canonical compact UTF-8 JSON and SHA-256 over 
 Assessment authority requires separate active `CLIENT_DECISION_AUTHORITY` and `SEKINFRA_ENGAGEMENT_AUTHORITY` approvals for the same tenant, grant, and authority digest. Future persistence/runtime must reject a duplicate active approval for that binding and role. Human approval never overrides commercial validity: invalidated payment or invalid agreement prevents authorization/use through separate cross-resource checks.
 
 The existing `RecordHumanApproval` command remains DiagnosticScope-only. The recommended next command contract is a new narrow `RecordAssessmentAccessApproval`, preserving the frozen Phase 4 scope command, trusted execution-context attribution, and workload-forgery protections. No credential provisioning is implied.
+
+## Assessment approval command contract
+
+`RecordAssessmentAccessApproval` is a new non-executable command contract for one trusted human approval of an `ASSESSMENT_ACCESS_GRANT`. It requires `assessment_access:approve`, a HUMAN trusted context, and exact trusted-role matching; workloads fail even with that capability. Its only payload fields are grant ID and authority role. The digest and all authority content, identity, organization, tenant authority, and capabilities are rejected from payload and must be resolved server-side. Two independent commands are required. Future event: `assessment_access.approval_recorded`.
+
+`RecordHumanApproval` remains DiagnosticScope-only. The current authoritative AssessmentAccessGrant begins at `APPROVED`, so a truthful pre-approval proposed-authority source is not yet modeled: `ASSESSMENT_ACCESS_APPROVAL_SOURCE_READY = NO`. The next batch must define the narrow immutable proposed-authority resource/state and its read path before handler/persistence work. Idempotency needs a future database CHECK vocabulary extension; none is made here.

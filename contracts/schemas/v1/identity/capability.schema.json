@@ -13,6 +13,7 @@
     "scope:read",
     "scope:submit",
     "scope:approve",
+    "assessment_access:approve",
     "approval:create",
     "inbound_event:record",
     "event:publish_internal"

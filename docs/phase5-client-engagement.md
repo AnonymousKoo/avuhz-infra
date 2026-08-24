@@ -15,7 +15,9 @@ Phase 5 turns an approved diagnostic scope into a governed client engagement wit
 
 `DiagnosticAgreementAuthority` is the first Phase 5 resource. It is the authoritative record that the diagnostic/OIA agreement has been verified. It has a tenant and engagement binding, a closed `DIAGNOSTIC_OIA` agreement type, opaque agreement reference, closed authority status, exact versioned DiagnosticScope reference and canonical scope digest, effective/end times, verified/recorded times, and record version. It deliberately does not contain a contract PDF, signature, provider payload, payment fact, credential, ongoing Agreement #2, or production-change authority.
 
-Diagnostic payment verification is not yet implemented. It remains a separate future authoritative resource for the payment required for the diagnostic/OIA, with provider-neutral opaque reference and verified status. Legal authority and payment satisfaction must never share an ambiguous status.
+`DiagnosticPaymentVerification` is now the separate authoritative payment fact. It is tenant- and engagement-scoped and binds one exact versioned `DiagnosticAgreementAuthority`; it therefore cannot be reused across tenants, engagements, or unrelated agreements. Its closed purpose is `DIAGNOSTIC_OIA`, and its provider-neutral opaque reference identifies only the externally observed payment fact.
+
+Its minimal lifecycle is `VERIFIED` or `INVALIDATED`. `INVALIDATED` requires an invalidation timestamp and retains historical evidence; it no longer satisfies the commercial gate. The contract records a required positive `amount_minor` integer and uppercase three-letter currency code. This captures the verified payment amount without inventing an agreement-derived expected amount; future commercial logic must establish any matching requirement. No floats, payment instruments, billing PII, provider payload, checkout data, webhook data, or secrets are permitted. A future adapter may translate provider callbacks into this authoritative result without retaining raw callback JSON.
 
 ## Assessment eligibility and access boundary
 
@@ -31,4 +33,4 @@ Raw credentials are prohibited from commands, business records, events, outbox, 
 
 ## Deferred work
 
-No Phase 5B, 5C, or 5D resource is implemented here. No migration, Postgres repository, remote Supabase operation, provider integration, or runtime command execution is included. The next batch is exactly the separate `DiagnosticPaymentVerification` resource contract.
+No Phase 5B, 5C, or 5D resource is implemented here. No migration, Postgres repository, remote Supabase operation, provider integration, or runtime command execution is included. The next batch is exactly the `AssessmentAccessGrant` contract, bound to the now-explicit scope, agreement, and payment eligibility chain.

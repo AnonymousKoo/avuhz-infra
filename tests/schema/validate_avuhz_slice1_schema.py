@@ -100,6 +100,9 @@ def main():
         require(query(f"select rowsecurity::text from pg_tables where schemaname = 'public' and tablename = '{table}'") == ['true'], f'{table} RLS disabled')
         require(not query(f"select policyname from pg_policies where schemaname = 'public' and tablename = '{table}' and (qual = 'true' or with_check = 'true')"), f'{table} has broad direct-write policy')
         require(not query(f"select privilege_type from information_schema.role_table_grants where table_schema = 'public' and table_name = '{table}' and grantee in ('anon', 'authenticated', 'PUBLIC') and privilege_type in ('SELECT', 'INSERT', 'UPDATE', 'DELETE')"), f'{table} has broad application data grant')
+        for role in ('anon', 'authenticated'):
+            for privilege in ('SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'):
+                require(query(f"select has_table_privilege('{role}', 'public.{table}', '{privilege}')") == ['f'], f'{role} retains {privilege} on {table}')
     for table in VERSIONED:
         require(query(f"select column_name from information_schema.columns where table_schema = 'public' and table_name = '{table}' and column_name = 'record_version'") == ['record_version'], f'{table} lacks record_version')
     for table, target in FK_TARGETS.items():

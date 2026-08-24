@@ -72,6 +72,12 @@ class HumanApprovalMemoryRepository(_TenantRepo):
         self.u.failpoint("AUTHORITATIVE_WRITE")
         if self.get(record["tenant_id"],record["approval_id"]):raise ValueError("approval already exists")
         self.data[record["approval_id"]]=record
+    def find_active_assessment_access_binding(self,tenant_id,proposal_id,digest,authority_role):
+        return next((copy.deepcopy(approval) for approval in self.data.values() if approval.get("tenant_id")==tenant_id and approval.get("subject_type")=="ASSESSMENT_ACCESS_PROPOSAL" and approval.get("subject_id")==proposal_id and approval.get("assessment_access",{}).get("assessment_access_authority_digest")==digest and approval.get("actor_role")==authority_role and approval.get("status")=="ACTIVE"),None)
+    def record_assessment_access(self,record):
+        binding=record["assessment_access"]
+        if self.find_active_assessment_access_binding(record["tenant_id"],record["subject_id"],binding["assessment_access_authority_digest"],record["actor_role"]):raise ValueError("duplicate active assessment access authority")
+        self.save(record)
     def find_active_binding(self,tenant_id,scope_id,scope_version,authority_role,digest,action_set_version):
         return next((a for a in self.data.values() if a.get("tenant_id")==tenant_id and a.get("subject_id")==scope_id and a.get("subject_version")==scope_version and a.get("authority_role")==authority_role and a.get("canonical_scope_digest")==digest and a.get("action_set_version")==action_set_version and a.get("status")=="ACTIVE"),None)
 class IdempotencyMemoryRepository:

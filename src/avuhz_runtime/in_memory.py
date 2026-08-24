@@ -14,7 +14,7 @@ def fingerprint(command):
     return "fpv1:"+hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=True).encode()).hexdigest()
 @dataclass
 class MemoryStore:
-    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
+    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
     fail_stage:str|None=None
     def snapshot(self,command):
         r={"ACQUISITION_HANDOFF":self.handoffs,"ENGAGEMENT":self.engagements,"DIAGNOSTIC_SCOPE":self.scopes}.get(command.subject_type,{ }).get(command.subject_id)
@@ -39,6 +39,13 @@ class DiagnosticScopeMemoryRepository(_TenantRepo):
         if not record or record.get("scope_version")!=scope_version or record.get("record_version")!=expected_record_version:raise ValueError()
         if record.get("canonical_scope_digest") is not None:return record["canonical_scope_digest"]
         self.u.failpoint("AUTHORITATIVE_WRITE");record["canonical_scope_digest"]=digest;record["record_version"]+=1;return digest
+class DiagnosticAgreementAuthorityMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"agreements")
+    def save(self,record):self.data[record["diagnostic_agreement_authority_id"]]=record
+class DiagnosticPaymentVerificationMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"payments")
+    def save(self,record):self.data[record["diagnostic_payment_verification_id"]]=record
+
 class AssessmentAccessProposalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"proposals")
     def save(self,record):self.data[record["assessment_access_proposal_id"]]=record
@@ -67,7 +74,7 @@ class OutboxMemoryRepository:
 class UnitOfWork:
     def __init__(self,store):
         self.store=store;self.working=copy.deepcopy(store)
-        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
+        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
     def failpoint(self,name):
         if self.working.fail_stage==name: raise RuntimeError("injected failpoint")
     def commit(self):

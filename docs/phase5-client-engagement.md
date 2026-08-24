@@ -69,3 +69,6 @@ The existing `RecordHumanApproval` command remains DiagnosticScope-only. The rec
 
 
 AssessmentAccessProposal is now the authoritative proposal source. Its content digest excludes proposal and grant identity; AssessmentAccessGrant retains a required versioned source-proposal reference. Future runtime must require OPEN proposal, tenant-scoped read, exact dual approvals, and equality of proposal/grant immutable authority and digest. Historical non-OPEN proposals remain readable.
+
+
+Commercial eligibility is now evaluated in memory from authoritative Engagement, approved canonical scope, valid DiagnosticAgreementAuthority, and VERIFIED DiagnosticPaymentVerification. Future trusted ingress commands are `RecordDiagnosticAgreementAuthority` and `RecordDiagnosticPaymentVerification`; neither may accept untrusted browser, n8n, or caller authority claims.

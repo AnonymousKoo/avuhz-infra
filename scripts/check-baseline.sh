@@ -14,6 +14,7 @@ python3 tests/contracts/validate_diagnostic_agreement_authority.py
 python3 tests/contracts/validate_diagnostic_payment_verification.py
 python3 tests/contracts/validate_assessment_access_grant.py
 python3 tests/contracts/validate_assessment_access_human_approval.py
+python3 tests/contracts/validate_assessment_access_proposal.py
 python3 tests/contracts/validate_record_assessment_access_approval.py
 
 printf 'check: forbidden paths\n'

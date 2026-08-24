@@ -10,6 +10,7 @@
     { "name": "scope approve", "value": "scope:approve" },
     { "name": "propose assessment access", "value": "assessment_access:propose" },
     { "name": "approve assessment access", "value": "assessment_access:approve" },
+    { "name": "issue assessment access", "value": "assessment_access:issue" },
     { "name": "create approval", "value": "approval:create" },
     { "name": "record inbound event", "value": "inbound_event:record" },
     { "name": "publish internal event", "value": "event:publish_internal" }
@@ -20,7 +21,7 @@
     { "name": "admin wildcard", "value": "admin:*" },
     { "name": "engagement wildcard", "value": "engagement:*" },
     { "name": "unimplemented deployment capability", "value": "deployment:approve" },
-    { "name": "unimplemented assessment capability", "value": "assessment_access:issue" },
+    { "name": "unimplemented assessment capability", "value": "assessment_access:activate" },
     { "name": "uppercase", "value": "ENGAGEMENT:READ" },
     { "name": "extra segment", "value": "scope:read:all" },
     { "name": "unknown capability", "value": "billing:read" },

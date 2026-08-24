@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:issue-assessment-access-grant-payload:v1",
+  "title": "Issue Assessment Access Grant Payload v1",
+  "description": "Strict request to issue authority already frozen in an authoritative AssessmentAccessProposal. All grant authority, lifecycle, approvals, commercial truth, and credentials are server-derived or forbidden.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["assessment_access_grant_id", "assessment_access_proposal_id"],
+  "properties": {
+    "assessment_access_grant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"},
+    "assessment_access_proposal_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"}
+  }
+}

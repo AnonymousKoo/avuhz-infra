@@ -21,6 +21,7 @@ EXPECTED_ENUM = [
     "scope:approve",
     "assessment_access:approve",
     "assessment_access:propose",
+    "assessment_access:issue",
     "approval:create",
     "inbound_event:record",
     "event:publish_internal",

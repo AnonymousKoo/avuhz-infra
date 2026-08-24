@@ -23,7 +23,7 @@ def fingerprint(command):
     return "fpv1:"+hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=True).encode()).hexdigest()
 @dataclass
 class MemoryStore:
-    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
+    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
     fail_stage:str|None=None
     def snapshot(self,command):
         records={"ACQUISITION_HANDOFF":self.handoffs,"ENGAGEMENT":self.engagements,"DIAGNOSTIC_SCOPE":self.scopes}.get(command.subject_type)
@@ -69,6 +69,24 @@ class AssessmentAccessProposalMemoryRepository(_TenantRepo):
         self.u.failpoint("AUTHORITATIVE_WRITE")
         self.data[key]=copy.deepcopy(proposal)
         return copy.deepcopy(proposal)
+    def consume(self,tenant_id,proposal_id,digest,consumed_at):
+        key=(tenant_id,proposal_id); proposal=self.data.get(key)
+        if not proposal or proposal.get("status")!="OPEN" or proposal.get("assessment_access_authority_digest")!=digest:raise ValueError("proposal is not consumable")
+        self.u.failpoint("AUTHORITATIVE_WRITE"); proposal["status"]="CONSUMED";proposal["consumed_at"]=consumed_at;proposal["record_version"]=proposal.get("record_version",1)+1
+        return copy.deepcopy(proposal)
+
+class AssessmentAccessGrantMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"grants")
+    def get(self,tenant_id,grant_id):
+        record=self.data.get((tenant_id,grant_id));return copy.deepcopy(record) if record else None
+    def create(self,grant):
+        key=(grant["tenant_id"],grant["assessment_access_grant_id"]);existing=self.data.get(key)
+        if existing:
+            if existing!=grant:raise ValueError("assessment access grant identity conflicts")
+            return copy.deepcopy(existing)
+        source=grant["source_assessment_access_proposal_reference"]["reference_id"]
+        if any(value.get("tenant_id")==grant["tenant_id"] and value.get("source_assessment_access_proposal_reference",{}).get("reference_id")==source for value in self.data.values()):raise ValueError("assessment access proposal already issued a grant")
+        self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=copy.deepcopy(grant);return copy.deepcopy(grant)
 
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
@@ -102,7 +120,7 @@ class OutboxMemoryRepository:
 class UnitOfWork:
     def __init__(self,store):
         self.store=store;self.working=copy.deepcopy(store)
-        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
+        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.assessment_access_grants=AssessmentAccessGrantMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
     def failpoint(self,name):
         if self.working.fail_stage==name: raise RuntimeError("injected failpoint")
     def commit(self):

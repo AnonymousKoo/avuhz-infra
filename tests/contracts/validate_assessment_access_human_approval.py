@@ -30,11 +30,11 @@ def remove(v,k):
  t=v;ps=k.split(".")
  for p in ps[:-1]:t=t[p]
  t.pop(ps[-1])
-def semantic(v):return v["subject_type"]!="ASSESSMENT_ACCESS_GRANT" or v["subject_id"]==v["assessment_access"]["assessment_access_grant_id"]
+def semantic(v):return v["subject_type"]!="ASSESSMENT_ACCESS_PROPOSAL" or v["subject_id"]==v["assessment_access"]["assessment_access_proposal_id"]
 def main():
  ss={load(p)["$id"]:load(p) for p in sorted(SC.rglob("*.schema.json"))};s=ss[SID]
  for x in ss.values():Draft202012Validator.check_schema(x)
- if s["properties"]["subject_type"]["enum"]!=["DIAGNOSTIC_SCOPE","ASSESSMENT_ACCESS_GRANT"]:fail("closed subject vocabulary drifted")
+ if s["properties"]["subject_type"]["enum"]!=["DIAGNOSTIC_SCOPE","ASSESSMENT_ACCESS_PROPOSAL"]:fail("closed subject vocabulary drifted")
  val=Draft202012Validator(expand(s,s,ss),format_checker=FormatChecker());old=load(OLD)["human_approval"]["positive"][:2]
  for c in old:
   if list(val.iter_errors(c["value"])) or not semantic(c["value"]):fail(f"scope compatibility failed: {c['name']}")

@@ -1,7 +1,7 @@
 """Pure deterministic AssessmentAccessGrant authority projection helpers."""
 import hashlib
 from .canonical_scope import canonical_json_bytes
-_FIELDS=("assessment_access_grant_id","tenant_id","engagement_id","diagnostic_scope_reference","canonical_scope_digest","action_set_version","diagnostic_agreement_authority_reference","diagnostic_payment_verification_reference")
+_FIELDS=("tenant_id","engagement_id","diagnostic_scope_reference","canonical_scope_digest","action_set_version","diagnostic_agreement_authority_reference","diagnostic_payment_verification_reference")
 def _unique_sorted(values, key):
     normalized=sorted(values,key=key)
     if len({key(value) for value in normalized})!=len(normalized): raise ValueError("duplicate authority collection member")

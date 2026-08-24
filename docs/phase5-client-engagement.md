@@ -66,3 +66,6 @@ The existing `RecordHumanApproval` command remains DiagnosticScope-only. The rec
 ## Assessment access proposal authority
 
 `AssessmentAccessProposal` is the immutable pre-grant authority source: Proposal ≠ Grant; approval of a proposal ≠ usable access; Grant ≠ ACTIVE access. Its OPEN, SUPERSEDED, WITHDRAWN, and CONSUMED lifecycle prevents stale issuance. Proposal authority contains exact scope/commercial bindings, targets, actions, and a server-derived digest; lifecycle facts and credentials are excluded. HumanApproval and `RecordAssessmentAccessApproval` now bind proposal ID plus digest, never a future grant ID or caller-supplied digest. Future server lookup is tenant plus OPEN proposal. The next sequence is proposal creation, approval recording, finalization/grant issuance, then technical verification.
+
+
+AssessmentAccessProposal is now the authoritative proposal source. Its content digest excludes proposal and grant identity; AssessmentAccessGrant retains a required versioned source-proposal reference. Future runtime must require OPEN proposal, tenant-scoped read, exact dual approvals, and equality of proposal/grant immutable authority and digest. Historical non-OPEN proposals remain readable.

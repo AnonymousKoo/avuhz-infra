@@ -4,11 +4,12 @@
   "title": "Avuhz Assessment Access Grant v1",
   "description": "Authoritative temporary diagnostic-only access authority for explicitly bounded systems and permitted assessment actions. It is authorization metadata only: never a credential, secret, vault record, ongoing access, implementation authority, deployment authority, or production-change authority.",
   "type": "object", "additionalProperties": false,
-  "required": ["assessment_access_grant_id", "tenant_id", "engagement_id", "diagnostic_scope_reference", "canonical_scope_digest", "assessment_access_authority_digest", "action_set_version", "diagnostic_agreement_authority_reference", "diagnostic_payment_verification_reference", "target_system_references", "permitted_actions", "status", "approved_at", "record_version"],
+  "required": ["assessment_access_grant_id", "tenant_id", "engagement_id", "source_assessment_access_proposal_reference", "diagnostic_scope_reference", "canonical_scope_digest", "assessment_access_authority_digest", "action_set_version", "diagnostic_agreement_authority_reference", "diagnostic_payment_verification_reference", "target_system_references", "permitted_actions", "status", "approved_at", "record_version"],
   "properties": {
     "assessment_access_grant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"},
     "tenant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
     "engagement_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
+    "source_assessment_access_proposal_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
     "diagnostic_scope_reference": {"readOnly": true, "$ref": "#/$defs/diagnosticScopeReference"},
     "canonical_scope_digest": {"readOnly": true, "$ref": "#/$defs/canonicalScopeDigest"},
     "assessment_access_authority_digest": {"readOnly": true, "$ref": "#/$defs/canonicalScopeDigest"},

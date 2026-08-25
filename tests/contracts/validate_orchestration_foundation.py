@@ -146,9 +146,9 @@ def main():
                 fail(f"unresolved reference: {reference}")
     if schemas[IDS["receipt"]]["properties"]["source_type"]["enum"] != ["ACQUISITION_SYSTEM", "PROVIDER", "INTERNAL_SERVICE"]:
         fail("receipt source vocabulary drifted")
-    if schemas[IDS["idempotency"]]["properties"]["command_type"]["enum"] != ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "CreateAssessmentAccessProposal", "RecordAssessmentAccessApproval", "IssueAssessmentAccessGrant"]:
+    if schemas[IDS["idempotency"]]["properties"]["command_type"]["enum"] != ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "CreateAssessmentAccessProposal", "RecordAssessmentAccessApproval", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess"]:
         fail("idempotency command vocabulary drifted")
-    if schemas[IDS["event"]]["properties"]["event_type"]["enum"] != ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized", "assessment_access.proposal_created", "assessment_access.approval_recorded", "assessment_access.grant_issued"]:
+    if schemas[IDS["event"]]["properties"]["event_type"]["enum"] != ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized", "assessment_access.proposal_created", "assessment_access.approval_recorded", "assessment_access.grant_issued", "assessment_access.verified_and_activated"]:
         fail("event vocabulary drifted")
     for schema_id in IDS.values():
         if "metadata" in schemas[schema_id]["properties"]:

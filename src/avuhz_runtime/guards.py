@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from .errors import RuntimeReason
 
-COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","RecordHumanApproval":"scope:approve","RecordAssessmentAccessApproval":"assessment_access:approve","CreateAssessmentAccessProposal":"assessment_access:propose","IssueAssessmentAccessGrant":"assessment_access:issue","VerifyAssessmentAccess":"assessment_access:verify","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit"}
+COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","RecordHumanApproval":"scope:approve","RecordAssessmentAccessApproval":"assessment_access:approve","CreateAssessmentAccessProposal":"assessment_access:propose","IssueAssessmentAccessGrant":"assessment_access:issue","VerifyAssessmentAccess":"assessment_access:verify","ExpireAssessmentAccess":"assessment_access:expire","RevokeAssessmentAccess":"assessment_access:revoke","CloseAssessmentAccessForAgreementEnd":"assessment_access:close","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit"}
 HUMAN_AUTHORITY_ROLES=frozenset({"CLIENT_DECISION_AUTHORITY","SEKINFRA_ENGAGEMENT_AUTHORITY"})
 
 @dataclass(frozen=True)

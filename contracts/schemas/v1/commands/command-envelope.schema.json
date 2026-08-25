@@ -43,10 +43,13 @@
         {"if": {"properties": {"command_type": {"const": "RecordAssessmentAccessApproval"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}},
         {"if": {"properties": {"command_type": {"const": "CreateAssessmentAccessProposal"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}},
         {"if": {"properties": {"command_type": {"const": "IssueAssessmentAccessGrant"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
-        {"if": {"properties": {"command_type": {"const": "VerifyAssessmentAccess"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}}
+        {"if": {"properties": {"command_type": {"const": "VerifyAssessmentAccess"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
+        {"if": {"properties": {"command_type": {"const": "ExpireAssessmentAccess"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
+        {"if": {"properties": {"command_type": {"const": "RevokeAssessmentAccess"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
+        {"if": {"properties": {"command_type": {"const": "CloseAssessmentAccessForAgreementEnd"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}}
       ]
     },
-    "commandType": {"type": "string", "minLength": 14, "maxLength": 30, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess"]},
+    "commandType": {"type": "string", "minLength": 14, "maxLength": 40, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd"]},
     "subjectType": {"type": "string", "minLength": 10, "maxLength": 26, "enum": ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL", "ASSESSMENT_ACCESS_GRANT"]},
     "schemaVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
     "positiveRecordVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647}

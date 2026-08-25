@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:close-assessment-access-for-agreement-end-payload:v1",
+  "title": "Close Assessment Access For Agreement End Payload v1",
+  "description": "Strict request to reconcile one AssessmentAccessGrant only when its exact authoritative agreement has server-resolved ended.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["assessment_access_grant_id"],
+  "properties": {"assessment_access_grant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"}}
+}

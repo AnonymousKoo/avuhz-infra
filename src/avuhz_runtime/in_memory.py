@@ -10,6 +10,7 @@ from .issue_assessment_access_grant import IssueAssessmentAccessGrantHandler
 from .assessment_access_approval import RecordAssessmentAccessApprovalHandler
 from .verify_assessment_access import VerifyAssessmentAccessHandler
 from .assessment_access_verification import InMemoryAssessmentAccessVerifier
+from .assessment_access_terminal import AssessmentAccessTerminalHandler
 
 class CanonicalScopeDigestConflict(ValueError): pass
 from .runtime import prepare_and_guard_command
@@ -26,6 +27,8 @@ def fingerprint(command):
     if command.get("command_type")=="IssueAssessmentAccessGrant":
         value={"command_type":command["command_type"],"payload":{"assessment_access_grant_id":command["payload"]["assessment_access_grant_id"],"assessment_access_proposal_id":command["payload"]["assessment_access_proposal_id"]}}
     if command.get("command_type")=="VerifyAssessmentAccess":
+        value={"command_type":command["command_type"],"payload":{"assessment_access_grant_id":command["payload"]["assessment_access_grant_id"]}}
+    if command.get("command_type") in ("ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd"):
         value={"command_type":command["command_type"],"payload":{"assessment_access_grant_id":command["payload"]["assessment_access_grant_id"]}}
     return "fpv1:"+hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=True).encode()).hexdigest()
 @dataclass
@@ -199,6 +202,12 @@ class Executor:
             digest=compute_canonical_scope_digest(s);existing=s.get("canonical_scope_digest")
             if existing is None:u.diagnostic_scopes.set_canonical_scope_digest(p.tenant_id,p.subject_id,payload["scope_version"],p.expected_record_version,digest)
             elif existing!=digest:raise CanonicalScopeDigestConflict()
+        elif p.command_type=="ExpireAssessmentAccess":
+            AssessmentAccessTerminalHandler(u).expire(raw_context,payload,now)
+        elif p.command_type=="RevokeAssessmentAccess":
+            AssessmentAccessTerminalHandler(u).revoke(raw_context,payload,now)
+        elif p.command_type=="CloseAssessmentAccessForAgreementEnd":
+            AssessmentAccessTerminalHandler(u).close_for_agreement_end(raw_context,payload,now)
         elif p.command_type=="RecordAssessmentAccessApproval":
             RecordAssessmentAccessApprovalHandler(u,self.pipeline).record(raw_context,payload,now,p.command_id,p.correlation_id,p.idempotency_key)
         elif p.command_type=="RecordHumanApproval":
@@ -215,11 +224,15 @@ class Executor:
             if payload["scope_content_digest"]!=s["canonical_scope_digest"]:raise ValueError()
             s.update(client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1);u.diagnostic_scopes.mark_approved(s)
     def _event(self,p,u=None):
-        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued","VerifyAssessmentAccess":"assessment_access.verified_and_activated"}[p.command_type]
+        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued","VerifyAssessmentAccess":"assessment_access.verified_and_activated","ExpireAssessmentAccess":"assessment_access.expired","RevokeAssessmentAccess":"assessment_access.revoked","CloseAssessmentAccessForAgreementEnd":"assessment_access.closed"}[p.command_type]
         if p.command_type=="CreateAssessmentAccessProposal":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_PROPOSAL","reference_id":p.subject_id},"authoritative_subject_version":1,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_proposal_id":p.subject_id}}
         if p.command_type=="IssueAssessmentAccessGrant":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_GRANT","reference_id":p.subject_id},"authoritative_subject_version":1,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_grant_id":p.subject_id,"assessment_access_proposal_id":p.payload["assessment_access_proposal_id"]}}
+        if p.command_type in ("ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd"):
+            grant=u.assessment_access_grants.get(p.tenant_id,p.subject_id); metadata={"assessment_access_grant_id":p.subject_id,"terminal_state":grant["status"]}
+            if p.command_type=="CloseAssessmentAccessForAgreementEnd":metadata["closure_cause"]="AGREEMENT_ENDED"
+            return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":grant["engagement_id"],"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_GRANT","reference_id":p.subject_id},"authoritative_subject_version":grant["record_version"],"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":metadata}
         if p.command_type=="RecordAssessmentAccessApproval":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_PROPOSAL","reference_id":p.subject_id},"authoritative_subject_version":p.expected_record_version,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_proposal_id":p.subject_id,"authority_role":p.payload["authority_role"],"approval_id":p.command_id}}
         if p.command_type=="VerifyAssessmentAccess":

@@ -33,7 +33,7 @@ EXPECTED_REASONS = [
 ]
 EXPECTED_RESULTS = ["ACCEPTED", "REJECTED", "CONFLICT", "DUPLICATE", "NOT_AUTHORIZED", "INVALID_STATE", "VALIDATION_FAILED", "SECURITY_BLOCKED"]
 EXPECTED_RETRYABILITY = ["NOT_RETRYABLE", "RETRY_SAME_KEY", "RETRY_NEW_ATTEMPT", "HUMAN_REVIEW"]
-EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess"]
+EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd"]
 EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL", "ASSESSMENT_ACCESS_GRANT"]
 
 
@@ -149,6 +149,9 @@ def main():
         "CreateAssessmentAccessProposal": "ASSESSMENT_ACCESS_PROPOSAL",
         "IssueAssessmentAccessGrant": "ASSESSMENT_ACCESS_GRANT",
         "VerifyAssessmentAccess": "ASSESSMENT_ACCESS_GRANT",
+        "ExpireAssessmentAccess": "ASSESSMENT_ACCESS_GRANT",
+        "RevokeAssessmentAccess": "ASSESSMENT_ACCESS_GRANT",
+        "CloseAssessmentAccessForAgreementEnd": "ASSESSMENT_ACCESS_GRANT",
     }
     bindings = schemas[ENVELOPE_ID]["$defs"]["envelopeCore"]["allOf"]
     for binding in bindings:

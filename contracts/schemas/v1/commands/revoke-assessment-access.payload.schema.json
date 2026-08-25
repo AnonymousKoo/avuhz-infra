@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:revoke-assessment-access-payload:v1",
+  "title": "Revoke Assessment Access Payload v1",
+  "description": "Strict trusted request to revoke one AssessmentAccessGrant; revocation truth and timestamp are server-derived.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["assessment_access_grant_id"],
+  "properties": {"assessment_access_grant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"}}
+}

@@ -25,6 +25,9 @@ COMMANDS = {
     "IssueAssessmentAccessGrant": CommandDefinition("IssueAssessmentAccessGrant", "ASSESSMENT_ACCESS_GRANT", 1, "urn:avuhz:schema:contracts:commands:issue-assessment-access-grant-payload:v1", 1, required_capability="assessment_access:issue", executable=True),
     "ApproveDiagnosticScope": CommandDefinition("ApproveDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:approve-diagnostic-scope-payload:v1", 1),
     "VerifyAssessmentAccess": CommandDefinition("VerifyAssessmentAccess", "ASSESSMENT_ACCESS_GRANT", 1, "urn:avuhz:schema:contracts:commands:verify-assessment-access-payload:v1", 1, required_capability="assessment_access:verify", executable=True),
+    "ExpireAssessmentAccess": CommandDefinition("ExpireAssessmentAccess", "ASSESSMENT_ACCESS_GRANT", 1, "urn:avuhz:schema:contracts:commands:expire-assessment-access-payload:v1", 1, required_capability="assessment_access:expire", executable=True),
+    "RevokeAssessmentAccess": CommandDefinition("RevokeAssessmentAccess", "ASSESSMENT_ACCESS_GRANT", 1, "urn:avuhz:schema:contracts:commands:revoke-assessment-access-payload:v1", 1, required_capability="assessment_access:revoke", executable=True),
+    "CloseAssessmentAccessForAgreementEnd": CommandDefinition("CloseAssessmentAccessForAgreementEnd", "ASSESSMENT_ACCESS_GRANT", 1, "urn:avuhz:schema:contracts:commands:close-assessment-access-for-agreement-end-payload:v1", 1, required_capability="assessment_access:close", executable=True),
     "CanonicalizeDiagnosticScope": CommandDefinition("CanonicalizeDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:canonicalize-diagnostic-scope-payload:v1", 1),
 }
 

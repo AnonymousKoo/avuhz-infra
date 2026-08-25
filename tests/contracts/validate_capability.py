@@ -27,6 +27,9 @@ EXPECTED_ENUM = [
     "assessment_access:revoke",
     "assessment_access:close",
     "approval:create",
+    "diagnostic_agreement:record",
+    "diagnostic_payment:record",
+    "diagnostic_payment:invalidate",
     "inbound_event:record",
     "event:publish_internal",
 ]

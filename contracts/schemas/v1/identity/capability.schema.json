@@ -5,7 +5,7 @@
   "description": "Closed vocabulary for a bounded action claim. A capability does not establish tenant membership or human authority; caller type and capability remain separate concepts. scope:approve does not create a HumanApproval record, and event:publish_internal is reserved for a trusted outbox publisher.",
   "type": "string",
   "minLength": 10,
-  "maxLength": 25,
+  "maxLength": 29,
   "enum": [
     "engagement:read",
     "engagement:accept_handoff",
@@ -21,6 +21,9 @@
     "assessment_access:revoke",
     "assessment_access:close",
     "approval:create",
+    "diagnostic_agreement:record",
+    "diagnostic_payment:record",
+    "diagnostic_payment:invalidate",
     "inbound_event:record",
     "event:publish_internal"
   ]

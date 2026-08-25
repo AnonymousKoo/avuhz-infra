@@ -62,10 +62,26 @@ class DiagnosticScopeMemoryRepository(_TenantRepo):
 class DiagnosticAgreementAuthorityMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"agreements")
     def save(self,record):self.data[record["diagnostic_agreement_authority_id"]]=record
+    def create(self,record):
+        key=record["diagnostic_agreement_authority_id"];existing=self.data.get(key)
+        if existing:
+            if existing!=record:raise ValueError("diagnostic agreement authority identity conflicts")
+            return copy.deepcopy(existing)
+        self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=copy.deepcopy(record);return copy.deepcopy(record)
 class DiagnosticPaymentVerificationMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"payments")
     def save(self,record):self.data[record["diagnostic_payment_verification_id"]]=record
-
+    def create(self,record):
+        key=record["diagnostic_payment_verification_id"];existing=self.data.get(key)
+        if existing:
+            if existing!=record:raise ValueError("diagnostic payment verification identity conflicts")
+            return copy.deepcopy(existing)
+        self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=copy.deepcopy(record);return copy.deepcopy(record)
+    def invalidate(self,tenant_id,payment_id,invalidated_at):
+        payment=self.get(tenant_id,payment_id)
+        if not payment or payment.get("verification_status")!="VERIFIED":raise ValueError("payment is not invalidatable")
+        self.u.failpoint("AUTHORITATIVE_WRITE");stored=self.data[payment_id];stored["verification_status"]="INVALIDATED";stored["invalidated_at"]=invalidated_at;stored["record_version"]=stored.get("record_version",1)+1
+        return copy.deepcopy(stored)
 class AssessmentAccessProposalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"proposals")
     def get(self,tenant_id,assessment_access_proposal_id):

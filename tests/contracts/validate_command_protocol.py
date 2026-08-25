@@ -33,8 +33,8 @@ EXPECTED_REASONS = [
 ]
 EXPECTED_RESULTS = ["ACCEPTED", "REJECTED", "CONFLICT", "DUPLICATE", "NOT_AUTHORIZED", "INVALID_STATE", "VALIDATION_FAILED", "SECURITY_BLOCKED"]
 EXPECTED_RETRYABILITY = ["NOT_RETRYABLE", "RETRY_SAME_KEY", "RETRY_NEW_ATTEMPT", "HUMAN_REVIEW"]
-EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd"]
-EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL", "ASSESSMENT_ACCESS_GRANT"]
+EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification"]
+EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL", "ASSESSMENT_ACCESS_GRANT", "DIAGNOSTIC_AGREEMENT_AUTHORITY", "DIAGNOSTIC_PAYMENT_VERIFICATION"]
 
 
 def load(path):
@@ -152,6 +152,9 @@ def main():
         "ExpireAssessmentAccess": "ASSESSMENT_ACCESS_GRANT",
         "RevokeAssessmentAccess": "ASSESSMENT_ACCESS_GRANT",
         "CloseAssessmentAccessForAgreementEnd": "ASSESSMENT_ACCESS_GRANT",
+        "RecordDiagnosticAgreementAuthority": "DIAGNOSTIC_AGREEMENT_AUTHORITY",
+        "RecordDiagnosticPaymentVerification": "DIAGNOSTIC_PAYMENT_VERIFICATION",
+        "InvalidateDiagnosticPaymentVerification": "DIAGNOSTIC_PAYMENT_VERIFICATION",
     }
     bindings = schemas[ENVELOPE_ID]["$defs"]["envelopeCore"]["allOf"]
     for binding in bindings:

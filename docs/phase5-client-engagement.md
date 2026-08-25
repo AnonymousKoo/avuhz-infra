@@ -84,3 +84,11 @@ Commercial eligibility is now evaluated in memory from authoritative Engagement,
 `APPROVED` means authority is issued but technical access is not active. `VerifyAssessmentAccess` accepts only a grant ID; success, timestamps, credentials, provider responses, and evidence are server-derived or forbidden. A trusted verifier receives only the grant's non-secret authority facts and returns sanitized per-target outcomes.
 
 Successful verification of every target for the exact permitted actions transitions the same grant to `ACTIVE`; `verified_at` equals `active_from`. `expires_at` is the earlier of verification time plus 30 calendar days and a precisely represented earlier agreement `ends_at`, with no grace. Failed verification leaves the grant `APPROVED` and retryable while authority remains valid. Credentials remain behind the provider/vault boundary and never enter business records, commands, events, outbox, logs, or fixtures.
+
+## Active assessment access usability safety gate
+
+Persisted `ACTIVE` is not technical-use authority by itself. Every future credential, vault, provider, or target-system operation must call `evaluate_assessment_access_usability` immediately before its secure boundary. If unusable, that boundary must not execute.
+
+The evaluator is read-only and fails closed: access is denied when the grant is not `ACTIVE`, trusted time is before `active_from`, trusted time is at or after `expires_at` (no grace), commercial authority is invalid, or exact authority binding mismatches. This denial is immediate even before persisted lifecycle reconciliation changes status to `EXPIRED`, `REVOKED`, or `CLOSED`.
+
+Expiry, agreement end, and payment invalidation are currently authoritatively verifiable. Explicit revocation requires a future trusted command. `FINDINGS_DELIVERED_CLOSURE_SOURCE_READY = NO` and `ASSESSMENT_CLOSED_CLOSURE_SOURCE_READY = NO`: no first-class Phase 5B lifecycle truth exists yet. Payment invalidation has no frozen terminal-state/reason mapping (`CLOSED` reasons are findings delivery, assessment closure, and agreement end); a future lifecycle-model decision is needed for persisted reconciliation, while usability already denies it immediately.

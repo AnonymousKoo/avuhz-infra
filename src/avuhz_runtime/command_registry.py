@@ -32,6 +32,7 @@ COMMANDS = {
     "RecordDiagnosticPaymentVerification": CommandDefinition("RecordDiagnosticPaymentVerification", "DIAGNOSTIC_PAYMENT_VERIFICATION", 1, "urn:avuhz:schema:contracts:commands:record-diagnostic-payment-verification-payload:v1", 1, required_capability="diagnostic_payment:record", executable=True),
     "InvalidateDiagnosticPaymentVerification": CommandDefinition("InvalidateDiagnosticPaymentVerification", "DIAGNOSTIC_PAYMENT_VERIFICATION", 1, "urn:avuhz:schema:contracts:commands:invalidate-diagnostic-payment-verification-payload:v1", 1, required_capability="diagnostic_payment:invalidate", executable=True),
     "CanonicalizeDiagnosticScope": CommandDefinition("CanonicalizeDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:canonicalize-diagnostic-scope-payload:v1", 1),
+    "OpenOIAAssessment": CommandDefinition("OpenOIAAssessment", "OIA_ASSESSMENT", 1, "urn:avuhz:schema:contracts:commands:open-oia-assessment-payload:v1", 1, required_capability="oia:open", executable=True),
 }
 
 

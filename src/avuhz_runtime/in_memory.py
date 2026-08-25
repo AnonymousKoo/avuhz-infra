@@ -12,12 +12,13 @@ from .verify_assessment_access import VerifyAssessmentAccessHandler
 from .assessment_access_verification import InMemoryAssessmentAccessVerifier
 from .assessment_access_terminal import AssessmentAccessTerminalHandler
 from .commercial_ingress import DiagnosticCommercialIngressHandler
+from .oia_assessment import OpenOIAAssessmentHandler
 
 class CanonicalScopeDigestConflict(ValueError): pass
 from .runtime import prepare_and_guard_command
 
-PHASE_5A_COMMAND_SCOPED_IDEMPOTENCY_COMMANDS=frozenset(("CreateAssessmentAccessProposal","RecordAssessmentAccessApproval","IssueAssessmentAccessGrant","VerifyAssessmentAccess","ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd","RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification"))
-def idempotency_scope(command): return "COMMAND" if command.command_type in PHASE_5A_COMMAND_SCOPED_IDEMPOTENCY_COMMANDS else "SUBJECT:"+command.subject_id
+COMMAND_SCOPED_IDEMPOTENCY_COMMANDS=frozenset(("CreateAssessmentAccessProposal","RecordAssessmentAccessApproval","IssueAssessmentAccessGrant","VerifyAssessmentAccess","ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd","RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification","OpenOIAAssessment"))
+def idempotency_scope(command): return "COMMAND" if command.command_type in COMMAND_SCOPED_IDEMPOTENCY_COMMANDS else "SUBJECT:"+command.subject_id
 
 def fingerprint(command):
     value={k:command[k] for k in ("tenant_id","command_type","subject_type","subject_id","engagement_id","expected_record_version","payload") if k in command}
@@ -36,15 +37,17 @@ def fingerprint(command):
         value={"command_type":command["command_type"],"payload":{"assessment_access_grant_id":command["payload"]["assessment_access_grant_id"]}}
     if command.get("command_type") in ("RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification"):
         value={"command_type":command["command_type"],"payload":command["payload"]}
+    if command.get("command_type")=="OpenOIAAssessment":
+        value={"command_type":command["command_type"],"payload":command["payload"]}
     return "fpv1:"+hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=True).encode()).hexdigest()
 @dataclass
 class MemoryStore:
-    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
+    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); oia_assessments:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
     fail_stage:str|None=None
     def snapshot(self,command,trusted_context=None):
         records={"ACQUISITION_HANDOFF":self.handoffs,"ENGAGEMENT":self.engagements,"DIAGNOSTIC_SCOPE":self.scopes,"DIAGNOSTIC_AGREEMENT_AUTHORITY":self.agreements,"DIAGNOSTIC_PAYMENT_VERIFICATION":self.payments}.get(command.subject_type)
-        r=self.proposals.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_PROPOSAL" else self.grants.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_GRANT" else (records or {}).get(command.subject_id)
-        return None if not r else AuthoritativeSubjectSnapshot(command.subject_type,command.subject_id,r["tenant_id"],r.get("record_version",1),True,r.get("engagement_id"),r.get("status") or r.get("engagement_state"))
+        r=self.proposals.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_PROPOSAL" else self.grants.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_GRANT" else self.oia_assessments.get((command.tenant_id,command.subject_id)) if command.subject_type=="OIA_ASSESSMENT" else (records or {}).get(command.subject_id)
+        return None if not r else AuthoritativeSubjectSnapshot(command.subject_type,command.subject_id,r["tenant_id"],r.get("record_version",1),True,r.get("engagement_id"),r.get("status") or r.get("engagement_state") or r.get("state"))
 class _TenantRepo:
     def __init__(self,u,name):self.u=u;self.data=getattr(u.working,name)
     def get(self,tenant_id,record_id):
@@ -139,6 +142,17 @@ class AssessmentAccessGrantMemoryRepository(_TenantRepo):
         grant=self.data.get((tenant_id,grant_id))
         if not grant or grant.get("status") not in ("APPROVED","ACTIVE"):raise ValueError("grant is not closable")
         self.u.failpoint("AUTHORITATIVE_WRITE");grant["status"]="CLOSED";grant["closed_at"]=trusted_now;grant["closure_reason"]="AGREEMENT_ENDED";grant["record_version"]+=1;return copy.deepcopy(grant)
+class OIAAssessmentMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"oia_assessments")
+    def get(self,tenant_id,oia_assessment_id):
+        record=self.data.get((tenant_id,oia_assessment_id));return copy.deepcopy(record) if record else None
+    def find_by_assessment_access_grant(self,tenant_id,assessment_access_grant_id):
+        return next((copy.deepcopy(record) for (record_tenant,_),record in self.data.items() if record_tenant==tenant_id and record.get("assessment_access_grant_id")==assessment_access_grant_id),None)
+    def create(self,assessment):
+        key=(assessment["tenant_id"],assessment["oia_assessment_id"])
+        if key in self.data:raise ValueError("OIA assessment identity already exists")
+        if self.find_by_assessment_access_grant(assessment["tenant_id"],assessment["assessment_access_grant_id"]):raise ValueError("assessment access grant already has an OIA assessment")
+        self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=copy.deepcopy(assessment);return copy.deepcopy(assessment)
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
     def save(self,record):
@@ -171,7 +185,7 @@ class OutboxMemoryRepository:
 class UnitOfWork:
     def __init__(self,store):
         self.store=store;self.working=copy.deepcopy(store)
-        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.assessment_access_grants=AssessmentAccessGrantMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
+        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.assessment_access_grants=AssessmentAccessGrantMemoryRepository(self);self.oia_assessments=OIAAssessmentMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
     def failpoint(self,name):
         if self.working.fail_stage==name: raise RuntimeError("injected failpoint")
     def commit(self):
@@ -231,6 +245,8 @@ class Executor:
             DiagnosticCommercialIngressHandler(u).invalidate_payment(raw_context,payload,now)
         elif p.command_type=="CreateAssessmentAccessProposal":
             CreateAssessmentAccessProposalHandler(u).create(raw_context,payload,now)
+        elif p.command_type=="OpenOIAAssessment":
+            OpenOIAAssessmentHandler(u).open(raw_context,payload,now)
         elif p.command_type=="VerifyAssessmentAccess":
             VerifyAssessmentAccessHandler(u,self.assessment_access_verifier).verify(raw_context,payload,now)
         elif p.command_type=="CanonicalizeDiagnosticScope":
@@ -261,13 +277,16 @@ class Executor:
             if payload["scope_content_digest"]!=s["canonical_scope_digest"]:raise ValueError()
             s.update(client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1);u.diagnostic_scopes.mark_approved(s)
     def _event(self,p,u=None):
-        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued","VerifyAssessmentAccess":"assessment_access.verified_and_activated","ExpireAssessmentAccess":"assessment_access.expired","RevokeAssessmentAccess":"assessment_access.revoked","CloseAssessmentAccessForAgreementEnd":"assessment_access.closed","RecordDiagnosticAgreementAuthority":"diagnostic_agreement.authority_recorded","RecordDiagnosticPaymentVerification":"diagnostic_payment.verified","InvalidateDiagnosticPaymentVerification":"diagnostic_payment.invalidated"}[p.command_type]
+        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued","VerifyAssessmentAccess":"assessment_access.verified_and_activated","ExpireAssessmentAccess":"assessment_access.expired","RevokeAssessmentAccess":"assessment_access.revoked","CloseAssessmentAccessForAgreementEnd":"assessment_access.closed","RecordDiagnosticAgreementAuthority":"diagnostic_agreement.authority_recorded","RecordDiagnosticPaymentVerification":"diagnostic_payment.verified","InvalidateDiagnosticPaymentVerification":"diagnostic_payment.invalidated","OpenOIAAssessment":"oia.assessment_opened"}[p.command_type]
         if p.command_type in ("RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification"):
             record=(u.diagnostic_agreement_authorities if p.command_type=="RecordDiagnosticAgreementAuthority" else u.diagnostic_payment_verifications).get(p.tenant_id,p.subject_id)
             meta={"commercial_authority_id":p.subject_id,"commercial_state":record.get("status",record.get("verification_status"))}
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":record["engagement_id"],"authoritative_subject_reference":{"reference_type":p.subject_type,"reference_id":p.subject_id},"authoritative_subject_version":record["record_version"],"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":meta}
         if p.command_type=="CreateAssessmentAccessProposal":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_PROPOSAL","reference_id":p.subject_id},"authoritative_subject_version":1,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_proposal_id":p.subject_id}}
+        if p.command_type=="OpenOIAAssessment":
+            assessment=u.oia_assessments.get(p.tenant_id,p.subject_id)
+            return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":assessment["engagement_id"],"authoritative_subject_reference":{"reference_type":"OIA_ASSESSMENT","reference_id":p.subject_id},"authoritative_subject_version":assessment["record_version"],"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"oia_assessment_id":p.subject_id,"record_version":assessment["record_version"]}}
         if p.command_type=="IssueAssessmentAccessGrant":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_GRANT","reference_id":p.subject_id},"authoritative_subject_version":1,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_grant_id":p.subject_id,"assessment_access_proposal_id":p.payload["assessment_access_proposal_id"]}}
         if p.command_type in ("ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd"):

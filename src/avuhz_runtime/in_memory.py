@@ -16,6 +16,9 @@ from .commercial_ingress import DiagnosticCommercialIngressHandler
 class CanonicalScopeDigestConflict(ValueError): pass
 from .runtime import prepare_and_guard_command
 
+PHASE_5A_COMMAND_SCOPED_IDEMPOTENCY_COMMANDS=frozenset(("CreateAssessmentAccessProposal","RecordAssessmentAccessApproval","IssueAssessmentAccessGrant","VerifyAssessmentAccess","ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd","RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification"))
+def idempotency_scope(command): return "COMMAND" if command.command_type in PHASE_5A_COMMAND_SCOPED_IDEMPOTENCY_COMMANDS else "SUBJECT:"+command.subject_id
+
 def fingerprint(command):
     value={k:command[k] for k in ("tenant_id","command_type","subject_type","subject_id","engagement_id","expected_record_version","payload") if k in command}
     if command.get("command_type")=="CreateAssessmentAccessProposal":
@@ -179,8 +182,8 @@ class Executor:
     def execute(self,raw,context):
         first=self.validator.prepare(raw)
         if isinstance(first,ValidationFailure):return {"result":"VALIDATION_FAILED","reason_code":first.reason.value}
-        p=first.prepared; u=self.uow_factory(self.store); subject_key="" if p.command_type in ("RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification") else p.subject_id
-        key=(p.tenant_id,context.principal_id,p.command_type,p.subject_type,subject_key,p.idempotency_key); fp=fingerprint(raw); prior=u.idempotency.get(key)
+        p=first.prepared; u=self.uow_factory(self.store); scope=idempotency_scope(p)
+        key=(p.tenant_id,context.principal_id,p.command_type,p.subject_type,scope,p.idempotency_key); fp=fingerprint(raw); prior=u.idempotency.get(key)
         if prior:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":prior["command_id"]} if prior["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
         guarded=prepare_and_guard_command(self.validator,self.pipeline,raw,context,self.store.snapshot(p),self.clock())
         if not hasattr(guarded,"guarded"):getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"REJECTED","reason_code":guarded.reason.value}

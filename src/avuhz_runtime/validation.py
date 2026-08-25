@@ -61,6 +61,9 @@ class CommandValidator:
             return self._failure(RuntimeReason.VERSION_REQUIRED, "expected version is not permitted for this command")
         if definition.command_type == "AcceptAcquisitionHandoff" and "engagement_id" in raw:
             return self._failure(RuntimeReason.FIELD_FORBIDDEN, "engagement context is not permitted for handoff acceptance")
+        identity_field = {"RecordDiagnosticAgreementAuthority": "diagnostic_agreement_authority_id", "RecordDiagnosticPaymentVerification": "diagnostic_payment_verification_id", "InvalidateDiagnosticPaymentVerification": "diagnostic_payment_verification_id"}.get(definition.command_type)
+        if identity_field and raw["payload"][identity_field] != raw["subject_id"]:
+            return self._failure(RuntimeReason.PAYLOAD_INVALID, "commercial payload must identify the command subject")
         if definition.command_type == "RecordHumanApproval" and raw["payload"]["diagnostic_scope_id"] != raw["subject_id"]:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "approval payload must identify the command subject")
         if definition.command_type == "ApproveDiagnosticScope":

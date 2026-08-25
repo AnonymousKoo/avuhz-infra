@@ -11,6 +11,7 @@ from .assessment_access_approval import RecordAssessmentAccessApprovalHandler
 from .verify_assessment_access import VerifyAssessmentAccessHandler
 from .assessment_access_verification import InMemoryAssessmentAccessVerifier
 from .assessment_access_terminal import AssessmentAccessTerminalHandler
+from .commercial_ingress import DiagnosticCommercialIngressHandler
 
 class CanonicalScopeDigestConflict(ValueError): pass
 from .runtime import prepare_and_guard_command
@@ -30,13 +31,15 @@ def fingerprint(command):
         value={"command_type":command["command_type"],"payload":{"assessment_access_grant_id":command["payload"]["assessment_access_grant_id"]}}
     if command.get("command_type") in ("ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd"):
         value={"command_type":command["command_type"],"payload":{"assessment_access_grant_id":command["payload"]["assessment_access_grant_id"]}}
+    if command.get("command_type") in ("RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification"):
+        value={"command_type":command["command_type"],"payload":command["payload"]}
     return "fpv1:"+hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=True).encode()).hexdigest()
 @dataclass
 class MemoryStore:
     handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
     fail_stage:str|None=None
     def snapshot(self,command):
-        records={"ACQUISITION_HANDOFF":self.handoffs,"ENGAGEMENT":self.engagements,"DIAGNOSTIC_SCOPE":self.scopes}.get(command.subject_type)
+        records={"ACQUISITION_HANDOFF":self.handoffs,"ENGAGEMENT":self.engagements,"DIAGNOSTIC_SCOPE":self.scopes,"DIAGNOSTIC_AGREEMENT_AUTHORITY":self.agreements,"DIAGNOSTIC_PAYMENT_VERIFICATION":self.payments}.get(command.subject_type)
         r=self.proposals.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_PROPOSAL" else self.grants.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_GRANT" else (records or {}).get(command.subject_id)
         return None if not r else AuthoritativeSubjectSnapshot(command.subject_type,command.subject_id,r["tenant_id"],r.get("record_version",1),True,r.get("engagement_id"),r.get("status") or r.get("engagement_state"))
 class _TenantRepo:
@@ -176,7 +179,8 @@ class Executor:
     def execute(self,raw,context):
         first=self.validator.prepare(raw)
         if isinstance(first,ValidationFailure):return {"result":"VALIDATION_FAILED","reason_code":first.reason.value}
-        p=first.prepared; u=self.uow_factory(self.store); key=(p.tenant_id,context.principal_id,p.command_type,p.subject_type,p.subject_id,p.idempotency_key); fp=fingerprint(raw); prior=u.idempotency.get(key)
+        p=first.prepared; u=self.uow_factory(self.store); subject_key="" if p.command_type in ("RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification") else p.subject_id
+        key=(p.tenant_id,context.principal_id,p.command_type,p.subject_type,subject_key,p.idempotency_key); fp=fingerprint(raw); prior=u.idempotency.get(key)
         if prior:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":prior["command_id"]} if prior["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
         guarded=prepare_and_guard_command(self.validator,self.pipeline,raw,context,self.store.snapshot(p),self.clock())
         if not hasattr(guarded,"guarded"):getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"REJECTED","reason_code":guarded.reason.value}
@@ -208,6 +212,12 @@ class Executor:
             u.diagnostic_scopes.save({"diagnostic_scope_id":sid,"engagement_id":p.subject_id,"tenant_id":p.tenant_id,"scope_version":payload["scope_version"],"record_version":1,"status":"REVIEW_PENDING","action_set_version":1,**payload})
         elif p.command_type=="IssueAssessmentAccessGrant":
             IssueAssessmentAccessGrantHandler(u).issue(raw_context,payload,now)
+        elif p.command_type=="RecordDiagnosticAgreementAuthority":
+            DiagnosticCommercialIngressHandler(u).record_agreement(raw_context,payload,now)
+        elif p.command_type=="RecordDiagnosticPaymentVerification":
+            DiagnosticCommercialIngressHandler(u).record_payment(raw_context,payload,now)
+        elif p.command_type=="InvalidateDiagnosticPaymentVerification":
+            DiagnosticCommercialIngressHandler(u).invalidate_payment(raw_context,payload,now)
         elif p.command_type=="CreateAssessmentAccessProposal":
             CreateAssessmentAccessProposalHandler(u).create(raw_context,payload,now)
         elif p.command_type=="VerifyAssessmentAccess":
@@ -240,7 +250,11 @@ class Executor:
             if payload["scope_content_digest"]!=s["canonical_scope_digest"]:raise ValueError()
             s.update(client_approval_reference=a,sekinfra_approval_reference=b,effective_at=now,record_version=s["record_version"]+1);u.diagnostic_scopes.mark_approved(s)
     def _event(self,p,u=None):
-        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued","VerifyAssessmentAccess":"assessment_access.verified_and_activated","ExpireAssessmentAccess":"assessment_access.expired","RevokeAssessmentAccess":"assessment_access.revoked","CloseAssessmentAccessForAgreementEnd":"assessment_access.closed"}[p.command_type]
+        typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued","VerifyAssessmentAccess":"assessment_access.verified_and_activated","ExpireAssessmentAccess":"assessment_access.expired","RevokeAssessmentAccess":"assessment_access.revoked","CloseAssessmentAccessForAgreementEnd":"assessment_access.closed","RecordDiagnosticAgreementAuthority":"diagnostic_agreement.authority_recorded","RecordDiagnosticPaymentVerification":"diagnostic_payment.verified","InvalidateDiagnosticPaymentVerification":"diagnostic_payment.invalidated"}[p.command_type]
+        if p.command_type in ("RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification"):
+            record=(u.diagnostic_agreement_authorities if p.command_type=="RecordDiagnosticAgreementAuthority" else u.diagnostic_payment_verifications).get(p.tenant_id,p.subject_id)
+            meta={"commercial_authority_id":p.subject_id,"commercial_state":record.get("status",record.get("verification_status"))}
+            return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":record["engagement_id"],"authoritative_subject_reference":{"reference_type":p.subject_type,"reference_id":p.subject_id},"authoritative_subject_version":record["record_version"],"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":meta}
         if p.command_type=="CreateAssessmentAccessProposal":
             return {"event_id":self.ids(),"event_type":typ,"event_schema_version":1,"tenant_id":p.tenant_id,"engagement_id":p.engagement_id,"authoritative_subject_reference":{"reference_type":"ASSESSMENT_ACCESS_PROPOSAL","reference_id":p.subject_id},"authoritative_subject_version":1,"occurred_at":self.clock(),"producer_reference":"command.service-01","correlation_id":p.correlation_id,"command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,"visibility":"TENANT_OPERATIONAL","sanitized_metadata":{"assessment_access_proposal_id":p.subject_id}}
         if p.command_type=="IssueAssessmentAccessGrant":

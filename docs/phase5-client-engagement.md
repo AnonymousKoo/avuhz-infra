@@ -78,3 +78,9 @@ Future `IssueAssessmentAccessGrant` must require: OPEN proposal, this predicate 
 
 
 Commercial eligibility is now evaluated in memory from authoritative Engagement, approved canonical scope, valid DiagnosticAgreementAuthority, and VERIFIED DiagnosticPaymentVerification. Future trusted ingress commands are `RecordDiagnosticAgreementAuthority` and `RecordDiagnosticPaymentVerification`; neither may accept untrusted browser, n8n, or caller authority claims.
+
+## Technical assessment access verification
+
+`APPROVED` means authority is issued but technical access is not active. `VerifyAssessmentAccess` accepts only a grant ID; success, timestamps, credentials, provider responses, and evidence are server-derived or forbidden. A trusted verifier receives only the grant's non-secret authority facts and returns sanitized per-target outcomes.
+
+Successful verification of every target for the exact permitted actions transitions the same grant to `ACTIVE`; `verified_at` equals `active_from`. `expires_at` is the earlier of verification time plus 30 calendar days and a precisely represented earlier agreement `ends_at`, with no grace. Failed verification leaves the grant `APPROVED` and retryable while authority remains valid. Credentials remain behind the provider/vault boundary and never enter business records, commands, events, outbox, logs, or fixtures.

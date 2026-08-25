@@ -91,6 +91,13 @@ class AssessmentAccessGrantMemoryRepository(_TenantRepo):
         if any(value.get("tenant_id")==grant["tenant_id"] and value.get("source_assessment_access_proposal_reference",{}).get("reference_id")==source for value in self.data.values()):raise ValueError("assessment access proposal already issued a grant")
         self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=copy.deepcopy(grant);return copy.deepcopy(grant)
 
+    def activate(self,tenant_id,grant_id,digest,verified_at,expires_at):
+        key=(tenant_id,grant_id); grant=self.data.get(key)
+        if not grant or grant.get("status")!="APPROVED" or grant.get("assessment_access_authority_digest")!=digest:raise ValueError("grant is not activatable")
+        self.u.failpoint("AUTHORITATIVE_WRITE")
+        grant["status"]="ACTIVE";grant["verified_at"]=verified_at;grant["active_from"]=verified_at;grant["expires_at"]=expires_at;grant["record_version"]=grant.get("record_version",1)+1
+        return copy.deepcopy(grant)
+
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
     def save(self,record):

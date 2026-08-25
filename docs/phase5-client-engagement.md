@@ -53,6 +53,11 @@ Agreement authority, payment verification, and payment invalidation now enter th
 Trusted provider adapters, authorized Sekinfra humans for supported manual cases, and tightly authorized internal workloads may use this boundary. Browsers, arbitrary n8n workflows, unverified webhooks, and direct database writes cannot establish or alter commercial truth. n8n is only a bounded client of the trusted command boundary.
 
 Ingress stores normalized opaque references only. It excludes agreement documents, raw provider callbacks, payment instruments, credentials, tokens, and metadata escape hatches. Payment invalidation immediately makes ACTIVE access unusable through the existing safety gate; its persisted grant-terminal mapping intentionally remains unresolved.
+
+## Durable PostgreSQL tenant boundary
+
+Phase 5A authoritative PostgreSQL execution uses a `NOLOGIN` `avuhz_command_service` privilege role. Server-side configuration supplies the connection through `AVUHZ_POSTGRES_DSN`; browser, n8n, payload, and Git never provide database credentials or tenant authority.
+
 Before this batch, `HumanApproval` was exclusively bound to `DIAGNOSTIC_SCOPE`; the assessment-access branch below resolves that contract prerequisite without changing the existing Phase 4 command. Future runtime tests must enforce: tenant and engagement equality across grant/scope/agreement/payment; approved scope status; exact digest and action-set binding; payment `VERIFIED`; agreement validity; in-scope targets; action subset; verification-before-active; 30-day TTL; terminal-state denial; and no authority-tier widening.
 
 ## Assessment access human approval

@@ -102,6 +102,18 @@ class AssessmentAccessGrantMemoryRepository(_TenantRepo):
         grant["status"]="ACTIVE";grant["verified_at"]=verified_at;grant["active_from"]=verified_at;grant["expires_at"]=expires_at;grant["record_version"]=grant.get("record_version",1)+1
         return copy.deepcopy(grant)
 
+    def expire(self,tenant_id,grant_id,trusted_now):
+        grant=self.data.get((tenant_id,grant_id))
+        if not grant or grant.get("status")!="ACTIVE" or trusted_now<grant.get("expires_at",""):raise ValueError("grant is not expirable")
+        self.u.failpoint("AUTHORITATIVE_WRITE");grant["status"]="EXPIRED";grant["record_version"]+=1;return copy.deepcopy(grant)
+    def revoke(self,tenant_id,grant_id,trusted_now):
+        grant=self.data.get((tenant_id,grant_id))
+        if not grant or grant.get("status") not in ("APPROVED","ACTIVE"):raise ValueError("grant is not revocable")
+        self.u.failpoint("AUTHORITATIVE_WRITE");grant["status"]="REVOKED";grant["revoked_at"]=trusted_now;grant["record_version"]+=1;return copy.deepcopy(grant)
+    def close_for_agreement_end(self,tenant_id,grant_id,trusted_now):
+        grant=self.data.get((tenant_id,grant_id))
+        if not grant or grant.get("status") not in ("APPROVED","ACTIVE"):raise ValueError("grant is not closable")
+        self.u.failpoint("AUTHORITATIVE_WRITE");grant["status"]="CLOSED";grant["closed_at"]=trusted_now;grant["closure_reason"]="AGREEMENT_ENDED";grant["record_version"]+=1;return copy.deepcopy(grant)
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
     def save(self,record):

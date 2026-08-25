@@ -92,3 +92,8 @@ Persisted `ACTIVE` is not technical-use authority by itself. Every future creden
 The evaluator is read-only and fails closed: access is denied when the grant is not `ACTIVE`, trusted time is before `active_from`, trusted time is at or after `expires_at` (no grace), commercial authority is invalid, or exact authority binding mismatches. This denial is immediate even before persisted lifecycle reconciliation changes status to `EXPIRED`, `REVOKED`, or `CLOSED`.
 
 Expiry, agreement end, and payment invalidation are currently authoritatively verifiable. Explicit revocation requires a future trusted command. `FINDINGS_DELIVERED_CLOSURE_SOURCE_READY = NO` and `ASSESSMENT_CLOSED_CLOSURE_SOURCE_READY = NO`: no first-class Phase 5B lifecycle truth exists yet. Payment invalidation has no frozen terminal-state/reason mapping (`CLOSED` reasons are findings delivery, assessment closure, and agreement end); a future lifecycle-model decision is needed for persisted reconciliation, while usability already denies it immediately.
+## Terminal lifecycle reconciliation
+
+Runtime usability denial remains immediate and independent of lifecycle persistence. Current truthful reconciliation is narrow: `ACTIVE` at/after `expires_at` may become `EXPIRED`; explicit trusted revocation may move `APPROVED` or `ACTIVE` to `REVOKED`; and server-resolved diagnostic agreement end may move `APPROVED` or `ACTIVE` to `CLOSED` with `AGREEMENT_ENDED`.
+
+Payment invalidation remains immediately unusable with no persisted terminal mapping. Findings delivered and assessment closure remain future Phase 5B authoritative triggers; no caller-selected closure reason is accepted.

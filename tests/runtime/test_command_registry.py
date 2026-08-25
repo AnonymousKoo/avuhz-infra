@@ -9,8 +9,8 @@ from avuhz_runtime.schema_registry import SchemaRegistry
 
 class CommandRegistryTests(unittest.TestCase):
     def test_registry_is_exactly_slice_one(self):
-        self.assertEqual(set(COMMANDS), {"AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment"})
-        self.assertEqual([entry.executable for entry in COMMANDS.values()], [False, False, False, False, True, True, True, False, True, True, True, True, True, True, True, False, True])
+        self.assertEqual(set(COMMANDS), {"AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence"})
+        self.assertEqual([entry.executable for entry in COMMANDS.values()], [False, False, False, False, True, True, True, False, True, True, True, True, True, True, True, False, True, True])
         self.assertEqual(COMMANDS["CreateAssessmentAccessProposal"].subject_type, "ASSESSMENT_ACCESS_PROPOSAL")
         self.assertEqual(COMMANDS["CreateAssessmentAccessProposal"].payload_schema_id, "urn:avuhz:schema:contracts:commands:create-assessment-access-proposal-payload:v1")
         self.assertTrue(all(entry.validatable for entry in COMMANDS.values()))
@@ -29,12 +29,15 @@ class CommandRegistryTests(unittest.TestCase):
         self.assertEqual(COMMANDS["OpenOIAAssessment"].subject_type, "OIA_ASSESSMENT")
         self.assertEqual(COMMANDS["OpenOIAAssessment"].required_capability, "oia:open")
         self.assertTrue(COMMANDS["OpenOIAAssessment"].executable)
+        self.assertEqual(COMMANDS["RecordOIAEvidence"].subject_type, "OIA_EVIDENCE_ITEM")
+        self.assertEqual(COMMANDS["RecordOIAEvidence"].required_capability, "oia:evidence:record")
+        self.assertTrue(COMMANDS["RecordOIAEvidence"].executable)
 
         self.assertIsNone(resolve_command("DeployEverything"))
 
     def test_schema_catalog_is_fixed_and_local(self):
         registry = SchemaRegistry(ROOT / "contracts/schemas/v1")
-        self.assertEqual(len(registry.schema_ids), 43)
+        self.assertEqual(len(registry.schema_ids), 45)
         with self.assertRaises(KeyError): registry.resolve("https://example.invalid/schema")
         with self.assertRaises(KeyError): registry.resolve("../outside.schema.json")
 

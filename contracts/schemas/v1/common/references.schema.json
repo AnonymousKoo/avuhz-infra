@@ -19,7 +19,13 @@
         "ASSESSMENT_ACCESS_PROPOSAL",
         "COMMAND",
         "LIFECYCLE_EVENT",
-        "INBOUND_EVENT_RECEIPT"
+        "INBOUND_EVENT_RECEIPT",
+        "OIA_ASSESSMENT",
+        "OIA_EVIDENCE_ITEM",
+        "OIA_OBSERVATION",
+        "OIA_ROOT_CAUSE",
+        "OIA_FINDING",
+        "OIA_FINDINGS_DELIVERY"
       ]
     },
     "internalReference": {

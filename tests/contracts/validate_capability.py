@@ -32,6 +32,15 @@ EXPECTED_ENUM = [
     "diagnostic_payment:invalidate",
     "inbound_event:record",
     "event:publish_internal",
+    "oia:open",
+    "oia:evidence:record",
+    "oia:observation:record",
+    "oia:root_cause:record",
+    "oia:finding:write",
+    "oia:finding:finalize",
+    "oia:assessment:review",
+    "oia:findings:deliver",
+    "oia:assessment:close",
 ]
 EXPECTED_KEYS = {
     "$schema",

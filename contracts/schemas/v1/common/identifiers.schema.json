@@ -49,6 +49,12 @@
       "$ref": "#/$defs/canonicalUuid"
     },
     "assessmentAccessProposalId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaAssessmentId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaEvidenceId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaObservationId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaRootCauseId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaFindingId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaFindingsDeliveryId": {"$ref": "#/$defs/canonicalUuid"},
     "assessmentAccessGrantId": {
       "title": "Assessment Access Grant ID",
       "description": "Canonical identity for one temporary diagnostic assessment access authority record.",

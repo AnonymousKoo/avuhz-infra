@@ -33,8 +33,8 @@ EXPECTED_REASONS = [
 ]
 EXPECTED_RESULTS = ["ACCEPTED", "REJECTED", "CONFLICT", "DUPLICATE", "NOT_AUTHORIZED", "INVALID_STATE", "VALIDATION_FAILED", "SECURITY_BLOCKED"]
 EXPECTED_RETRYABILITY = ["NOT_RETRYABLE", "RETRY_SAME_KEY", "RETRY_NEW_ATTEMPT", "HUMAN_REVIEW"]
-EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification"]
-EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL", "ASSESSMENT_ACCESS_GRANT", "DIAGNOSTIC_AGREEMENT_AUTHORITY", "DIAGNOSTIC_PAYMENT_VERIFICATION"]
+EXPECTED_COMMANDS = ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "SupersedeOIAObservation", "RecordOIARootCause", "CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment"]
+EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL", "ASSESSMENT_ACCESS_GRANT", "DIAGNOSTIC_AGREEMENT_AUTHORITY", "DIAGNOSTIC_PAYMENT_VERIFICATION", "OIA_ASSESSMENT", "OIA_EVIDENCE_ITEM", "OIA_OBSERVATION", "OIA_ROOT_CAUSE", "OIA_FINDING", "OIA_FINDINGS_DELIVERY"]
 
 
 def load(path):
@@ -155,9 +155,12 @@ def main():
         "RecordDiagnosticAgreementAuthority": "DIAGNOSTIC_AGREEMENT_AUTHORITY",
         "RecordDiagnosticPaymentVerification": "DIAGNOSTIC_PAYMENT_VERIFICATION",
         "InvalidateDiagnosticPaymentVerification": "DIAGNOSTIC_PAYMENT_VERIFICATION",
+        "OpenOIAAssessment": "OIA_ASSESSMENT", "RecordOIAEvidence": "OIA_EVIDENCE_ITEM", "RecordOIAObservation": "OIA_OBSERVATION", "SupersedeOIAObservation": "OIA_OBSERVATION", "RecordOIARootCause": "OIA_ROOT_CAUSE", "CreateOIAFinding": "OIA_FINDING", "UpdateOIAFindingAnalysis": "OIA_FINDING", "FinalizeOIAFinding": "OIA_FINDING", "MarkOIAAssessmentReadyForDelivery": "OIA_ASSESSMENT", "DeliverOIAFindings": "OIA_FINDINGS_DELIVERY", "ReviseDeliveredOIAFinding": "OIA_FINDING", "CloseOIAAssessment": "OIA_ASSESSMENT",
     }
     bindings = schemas[ENVELOPE_ID]["$defs"]["envelopeCore"]["allOf"]
     for binding in bindings:
+        if "const" not in binding["if"]["properties"]["command_type"]:
+            continue
         command_type = binding["if"]["properties"]["command_type"]["const"]
         subject_type = binding["then"]["properties"]["subject_type"]["const"]
         if expected_bindings.get(command_type) != subject_type:

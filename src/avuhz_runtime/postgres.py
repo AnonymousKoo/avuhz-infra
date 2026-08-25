@@ -17,13 +17,16 @@ def _load(value): return json.loads(value) if isinstance(value, str) and value[:
 
 class PostgresStore:
     def __init__(self, connection_factory): self.connection_factory = connection_factory
-    def snapshot(self, command):
+    def snapshot(self, command, trusted_context=None):
         queries = {"ACQUISITION_HANDOFF": ("select tenant_id, 1 as record_version, null::uuid as engagement_id, accepted_at from public.avuhz_acquisition_handoffs where tenant_id = %s and handoff_id = %s", "accepted_at"), "ENGAGEMENT": ("select tenant_id, record_version, null::uuid as engagement_id, engagement_state from public.avuhz_engagements where tenant_id = %s and engagement_id = %s", "engagement_state"), "DIAGNOSTIC_SCOPE": ("select tenant_id, record_version, engagement_id, status from public.avuhz_diagnostic_scopes where tenant_id = %s and diagnostic_scope_id = %s", "status"), "DIAGNOSTIC_AGREEMENT_AUTHORITY": ("select tenant_id, record_version, engagement_id, status from public.avuhz_diagnostic_agreement_authorities where tenant_id = %s and diagnostic_agreement_authority_id = %s", "status"), "DIAGNOSTIC_PAYMENT_VERIFICATION": ("select tenant_id, record_version, engagement_id, verification_status as status from public.avuhz_diagnostic_payment_verifications where tenant_id = %s and diagnostic_payment_verification_id = %s", "status"), "ASSESSMENT_ACCESS_PROPOSAL": ("select tenant_id, record_version, engagement_id, status from public.avuhz_assessment_access_proposals where tenant_id = %s and assessment_access_proposal_id = %s", "status"), "ASSESSMENT_ACCESS_GRANT": ("select tenant_id, record_version, engagement_id, status from public.avuhz_assessment_access_grants where tenant_id = %s and assessment_access_grant_id = %s", "status")}
         query = queries.get(command.subject_type)
         if not query: return None
         sql, state = query
         conn = self.connection_factory()
         try:
+            tenant = getattr(trusted_context, "tenant_id", None)
+            if tenant:
+                conn.execute("select set_config('avuhz.tenant_id',%s,true)", (str(uuid.UUID(str(tenant))),))
             row = conn.execute(sql, (command.tenant_id, command.subject_id)).fetchone()
             if not row: return None
             return AuthoritativeSubjectSnapshot(command.subject_type, command.subject_id, str(row["tenant_id"]), row.get("record_version", 1), True, str(row["engagement_id"]) if row.get("engagement_id") else None, "ACCEPTED" if state == "accepted_at" and row[state] else row[state])

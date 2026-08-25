@@ -182,7 +182,15 @@ class Executor:
     def execute(self,raw,context):
         first=self.validator.prepare(raw)
         if isinstance(first,ValidationFailure):return {"result":"VALIDATION_FAILED","reason_code":first.reason.value}
-        p=first.prepared; u=self.uow_factory(self.store); scope=idempotency_scope(p)
+        p=first.prepared
+        try:
+            u=self.uow_factory(self.store)
+            bind_context=getattr(u,"bind_trusted_context",None)
+            if bind_context: bind_context(context)
+        except (ValueError, RuntimeError):
+            getattr(locals().get("u"),"rollback",lambda:None)();getattr(locals().get("u"),"close",lambda:None)()
+            return {"result":"REJECTED","reason_code":"PREREQUISITE_STATE_INVALID"}
+        scope=idempotency_scope(p)
         key=(p.tenant_id,context.principal_id,p.command_type,p.subject_type,scope,p.idempotency_key); fp=fingerprint(raw); prior=u.idempotency.get(key)
         if prior:getattr(u,"rollback",lambda:None)();getattr(u,"close",lambda:None)();return {"result":"DUPLICATE","reason_code":"DUPLICATE_REQUEST","prior_result_reference":prior["command_id"]} if prior["fingerprint"]==fp else {"result":"CONFLICT","reason_code":"IDEMPOTENCY_SEMANTIC_MISMATCH"}
         guarded=prepare_and_guard_command(self.validator,self.pipeline,raw,context,self.store.snapshot(p),self.clock())

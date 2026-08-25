@@ -1,6 +1,6 @@
 """Provider-neutral PostgreSQL catalog assertions for the Slice 1 schema."""
 from __future__ import annotations
-import os, subprocess, sys
+import os, re, subprocess, sys
 
 TABLES = ('avuhz_acquisition_handoffs', 'avuhz_engagements', 'avuhz_diagnostic_scopes', 'avuhz_human_approvals', 'avuhz_idempotency_records', 'avuhz_lifecycle_events', 'avuhz_outbox_deliveries')
 LEGACY = ('tenant_users', 'engagements', 'engagement_events')
@@ -87,6 +87,8 @@ def accepts_canonicalize_diagnostic_scope_command_type():
 
 def require(ok, message):
     if not ok: raise AssertionError(message)
+def sql_string_literals(expression):
+    return frozenset(value.replace("''", "'") for value in re.findall(r"'((?:''|[^'])*)'", expression))
 
 def main():
     available = set(query("select tablename from pg_tables where schemaname = 'public'"))
@@ -116,14 +118,16 @@ def main():
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_lifecycle_events' and column_name = '{column}'") == ['YES'], f'lifecycle event envelope cannot represent {column}')
     event_check = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_lifecycle_events'::regclass and conname = 'avuhz_lifecycle_events_event_type_check'")
     require(len(event_check) == 1, 'lifecycle event type check is missing')
-    for event_type in ('engagement.handoff.accepted', 'engagement.opened', 'diagnostic_scope.submitted', 'diagnostic_scope.approved', 'diagnostic_scope.rejected', 'human_approval.recorded', 'diagnostic_scope.canonicalized'):
-        require(event_type in event_check[0], f'lifecycle event type {event_type} is not allowed')
-    require('payment.verified' not in event_check[0], 'lifecycle event type check is not closed')
+    event_literals = sql_string_literals(event_check[0])
+    for event_type in ('engagement.handoff.accepted', 'engagement.opened', 'diagnostic_scope.submitted', 'diagnostic_scope.approved', 'diagnostic_scope.rejected', 'human_approval.recorded', 'diagnostic_scope.canonicalized', 'diagnostic_payment.verified', 'diagnostic_payment.invalidated'):
+        require(event_type in event_literals, f'lifecycle event type {event_type} is not allowed')
+    for event_type in ('payment.verified', 'payment.invalidated'):
+        require(event_type not in event_literals, f'lifecycle event type {event_type} is not closed')
     require(accepts_diagnostic_scope_canonicalized_event_type(), 'diagnostic_scope.canonicalized lifecycle event type was rejected')
     require(rejects_unknown_lifecycle_event_type(), 'unsupported lifecycle event type was accepted')
     idempotency_check = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_idempotency_records'::regclass and conname = 'avuhz_idempotency_records_command_type_check'")
     idempotency_unique = query("select pg_get_constraintdef(oid) from pg_constraint where conrelid = 'public.avuhz_idempotency_records'::regclass and contype = 'u'")
-    require(any('UNIQUE (tenant_id, trusted_principal_id, command_type, subject_type, subject_id, idempotency_key)' in definition for definition in idempotency_unique), 'tenant-scoped idempotency uniqueness drifted')
+    require(any('UNIQUE (tenant_id, trusted_principal_id, command_type, subject_type, idempotency_scope, idempotency_key)' in definition for definition in idempotency_unique), 'command-scoped idempotency uniqueness drifted')
     require(len(idempotency_check) == 1 and 'RecordHumanApproval' in idempotency_check[0], 'RecordHumanApproval idempotency command type is not allowed')
     require('CanonicalizeDiagnosticScope' in idempotency_check[0], 'CanonicalizeDiagnosticScope idempotency command type is not allowed')
     require(accepts_canonicalize_diagnostic_scope_command_type(), 'CanonicalizeDiagnosticScope idempotency command type was rejected')
@@ -132,8 +136,8 @@ def main():
     require(query("select column_default is not null from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_outbox_deliveries' and column_name = 'outbox_delivery_id'") == ['t'], 'outbox ID requires persistence-owned default')
     for column in ('approving_principal_reference', 'approving_organization_reference', 'decision', 'conditions', 'effective_at', 'evidence_reference', 'correlation_id', 'idempotency_key'):
         require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_human_approvals' and column_name = '{column}'") == ['YES'], f'human approval future field {column} must be optional')
-    for column in ('tenant_id', 'diagnostic_scope_id', 'approved_scope_version', 'approval_role', 'authority_category', 'canonical_scope_digest', 'action_set_version', 'status'):
-        require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_human_approvals' and column_name = '{column}'") == ['NO'], f'human approval authority binding {column} must be required')
+    for column in ('tenant_id', 'approval_role', 'authority_category', 'status'):
+        require(query(f"select is_nullable from information_schema.columns where table_schema = 'public' and table_name = 'avuhz_human_approvals' and column_name = '{column}'") == ['NO'], f'human approval shared authority binding {column} must be required')
     print('avuhz Slice 1 schema assertion: PASS')
 
 if __name__ == '__main__':

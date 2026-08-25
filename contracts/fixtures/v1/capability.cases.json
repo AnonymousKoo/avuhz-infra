@@ -12,6 +12,7 @@
     { "name": "approve assessment access", "value": "assessment_access:approve" },
     { "name": "issue assessment access", "value": "assessment_access:issue" },
     { "name": "create approval", "value": "approval:create" },
+    { "name": "verify assessment access", "value": "assessment_access:verify" },
     { "name": "record inbound event", "value": "inbound_event:record" },
     { "name": "publish internal event", "value": "event:publish_internal" }
   ],

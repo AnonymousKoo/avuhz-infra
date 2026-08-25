@@ -22,6 +22,7 @@ EXPECTED_ENUM = [
     "assessment_access:approve",
     "assessment_access:propose",
     "assessment_access:issue",
+    "assessment_access:verify",
     "approval:create",
     "inbound_event:record",
     "event:publish_internal",

@@ -181,6 +181,12 @@ classification is recalculated on expected-version draft updates and frozen at
 finalization. This avoids false numerical precision while retaining the facts
 behind a ranking.
 
+The normative derivation is versioned as Finding Priority Policy v1 in
+`docs/oia/finding-priority-policy.md` and
+`contracts/policies/oia-finding-priority-policy.v1.json`. `OIAFinding` contract
+v1 is normatively bound to policy version `1.0.0`; a future policy cannot
+silently reinterpret v1. An unversioned `latest` reference is not authoritative.
+
 ## G. Human authority and client-facing boundary
 
 Trusted internal workloads and authorized Sekinfra humans may record sanitized

@@ -153,7 +153,7 @@ class OIAObservationRuntimeTests(unittest.TestCase):
             set(self.store.events[0]["sanitized_metadata"]),
             {"oia_assessment_id", "oia_observation_id", "record_version"},
         )
-        self.assertFalse(hasattr(self.store, "oia_root_causes")); self.assertFalse(hasattr(self.store, "oia_findings"))
+        self.assertEqual(self.store.oia_root_causes, {}); self.assertFalse(hasattr(self.store, "oia_findings"))
 
     def test_sufficient_support_does_not_invent_numeric_confidence_threshold(self):
         item = self.store.oia_inspection_items[(self.base.tenant, self.base.item_id)]

@@ -47,6 +47,8 @@ class CommandValidator:
     def _composed_schema(self, definition: CommandDefinition) -> dict[str, Any]:
         constraints: dict[str, Any] = {"type": "object", "properties": {"command_type": {"const": definition.command_type}, "subject_type": {"const": definition.subject_type}, "payload_schema": {"const": definition.payload_schema_id}}, "required": ["payload"]}
         if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
+        elif definition.command_type == "RecordOIARootCause":
+            constraints["required"] += ["engagement_id"]
         elif definition.command_type in ("OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"):
             constraints["not"] = {"required": ["expected_record_version"]}
             if definition.command_type in ("OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"): constraints["required"] += ["engagement_id"]
@@ -86,6 +88,8 @@ class CommandValidator:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA observation payload must identify the command subject")
             if definition.command_type == "SupersedeOIAObservation" and payload["replacement_oia_observation_id"] == raw["subject_id"]:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "an observation cannot supersede itself")
+        if definition.command_type == "RecordOIARootCause" and raw["payload"]["oia_root_cause_id"] != raw["subject_id"]:
+            return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA root-cause payload must identify the command subject")
         if definition.command_type in ("CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan"):
             payload = raw["payload"]
             if payload["oia_assessment_plan_id"] != raw["subject_id"]:

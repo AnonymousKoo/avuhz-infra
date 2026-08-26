@@ -38,6 +38,9 @@ COMMANDS = {
     "ReviseOIAAssessmentPlan": CommandDefinition("ReviseOIAAssessmentPlan", "OIA_ASSESSMENT_PLAN", 1, "urn:avuhz:schema:contracts:commands:revise-oia-assessment-plan-payload:v1", 1, required_capability="oia:plan:write", executable=True),
     "ReviewOIAAssessmentPlan": CommandDefinition("ReviewOIAAssessmentPlan", "OIA_ASSESSMENT_PLAN", 1, "urn:avuhz:schema:contracts:commands:review-oia-assessment-plan-payload:v1", 1, required_capability="oia:plan:review", executable=True),
     "ApproveOIAAssessmentPlan": CommandDefinition("ApproveOIAAssessmentPlan", "OIA_ASSESSMENT_PLAN", 1, "urn:avuhz:schema:contracts:commands:approve-oia-assessment-plan-payload:v1", 1, required_capability="oia:plan:approve", executable=True),
+    "CreateOIAInspectionItem": CommandDefinition("CreateOIAInspectionItem", "OIA_INSPECTION_ITEM", 1, "urn:avuhz:schema:contracts:commands:create-oia-inspection-item-payload:v1", 1, required_capability="oia:inspection:manage", executable=True),
+    "UpdateOIAInspectionItem": CommandDefinition("UpdateOIAInspectionItem", "OIA_INSPECTION_ITEM", 1, "urn:avuhz:schema:contracts:commands:update-oia-inspection-item-payload:v1", 1, required_capability="oia:inspection:manage", executable=True),
+    "MarkOIAInspectionItemBlocked": CommandDefinition("MarkOIAInspectionItemBlocked", "OIA_INSPECTION_ITEM", 1, "urn:avuhz:schema:contracts:commands:mark-oia-inspection-item-blocked-payload:v1", 1, required_capability="oia:inspection:manage", executable=True),
 }
 
 

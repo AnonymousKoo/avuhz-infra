@@ -21,6 +21,8 @@
         "LIFECYCLE_EVENT",
         "INBOUND_EVENT_RECEIPT",
         "OIA_ASSESSMENT",
+        "OIA_ASSESSMENT_PLAN",
+        "OIA_INSPECTION_ITEM",
         "OIA_EVIDENCE_ITEM",
         "OIA_OBSERVATION",
         "OIA_ROOT_CAUSE",

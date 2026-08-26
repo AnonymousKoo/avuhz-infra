@@ -50,6 +50,8 @@
     },
     "assessmentAccessProposalId": {"$ref": "#/$defs/canonicalUuid"},
     "oiaAssessmentId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaAssessmentPlanId": {"title": "OIA Assessment Plan ID", "description": "Canonical identity for one versioned client-specific OIA assessment plan resource.", "$ref": "#/$defs/canonicalUuid"},
+    "oiaInspectionItemId": {"title": "OIA Inspection Item ID", "description": "Canonical identity for one first-class OIA diagnostic inspection item.", "$ref": "#/$defs/canonicalUuid"},
     "oiaEvidenceId": {"$ref": "#/$defs/canonicalUuid"},
     "oiaObservationId": {"$ref": "#/$defs/canonicalUuid"},
     "oiaRootCauseId": {"$ref": "#/$defs/canonicalUuid"},

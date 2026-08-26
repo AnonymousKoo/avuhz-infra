@@ -41,6 +41,10 @@ EXPECTED_ENUM = [
     "oia:assessment:review",
     "oia:findings:deliver",
     "oia:assessment:close",
+    "oia:plan:write",
+    "oia:plan:review",
+    "oia:plan:approve",
+    "oia:inspection:manage",
 ]
 EXPECTED_KEYS = {
     "$schema",

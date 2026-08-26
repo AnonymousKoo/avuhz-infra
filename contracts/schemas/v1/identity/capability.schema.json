@@ -34,6 +34,10 @@
     "oia:finding:finalize",
     "oia:assessment:review",
     "oia:findings:deliver",
-    "oia:assessment:close"
+    "oia:assessment:close",
+    "oia:plan:write",
+    "oia:plan:review",
+    "oia:plan:approve",
+    "oia:inspection:manage"
   ]
 }

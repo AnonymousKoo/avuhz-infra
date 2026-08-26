@@ -47,9 +47,9 @@ class CommandValidator:
     def _composed_schema(self, definition: CommandDefinition) -> dict[str, Any]:
         constraints: dict[str, Any] = {"type": "object", "properties": {"command_type": {"const": definition.command_type}, "subject_type": {"const": definition.subject_type}, "payload_schema": {"const": definition.payload_schema_id}}, "required": ["payload"]}
         if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
-        elif definition.command_type in ("OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence"):
+        elif definition.command_type in ("OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "CreateOIAAssessmentPlan"):
             constraints["not"] = {"required": ["expected_record_version"]}
-            if definition.command_type in ("OpenOIAAssessment", "RecordOIAEvidence"): constraints["required"] += ["engagement_id"]
+            if definition.command_type in ("OpenOIAAssessment", "RecordOIAEvidence", "CreateOIAAssessmentPlan"): constraints["required"] += ["engagement_id"]
         else: constraints["required"] += ["engagement_id", "expected_record_version"]
         return {"allOf": [{"$ref": ENVELOPE_ID + "#/$defs/envelopeCore"}, {"type": "object", "required": ["payload"], "properties": {"payload": {"$ref": definition.payload_schema_id}}}, constraints], "unevaluatedProperties": False}
 
@@ -59,7 +59,7 @@ class CommandValidator:
     def _semantic_failure(self, raw: dict[str, Any], definition: CommandDefinition) -> ValidationFailure | None:
         if raw["subject_type"] != definition.subject_type:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "command subject does not match registration")
-        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence") and "expected_record_version" in raw:
+        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "CreateOIAAssessmentPlan") and "expected_record_version" in raw:
             return self._failure(RuntimeReason.VERSION_REQUIRED, "expected version is not permitted for this command")
         if definition.command_type == "AcceptAcquisitionHandoff" and "engagement_id" in raw:
             return self._failure(RuntimeReason.FIELD_FORBIDDEN, "engagement context is not permitted for handoff acceptance")
@@ -80,6 +80,12 @@ class CommandValidator:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA payload must identify the command subject and engagement")
         if definition.command_type == "RecordOIAEvidence" and raw["payload"]["oia_evidence_id"] != raw["subject_id"]:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA evidence payload must identify the command subject")
+        if definition.command_type in ("CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan"):
+            payload = raw["payload"]
+            if payload["oia_assessment_plan_id"] != raw["subject_id"]:
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA plan payload must identify the command subject")
+            if definition.command_type == "CreateOIAAssessmentPlan" and payload["engagement_id"] != raw.get("engagement_id"):
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA plan payload must identify the command engagement")
         return None
 
     @staticmethod

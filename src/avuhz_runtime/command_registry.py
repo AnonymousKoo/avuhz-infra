@@ -34,6 +34,10 @@ COMMANDS = {
     "CanonicalizeDiagnosticScope": CommandDefinition("CanonicalizeDiagnosticScope", "DIAGNOSTIC_SCOPE", 1, "urn:avuhz:schema:contracts:commands:canonicalize-diagnostic-scope-payload:v1", 1),
     "OpenOIAAssessment": CommandDefinition("OpenOIAAssessment", "OIA_ASSESSMENT", 1, "urn:avuhz:schema:contracts:commands:open-oia-assessment-payload:v1", 1, required_capability="oia:open", executable=True),
     "RecordOIAEvidence": CommandDefinition("RecordOIAEvidence", "OIA_EVIDENCE_ITEM", 1, "urn:avuhz:schema:contracts:commands:record-oia-evidence-payload:v1", 1, required_capability="oia:evidence:record", executable=True),
+    "CreateOIAAssessmentPlan": CommandDefinition("CreateOIAAssessmentPlan", "OIA_ASSESSMENT_PLAN", 1, "urn:avuhz:schema:contracts:commands:create-oia-assessment-plan-payload:v1", 1, required_capability="oia:plan:write", executable=True),
+    "ReviseOIAAssessmentPlan": CommandDefinition("ReviseOIAAssessmentPlan", "OIA_ASSESSMENT_PLAN", 1, "urn:avuhz:schema:contracts:commands:revise-oia-assessment-plan-payload:v1", 1, required_capability="oia:plan:write", executable=True),
+    "ReviewOIAAssessmentPlan": CommandDefinition("ReviewOIAAssessmentPlan", "OIA_ASSESSMENT_PLAN", 1, "urn:avuhz:schema:contracts:commands:review-oia-assessment-plan-payload:v1", 1, required_capability="oia:plan:review", executable=True),
+    "ApproveOIAAssessmentPlan": CommandDefinition("ApproveOIAAssessmentPlan", "OIA_ASSESSMENT_PLAN", 1, "urn:avuhz:schema:contracts:commands:approve-oia-assessment-plan-payload:v1", 1, required_capability="oia:plan:approve", executable=True),
 }
 
 

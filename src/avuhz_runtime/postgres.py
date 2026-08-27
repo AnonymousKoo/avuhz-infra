@@ -4,6 +4,16 @@ import json, os, uuid
 import psycopg
 from psycopg.rows import dict_row
 from .guards import AuthoritativeSubjectSnapshot
+from .postgres_oia import (
+    OIAAssessmentPlanPostgresRepository,
+    OIAAssessmentPostgresRepository,
+    OIAEvidencePostgresRepository,
+    OIAFindingPostgresRepository,
+    OIAFindingsDeliveryPostgresRepository,
+    OIAInspectionItemPostgresRepository,
+    OIAObservationPostgresRepository,
+    OIARootCausePostgresRepository,
+)
 
 def connection_factory_from_environment(name="AVUHZ_POSTGRES_DSN"):
     def factory():
@@ -18,8 +28,27 @@ def _load(value): return json.loads(value) if isinstance(value, str) and value[:
 class PostgresStore:
     def __init__(self, connection_factory): self.connection_factory = connection_factory
     def snapshot(self, command, trusted_context=None):
-        queries = {"ACQUISITION_HANDOFF": ("select tenant_id, 1 as record_version, null::uuid as engagement_id, accepted_at from public.avuhz_acquisition_handoffs where tenant_id = %s and handoff_id = %s", "accepted_at"), "ENGAGEMENT": ("select tenant_id, record_version, null::uuid as engagement_id, engagement_state from public.avuhz_engagements where tenant_id = %s and engagement_id = %s", "engagement_state"), "DIAGNOSTIC_SCOPE": ("select tenant_id, record_version, engagement_id, status from public.avuhz_diagnostic_scopes where tenant_id = %s and diagnostic_scope_id = %s", "status"), "DIAGNOSTIC_AGREEMENT_AUTHORITY": ("select tenant_id, record_version, engagement_id, status from public.avuhz_diagnostic_agreement_authorities where tenant_id = %s and diagnostic_agreement_authority_id = %s", "status"), "DIAGNOSTIC_PAYMENT_VERIFICATION": ("select tenant_id, record_version, engagement_id, verification_status as status from public.avuhz_diagnostic_payment_verifications where tenant_id = %s and diagnostic_payment_verification_id = %s", "status"), "ASSESSMENT_ACCESS_PROPOSAL": ("select tenant_id, record_version, engagement_id, status from public.avuhz_assessment_access_proposals where tenant_id = %s and assessment_access_proposal_id = %s", "status"), "ASSESSMENT_ACCESS_GRANT": ("select tenant_id, record_version, engagement_id, status from public.avuhz_assessment_access_grants where tenant_id = %s and assessment_access_grant_id = %s", "status")}
+        queries = {
+            "ACQUISITION_HANDOFF": ("select tenant_id,1 as record_version,null::uuid as engagement_id,accepted_at from public.avuhz_acquisition_handoffs where tenant_id=%s and handoff_id=%s", "accepted_at"),
+            "ENGAGEMENT": ("select tenant_id,record_version,null::uuid as engagement_id,engagement_state from public.avuhz_engagements where tenant_id=%s and engagement_id=%s", "engagement_state"),
+            "DIAGNOSTIC_SCOPE": ("select tenant_id,record_version,engagement_id,status from public.avuhz_diagnostic_scopes where tenant_id=%s and diagnostic_scope_id=%s", "status"),
+            "DIAGNOSTIC_AGREEMENT_AUTHORITY": ("select tenant_id,record_version,engagement_id,status from public.avuhz_diagnostic_agreement_authorities where tenant_id=%s and diagnostic_agreement_authority_id=%s", "status"),
+            "DIAGNOSTIC_PAYMENT_VERIFICATION": ("select tenant_id,record_version,engagement_id,verification_status as status from public.avuhz_diagnostic_payment_verifications where tenant_id=%s and diagnostic_payment_verification_id=%s", "status"),
+            "ASSESSMENT_ACCESS_PROPOSAL": ("select tenant_id,record_version,engagement_id,status from public.avuhz_assessment_access_proposals where tenant_id=%s and assessment_access_proposal_id=%s", "status"),
+            "ASSESSMENT_ACCESS_GRANT": ("select tenant_id,record_version,engagement_id,status from public.avuhz_assessment_access_grants where tenant_id=%s and assessment_access_grant_id=%s", "status"),
+            "OIA_ASSESSMENT": ("select tenant_id,record_version,engagement_id,state from public.avuhz_oia_assessments where tenant_id=%s and oia_assessment_id=%s", "state"),
+            "OIA_ASSESSMENT_PLAN": ("select tenant_id,record_version,engagement_id,state from public.avuhz_oia_assessment_plans where tenant_id=%s and oia_assessment_plan_id=%s and state<>'SUPERSEDED' order by plan_version desc limit 1", "state"),
+            "OIA_INSPECTION_ITEM": ("select tenant_id,record_version,engagement_id,coverage_state as state from public.avuhz_oia_inspection_items where tenant_id=%s and oia_inspection_item_id=%s", "state"),
+            "OIA_EVIDENCE_ITEM": ("select e.tenant_id,1 as record_version,a.engagement_id,null::text as state from public.avuhz_oia_evidence_items e join public.avuhz_oia_assessments a using (tenant_id,oia_assessment_id) where e.tenant_id=%s and e.oia_evidence_id=%s", "state"),
+            "OIA_OBSERVATION": ("select o.tenant_id,o.record_version,a.engagement_id,o.state from public.avuhz_oia_observations o join public.avuhz_oia_assessments a using (tenant_id,oia_assessment_id) where o.tenant_id=%s and o.oia_observation_id=%s", "state"),
+            "OIA_ROOT_CAUSE": ("select r.tenant_id,r.record_version,a.engagement_id,r.confidence as state from public.avuhz_oia_root_causes r join public.avuhz_oia_assessments a using (tenant_id,oia_assessment_id) where r.tenant_id=%s and r.oia_root_cause_id=%s", "state"),
+            "OIA_FINDING": ("select f.tenant_id,f.finding_revision as record_version,a.engagement_id,f.state from public.avuhz_oia_findings f join public.avuhz_oia_assessments a using (tenant_id,oia_assessment_id) where f.tenant_id=%s and f.oia_finding_id=%s and f.state<>'SUPERSEDED' order by f.finding_revision desc limit 1", "state"),
+        }
         query = queries.get(command.subject_type)
+        subject_id = command.subject_id
+        if command.subject_type == "OIA_FINDINGS_DELIVERY":
+            query = ("select tenant_id,record_version,engagement_id,state from public.avuhz_oia_assessments where tenant_id=%s and oia_assessment_id=%s", "state")
+            subject_id = command.payload.get("oia_assessment_id")
         if not query: return None
         sql, state = query
         conn = self.connection_factory()
@@ -27,7 +56,7 @@ class PostgresStore:
             tenant = getattr(trusted_context, "tenant_id", None)
             if tenant:
                 conn.execute("select set_config('avuhz.tenant_id',%s,true)", (str(uuid.UUID(str(tenant))),))
-            row = conn.execute(sql, (command.tenant_id, command.subject_id)).fetchone()
+            row = conn.execute(sql, (command.tenant_id, subject_id)).fetchone()
             if not row: return None
             return AuthoritativeSubjectSnapshot(command.subject_type, command.subject_id, str(row["tenant_id"]), row.get("record_version", 1), True, str(row["engagement_id"]) if row.get("engagement_id") else None, "ACCEPTED" if state == "accepted_at" and row[state] else row[state])
         finally: conn.close()
@@ -167,6 +196,13 @@ class AssessmentAccessGrantPostgresRepository(_TenantRepository):
         x=self.get(t,i)
         if not x or x["status"] not in ("APPROVED","ACTIVE"):raise ValueError("grant is not closable")
         return self._transition(t,i,x,"CLOSED","closed_at=%s,closure_reason='AGREEMENT_ENDED'",(now,))
+    def close_for_lifecycle(self,t,i,now,reason):
+        x=self.get(t,i)
+        if not x:raise ValueError("assessment access grant is required")
+        if reason not in ("FINDINGS_DELIVERED","ASSESSMENT_CLOSED"):raise ValueError("closure reason is not an OIA terminal source")
+        if x["status"] in ("EXPIRED","REVOKED","CLOSED"):return None
+        if x["status"] not in ("APPROVED","ACTIVE"):raise ValueError("grant is not closable")
+        return self._transition(t,i,x,"CLOSED","closed_at=%s,closure_reason=%s",(now,reason))
     def _transition(self,t,i,x,status,fields,values):
         self.uow.failpoint("AUTHORITATIVE_WRITE"); assignments="status=%s" + ("," + fields if fields else "") + ",record_version=record_version+1";cur=self.uow.connection.execute(f"update public.avuhz_assessment_access_grants set {assignments} where tenant_id=%s and assessment_access_grant_id=%s and status=%s and record_version=%s",(status,*values,t,i,x["status"],x["record_version"]))
         if cur.rowcount!=1:raise ValueError("grant transition conflict")
@@ -201,7 +237,22 @@ class IdempotencyPostgresRepository:
 class LifecycleEventPostgresRepository:
     def __init__(self,uow): self.uow=uow
     def append(self,event):
-        self.uow.failpoint("LIFECYCLE_EVENT_APPEND"); self.uow.connection.execute("insert into public.avuhz_lifecycle_events (lifecycle_event_id,tenant_id,event_type,authoritative_subject_id,idempotency_key) values (%s,%s,%s,%s,%s)",(event["event_id"],event["tenant_id"],event["event_type"],event["subject_id"],event["idempotency_key"]))
+        self.uow.failpoint("LIFECYCLE_EVENT_APPEND")
+        subject=event.get("authoritative_subject_reference")
+        if not subject:
+            self.uow.connection.execute(
+                "insert into public.avuhz_lifecycle_events "
+                "(lifecycle_event_id,tenant_id,event_type,authoritative_subject_id,idempotency_key) "
+                "values (%s,%s,%s,%s,%s)",
+                (event["event_id"],event["tenant_id"],event["event_type"],event["subject_id"],event["idempotency_key"]),
+            )
+            return
+        self.uow.connection.execute(
+            "insert into public.avuhz_lifecycle_events "
+            "(lifecycle_event_id,tenant_id,engagement_id,event_type,event_schema_version,authoritative_subject_type,authoritative_subject_id,authoritative_subject_version,occurred_at,producer_reference,correlation_id,causation_id,idempotency_key,visibility,sanitized_metadata) "
+            "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)",
+            (event["event_id"],event["tenant_id"],event.get("engagement_id"),event["event_type"],event["event_schema_version"],subject["reference_type"],subject["reference_id"],event["authoritative_subject_version"],event["occurred_at"],event["producer_reference"],event["correlation_id"],event.get("command_id"),event["idempotency_key"],event["visibility"],_json(event["sanitized_metadata"])),
+        )
 
 class OutboxPostgresRepository:
     def __init__(self,uow): self.uow=uow
@@ -211,9 +262,18 @@ class OutboxPostgresRepository:
 
 class PostgresUnitOfWork:
     def __init__(self,store,trusted_context=None):
-        self.store=store; self.connection=store.connection_factory(); self.connection.autocommit=False; self.fail_stage=getattr(store,"fail_stage",None); self.trusted_tenant_id=None
-        if trusted_context is not None:self.bind_trusted_context(trusted_context)
-        self.handoffs=AcquisitionHandoffPostgresRepository(self); self.engagements=EngagementPostgresRepository(self); self.diagnostic_scopes=DiagnosticScopePostgresRepository(self); self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityPostgresRepository(self); self.diagnostic_payment_verifications=DiagnosticPaymentVerificationPostgresRepository(self); self.assessment_access_proposals=AssessmentAccessProposalPostgresRepository(self); self.assessment_access_grants=AssessmentAccessGrantPostgresRepository(self); self.human_approvals=HumanApprovalPostgresRepository(self); self.idempotency=IdempotencyPostgresRepository(self); self.lifecycle_events=LifecycleEventPostgresRepository(self); self.outbox=OutboxPostgresRepository(self)
+        self.store=store
+        self.connection=store.connection_factory()
+        if self.connection.autocommit:self.connection.autocommit=False
+        self.fail_stage=getattr(store,"fail_stage",None)
+        self.trusted_tenant_id=None
+        if trusted_context is not None:
+            try:
+                self.bind_trusted_context(trusted_context)
+            except Exception:
+                self.connection.close()
+                raise
+        self.handoffs=AcquisitionHandoffPostgresRepository(self); self.engagements=EngagementPostgresRepository(self); self.diagnostic_scopes=DiagnosticScopePostgresRepository(self); self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityPostgresRepository(self); self.diagnostic_payment_verifications=DiagnosticPaymentVerificationPostgresRepository(self); self.assessment_access_proposals=AssessmentAccessProposalPostgresRepository(self); self.assessment_access_grants=AssessmentAccessGrantPostgresRepository(self); self.oia_assessments=OIAAssessmentPostgresRepository(self); self.oia_evidence_items=OIAEvidencePostgresRepository(self); self.oia_assessment_plans=OIAAssessmentPlanPostgresRepository(self); self.oia_inspection_items=OIAInspectionItemPostgresRepository(self); self.oia_observations=OIAObservationPostgresRepository(self); self.oia_root_causes=OIARootCausePostgresRepository(self); self.oia_findings=OIAFindingPostgresRepository(self); self.oia_findings_deliveries=OIAFindingsDeliveryPostgresRepository(self); self.human_approvals=HumanApprovalPostgresRepository(self); self.idempotency=IdempotencyPostgresRepository(self); self.lifecycle_events=LifecycleEventPostgresRepository(self); self.outbox=OutboxPostgresRepository(self)
     def bind_trusted_context(self,context):
         if not getattr(context,"authenticated",False) or not getattr(context,"tenant_id",None):raise ValueError("trusted tenant context is required")
         tenant=str(uuid.UUID(str(context.tenant_id)))

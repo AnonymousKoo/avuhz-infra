@@ -49,6 +49,9 @@ class CommandValidator:
         if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
         elif definition.command_type == "RecordOIARootCause":
             constraints["required"] += ["engagement_id"]
+        elif definition.command_type in ("RecordOIAConversionDecision", "ProposeOngoingAgreement", "RecordOngoingPaymentVerification", "ProposeOngoingAccessGrant", "InitiateOngoingOffboarding"):
+            constraints["not"] = {"required": ["expected_record_version"]}
+            constraints["required"] += ["engagement_id"]
         elif definition.command_type in ("OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"):
             constraints["not"] = {"required": ["expected_record_version"]}
             if definition.command_type in ("OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"): constraints["required"] += ["engagement_id"]
@@ -61,13 +64,13 @@ class CommandValidator:
     def _semantic_failure(self, raw: dict[str, Any], definition: CommandDefinition) -> ValidationFailure | None:
         if raw["subject_type"] != definition.subject_type:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "command subject does not match registration")
-        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem") and "expected_record_version" in raw:
+        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem", "RecordOIAConversionDecision", "ProposeOngoingAgreement", "RecordOngoingPaymentVerification", "ProposeOngoingAccessGrant", "InitiateOngoingOffboarding") and "expected_record_version" in raw:
             return self._failure(RuntimeReason.VERSION_REQUIRED, "expected version is not permitted for this command")
         if definition.command_type == "AcceptAcquisitionHandoff" and "engagement_id" in raw:
             return self._failure(RuntimeReason.FIELD_FORBIDDEN, "engagement context is not permitted for handoff acceptance")
-        identity_field = {"RecordDiagnosticAgreementAuthority": "diagnostic_agreement_authority_id", "RecordDiagnosticPaymentVerification": "diagnostic_payment_verification_id", "InvalidateDiagnosticPaymentVerification": "diagnostic_payment_verification_id"}.get(definition.command_type)
+        identity_field = {"RecordDiagnosticAgreementAuthority": "diagnostic_agreement_authority_id", "RecordDiagnosticPaymentVerification": "diagnostic_payment_verification_id", "InvalidateDiagnosticPaymentVerification": "diagnostic_payment_verification_id", "RecordOIAConversionDecision":"oia_conversion_decision_id", "AcceptOIAConversion":"oia_conversion_decision_id", "ProposeOngoingAgreement":"ongoing_agreement_authority_id", "RecordOngoingAgreementApproval":"ongoing_agreement_authority_id", "ActivateOngoingAgreement":"ongoing_agreement_authority_id", "TerminateOngoingAgreement":"ongoing_agreement_authority_id", "RecordOngoingPaymentVerification":"ongoing_payment_verification_id", "InvalidateOngoingPaymentVerification":"ongoing_payment_verification_id", "ProposeOngoingAccessGrant":"ongoing_access_grant_id", "RecordOngoingAccessApproval":"ongoing_access_grant_id", "ApproveOngoingAccessGrant":"ongoing_access_grant_id", "VerifyOngoingAccess":"ongoing_access_grant_id", "RevokeOngoingAccess":"ongoing_access_grant_id", "CloseOngoingAccess":"ongoing_access_grant_id", "InitiateOngoingOffboarding":"ongoing_offboarding_id", "VerifyOngoingAccessRevocation":"ongoing_access_revocation_verification_id", "CompleteOngoingOffboarding":"ongoing_offboarding_id"}.get(definition.command_type)
         if identity_field and raw["payload"][identity_field] != raw["subject_id"]:
-            return self._failure(RuntimeReason.PAYLOAD_INVALID, "commercial payload must identify the command subject")
+            return self._failure(RuntimeReason.PAYLOAD_INVALID, "payload must identify the command subject")
         if definition.command_type == "RecordHumanApproval" and raw["payload"]["diagnostic_scope_id"] != raw["subject_id"]:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "approval payload must identify the command subject")
         if definition.command_type == "ApproveDiagnosticScope":

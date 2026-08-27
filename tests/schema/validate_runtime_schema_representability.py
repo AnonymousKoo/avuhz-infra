@@ -3,8 +3,15 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / 'tests' / 'contracts')]
+sys.path[:0] = [str(ROOT), str(ROOT / 'src'), str(ROOT / 'tests' / 'contracts')]
+from jsonschema import Draft202012Validator
 from validate_command_payloads import handoff, payloads
+from avuhz_runtime.in_memory import UnitOfWork
+from avuhz_runtime.phase5c import (
+    PHASE5C_CAPABILITIES, PHASE5C_COMMANDS, PHASE5C_EVENTS, Phase5CReadService,
+)
+from avuhz_runtime.schema_registry import SchemaRegistry
+from tests.runtime.test_phase5c_runtime import Phase5CRuntimeTests
 
 def require(ok, message):
     if not ok: raise AssertionError(message)
@@ -42,9 +49,83 @@ def main():
         require(approval['subject_id'] == scope_id and approval['subject_version'] == 1 and approval['scope']['scope_digest'] == digest, 'approval binding drifted')
         require(not (optional_approval_fields & approval.keys()), 'approval fabricated future evidence')
     require(partial_approvals[0]['approval_id'] != partial_approvals[1]['approval_id'], 'dual authority requires separate rows')
-    print('runtime schema representability: PASS')
+    require(len(PHASE5C_COMMANDS) == 17, 'Phase 5C command vocabulary drifted')
+    require(len(set(PHASE5C_CAPABILITIES.values())) == 16, 'Phase 5C capability vocabulary drifted')
+    require(len(set(PHASE5C_EVENTS.values())) == 17, 'Phase 5C event vocabulary drifted')
+
+    phase5c = Phase5CRuntimeTests()
+    phase5c.setUp()
+    phase5c.build_active()
+    phase5c.execute('RevokeOngoingAccess', {
+        'ongoing_access_grant_id': phase5c.ongoing_grant_id,
+        'revocation_reason': 'EMERGENCY_SECURITY_REVOCATION',
+    }, expected=3, role='SEKINFRA_ENGAGEMENT_AUTHORITY', caller_type='HUMAN')
+    phase5c.execute('InitiateOngoingOffboarding', {
+        'ongoing_offboarding_id': phase5c.offboarding_id,
+        'oia_conversion_decision_id': phase5c.conversion_id,
+        'decision_version': 1,
+        'ongoing_agreement_authority_id': phase5c.agreement_id,
+        'agreement_version': 1,
+        'reason': 'ENGAGEMENT_COMPLETED',
+        'ongoing_access_grant_ids': [phase5c.ongoing_grant_id],
+    }, role='SEKINFRA_ENGAGEMENT_AUTHORITY')
+    phase5c.execute('VerifyOngoingAccessRevocation', {
+        'ongoing_access_revocation_verification_id': phase5c.revocation_id,
+        'ongoing_access_grant_id': phase5c.ongoing_grant_id,
+        'ongoing_offboarding_id': phase5c.offboarding_id,
+    }, expected=4)
+    phase5c.execute('CompleteOngoingOffboarding', {
+        'ongoing_offboarding_id': phase5c.offboarding_id,
+    }, expected=1)
+    uow = UnitOfWork(phase5c.store)
+    records = (
+        ('oia-conversion-decision', uow.oia_conversion_decisions.get_version(
+            phase5c.tenant, phase5c.conversion_id, 1)),
+        ('ongoing-agreement-authority', uow.ongoing_agreement_authorities.get_version(
+            phase5c.tenant, phase5c.agreement_id, 1)),
+        ('ongoing-payment-verification', uow.ongoing_payment_verifications.get(
+            phase5c.tenant, phase5c.payment_id)),
+        ('ongoing-access-grant', uow.ongoing_access_grants.get(
+            phase5c.tenant, phase5c.ongoing_grant_id)),
+        ('ongoing-offboarding', uow.ongoing_offboardings.get(
+            phase5c.tenant, phase5c.offboarding_id)),
+        ('ongoing-access-revocation-verification',
+         uow.ongoing_access_revocation_verifications.get(
+             phase5c.tenant, phase5c.revocation_id)),
+    )
+    registry = SchemaRegistry(ROOT / 'contracts/schemas/v1')
+    for slug, record in records:
+        schema = registry.expanded(f'urn:avuhz:schema:contracts:domain:{slug}:v1')
+        require(not list(Draft202012Validator(schema).iter_errors(record)),
+                f'Phase 5C {slug} runtime record is not schema representable')
+    approvals = [
+        value for value in phase5c.store.approvals.values()
+        if value.get('subject_type') in {
+            'OIA_CONVERSION_DECISION', 'ONGOING_AGREEMENT_AUTHORITY', 'ONGOING_ACCESS_GRANT'
+        }
+    ]
+    approval_schema = registry.expanded(
+        'urn:avuhz:schema:contracts:domain:human-approval:v1')
+    require(len(approvals) == 6, 'Phase 5C dual approval records drifted')
+    require(all(not list(Draft202012Validator(approval_schema).iter_errors(value))
+                for value in approvals), 'Phase 5C HumanApproval is not schema representable')
+    reads = Phase5CReadService(uow)
+    read_values = (
+        ('oia-conversion-status-view', reads.conversion_status(phase5c.tenant, phase5c.conversion_id, 1, phase5c.now)),
+        ('ongoing-agreement-authority-view', reads.agreement_authority(phase5c.tenant, phase5c.agreement_id, 1, phase5c.now)),
+        ('ongoing-commercial-authority-view', reads.commercial_authority(phase5c.tenant, phase5c.payment_id, phase5c.now)),
+        ('ongoing-access-status-view', reads.access_status(phase5c.tenant, phase5c.ongoing_grant_id, phase5c.now)),
+        ('ongoing-offboarding-status-view', reads.offboarding_status(phase5c.tenant, phase5c.offboarding_id, phase5c.now)),
+        ('ongoing-engagement-eligibility-view', reads.eligibility(phase5c.tenant, phase5c.engagement_id, phase5c.now)),
+        ('phase5c-authority-progression-view', reads.progression(phase5c.tenant, phase5c.engagement_id, phase5c.now)),
+    )
+    for slug, value in read_values:
+        schema = registry.expanded(f'urn:avuhz:schema:contracts:read-models:{slug}:v1')
+        require(not list(Draft202012Validator(schema).iter_errors(value)),
+                f'Phase 5C {slug} runtime read is not schema representable')
 
 if __name__ == '__main__':
     try: main()
     except AssertionError as error:
         print(f'runtime schema representability: FAIL: {error}', file=sys.stderr); raise SystemExit(1)
+    print('runtime schema representability: PASS')

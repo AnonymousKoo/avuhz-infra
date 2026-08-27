@@ -5,12 +5,13 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]; sys.path.insert(0, str(ROOT / "src"))
 from avuhz_runtime.command_registry import COMMANDS, resolve_command
 from avuhz_runtime.schema_registry import SchemaRegistry
+from avuhz_runtime.phase5c import PHASE5C_COMMANDS
 
 
 class CommandRegistryTests(unittest.TestCase):
     def test_registry_is_exactly_slice_one(self):
-        self.assertEqual(set(COMMANDS), {"AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "SupersedeOIAObservation", "RecordOIARootCause", "CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment", "CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan", "CreateOIAInspectionItem", "UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"})
-        self.assertEqual(sum(entry.executable for entry in COMMANDS.values()), 29)
+        self.assertEqual(set(COMMANDS), {"AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "SupersedeOIAObservation", "RecordOIARootCause", "CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment", "CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan", "CreateOIAInspectionItem", "UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"} | set(PHASE5C_COMMANDS))
+        self.assertEqual(sum(entry.executable for entry in COMMANDS.values()), 46)
         self.assertEqual(COMMANDS["CreateAssessmentAccessProposal"].subject_type, "ASSESSMENT_ACCESS_PROPOSAL")
         self.assertEqual(COMMANDS["CreateAssessmentAccessProposal"].payload_schema_id, "urn:avuhz:schema:contracts:commands:create-assessment-access-proposal-payload:v1")
         self.assertTrue(all(entry.validatable for entry in COMMANDS.values()))

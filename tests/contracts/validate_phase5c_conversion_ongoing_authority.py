@@ -253,8 +253,8 @@ def main() -> None:
         fail("local schema catalog count or uniqueness drifted")
     for schema_id in registry.schema_ids:
         Draft202012Validator.check_schema(registry.resolve(schema_id))
-    if set(COMMAND_IDS) & set(COMMANDS):
-        fail("Phase 5C runtime commands were registered during the contract-only batch")
+    if not set(COMMAND_IDS) <= set(COMMANDS) or not all(COMMANDS[name].executable for name in COMMAND_IDS):
+        fail("Phase 5C frozen commands are not fully runtime executable")
     assert_human_rules(registry)
 
     expected_transitions = {

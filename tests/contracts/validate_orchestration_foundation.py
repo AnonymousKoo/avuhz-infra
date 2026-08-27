@@ -21,6 +21,7 @@ IDS = {
     "event": "urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1",
     "outbox": "urn:avuhz:schema:contracts:orchestration:outbox-delivery:v1"
 }
+ASSESSMENT_ACCESS_GRANT_ID = "urn:avuhz:schema:contracts:domain:assessment-access-grant:v1"
 
 
 def load(path):
@@ -115,6 +116,7 @@ def event_semantics(value):
     event_type = value["event_type"]
     metadata = value["sanitized_metadata"]
     if event_type == "assessment_access.approval_recorded": return set(metadata) == {"assessment_access_proposal_id", "authority_role", "approval_id"}
+    if event_type == "assessment_access.closed": return set(metadata) == {"assessment_access_grant_id", "terminal_state", "closure_cause"}
     expected = "handoff_version" if event_type == "engagement.handoff.accepted" else "engagement_version" if event_type == "engagement.opened" else "assessment_access_proposal_id" if event_type == "assessment_access.proposal_created" else "scope_version"
     return set(metadata) == ({"engagement_state", "engagement_version"} if expected == "engagement_version" else {expected})
 
@@ -150,6 +152,10 @@ def main():
         fail("idempotency command vocabulary drifted")
     if schemas[IDS["event"]]["properties"]["event_type"]["enum"] != ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized", "assessment_access.proposal_created", "assessment_access.approval_recorded", "assessment_access.grant_issued", "assessment_access.verified_and_activated", "assessment_access.expired", "assessment_access.revoked", "assessment_access.closed", "diagnostic_agreement.authority_recorded", "diagnostic_payment.verified", "diagnostic_payment.invalidated", "oia.assessment_opened", "oia.evidence_recorded", "oia.observation_recorded", "oia.observation_superseded", "oia.root_cause_recorded", "oia.finding_created", "oia.finding_updated", "oia.finding_finalized", "oia.assessment_ready_for_delivery", "oia.findings_delivered", "oia.finding_revision_opened", "oia.assessment_closed", "oia.assessment_plan_created", "oia.assessment_plan_revised", "oia.assessment_plan_reviewed", "oia.assessment_plan_approved", "oia.inspection_item_created", "oia.inspection_item_blocked", "oia.inspection_item_progressed"]:
         fail("event vocabulary drifted")
+    event_closure_causes = schemas[IDS["event"]]["$defs"]["assessmentAccessClosureMetadata"]["properties"]["closure_cause"]["enum"]
+    grant_closure_reasons = schemas[ASSESSMENT_ACCESS_GRANT_ID]["properties"]["closure_reason"]["enum"]
+    if set(event_closure_causes) != set(grant_closure_reasons):
+        fail("assessment access event/domain closure vocabulary drifted")
     for schema_id in IDS.values():
         if "metadata" in schemas[schema_id]["properties"]:
             fail("generic metadata escape hatch is forbidden")

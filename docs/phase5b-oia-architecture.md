@@ -239,6 +239,12 @@ Phase 5A closure reasons:
 - If the grant is already `EXPIRED`, `REVOKED`, or `CLOSED`, delivery/closure
   must not rewrite that terminal state.
 
+The single strict `assessment_access.closed` event records the truthful terminal
+cause as exactly `AGREEMENT_ENDED`, `FINDINGS_DELIVERED`, or
+`ASSESSMENT_CLOSED`. It describes an accepted access closure; it does not create
+closure authority or imply assessment delivery, closure, or implementation
+authority by itself.
+
 This is not a new access model. It is the previously deferred authoritative source
 for the frozen grant closure reasons. It never reactivates access, extends TTL, or
 creates ongoing authority. Payment invalidation retains its frozen Phase 5A

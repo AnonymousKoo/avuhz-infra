@@ -162,7 +162,7 @@ class OIARootCauseRuntimeTests(unittest.TestCase):
         self.assertEqual(set(self.store.events[0]["sanitized_metadata"]),
                          {"oia_assessment_id", "oia_root_cause_id", "record_version"})
         self.assertEqual(UnitOfWork(self.store).oia_root_causes.list_by_assessment(self.tenant, self.assessment_id), (root,))
-        self.assertFalse(hasattr(self.store, "oia_findings"))
+        self.assertEqual(self.store.oia_findings, {})
 
     def test_supported_and_verified_happy_path_is_ordered_and_terminal(self):
         self.create(); self.support(); self.verify()

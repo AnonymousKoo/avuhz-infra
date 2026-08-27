@@ -49,9 +49,9 @@ class CommandValidator:
         if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
         elif definition.command_type == "RecordOIARootCause":
             constraints["required"] += ["engagement_id"]
-        elif definition.command_type in ("OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"):
+        elif definition.command_type in ("OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"):
             constraints["not"] = {"required": ["expected_record_version"]}
-            if definition.command_type in ("OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"): constraints["required"] += ["engagement_id"]
+            if definition.command_type in ("OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"): constraints["required"] += ["engagement_id"]
         else: constraints["required"] += ["engagement_id", "expected_record_version"]
         return {"allOf": [{"$ref": ENVELOPE_ID + "#/$defs/envelopeCore"}, {"type": "object", "required": ["payload"], "properties": {"payload": {"$ref": definition.payload_schema_id}}}, constraints], "unevaluatedProperties": False}
 
@@ -61,7 +61,7 @@ class CommandValidator:
     def _semantic_failure(self, raw: dict[str, Any], definition: CommandDefinition) -> ValidationFailure | None:
         if raw["subject_type"] != definition.subject_type:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "command subject does not match registration")
-        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem") and "expected_record_version" in raw:
+        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem") and "expected_record_version" in raw:
             return self._failure(RuntimeReason.VERSION_REQUIRED, "expected version is not permitted for this command")
         if definition.command_type == "AcceptAcquisitionHandoff" and "engagement_id" in raw:
             return self._failure(RuntimeReason.FIELD_FORBIDDEN, "engagement context is not permitted for handoff acceptance")
@@ -90,6 +90,12 @@ class CommandValidator:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "an observation cannot supersede itself")
         if definition.command_type == "RecordOIARootCause" and raw["payload"]["oia_root_cause_id"] != raw["subject_id"]:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA root-cause payload must identify the command subject")
+        if definition.command_type in ("CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding"):
+            payload = raw["payload"]
+            if payload["oia_finding_id"] != raw["subject_id"]:
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA Finding payload must identify the command subject")
+            if definition.command_type == "FinalizeOIAFinding" and payload["finding_revision"] != raw.get("expected_record_version"):
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "Finding revision must match the expected version")
         if definition.command_type in ("CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan"):
             payload = raw["payload"]
             if payload["oia_assessment_plan_id"] != raw["subject_id"]:

@@ -96,6 +96,23 @@ class CommandValidator:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA Finding payload must identify the command subject")
             if definition.command_type == "FinalizeOIAFinding" and payload["finding_revision"] != raw.get("expected_record_version"):
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "Finding revision must match the expected version")
+        if definition.command_type in ("MarkOIAAssessmentReadyForDelivery", "CloseOIAAssessment"):
+            if raw["payload"]["oia_assessment_id"] != raw["subject_id"]:
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "OIA lifecycle payload must identify the assessment subject")
+        if definition.command_type == "DeliverOIAFindings":
+            payload = raw["payload"]
+            if payload["oia_findings_delivery_id"] != raw["subject_id"]:
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "delivery payload must identify the delivery subject")
+            if payload["ready_record_version"] != raw.get("expected_record_version"):
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "ready assessment version must match the expected version")
+        if definition.command_type == "ReviseDeliveredOIAFinding":
+            payload = raw["payload"]
+            if payload["oia_finding_id"] != raw["subject_id"]:
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "correction payload must identify the delivered Finding subject")
+            if payload["delivered_finding_revision"] != raw.get("expected_record_version"):
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "delivered Finding revision must match the expected version")
+            if payload["replacement_oia_finding_id"] == raw["subject_id"]:
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "correction requires a distinct replacement Finding identity")
         if definition.command_type in ("CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan"):
             payload = raw["payload"]
             if payload["oia_assessment_plan_id"] != raw["subject_id"]:

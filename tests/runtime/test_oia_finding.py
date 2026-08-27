@@ -358,7 +358,7 @@ class OIAFindingRuntimeTests(unittest.TestCase):
         registry = SchemaRegistry(ROOT / "contracts/schemas/v1")
         self.assertFalse(list(Draft202012Validator(registry.expanded("urn:avuhz:schema:contracts:read-models:oia-findings-summary-view:v1")).iter_errors(summary)))
         self.assertEqual(self.store.oia_assessments[(self.tenant, self.assessment_id)]["state"], "IN_PROGRESS")
-        self.assertFalse(hasattr(self.store, "oia_findings_deliveries"))
+        self.assertEqual(self.store.oia_findings_deliveries, {})
 
     def test_create_update_finalize_failpoints_roll_back_every_component(self):
         stages = ("AUTHORITATIVE_WRITE", "IDEMPOTENCY_RESERVE", "IDEMPOTENCY_COMPLETE", "LIFECYCLE_EVENT_APPEND", "OUTBOX_APPEND", "COMMIT")

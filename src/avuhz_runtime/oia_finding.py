@@ -138,14 +138,14 @@ class OIAFindingHandler:
             raise OIAFindingRejected("trusted human Finding authority is required")
         return trusted_context.human_principal_reference
 
-    def _assessment(self, tenant_id, assessment_id, engagement_id):
+    def _assessment(self, tenant_id, assessment_id, engagement_id, allowed_states=("IN_PROGRESS",)):
         assessment = self.repositories.oia_assessments.get(tenant_id, assessment_id)
         engagement = self.repositories.engagements.get(tenant_id, engagement_id)
         if (
             not assessment
             or assessment.get("tenant_id") != tenant_id
             or assessment.get("engagement_id") != engagement_id
-            or assessment.get("state") != "IN_PROGRESS"
+            or assessment.get("state") not in allowed_states
             or not engagement
             or engagement.get("engagement_state") != "OPEN"
         ):
@@ -254,8 +254,11 @@ class OIAFindingHandler:
         ):
             raise OIAFindingRejected("only the current expected DRAFT revision can be updated")
         assessment = self._assessment(
-            tenant_id, current["oia_assessment_id"], engagement_id
+            tenant_id, current["oia_assessment_id"], engagement_id,
+            ("IN_PROGRESS", "READY_FOR_DELIVERY"),
         )
+        if assessment["state"] == "READY_FOR_DELIVERY" and "supersedes_finding_revision" not in current:
+            raise OIAFindingRejected("only a governed delivered-Finding correction may be revised")
         priority = self._validate_support(tenant_id, assessment, payload)
         replacement = {
             "tenant_id": tenant_id,
@@ -289,8 +292,11 @@ class OIAFindingHandler:
         ):
             raise OIAFindingRejected("only the current expected DRAFT revision can be finalized")
         assessment = self._assessment(
-            tenant_id, current["oia_assessment_id"], engagement_id
+            tenant_id, current["oia_assessment_id"], engagement_id,
+            ("IN_PROGRESS", "READY_FOR_DELIVERY"),
         )
+        if assessment["state"] == "READY_FOR_DELIVERY" and "supersedes_finding_revision" not in current:
+            raise OIAFindingRejected("only a governed delivered-Finding correction may be finalized")
         priority = self._validate_support(tenant_id, assessment, current)
         if current.get("priority") != priority:
             raise OIAFindingRejected("stored Finding priority does not match policy 1.0.0")
@@ -310,7 +316,7 @@ def derive_finding_set_readiness(repositories, tenant_id, assessment_id):
     """Return bounded non-authoritative eligibility without advancing assessment state."""
     assessment = repositories.oia_assessments.get(tenant_id, assessment_id)
     reasons = []
-    if not assessment or assessment.get("state") != "IN_PROGRESS":
+    if not assessment or assessment.get("state") not in ("IN_PROGRESS", "READY_FOR_DELIVERY"):
         reasons.append("ASSESSMENT_NOT_ANALYTICALLY_OPEN")
     coverage = repositories.oia_inspection_items.coverage_for_current_assessment(
         tenant_id, assessment_id

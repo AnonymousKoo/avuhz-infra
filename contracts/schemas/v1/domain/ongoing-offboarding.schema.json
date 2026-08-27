@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:ongoing-offboarding:v1",
+  "title": "OngoingOffboarding v1",
+  "description": "Governed non-destructive offboarding state. Initiation immediately blocks ongoing eligibility; completion preserves all commercial, diagnostic, access, event, and revocation-verification history.",
+  "type": "object", "additionalProperties": false,
+  "required": ["ongoing_offboarding_id", "tenant_id", "engagement_id", "conversion_decision_reference", "reason", "state", "access_revocation_required", "ongoing_access_grant_references", "revocation_verification_references", "initiated_at", "initiated_by", "record_version"],
+  "properties": {
+    "ongoing_offboarding_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingOffboardingId"},
+    "tenant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
+    "engagement_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
+    "conversion_decision_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/conversionDecisionReference"},
+    "ongoing_agreement_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/ongoingAgreementReference"},
+    "reason": {"type": "string", "enum": ["CONVERSION_DECLINED", "AGREEMENT_ENDED", "CLIENT_TERMINATION", "SEKINFRA_TERMINATION", "ENGAGEMENT_COMPLETED"]},
+    "state": {"type": "string", "enum": ["INITIATED", "ACCESS_REVOCATION_PENDING", "COMPLETED"]},
+    "access_revocation_required": {"type": "boolean"},
+    "ongoing_access_grant_references": {"type": "array", "minItems": 0, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/ongoingAccessGrantReference"}},
+    "revocation_verification_references": {"type": "array", "minItems": 0, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/revocationVerificationReference"}},
+    "initiated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "initiated_by": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/trustedActorReference"},
+    "completed_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "completed_by": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/trustedActorReference"},
+    "record_version": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"}
+  },
+  "allOf": [
+    {"if": {"properties": {"access_revocation_required": {"const": true}}, "required": ["access_revocation_required"]}, "then": {"properties": {"ongoing_access_grant_references": {"minItems": 1}}}},
+    {"if": {"properties": {"state": {"const": "ACCESS_REVOCATION_PENDING"}}, "required": ["state"]}, "then": {"properties": {"access_revocation_required": {"const": true}, "ongoing_access_grant_references": {"minItems": 1}}}},
+    {"if": {"properties": {"state": {"const": "COMPLETED"}}, "required": ["state"]}, "then": {"required": ["completed_at", "completed_by"]}},
+    {"if": {"properties": {"state": {"const": "COMPLETED"}, "access_revocation_required": {"const": true}}, "required": ["state", "access_revocation_required"]}, "then": {"properties": {"revocation_verification_references": {"minItems": 1}}}}
+  ]
+}

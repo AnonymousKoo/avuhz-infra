@@ -5,64 +5,1433 @@
   "description": "Append-only sanitized orchestration output describing an already accepted authoritative transition. It is not authoritative state and cannot contain a full domain snapshot, approval body, raw provider payload, credentials, stack trace, or arbitrary metadata.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["event_id", "event_type", "event_schema_version", "tenant_id", "authoritative_subject_reference", "authoritative_subject_version", "occurred_at", "producer_reference", "correlation_id", "idempotency_key", "visibility", "sanitized_metadata"],
+  "required": [
+    "event_id",
+    "event_type",
+    "event_schema_version",
+    "tenant_id",
+    "authoritative_subject_reference",
+    "authoritative_subject_version",
+    "occurred_at",
+    "producer_reference",
+    "correlation_id",
+    "idempotency_key",
+    "visibility",
+    "sanitized_metadata"
+  ],
   "properties": {
-    "event_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/eventId"},
-    "event_type": {"type": "string", "enum": ["engagement.handoff.accepted", "engagement.opened", "diagnostic_scope.submitted", "diagnostic_scope.approved", "diagnostic_scope.rejected", "human_approval.recorded", "diagnostic_scope.canonicalized", "assessment_access.proposal_created", "assessment_access.approval_recorded", "assessment_access.grant_issued", "assessment_access.verified_and_activated", "assessment_access.expired", "assessment_access.revoked", "assessment_access.closed", "diagnostic_agreement.authority_recorded", "diagnostic_payment.verified", "diagnostic_payment.invalidated", "oia.assessment_opened", "oia.evidence_recorded", "oia.observation_recorded", "oia.observation_superseded", "oia.root_cause_recorded", "oia.finding_created", "oia.finding_updated", "oia.finding_finalized", "oia.assessment_ready_for_delivery", "oia.findings_delivered", "oia.finding_revision_opened", "oia.assessment_closed", "oia.assessment_plan_created", "oia.assessment_plan_revised", "oia.assessment_plan_reviewed", "oia.assessment_plan_approved", "oia.inspection_item_created", "oia.inspection_item_blocked", "oia.inspection_item_progressed"]},
-    "event_schema_version": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "tenant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
-    "engagement_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
-    "authoritative_subject_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"},
-    "authoritative_subject_version": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "occurred_at": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "producer_reference": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-    "command_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/commandId"},
-    "subject_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"},
-    "correlation_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId"},
-    "causation_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/causationId"},
-    "idempotency_key": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"},
-    "visibility": {"type": "string", "enum": ["TENANT_OPERATIONAL", "SEKINFRA_INTERNAL", "INTEGRATION_INTERNAL"]},
-    "sanitized_metadata": {"type": "object"}
+    "event_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/eventId"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "engagement.handoff.accepted",
+        "engagement.opened",
+        "diagnostic_scope.submitted",
+        "diagnostic_scope.approved",
+        "diagnostic_scope.rejected",
+        "human_approval.recorded",
+        "diagnostic_scope.canonicalized",
+        "assessment_access.proposal_created",
+        "assessment_access.approval_recorded",
+        "assessment_access.grant_issued",
+        "assessment_access.verified_and_activated",
+        "assessment_access.expired",
+        "assessment_access.revoked",
+        "assessment_access.closed",
+        "diagnostic_agreement.authority_recorded",
+        "diagnostic_payment.verified",
+        "diagnostic_payment.invalidated",
+        "oia.assessment_opened",
+        "oia.evidence_recorded",
+        "oia.observation_recorded",
+        "oia.observation_superseded",
+        "oia.root_cause_recorded",
+        "oia.finding_created",
+        "oia.finding_updated",
+        "oia.finding_finalized",
+        "oia.assessment_ready_for_delivery",
+        "oia.findings_delivered",
+        "oia.finding_revision_opened",
+        "oia.assessment_closed",
+        "oia.assessment_plan_created",
+        "oia.assessment_plan_revised",
+        "oia.assessment_plan_reviewed",
+        "oia.assessment_plan_approved",
+        "oia.inspection_item_created",
+        "oia.inspection_item_blocked",
+        "oia.inspection_item_progressed",
+        "conversion.decision_recorded",
+        "conversion.accepted",
+        "ongoing_agreement.proposed",
+        "ongoing_agreement.approval_recorded",
+        "ongoing_agreement.activated",
+        "ongoing_agreement.terminated",
+        "ongoing_payment.verified",
+        "ongoing_payment.invalidated",
+        "ongoing_access.proposed",
+        "ongoing_access.approval_recorded",
+        "ongoing_access.approved",
+        "ongoing_access.activated",
+        "ongoing_access.revoked",
+        "ongoing_access.closed",
+        "offboarding.initiated",
+        "ongoing_access.revocation_verified",
+        "offboarding.completed"
+      ]
+    },
+    "event_schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "tenant_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "authoritative_subject_reference": {
+      "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"
+    },
+    "authoritative_subject_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "occurred_at": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "producer_reference": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "command_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/commandId"
+    },
+    "subject_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+    },
+    "correlation_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId"
+    },
+    "causation_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/causationId"
+    },
+    "idempotency_key": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "TENANT_OPERATIONAL",
+        "SEKINFRA_INTERNAL",
+        "INTEGRATION_INTERNAL"
+      ]
+    },
+    "sanitized_metadata": {
+      "type": "object"
+    }
   },
   "$defs": {
-    "proposalMetadata": {"type": "object", "additionalProperties": false, "required": ["assessment_access_proposal_id"], "properties": {"assessment_access_proposal_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"}}},
-    "verificationMetadata": {"type": "object", "additionalProperties": false, "required": ["assessment_access_grant_id", "assessment_access_proposal_id", "verified_at", "active_from", "expires_at"], "properties": {"assessment_access_grant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"}, "assessment_access_proposal_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"}, "verified_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}, "active_from": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}, "expires_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}}},
-    "assessmentApprovalMetadata": {"type": "object", "additionalProperties": false, "required": ["assessment_access_proposal_id", "authority_role", "approval_id"], "properties": {"assessment_access_proposal_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"}, "authority_role": {"type": "string", "enum": ["CLIENT_DECISION_AUTHORITY", "SEKINFRA_ENGAGEMENT_AUTHORITY"]}, "approval_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/approvalId"}}},
-    "grantMetadata": {"type": "object", "additionalProperties": false, "required": ["assessment_access_grant_id", "assessment_access_proposal_id"], "properties": {"assessment_access_grant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"}, "assessment_access_proposal_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"}}},
-    "handoffMetadata": {"type": "object", "additionalProperties": false, "required": ["handoff_version"], "properties": {"handoff_version": {"type": "integer", "minimum": 1, "maximum": 2147483647}}},
-    "engagementMetadata": {"type": "object", "additionalProperties": false, "required": ["engagement_state", "engagement_version"], "properties": {"engagement_state": {"const": "OPEN"}, "engagement_version": {"type": "integer", "minimum": 1, "maximum": 2147483647}}},
-    "scopeMetadata": {"type": "object", "additionalProperties": false, "required": ["scope_version"], "properties": {"scope_version": {"type": "integer", "minimum": 1, "maximum": 2147483647}}},
-    "terminalMetadata": {"type": "object", "additionalProperties": false, "required": ["assessment_access_grant_id", "terminal_state"], "properties": {"assessment_access_grant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"}, "terminal_state": {"type": "string", "enum": ["EXPIRED", "REVOKED"]}}},
-    "assessmentAccessClosureMetadata": {"type": "object", "additionalProperties": false, "required": ["assessment_access_grant_id", "terminal_state", "closure_cause"], "properties": {"assessment_access_grant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"}, "terminal_state": {"const": "CLOSED"}, "closure_cause": {"type": "string", "enum": ["FINDINGS_DELIVERED", "ASSESSMENT_CLOSED", "AGREEMENT_ENDED"]}}},
-    "commercialMetadata": {"type": "object", "additionalProperties": false, "required": ["commercial_authority_id", "commercial_state"], "properties": {"commercial_authority_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"}, "commercial_state": {"type": "string", "enum": ["VERIFIED_ACTIVE", "VERIFIED", "INVALIDATED"]}}},
-    "oiaMetadata": {"type":"object","additionalProperties":false,"required":["oia_assessment_id"],"properties":{"oia_assessment_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaAssessmentId"},"oia_evidence_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaEvidenceId"},"oia_observation_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaObservationId"},"oia_root_cause_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaRootCauseId"},"oia_finding_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaFindingId"},"oia_findings_delivery_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaFindingsDeliveryId"},"oia_assessment_plan_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaAssessmentPlanId"},"oia_inspection_item_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaInspectionItemId"},"plan_version":{"type":"integer","minimum":1,"maximum":2147483647},"coverage_state":{"$ref":"urn:avuhz:schema:contracts:domain:oia-methodology-common:v1#/$defs/coverageState"},"record_version":{"type":"integer","minimum":1,"maximum":2147483647},"manifest_digest":{"$ref":"urn:avuhz:schema:contracts:domain:oia-common:v1#/$defs/digest"}}}
+    "proposalMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_access_proposal_id"
+      ],
+      "properties": {
+        "assessment_access_proposal_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"
+        }
+      }
+    },
+    "verificationMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_access_grant_id",
+        "assessment_access_proposal_id",
+        "verified_at",
+        "active_from",
+        "expires_at"
+      ],
+      "properties": {
+        "assessment_access_grant_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"
+        },
+        "assessment_access_proposal_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"
+        },
+        "verified_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        },
+        "active_from": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        },
+        "expires_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        }
+      }
+    },
+    "assessmentApprovalMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_access_proposal_id",
+        "authority_role",
+        "approval_id"
+      ],
+      "properties": {
+        "assessment_access_proposal_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"
+        },
+        "authority_role": {
+          "type": "string",
+          "enum": [
+            "CLIENT_DECISION_AUTHORITY",
+            "SEKINFRA_ENGAGEMENT_AUTHORITY"
+          ]
+        },
+        "approval_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/approvalId"
+        }
+      }
+    },
+    "grantMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_access_grant_id",
+        "assessment_access_proposal_id"
+      ],
+      "properties": {
+        "assessment_access_grant_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"
+        },
+        "assessment_access_proposal_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessProposalId"
+        }
+      }
+    },
+    "handoffMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handoff_version"
+      ],
+      "properties": {
+        "handoff_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "engagementMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "engagement_state",
+        "engagement_version"
+      ],
+      "properties": {
+        "engagement_state": {
+          "const": "OPEN"
+        },
+        "engagement_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "scopeMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_version"
+      ],
+      "properties": {
+        "scope_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "terminalMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_access_grant_id",
+        "terminal_state"
+      ],
+      "properties": {
+        "assessment_access_grant_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"
+        },
+        "terminal_state": {
+          "type": "string",
+          "enum": [
+            "EXPIRED",
+            "REVOKED"
+          ]
+        }
+      }
+    },
+    "assessmentAccessClosureMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_access_grant_id",
+        "terminal_state",
+        "closure_cause"
+      ],
+      "properties": {
+        "assessment_access_grant_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/assessmentAccessGrantId"
+        },
+        "terminal_state": {
+          "const": "CLOSED"
+        },
+        "closure_cause": {
+          "type": "string",
+          "enum": [
+            "FINDINGS_DELIVERED",
+            "ASSESSMENT_CLOSED",
+            "AGREEMENT_ENDED"
+          ]
+        }
+      }
+    },
+    "commercialMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commercial_authority_id",
+        "commercial_state"
+      ],
+      "properties": {
+        "commercial_authority_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+        },
+        "commercial_state": {
+          "type": "string",
+          "enum": [
+            "VERIFIED_ACTIVE",
+            "VERIFIED",
+            "INVALIDATED"
+          ]
+        }
+      }
+    },
+    "oiaMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oia_assessment_id"
+      ],
+      "properties": {
+        "oia_assessment_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaAssessmentId"
+        },
+        "oia_evidence_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaEvidenceId"
+        },
+        "oia_observation_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaObservationId"
+        },
+        "oia_root_cause_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaRootCauseId"
+        },
+        "oia_finding_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaFindingId"
+        },
+        "oia_findings_delivery_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaFindingsDeliveryId"
+        },
+        "oia_assessment_plan_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaAssessmentPlanId"
+        },
+        "oia_inspection_item_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaInspectionItemId"
+        },
+        "plan_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "coverage_state": {
+          "$ref": "urn:avuhz:schema:contracts:domain:oia-methodology-common:v1#/$defs/coverageState"
+        },
+        "record_version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "manifest_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:oia-common:v1#/$defs/digest"
+        }
+      }
+    },
+    "phase5cMetadata": {
+      "description": "Sanitized identifiers and bounded transition state only; no agreement body, payment data, raw credential, provider payload, or implementation design.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_stage"
+      ],
+      "properties": {
+        "authority_stage": {
+          "type": "string",
+          "enum": [
+            "CONVERSION",
+            "ONGOING_AGREEMENT",
+            "ONGOING_COMMERCIAL",
+            "ONGOING_ACCESS",
+            "OFFBOARDING"
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING_SEKINFRA",
+            "ACCEPTED",
+            "DECLINED",
+            "DRAFT",
+            "ACTIVE",
+            "SUPERSEDED",
+            "ENDED",
+            "TERMINATED",
+            "REVOKED",
+            "VERIFIED",
+            "INVALIDATED",
+            "PROPOSED",
+            "APPROVED",
+            "EXPIRED",
+            "CLOSED",
+            "INITIATED",
+            "ACCESS_REVOCATION_PENDING",
+            "COMPLETED"
+          ]
+        },
+        "approval_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/approvalId"
+        },
+        "oia_conversion_decision_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaConversionDecisionId"
+        },
+        "ongoing_agreement_authority_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAgreementAuthorityId"
+        },
+        "ongoing_payment_verification_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingPaymentVerificationId"
+        },
+        "ongoing_access_grant_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAccessGrantId"
+        },
+        "ongoing_access_revocation_verification_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAccessRevocationVerificationId"
+        },
+        "ongoing_offboarding_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingOffboardingId"
+        },
+        "coverage_until": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        },
+        "external_revocation_verified": {
+          "type": "boolean"
+        }
+      }
+    }
   },
   "allOf": [
-    {"if": {"properties": {"event_type": {"const": "engagement.handoff.accepted"}}, "required": ["event_type"]}, "then": {"properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ACQUISITION_HANDOFF"}}}, "sanitized_metadata": {"$ref": "#/$defs/handoffMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "engagement.opened"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ENGAGEMENT"}}}, "sanitized_metadata": {"$ref": "#/$defs/engagementMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "diagnostic_scope.submitted"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "diagnostic_scope.approved"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "diagnostic_scope.rejected"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "human_approval.recorded"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "diagnostic_scope.canonicalized"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}, "sanitized_metadata": {"$ref": "#/$defs/scopeMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "assessment_access.proposal_created"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}, "sanitized_metadata": {"$ref": "#/$defs/proposalMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "assessment_access.approval_recorded"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}, "sanitized_metadata": {"$ref": "#/$defs/assessmentApprovalMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "assessment_access.grant_issued"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}, "sanitized_metadata": {"$ref": "#/$defs/grantMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "assessment_access.verified_and_activated"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}, "sanitized_metadata": {"$ref": "#/$defs/verificationMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "assessment_access.expired"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}, "sanitized_metadata": {"$ref": "#/$defs/terminalMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "assessment_access.revoked"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}, "sanitized_metadata": {"$ref": "#/$defs/terminalMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "assessment_access.closed"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}, "sanitized_metadata": {"$ref": "#/$defs/assessmentAccessClosureMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "diagnostic_agreement.authority_recorded"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_AGREEMENT_AUTHORITY"}}}, "sanitized_metadata": {"$ref": "#/$defs/commercialMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "diagnostic_payment.verified"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_PAYMENT_VERIFICATION"}}}, "sanitized_metadata": {"$ref": "#/$defs/commercialMetadata"}}}},
-    {"if": {"properties": {"event_type": {"const": "diagnostic_payment.invalidated"}}, "required": ["event_type"]}, "then": {"required": ["engagement_id"], "properties": {"authoritative_subject_reference": {"properties": {"reference_type": {"const": "DIAGNOSTIC_PAYMENT_VERIFICATION"}}}, "sanitized_metadata": {"$ref": "#/$defs/commercialMetadata"}}}},
-    {"if":{"properties":{"event_type":{"enum":["oia.assessment_opened","oia.evidence_recorded","oia.observation_recorded","oia.observation_superseded","oia.root_cause_recorded","oia.finding_created","oia.finding_updated","oia.finding_finalized","oia.assessment_ready_for_delivery","oia.findings_delivered","oia.finding_revision_opened","oia.assessment_closed","oia.assessment_plan_created","oia.assessment_plan_revised","oia.assessment_plan_reviewed","oia.assessment_plan_approved","oia.inspection_item_created","oia.inspection_item_blocked","oia.inspection_item_progressed"]}},"required":["event_type"]},"then":{"required":["engagement_id"],"properties":{"sanitized_metadata":{"$ref":"#/$defs/oiaMetadata"}}}},
-    {"if":{"properties":{"event_type":{"enum":["oia.assessment_opened","oia.assessment_ready_for_delivery","oia.assessment_closed"]}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_ASSESSMENT"}}}}}},
-    {"if":{"properties":{"event_type":{"const":"oia.evidence_recorded"}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_EVIDENCE_ITEM"}}}}}},
-    {"if":{"properties":{"event_type":{"enum":["oia.observation_recorded","oia.observation_superseded"]}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_OBSERVATION"}}}}}},
-    {"if":{"properties":{"event_type":{"const":"oia.root_cause_recorded"}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_ROOT_CAUSE"}}}}}},
-    {"if":{"properties":{"event_type":{"enum":["oia.finding_created","oia.finding_updated","oia.finding_finalized","oia.finding_revision_opened"]}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_FINDING"}}}}}},
-    {"if":{"properties":{"event_type":{"const":"oia.findings_delivered"}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_FINDINGS_DELIVERY"}}},"sanitized_metadata":{"required":["oia_findings_delivery_id","manifest_digest"]}}}},
-    {"if":{"properties":{"event_type":{"enum":["oia.assessment_plan_created","oia.assessment_plan_revised","oia.assessment_plan_reviewed","oia.assessment_plan_approved"]}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_ASSESSMENT_PLAN"}}},"sanitized_metadata":{"required":["oia_assessment_id","oia_assessment_plan_id","plan_version"]}}}},
-    {"if":{"properties":{"event_type":{"enum":["oia.inspection_item_created","oia.inspection_item_blocked","oia.inspection_item_progressed"]}},"required":["event_type"]},"then":{"properties":{"authoritative_subject_reference":{"properties":{"reference_type":{"const":"OIA_INSPECTION_ITEM"}}},"sanitized_metadata":{"required":["oia_assessment_id","oia_assessment_plan_id","oia_inspection_item_id","plan_version","coverage_state"]}}}}
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "engagement.handoff.accepted"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ACQUISITION_HANDOFF"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/handoffMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "engagement.opened"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ENGAGEMENT"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/engagementMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "diagnostic_scope.submitted"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/scopeMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "diagnostic_scope.approved"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/scopeMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "diagnostic_scope.rejected"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/scopeMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "human_approval.recorded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/scopeMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "diagnostic_scope.canonicalized"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/scopeMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "assessment_access.proposal_created"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ASSESSMENT_ACCESS_PROPOSAL"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/proposalMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "assessment_access.approval_recorded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ASSESSMENT_ACCESS_PROPOSAL"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/assessmentApprovalMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "assessment_access.grant_issued"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/grantMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "assessment_access.verified_and_activated"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/verificationMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "assessment_access.expired"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/terminalMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "assessment_access.revoked"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/terminalMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "assessment_access.closed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/assessmentAccessClosureMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "diagnostic_agreement.authority_recorded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_AGREEMENT_AUTHORITY"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/commercialMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "diagnostic_payment.verified"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_PAYMENT_VERIFICATION"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/commercialMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "diagnostic_payment.invalidated"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DIAGNOSTIC_PAYMENT_VERIFICATION"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/commercialMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "oia.assessment_opened",
+              "oia.evidence_recorded",
+              "oia.observation_recorded",
+              "oia.observation_superseded",
+              "oia.root_cause_recorded",
+              "oia.finding_created",
+              "oia.finding_updated",
+              "oia.finding_finalized",
+              "oia.assessment_ready_for_delivery",
+              "oia.findings_delivered",
+              "oia.finding_revision_opened",
+              "oia.assessment_closed",
+              "oia.assessment_plan_created",
+              "oia.assessment_plan_revised",
+              "oia.assessment_plan_reviewed",
+              "oia.assessment_plan_approved",
+              "oia.inspection_item_created",
+              "oia.inspection_item_blocked",
+              "oia.inspection_item_progressed"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "sanitized_metadata": {
+            "$ref": "#/$defs/oiaMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "oia.assessment_opened",
+              "oia.assessment_ready_for_delivery",
+              "oia.assessment_closed"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_ASSESSMENT"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "oia.evidence_recorded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_EVIDENCE_ITEM"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "oia.observation_recorded",
+              "oia.observation_superseded"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_OBSERVATION"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "oia.root_cause_recorded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_ROOT_CAUSE"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "oia.finding_created",
+              "oia.finding_updated",
+              "oia.finding_finalized",
+              "oia.finding_revision_opened"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_FINDING"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "oia.findings_delivered"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_FINDINGS_DELIVERY"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "required": [
+              "oia_findings_delivery_id",
+              "manifest_digest"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "oia.assessment_plan_created",
+              "oia.assessment_plan_revised",
+              "oia.assessment_plan_reviewed",
+              "oia.assessment_plan_approved"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_ASSESSMENT_PLAN"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "required": [
+              "oia_assessment_id",
+              "oia_assessment_plan_id",
+              "plan_version"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "oia.inspection_item_created",
+              "oia.inspection_item_blocked",
+              "oia.inspection_item_progressed"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_INSPECTION_ITEM"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "required": [
+              "oia_assessment_id",
+              "oia_assessment_plan_id",
+              "oia_inspection_item_id",
+              "plan_version",
+              "coverage_state"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "conversion.decision_recorded",
+              "conversion.accepted"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "OIA_CONVERSION_DECISION"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/phase5cMetadata",
+            "required": [
+              "authority_stage",
+              "oia_conversion_decision_id"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "ongoing_agreement.proposed",
+              "ongoing_agreement.approval_recorded",
+              "ongoing_agreement.activated",
+              "ongoing_agreement.terminated"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ONGOING_AGREEMENT_AUTHORITY"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/phase5cMetadata",
+            "required": [
+              "authority_stage",
+              "ongoing_agreement_authority_id"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "ongoing_payment.verified",
+              "ongoing_payment.invalidated"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ONGOING_PAYMENT_VERIFICATION"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/phase5cMetadata",
+            "required": [
+              "authority_stage",
+              "ongoing_payment_verification_id"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "ongoing_access.proposed",
+              "ongoing_access.approval_recorded",
+              "ongoing_access.approved",
+              "ongoing_access.activated",
+              "ongoing_access.revoked",
+              "ongoing_access.closed"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ONGOING_ACCESS_GRANT"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/phase5cMetadata",
+            "required": [
+              "authority_stage",
+              "ongoing_access_grant_id"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "ongoing_access.revocation_verified"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ONGOING_ACCESS_REVOCATION_VERIFICATION"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/phase5cMetadata",
+            "required": [
+              "authority_stage",
+              "ongoing_access_revocation_verification_id",
+              "ongoing_access_grant_id",
+              "external_revocation_verified"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "offboarding.initiated",
+              "offboarding.completed"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ONGOING_OFFBOARDING"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/phase5cMetadata",
+            "required": [
+              "authority_stage",
+              "ongoing_offboarding_id"
+            ]
+          }
+        }
+      }
+    }
   ]
 }

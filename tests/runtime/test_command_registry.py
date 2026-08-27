@@ -61,7 +61,7 @@ class CommandRegistryTests(unittest.TestCase):
 
     def test_schema_catalog_is_fixed_and_local(self):
         registry = SchemaRegistry(ROOT / "contracts/schemas/v1")
-        self.assertEqual(len(registry.schema_ids), 73)
+        self.assertEqual(len(registry.schema_ids), 104)
         with self.assertRaises(KeyError): registry.resolve("https://example.invalid/schema")
         with self.assertRaises(KeyError): registry.resolve("../outside.schema.json")
 

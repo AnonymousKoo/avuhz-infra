@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:invalidate-ongoing-payment-verification-payload:v1","title":"Invalidate Ongoing Payment Verification Payload v1",
+  "description":"Requests invalidation of one exact ongoing commercial verification. Invalidation makes dependent ongoing access unusable immediately through server-side eligibility revalidation.",
+  "type":"object","additionalProperties":false,"required":["ongoing_payment_verification_id","invalidation_reason"],
+  "properties":{"ongoing_payment_verification_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingPaymentVerificationId"},"invalidation_reason":{"type":"string","enum":["PAYMENT_REVERSED","COVERAGE_ENDED","VERIFICATION_REVOKED","AGREEMENT_TERMINATED"]}}
+}

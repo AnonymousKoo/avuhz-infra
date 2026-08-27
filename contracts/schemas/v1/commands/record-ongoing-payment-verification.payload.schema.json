@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:record-ongoing-payment-verification-payload:v1","title":"Record Ongoing Payment Verification Payload v1",
+  "description":"Records normalized proof of a bounded ongoing commercial condition. Status, tenant, attribution, and verification time are server-derived; provider payloads and payment instruments are forbidden.",
+  "type":"object","additionalProperties":false,
+  "required":["ongoing_payment_verification_id","ongoing_agreement_authority_id","agreement_version","verification_basis","coverage_from","coverage_until","verification_reference"],
+  "properties":{
+    "ongoing_payment_verification_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingPaymentVerificationId"},
+    "ongoing_agreement_authority_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAgreementAuthorityId"},
+    "agreement_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"},
+    "verification_basis":{"type":"string","enum":["PAYMENT","RETAINER","APPROVED_COMMERCIAL_COVERAGE"]},
+    "amount_minor":{"type":"integer","minimum":1,"maximum":9007199254740991},
+    "currency":{"type":"string","pattern":"^[A-Z]{3}$"},
+    "coverage_from":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "coverage_until":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "verification_reference":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"}
+  },
+  "allOf":[{"if":{"properties":{"verification_basis":{"enum":["PAYMENT","RETAINER"]}},"required":["verification_basis"]},"then":{"required":["amount_minor","currency"]}}]
+}

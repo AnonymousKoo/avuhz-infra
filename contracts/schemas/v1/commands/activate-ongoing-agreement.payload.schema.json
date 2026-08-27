@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:activate-ongoing-agreement-payload:v1","title":"Activate Ongoing Agreement Payload v1",
+  "description":"Requests deterministic activation of one Agreement #2 version after exact client and Sekinfra approvals. It does not create payment or access authority.",
+  "type":"object","additionalProperties":false,"required":["ongoing_agreement_authority_id","agreement_version"],
+  "properties":{"ongoing_agreement_authority_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAgreementAuthorityId"},"agreement_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"}}
+}

@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:read-models:ongoing-engagement-eligibility-view:v1","title":"Ongoing Engagement Eligibility View v1",
+  "description":"Derived answer to whether an engagement may currently proceed into bounded ongoing work. It never reports implementation authorization.",
+  "type":"object","additionalProperties":false,"required":["tenant_id","engagement_id","eligible_for_ongoing_work","reasons","implementation_authorized","generated_at"],
+  "properties":{"tenant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},"engagement_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},"eligible_for_ongoing_work":{"type":"boolean"},"reasons":{"type":"array","minItems":0,"maxItems":8,"uniqueItems":true,"items":{"type":"string","enum":["ENGAGEMENT_INACTIVE","CONVERSION_MISSING","CONVERSION_NOT_ACCEPTED","AGREEMENT_MISSING","AGREEMENT_INVALID","PAYMENT_MISSING","PAYMENT_INVALID","ONGOING_ACCESS_MISSING","ONGOING_ACCESS_UNUSABLE","OFFBOARDING_ACTIVE"]}},"implementation_authorized":{"type":"boolean","const":false},"generated_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}}
+}

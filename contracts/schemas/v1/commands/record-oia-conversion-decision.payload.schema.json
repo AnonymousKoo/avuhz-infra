@@ -1,0 +1,19 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:record-oia-conversion-decision-payload:v1","title":"Record OIA Conversion Decision Payload v1",
+  "description":"Records one trusted client decision against an exact immutable findings delivery. Actor, tenant authority, approval evidence, digest, state, and timestamps are server-derived.",
+  "type":"object","additionalProperties":false,
+  "required":["oia_conversion_decision_id","decision_version","oia_assessment_id","oia_findings_delivery_id","decision","selected_finding_revisions"],
+  "properties":{
+    "oia_conversion_decision_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaConversionDecisionId"},
+    "decision_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"},
+    "oia_assessment_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaAssessmentId"},
+    "oia_findings_delivery_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaFindingsDeliveryId"},
+    "decision":{"type":"string","enum":["PROCEED","DECLINE"]},
+    "selected_finding_revisions":{"type":"array","minItems":0,"maxItems":100,"uniqueItems":true,"items":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/findingRevisionReference"}},
+    "supersedes_decision_reference":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/conversionDecisionReference"}
+  },
+  "allOf":[
+    {"if":{"properties":{"decision":{"const":"PROCEED"}},"required":["decision"]},"then":{"properties":{"selected_finding_revisions":{"minItems":1}}}},
+    {"if":{"properties":{"decision":{"const":"DECLINE"}},"required":["decision"]},"then":{"properties":{"selected_finding_revisions":{"maxItems":0}}}}
+  ]
+}

@@ -5,25 +5,187 @@
   "description": "Internal, security-sensitive deduplication record for one command semantic request. It retains an opaque fingerprint representation rather than raw request data, credentials, payloads, or caller-selected expiry dates.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "tenant_id", "caller_reference", "command_type", "subject_reference", "idempotency_key", "semantic_request_fingerprint", "fingerprint_schema_version", "processing_status", "first_seen_at", "retention_class", "attempt_count"],
+  "required": [
+    "id",
+    "tenant_id",
+    "caller_reference",
+    "command_type",
+    "subject_reference",
+    "idempotency_key",
+    "semantic_request_fingerprint",
+    "fingerprint_schema_version",
+    "processing_status",
+    "first_seen_at",
+    "retention_class",
+    "attempt_count"
+  ],
   "properties": {
-    "id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"},
-    "tenant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
-    "caller_reference": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-    "command_type": {"type": "string", "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "CreateAssessmentAccessProposal", "RecordAssessmentAccessApproval", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "SupersedeOIAObservation", "RecordOIARootCause", "CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment", "CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan", "CreateOIAInspectionItem", "UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"]},
-    "subject_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-    "idempotency_key": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"},
-    "semantic_request_fingerprint": {"description": "Opaque trusted-service fingerprint representation; no public hashing algorithm or raw request semantics are exposed.", "type": "string", "minLength": 20, "maxLength": 220, "pattern": "^fpv[1-9][0-9]*:[A-Za-z0-9._-]{16,200}$"},
-    "fingerprint_schema_version": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalVersion"},
-    "processing_status": {"type": "string", "enum": ["RESERVED", "PROCESSING", "COMPLETED", "FAILED_RETRYABLE", "FAILED_TERMINAL", "AMBIGUOUS"]},
-    "result_reference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"properties": {"reference_type": {"const": "COMMAND"}}}]},
-    "first_seen_at": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "completed_at": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "retention_class": {"type": "string", "enum": ["OPERATIONAL_DEDUPLICATION", "AUDIT_HISTORY"]},
-    "attempt_count": {"type": "integer", "minimum": 0, "maximum": 2147483647}
+    "id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+    },
+    "tenant_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "caller_reference": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "command_type": {
+      "type": "string",
+      "enum": [
+        "AcceptAcquisitionHandoff",
+        "OpenEngagement",
+        "SubmitDiagnosticScope",
+        "RecordHumanApproval",
+        "ApproveDiagnosticScope",
+        "CanonicalizeDiagnosticScope",
+        "CreateAssessmentAccessProposal",
+        "RecordAssessmentAccessApproval",
+        "IssueAssessmentAccessGrant",
+        "VerifyAssessmentAccess",
+        "ExpireAssessmentAccess",
+        "RevokeAssessmentAccess",
+        "CloseAssessmentAccessForAgreementEnd",
+        "RecordDiagnosticAgreementAuthority",
+        "RecordDiagnosticPaymentVerification",
+        "InvalidateDiagnosticPaymentVerification",
+        "OpenOIAAssessment",
+        "RecordOIAEvidence",
+        "RecordOIAObservation",
+        "SupersedeOIAObservation",
+        "RecordOIARootCause",
+        "CreateOIAFinding",
+        "UpdateOIAFindingAnalysis",
+        "FinalizeOIAFinding",
+        "MarkOIAAssessmentReadyForDelivery",
+        "DeliverOIAFindings",
+        "ReviseDeliveredOIAFinding",
+        "CloseOIAAssessment",
+        "CreateOIAAssessmentPlan",
+        "ReviseOIAAssessmentPlan",
+        "ReviewOIAAssessmentPlan",
+        "ApproveOIAAssessmentPlan",
+        "CreateOIAInspectionItem",
+        "UpdateOIAInspectionItem",
+        "MarkOIAInspectionItemBlocked",
+        "RecordOIAConversionDecision",
+        "AcceptOIAConversion",
+        "ProposeOngoingAgreement",
+        "RecordOngoingAgreementApproval",
+        "ActivateOngoingAgreement",
+        "TerminateOngoingAgreement",
+        "RecordOngoingPaymentVerification",
+        "InvalidateOngoingPaymentVerification",
+        "ProposeOngoingAccessGrant",
+        "RecordOngoingAccessApproval",
+        "ApproveOngoingAccessGrant",
+        "VerifyOngoingAccess",
+        "RevokeOngoingAccess",
+        "CloseOngoingAccess",
+        "InitiateOngoingOffboarding",
+        "VerifyOngoingAccessRevocation",
+        "CompleteOngoingOffboarding"
+      ]
+    },
+    "subject_reference": {
+      "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+    },
+    "idempotency_key": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"
+    },
+    "semantic_request_fingerprint": {
+      "description": "Opaque trusted-service fingerprint representation; no public hashing algorithm or raw request semantics are exposed.",
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 220,
+      "pattern": "^fpv[1-9][0-9]*:[A-Za-z0-9._-]{16,200}$"
+    },
+    "fingerprint_schema_version": {
+      "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalVersion"
+    },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "RESERVED",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED_RETRYABLE",
+        "FAILED_TERMINAL",
+        "AMBIGUOUS"
+      ]
+    },
+    "result_reference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "COMMAND"
+            }
+          }
+        }
+      ]
+    },
+    "first_seen_at": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "completed_at": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "retention_class": {
+      "type": "string",
+      "enum": [
+        "OPERATIONAL_DEDUPLICATION",
+        "AUDIT_HISTORY"
+      ]
+    },
+    "attempt_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    }
   },
   "allOf": [
-    {"if": {"properties": {"processing_status": {"const": "COMPLETED"}}, "required": ["processing_status"]}, "then": {"required": ["result_reference", "completed_at"]}},
-    {"if": {"properties": {"processing_status": {"const": "FAILED_TERMINAL"}}, "required": ["processing_status"]}, "then": {"required": ["completed_at"]}}
+    {
+      "if": {
+        "properties": {
+          "processing_status": {
+            "const": "COMPLETED"
+          }
+        },
+        "required": [
+          "processing_status"
+        ]
+      },
+      "then": {
+        "required": [
+          "result_reference",
+          "completed_at"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "processing_status": {
+            "const": "FAILED_TERMINAL"
+          }
+        },
+        "required": [
+          "processing_status"
+        ]
+      },
+      "then": {
+        "required": [
+          "completed_at"
+        ]
+      }
+    }
   ]
 }

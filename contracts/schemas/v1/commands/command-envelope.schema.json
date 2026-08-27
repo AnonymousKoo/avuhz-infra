@@ -4,75 +4,1135 @@
   "title": "Avuhz Slice 1 Command Envelope v1",
   "description": "Strict transport envelope for a requested Slice 1 command. Caller-supplied identity is never proof: the server must derive and verify authenticated identity, caller type, capabilities, tenant membership, audience, effective authority, and server time. This base envelope is not sufficient to validate or execute a command until a registered command-specific payload schema composes the reusable envelope core.",
   "allOf": [
-    {"$ref": "#/$defs/envelopeCore"},
-    {"type": "object", "required": ["payload"], "properties": {"payload": {"description": "Temporary empty placeholder. Arbitrary payload content is rejected until a command-specific payload schema is registered and composed with envelopeCore.", "type": "object", "additionalProperties": false, "maxProperties": 0}}}
+    {
+      "$ref": "#/$defs/envelopeCore"
+    },
+    {
+      "type": "object",
+      "required": [
+        "payload"
+      ],
+      "properties": {
+        "payload": {
+          "description": "Temporary empty placeholder. Arbitrary payload content is rejected until a command-specific payload schema is registered and composed with envelopeCore.",
+          "type": "object",
+          "additionalProperties": false,
+          "maxProperties": 0
+        }
+      }
+    }
   ],
   "unevaluatedProperties": false,
   "$defs": {
     "envelopeCore": {
       "type": "object",
-      "required": ["command_id", "command_type", "command_schema_version", "tenant_id", "subject_type", "subject_id", "requested_by", "caller_type", "caller_identity", "correlation_id", "idempotency_key", "requested_at", "environment", "payload_schema", "payload_version"],
+      "required": [
+        "command_id",
+        "command_type",
+        "command_schema_version",
+        "tenant_id",
+        "subject_type",
+        "subject_id",
+        "requested_by",
+        "caller_type",
+        "caller_identity",
+        "correlation_id",
+        "idempotency_key",
+        "requested_at",
+        "environment",
+        "payload_schema",
+        "payload_version"
+      ],
       "properties": {
-        "command_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/commandId"},
-        "command_type": {"$ref": "#/$defs/commandType"},
-        "command_schema_version": {"$ref": "#/$defs/schemaVersion"},
-        "tenant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
-        "engagement_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
-        "subject_type": {"$ref": "#/$defs/subjectType"},
-        "subject_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"},
-        "expected_record_version": {"$ref": "#/$defs/positiveRecordVersion"},
-        "requested_by": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "caller_type": {"$ref": "urn:avuhz:schema:contracts:identity:caller-type:v1"},
-        "caller_identity": {"$ref": "urn:avuhz:schema:contracts:identity:caller-identity:v1"},
-        "authority_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        "correlation_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId"},
-        "causation_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/causationId"},
-        "idempotency_key": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"},
-        "requested_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-        "environment": {"$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"},
-        "payload_schema": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/schemaIdentifier"},
-        "payload_version": {"$ref": "#/$defs/schemaVersion"}
+        "command_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/commandId"
+        },
+        "command_type": {
+          "$ref": "#/$defs/commandType"
+        },
+        "command_schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "tenant_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+        },
+        "engagement_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+        },
+        "subject_type": {
+          "$ref": "#/$defs/subjectType"
+        },
+        "subject_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+        },
+        "expected_record_version": {
+          "$ref": "#/$defs/positiveRecordVersion"
+        },
+        "requested_by": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "caller_type": {
+          "$ref": "urn:avuhz:schema:contracts:identity:caller-type:v1"
+        },
+        "caller_identity": {
+          "$ref": "urn:avuhz:schema:contracts:identity:caller-identity:v1"
+        },
+        "authority_reference": {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        "correlation_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId"
+        },
+        "causation_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/causationId"
+        },
+        "idempotency_key": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"
+        },
+        "requested_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        },
+        "environment": {
+          "$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"
+        },
+        "payload_schema": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/schemaIdentifier"
+        },
+        "payload_version": {
+          "$ref": "#/$defs/schemaVersion"
+        }
       },
       "allOf": [
-        {"if": {"properties": {"command_type": {"const": "AcceptAcquisitionHandoff"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ACQUISITION_HANDOFF"}}}},
-        {"if": {"properties": {"command_type": {"const": "OpenEngagement"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ENGAGEMENT"}}}},
-        {"if": {"properties": {"command_type": {"const": "SubmitDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ENGAGEMENT"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordHumanApproval"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
-        {"if": {"properties": {"command_type": {"const": "ApproveDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
-        {"if": {"properties": {"command_type": {"const": "CanonicalizeDiagnosticScope"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_SCOPE"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordAssessmentAccessApproval"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}},
-        {"if": {"properties": {"command_type": {"const": "CreateAssessmentAccessProposal"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_PROPOSAL"}}}},
-        {"if": {"properties": {"command_type": {"const": "IssueAssessmentAccessGrant"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
-        {"if": {"properties": {"command_type": {"const": "VerifyAssessmentAccess"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
-        {"if": {"properties": {"command_type": {"const": "ExpireAssessmentAccess"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
-        {"if": {"properties": {"command_type": {"const": "RevokeAssessmentAccess"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
-        {"if": {"properties": {"command_type": {"const": "CloseAssessmentAccessForAgreementEnd"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "ASSESSMENT_ACCESS_GRANT"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordDiagnosticAgreementAuthority"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_AGREEMENT_AUTHORITY"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordDiagnosticPaymentVerification"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_PAYMENT_VERIFICATION"}}}},
-        {"if": {"properties": {"command_type": {"const": "InvalidateDiagnosticPaymentVerification"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "DIAGNOSTIC_PAYMENT_VERIFICATION"}}}},
-        {"if": {"properties": {"command_type": {"const": "OpenOIAAssessment"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_ASSESSMENT"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordOIAEvidence"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_EVIDENCE_ITEM"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordOIAObservation"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_OBSERVATION"}}}},
-        {"if": {"properties": {"command_type": {"const": "SupersedeOIAObservation"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_OBSERVATION"}}}},
-        {"if": {"properties": {"command_type": {"const": "RecordOIARootCause"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_ROOT_CAUSE"}}}},
-        {"if": {"properties": {"command_type": {"const": "CreateOIAFinding"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_FINDING"}}}},
-        {"if": {"properties": {"command_type": {"const": "UpdateOIAFindingAnalysis"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_FINDING"}}}},
-        {"if": {"properties": {"command_type": {"const": "FinalizeOIAFinding"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_FINDING"}}}},
-        {"if": {"properties": {"command_type": {"const": "MarkOIAAssessmentReadyForDelivery"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_ASSESSMENT"}}}},
-        {"if": {"properties": {"command_type": {"const": "DeliverOIAFindings"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_FINDINGS_DELIVERY"}}}},
-        {"if": {"properties": {"command_type": {"const": "ReviseDeliveredOIAFinding"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_FINDING"}}}},
-        {"if": {"properties": {"command_type": {"const": "CloseOIAAssessment"}}, "required": ["command_type"]}, "then": {"properties": {"subject_type": {"const": "OIA_ASSESSMENT"}}}},
-        {"if": {"properties": {"command_type": {"const": "CreateOIAAssessmentPlan"}}, "required": ["command_type"]}, "then": {"required": ["engagement_id"], "properties": {"subject_type": {"const": "OIA_ASSESSMENT_PLAN"}}}},
-        {"if": {"properties": {"command_type": {"const": "ReviseOIAAssessmentPlan"}}, "required": ["command_type"]}, "then": {"required": ["engagement_id"], "properties": {"subject_type": {"const": "OIA_ASSESSMENT_PLAN"}}}},
-        {"if": {"properties": {"command_type": {"enum": ["ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan"]}}, "required": ["command_type"]}, "then": {"required": ["engagement_id"], "properties": {"subject_type": {"const": "OIA_ASSESSMENT_PLAN"}, "caller_type": {"const": "HUMAN"}}}},
-        {"if": {"properties": {"command_type": {"const": "CreateOIAInspectionItem"}}, "required": ["command_type"]}, "then": {"required": ["engagement_id"], "properties": {"subject_type": {"const": "OIA_INSPECTION_ITEM"}}}},
-        {"if": {"properties": {"command_type": {"enum": ["UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"]}}, "required": ["command_type"]}, "then": {"required": ["engagement_id"], "properties": {"subject_type": {"const": "OIA_INSPECTION_ITEM"}}}},
-        {"if": {"properties": {"command_type": {"enum": ["SupersedeOIAObservation", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan", "UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"]}}, "required": ["command_type"]}, "then": {"required": ["expected_record_version"]}}
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "AcceptAcquisitionHandoff"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ACQUISITION_HANDOFF"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "OpenEngagement"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ENGAGEMENT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "SubmitDiagnosticScope"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ENGAGEMENT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordHumanApproval"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "ApproveDiagnosticScope"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CanonicalizeDiagnosticScope"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DIAGNOSTIC_SCOPE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordAssessmentAccessApproval"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ASSESSMENT_ACCESS_PROPOSAL"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CreateAssessmentAccessProposal"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ASSESSMENT_ACCESS_PROPOSAL"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "IssueAssessmentAccessGrant"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "VerifyAssessmentAccess"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "ExpireAssessmentAccess"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RevokeAssessmentAccess"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CloseAssessmentAccessForAgreementEnd"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "ASSESSMENT_ACCESS_GRANT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordDiagnosticAgreementAuthority"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DIAGNOSTIC_AGREEMENT_AUTHORITY"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordDiagnosticPaymentVerification"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DIAGNOSTIC_PAYMENT_VERIFICATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "InvalidateDiagnosticPaymentVerification"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DIAGNOSTIC_PAYMENT_VERIFICATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "OpenOIAAssessment"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_ASSESSMENT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordOIAEvidence"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_EVIDENCE_ITEM"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordOIAObservation"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_OBSERVATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "SupersedeOIAObservation"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_OBSERVATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordOIARootCause"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_ROOT_CAUSE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CreateOIAFinding"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_FINDING"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "UpdateOIAFindingAnalysis"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_FINDING"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "FinalizeOIAFinding"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_FINDING"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "MarkOIAAssessmentReadyForDelivery"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_ASSESSMENT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "DeliverOIAFindings"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_FINDINGS_DELIVERY"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "ReviseDeliveredOIAFinding"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_FINDING"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CloseOIAAssessment"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "OIA_ASSESSMENT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CreateOIAAssessmentPlan"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "OIA_ASSESSMENT_PLAN"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "ReviseOIAAssessmentPlan"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "OIA_ASSESSMENT_PLAN"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "ReviewOIAAssessmentPlan",
+                  "ApproveOIAAssessmentPlan"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "OIA_ASSESSMENT_PLAN"
+              },
+              "caller_type": {
+                "const": "HUMAN"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CreateOIAInspectionItem"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "OIA_INSPECTION_ITEM"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "UpdateOIAInspectionItem",
+                  "MarkOIAInspectionItemBlocked"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "OIA_INSPECTION_ITEM"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "SupersedeOIAObservation",
+                  "UpdateOIAFindingAnalysis",
+                  "FinalizeOIAFinding",
+                  "MarkOIAAssessmentReadyForDelivery",
+                  "DeliverOIAFindings",
+                  "ReviseDeliveredOIAFinding",
+                  "CloseOIAAssessment",
+                  "ReviseOIAAssessmentPlan",
+                  "ReviewOIAAssessmentPlan",
+                  "ApproveOIAAssessmentPlan",
+                  "UpdateOIAInspectionItem",
+                  "MarkOIAInspectionItemBlocked"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "expected_record_version"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordOIAConversionDecision",
+                  "AcceptOIAConversion"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "OIA_CONVERSION_DECISION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "ProposeOngoingAgreement",
+                  "RecordOngoingAgreementApproval",
+                  "ActivateOngoingAgreement",
+                  "TerminateOngoingAgreement"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "ONGOING_AGREEMENT_AUTHORITY"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordOngoingPaymentVerification",
+                  "InvalidateOngoingPaymentVerification"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "ONGOING_PAYMENT_VERIFICATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "ProposeOngoingAccessGrant",
+                  "RecordOngoingAccessApproval",
+                  "ApproveOngoingAccessGrant",
+                  "VerifyOngoingAccess",
+                  "RevokeOngoingAccess",
+                  "CloseOngoingAccess"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "ONGOING_ACCESS_GRANT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "InitiateOngoingOffboarding",
+                  "CompleteOngoingOffboarding"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "ONGOING_OFFBOARDING"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "VerifyOngoingAccessRevocation"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "ONGOING_ACCESS_REVOCATION_VERIFICATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordOIAConversionDecision",
+                  "AcceptOIAConversion",
+                  "RecordOngoingAgreementApproval",
+                  "TerminateOngoingAgreement",
+                  "RecordOngoingAccessApproval",
+                  "InitiateOngoingOffboarding"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "caller_type": {
+                "const": "HUMAN"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "AcceptOIAConversion",
+                  "RecordOngoingAgreementApproval",
+                  "ActivateOngoingAgreement",
+                  "TerminateOngoingAgreement",
+                  "InvalidateOngoingPaymentVerification",
+                  "RecordOngoingAccessApproval",
+                  "ApproveOngoingAccessGrant",
+                  "VerifyOngoingAccess",
+                  "RevokeOngoingAccess",
+                  "CloseOngoingAccess",
+                  "VerifyOngoingAccessRevocation",
+                  "CompleteOngoingOffboarding"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "expected_record_version"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordOIAConversionDecision",
+                  "AcceptOIAConversion",
+                  "ProposeOngoingAgreement",
+                  "RecordOngoingAgreementApproval",
+                  "ActivateOngoingAgreement",
+                  "TerminateOngoingAgreement",
+                  "RecordOngoingPaymentVerification",
+                  "InvalidateOngoingPaymentVerification",
+                  "ProposeOngoingAccessGrant",
+                  "RecordOngoingAccessApproval",
+                  "ApproveOngoingAccessGrant",
+                  "VerifyOngoingAccess",
+                  "RevokeOngoingAccess",
+                  "CloseOngoingAccess",
+                  "InitiateOngoingOffboarding",
+                  "VerifyOngoingAccessRevocation",
+                  "CompleteOngoingOffboarding"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "caller_type": {
+                "enum": [
+                  "HUMAN",
+                  "INTERNAL_SERVICE",
+                  "PROVIDER_ADAPTER",
+                  "SECURITY_AUTOMATION"
+                ]
+              }
+            }
+          }
+        }
       ]
     },
-    "commandType": {"type": "string", "minLength": 14, "maxLength": 42, "enum": ["AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "SupersedeOIAObservation", "RecordOIARootCause", "CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment", "CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan", "CreateOIAInspectionItem", "UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"]},
-    "subjectType": {"type": "string", "minLength": 10, "maxLength": 34, "enum": ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "ASSESSMENT_ACCESS_PROPOSAL", "ASSESSMENT_ACCESS_GRANT", "DIAGNOSTIC_AGREEMENT_AUTHORITY", "DIAGNOSTIC_PAYMENT_VERIFICATION", "OIA_ASSESSMENT", "OIA_ASSESSMENT_PLAN", "OIA_INSPECTION_ITEM", "OIA_EVIDENCE_ITEM", "OIA_OBSERVATION", "OIA_ROOT_CAUSE", "OIA_FINDING", "OIA_FINDINGS_DELIVERY"]},
-    "schemaVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "positiveRecordVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647}
+    "commandType": {
+      "type": "string",
+      "minLength": 14,
+      "maxLength": 42,
+      "enum": [
+        "AcceptAcquisitionHandoff",
+        "OpenEngagement",
+        "SubmitDiagnosticScope",
+        "RecordHumanApproval",
+        "ApproveDiagnosticScope",
+        "CanonicalizeDiagnosticScope",
+        "RecordAssessmentAccessApproval",
+        "CreateAssessmentAccessProposal",
+        "IssueAssessmentAccessGrant",
+        "VerifyAssessmentAccess",
+        "ExpireAssessmentAccess",
+        "RevokeAssessmentAccess",
+        "CloseAssessmentAccessForAgreementEnd",
+        "RecordDiagnosticAgreementAuthority",
+        "RecordDiagnosticPaymentVerification",
+        "InvalidateDiagnosticPaymentVerification",
+        "OpenOIAAssessment",
+        "RecordOIAEvidence",
+        "RecordOIAObservation",
+        "SupersedeOIAObservation",
+        "RecordOIARootCause",
+        "CreateOIAFinding",
+        "UpdateOIAFindingAnalysis",
+        "FinalizeOIAFinding",
+        "MarkOIAAssessmentReadyForDelivery",
+        "DeliverOIAFindings",
+        "ReviseDeliveredOIAFinding",
+        "CloseOIAAssessment",
+        "CreateOIAAssessmentPlan",
+        "ReviseOIAAssessmentPlan",
+        "ReviewOIAAssessmentPlan",
+        "ApproveOIAAssessmentPlan",
+        "CreateOIAInspectionItem",
+        "UpdateOIAInspectionItem",
+        "MarkOIAInspectionItemBlocked",
+        "RecordOIAConversionDecision",
+        "AcceptOIAConversion",
+        "ProposeOngoingAgreement",
+        "RecordOngoingAgreementApproval",
+        "ActivateOngoingAgreement",
+        "TerminateOngoingAgreement",
+        "RecordOngoingPaymentVerification",
+        "InvalidateOngoingPaymentVerification",
+        "ProposeOngoingAccessGrant",
+        "RecordOngoingAccessApproval",
+        "ApproveOngoingAccessGrant",
+        "VerifyOngoingAccess",
+        "RevokeOngoingAccess",
+        "CloseOngoingAccess",
+        "InitiateOngoingOffboarding",
+        "VerifyOngoingAccessRevocation",
+        "CompleteOngoingOffboarding"
+      ]
+    },
+    "subjectType": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 39,
+      "enum": [
+        "ACQUISITION_HANDOFF",
+        "ENGAGEMENT",
+        "DIAGNOSTIC_SCOPE",
+        "ASSESSMENT_ACCESS_PROPOSAL",
+        "ASSESSMENT_ACCESS_GRANT",
+        "DIAGNOSTIC_AGREEMENT_AUTHORITY",
+        "DIAGNOSTIC_PAYMENT_VERIFICATION",
+        "OIA_ASSESSMENT",
+        "OIA_ASSESSMENT_PLAN",
+        "OIA_INSPECTION_ITEM",
+        "OIA_EVIDENCE_ITEM",
+        "OIA_OBSERVATION",
+        "OIA_ROOT_CAUSE",
+        "OIA_FINDING",
+        "OIA_FINDINGS_DELIVERY",
+        "OIA_CONVERSION_DECISION",
+        "ONGOING_AGREEMENT_AUTHORITY",
+        "ONGOING_PAYMENT_VERIFICATION",
+        "ONGOING_ACCESS_GRANT",
+        "ONGOING_ACCESS_REVOCATION_VERIFICATION",
+        "ONGOING_OFFBOARDING"
+      ]
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "positiveRecordVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    }
   }
 }

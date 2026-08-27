@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:phase5c-common:v1",
+  "title": "Avuhz Phase 5C Common Types v1",
+  "description": "Bounded shared types for conversion, ongoing commercial authority, ongoing access, and offboarding. No type grants implementation, deployment, or managed-operations authority.",
+  "$defs": {
+    "positiveVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+    "digest": {"type": "string", "minLength": 71, "maxLength": 71, "pattern": "^sha256:[0-9a-f]{64}$"},
+    "trustedActorReference": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "authorityRole": {"type": "string", "enum": ["CLIENT_DECISION_AUTHORITY", "SEKINFRA_ENGAGEMENT_AUTHORITY"]},
+    "boundedStatement": {"type": "string", "minLength": 1, "maxLength": 500, "pattern": "^[^\\u0000-\\u001F\\u007F]+$"},
+    "boundedStatements": {"type": "array", "minItems": 0, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "#/$defs/boundedStatement"}},
+    "findingRevisionReference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["oia_finding_id", "finding_revision", "content_digest"],
+      "properties": {
+        "oia_finding_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaFindingId"},
+        "finding_revision": {"$ref": "#/$defs/positiveVersion"},
+        "content_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "targetResourceReference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["resource_reference_id"],
+      "properties": {"resource_reference_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"}}
+    },
+    "humanApprovalReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "HUMAN_APPROVAL"}}}
+      ]
+    },
+    "conversionDecisionReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "OIA_CONVERSION_DECISION"}}}
+      ]
+    },
+    "findingsDeliveryReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "OIA_FINDINGS_DELIVERY"}}}
+      ]
+    },
+    "ongoingAgreementReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "ONGOING_AGREEMENT_AUTHORITY"}}}
+      ]
+    },
+    "ongoingPaymentReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "ONGOING_PAYMENT_VERIFICATION"}}}
+      ]
+    },
+    "ongoingAccessGrantReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "ONGOING_ACCESS_GRANT"}}}
+      ]
+    },
+    "offboardingReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "ONGOING_OFFBOARDING"}}}
+      ]
+    },
+    "revocationVerificationReference": {
+      "allOf": [
+        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
+        {"properties": {"reference_type": {"const": "ONGOING_ACCESS_REVOCATION_VERIFICATION"}}}
+      ]
+    }
+  }
+}

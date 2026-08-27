@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:record-ongoing-access-approval-payload:v1","title":"Record Ongoing Access Approval Payload v1",
+  "description":"Records one trusted-human approval of an exact new OngoingAccessGrant authority digest. It never approves an AssessmentAccessGrant for ongoing use.",
+  "type":"object","additionalProperties":false,"required":["ongoing_access_grant_id","authority_role"],
+  "properties":{"ongoing_access_grant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAccessGrantId"},"authority_role":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/authorityRole"}}
+}

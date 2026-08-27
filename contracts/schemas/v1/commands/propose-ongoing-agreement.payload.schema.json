@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:propose-ongoing-agreement-payload:v1","title":"Propose Ongoing Agreement Payload v1",
+  "description":"Creates one non-authoritative Agreement #2 version proposal from accepted conversion scope. Digests, approvals, state, and activation are server-derived.",
+  "type":"object","additionalProperties":false,
+  "required":["ongoing_agreement_authority_id","agreement_version","oia_conversion_decision_id","decision_version","agreement_reference","service_scope","effective_at"],
+  "properties":{
+    "ongoing_agreement_authority_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAgreementAuthorityId"},
+    "agreement_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"},
+    "oia_conversion_decision_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaConversionDecisionId"},
+    "decision_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"},
+    "agreement_reference":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "service_scope":{"$ref":"urn:avuhz:schema:contracts:domain:ongoing-agreement-authority:v1#/$defs/serviceScope"},
+    "effective_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "ends_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "supersedes_agreement_reference":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/ongoingAgreementReference"}
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:propose-ongoing-access-grant-payload:v1","title":"Propose Ongoing Access Grant Payload v1",
+  "description":"Creates a new proposed ongoing access-channel authority. It cannot reference or mutate AssessmentAccessGrant and contains no implementation action vocabulary.",
+  "type":"object","additionalProperties":false,
+  "required":["ongoing_access_grant_id","ongoing_agreement_authority_id","agreement_version","ongoing_payment_verification_id","target_resource_references","access_channel_reference","effective_at","review_at","expires_at"],
+  "properties":{
+    "ongoing_access_grant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAccessGrantId"},
+    "ongoing_agreement_authority_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAgreementAuthorityId"},
+    "agreement_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"},
+    "ongoing_payment_verification_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingPaymentVerificationId"},
+    "target_resource_references":{"type":"array","minItems":1,"maxItems":20,"uniqueItems":true,"items":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/targetResourceReference"}},
+    "access_channel_reference":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "effective_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "review_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
+    "expires_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}
+  }
+}

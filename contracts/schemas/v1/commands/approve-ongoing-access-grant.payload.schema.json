@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:approve-ongoing-access-grant-payload:v1","title":"Approve Ongoing Access Grant Payload v1",
+  "description":"Requests APPROVED, unusable state after exact dual human authority. Approval is not activation and does not authorize change.",
+  "type":"object","additionalProperties":false,"required":["ongoing_access_grant_id"],
+  "properties":{"ongoing_access_grant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAccessGrantId"}}
+}

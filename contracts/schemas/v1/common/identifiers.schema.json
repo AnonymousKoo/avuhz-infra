@@ -57,6 +57,12 @@
     "oiaRootCauseId": {"$ref": "#/$defs/canonicalUuid"},
     "oiaFindingId": {"$ref": "#/$defs/canonicalUuid"},
     "oiaFindingsDeliveryId": {"$ref": "#/$defs/canonicalUuid"},
+    "oiaConversionDecisionId": {"title": "OIA Conversion Decision ID", "description": "Canonical identity for one delivery-bound client conversion decision history.", "$ref": "#/$defs/canonicalUuid"},
+    "ongoingAgreementAuthorityId": {"title": "Ongoing Agreement Authority ID", "description": "Canonical identity for one versioned Agreement #2 authority history.", "$ref": "#/$defs/canonicalUuid"},
+    "ongoingPaymentVerificationId": {"title": "Ongoing Payment Verification ID", "description": "Canonical identity for one bounded ongoing commercial verification.", "$ref": "#/$defs/canonicalUuid"},
+    "ongoingAccessGrantId": {"title": "Ongoing Access Grant ID", "description": "Canonical identity for one bounded ongoing access authority, distinct from diagnostic access.", "$ref": "#/$defs/canonicalUuid"},
+    "ongoingAccessRevocationVerificationId": {"title": "Ongoing Access Revocation Verification ID", "description": "Canonical identity for immutable verification that external ongoing access is absent.", "$ref": "#/$defs/canonicalUuid"},
+    "ongoingOffboardingId": {"title": "Ongoing Offboarding ID", "description": "Canonical identity for one governed ongoing-engagement offboarding history.", "$ref": "#/$defs/canonicalUuid"},
     "assessmentAccessGrantId": {
       "title": "Assessment Access Grant ID",
       "description": "Canonical identity for one temporary diagnostic assessment access authority record.",

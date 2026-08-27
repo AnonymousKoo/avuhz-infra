@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:record-ongoing-agreement-approval-payload:v1","title":"Record Ongoing Agreement Approval Payload v1",
+  "description":"Records one attributable trusted-human approval of an exact Agreement #2 version and server-derived authority digest.",
+  "type":"object","additionalProperties":false,"required":["ongoing_agreement_authority_id","agreement_version","authority_role"],
+  "properties":{"ongoing_agreement_authority_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAgreementAuthorityId"},"agreement_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"},"authority_role":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/authorityRole"}}
+}

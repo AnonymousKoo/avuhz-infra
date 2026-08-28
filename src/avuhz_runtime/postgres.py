@@ -24,6 +24,7 @@ from .postgres_phase5c import (
 )
 from .postgres_phase5d_brief import ImplementationBriefPostgresRepository
 from .postgres_phase5d_authorization import ImplementationAuthorizationPostgresRepository
+from .postgres_phase5d_package import CodexBuildPackagePostgresRepository
 
 def connection_factory_from_environment(name="AVUHZ_POSTGRES_DSN"):
     def factory():
@@ -60,6 +61,7 @@ class PostgresStore:
             "ONGOING_OFFBOARDING": ("select tenant_id,record_version,engagement_id,state from public.avuhz_ongoing_offboardings where tenant_id=%s and ongoing_offboarding_id=%s", "state"),
             "IMPLEMENTATION_BRIEF": ("select tenant_id,record_version,engagement_id,state from public.avuhz_implementation_briefs where tenant_id=%s and implementation_brief_id=%s and state<>'SUPERSEDED' order by implementation_brief_version desc limit 1", "state"),
             "IMPLEMENTATION_AUTHORIZATION": ("select tenant_id,record_version,engagement_id,state from public.avuhz_implementation_authorizations where tenant_id=%s and implementation_authorization_id=%s and state<>'SUPERSEDED' order by authorization_version desc limit 1", "state"),
+            "CODEX_BUILD_PACKAGE": ("select tenant_id,record_version,engagement_id,state from public.avuhz_codex_build_packages where tenant_id=%s and codex_build_package_id=%s and state<>'SUPERSEDED' order by package_version desc limit 1", "state"),
         }
         query = queries.get(command.subject_type)
         subject_id = command.subject_id
@@ -143,7 +145,7 @@ class HumanApprovalPostgresRepository(_TenantRepository):
             "OIA_CONVERSION_DECISION", "ONGOING_AGREEMENT_AUTHORITY", "ONGOING_ACCESS_GRANT"
         }:
             return self._phase5c(row)
-        if row.get("subject_type") == "IMPLEMENTATION_BRIEF":
+        if row.get("subject_type") in {"IMPLEMENTATION_BRIEF", "IMPLEMENTATION_AUTHORIZATION", "CODEX_BUILD_PACKAGE"}:
             return self._phase5d(row)
         if row.get("subject_type") == "ASSESSMENT_ACCESS_PROPOSAL":
             return self._assessment(row)
@@ -352,6 +354,7 @@ class PostgresUnitOfWork:
                 raise
         self.handoffs=AcquisitionHandoffPostgresRepository(self); self.engagements=EngagementPostgresRepository(self); self.diagnostic_scopes=DiagnosticScopePostgresRepository(self); self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityPostgresRepository(self); self.diagnostic_payment_verifications=DiagnosticPaymentVerificationPostgresRepository(self); self.assessment_access_proposals=AssessmentAccessProposalPostgresRepository(self); self.assessment_access_grants=AssessmentAccessGrantPostgresRepository(self); self.oia_assessments=OIAAssessmentPostgresRepository(self); self.oia_evidence_items=OIAEvidencePostgresRepository(self); self.oia_assessment_plans=OIAAssessmentPlanPostgresRepository(self); self.oia_inspection_items=OIAInspectionItemPostgresRepository(self); self.oia_observations=OIAObservationPostgresRepository(self); self.oia_root_causes=OIARootCausePostgresRepository(self); self.oia_findings=OIAFindingPostgresRepository(self); self.oia_findings_deliveries=OIAFindingsDeliveryPostgresRepository(self); self.oia_conversion_decisions=OIAConversionDecisionPostgresRepository(self); self.ongoing_agreement_authorities=OngoingAgreementAuthorityPostgresRepository(self); self.ongoing_payment_verifications=OngoingPaymentVerificationPostgresRepository(self); self.ongoing_access_grants=OngoingAccessGrantPostgresRepository(self); self.ongoing_access_revocation_verifications=OngoingAccessRevocationVerificationPostgresRepository(self); self.ongoing_offboardings=OngoingOffboardingPostgresRepository(self); self.implementation_briefs=ImplementationBriefPostgresRepository(self); self.human_approvals=HumanApprovalPostgresRepository(self); self.idempotency=IdempotencyPostgresRepository(self); self.lifecycle_events=LifecycleEventPostgresRepository(self); self.outbox=OutboxPostgresRepository(self)
         self.implementation_authorizations=ImplementationAuthorizationPostgresRepository(self)
+        self.codex_build_packages=CodexBuildPackagePostgresRepository(self)
     def bind_trusted_context(self,context):
         if not getattr(context,"authenticated",False) or not getattr(context,"tenant_id",None):raise ValueError("trusted tenant context is required")
         tenant=str(uuid.UUID(str(context.tenant_id)))

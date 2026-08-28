@@ -456,17 +456,19 @@ def main() -> None:
         fail("command/idempotency vocabulary order drifted")
     if capability["enum"][-9:] != CAPABILITIES_5D or event["properties"]["event_type"]["enum"][-13:] != EVENTS_5D:
         fail("capability/event vocabulary drifted")
-    runtime_commands = COMMANDS_5D[:9]
+    runtime_commands = COMMANDS_5D
     brief_commands = runtime_commands[:4]
-    authorization_commands = runtime_commands[4:]
+    authorization_commands = runtime_commands[4:9]
+    package_commands = runtime_commands[9:]
     if (
         set(COMMANDS).intersection(COMMANDS_5D) != set(runtime_commands)
         or not all(COMMANDS[command].executable for command in runtime_commands)
         or any(COMMANDS[command].subject_type != "IMPLEMENTATION_BRIEF" for command in brief_commands)
         or any(COMMANDS[command].subject_type != "IMPLEMENTATION_AUTHORIZATION" for command in authorization_commands)
-        or len(SCHEMA_FILES) != 118
+        or any(COMMANDS[command].subject_type != "CODEX_BUILD_PACKAGE" for command in package_commands)
+        or len(SCHEMA_FILES) != 124
     ):
-        fail("Phase 5D-B2 ImplementationAuthorization-only runtime boundary drifted")
+        fail("Phase 5D-B3 CodexBuildPackage runtime boundary drifted")
 
     assert_approvals(schemas, values)
     assert_events(schemas, values)

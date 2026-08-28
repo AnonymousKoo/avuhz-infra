@@ -249,7 +249,7 @@ def assert_human_rules(registry: SchemaRegistry) -> None:
 def main() -> None:
     fixtures = json.loads(FIXTURE.read_text())
     registry = SchemaRegistry(SCHEMA_ROOT)
-    if len(registry.schema_ids) != len(SCHEMA_FILES) or len(registry.schema_ids) != 118:
+    if len(registry.schema_ids) != len(SCHEMA_FILES) or len(registry.schema_ids) != 124:
         fail("local schema catalog count or uniqueness drifted")
     for schema_id in registry.schema_ids:
         Draft202012Validator.check_schema(registry.resolve(schema_id))

@@ -8,12 +8,13 @@ from avuhz_runtime.schema_registry import SchemaRegistry
 from avuhz_runtime.phase5c import PHASE5C_COMMANDS
 from avuhz_runtime.phase5d_brief import IMPLEMENTATION_BRIEF_COMMANDS
 from avuhz_runtime.phase5d_authorization import IMPLEMENTATION_AUTHORIZATION_COMMANDS
+from avuhz_runtime.phase5d_package import CODEX_BUILD_PACKAGE_COMMANDS
 
 
 class CommandRegistryTests(unittest.TestCase):
     def test_registry_is_exactly_slice_one(self):
-        self.assertEqual(set(COMMANDS), {"AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "SupersedeOIAObservation", "RecordOIARootCause", "CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment", "CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan", "CreateOIAInspectionItem", "UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"} | set(PHASE5C_COMMANDS) | set(IMPLEMENTATION_BRIEF_COMMANDS) | set(IMPLEMENTATION_AUTHORIZATION_COMMANDS))
-        self.assertEqual(sum(entry.executable for entry in COMMANDS.values()), 55)
+        self.assertEqual(set(COMMANDS), {"AcceptAcquisitionHandoff", "OpenEngagement", "SubmitDiagnosticScope", "RecordHumanApproval", "ApproveDiagnosticScope", "CanonicalizeDiagnosticScope", "RecordAssessmentAccessApproval", "CreateAssessmentAccessProposal", "IssueAssessmentAccessGrant", "VerifyAssessmentAccess", "ExpireAssessmentAccess", "RevokeAssessmentAccess", "CloseAssessmentAccessForAgreementEnd", "RecordDiagnosticAgreementAuthority", "RecordDiagnosticPaymentVerification", "InvalidateDiagnosticPaymentVerification", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "SupersedeOIAObservation", "RecordOIARootCause", "CreateOIAFinding", "UpdateOIAFindingAnalysis", "FinalizeOIAFinding", "MarkOIAAssessmentReadyForDelivery", "DeliverOIAFindings", "ReviseDeliveredOIAFinding", "CloseOIAAssessment", "CreateOIAAssessmentPlan", "ReviseOIAAssessmentPlan", "ReviewOIAAssessmentPlan", "ApproveOIAAssessmentPlan", "CreateOIAInspectionItem", "UpdateOIAInspectionItem", "MarkOIAInspectionItemBlocked"} | set(PHASE5C_COMMANDS) | set(IMPLEMENTATION_BRIEF_COMMANDS) | set(IMPLEMENTATION_AUTHORIZATION_COMMANDS) | set(CODEX_BUILD_PACKAGE_COMMANDS))
+        self.assertEqual(sum(entry.executable for entry in COMMANDS.values()), 59)
         self.assertEqual(COMMANDS["CreateAssessmentAccessProposal"].subject_type, "ASSESSMENT_ACCESS_PROPOSAL")
         self.assertEqual(COMMANDS["CreateAssessmentAccessProposal"].payload_schema_id, "urn:avuhz:schema:contracts:commands:create-assessment-access-proposal-payload:v1")
         self.assertTrue(all(entry.validatable for entry in COMMANDS.values()))
@@ -64,7 +65,7 @@ class CommandRegistryTests(unittest.TestCase):
 
     def test_schema_catalog_is_fixed_and_local(self):
         registry = SchemaRegistry(ROOT / "contracts/schemas/v1")
-        self.assertEqual(len(registry.schema_ids), 118)
+        self.assertEqual(len(registry.schema_ids), 124)
         with self.assertRaises(KeyError): registry.resolve("https://example.invalid/schema")
         with self.assertRaises(KeyError): registry.resolve("../outside.schema.json")
 

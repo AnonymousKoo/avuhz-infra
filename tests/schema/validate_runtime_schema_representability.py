@@ -10,8 +10,12 @@ from avuhz_runtime.in_memory import UnitOfWork
 from avuhz_runtime.phase5c import (
     PHASE5C_CAPABILITIES, PHASE5C_COMMANDS, PHASE5C_EVENTS, Phase5CReadService,
 )
+from avuhz_runtime.phase5d_package import CodexBuildPackageReadService
 from avuhz_runtime.schema_registry import SchemaRegistry
 from tests.runtime.test_phase5c_runtime import Phase5CRuntimeTests
+from tests.runtime.test_phase5d_codex_build_package_runtime import (
+    CodexBuildPackageRuntimeTests,
+)
 
 def require(ok, message):
     if not ok: raise AssertionError(message)
@@ -124,6 +128,43 @@ def main():
         require(not list(Draft202012Validator(schema).iter_errors(value)),
                 f'Phase 5C {slug} runtime read is not schema representable')
 
+    package_runtime = CodexBuildPackageRuntimeTests()
+    package_runtime.setUp()
+    package_payload = package_runtime.payload()
+    package_runtime.draft(package_payload)
+    package_runtime.release(package_payload, package_runtime.approve(package_payload))
+    package_uow = UnitOfWork(package_runtime.store)
+    package = package_uow.codex_build_packages.get_version(
+        package_runtime.tenant, package_payload['codex_build_package_id'], 1)
+    package_schema = registry.expanded(
+        'urn:avuhz:schema:contracts:domain:codex-build-package:v1')
+    require(not list(Draft202012Validator(package_schema).iter_errors(package)),
+            'Phase 5D-B3 CodexBuildPackage runtime record is not schema representable')
+    package_approvals = [
+        value for value in package_runtime.store.approvals.values()
+        if value.get('subject_type') == 'CODEX_BUILD_PACKAGE'
+    ]
+    require(len(package_approvals) == 2,
+            'Phase 5D-B3 CodexBuildPackage dual approval records drifted')
+    require(all(not list(Draft202012Validator(approval_schema).iter_errors(value))
+                for value in package_approvals),
+            'Phase 5D-B3 CodexBuildPackage HumanApproval is not schema representable')
+    package_readiness = CodexBuildPackageReadService(package_uow).readiness(
+        package_runtime.tenant, package_payload['codex_build_package_id'], 1,
+        package_runtime.now)
+    package_readiness_schema = registry.expanded(
+        'urn:avuhz:schema:contracts:read-models:codex-build-package-readiness-view:v1')
+    require(not list(Draft202012Validator(package_readiness_schema).iter_errors(
+        package_readiness)),
+        'Phase 5D-B3 CodexBuildPackage readiness is not schema representable')
+    require(package_readiness['codex_build_package_ready'],
+            'Phase 5D-B3 released package must be ready')
+    require(not package_readiness['package_grants_authority'],
+            'CodexBuildPackage must never grant implementation authority')
+    require(not package_readiness['deployment_authorized'],
+            'CodexBuildPackage must never grant deployment authority')
+    require(not package_readiness['production_change_authorized'],
+            'CodexBuildPackage must never grant production-change authority')
 if __name__ == '__main__':
     try: main()
     except AssertionError as error:

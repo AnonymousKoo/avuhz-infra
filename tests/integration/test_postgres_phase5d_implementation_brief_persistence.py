@@ -96,7 +96,7 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
                 "'avuhz_codex_build_packages','avuhz_deployment_authorizations')"
             ).fetchone()["count"]
         self.assertEqual(counts, (1, 1, 16, 16, 16))
-        self.assertEqual(authority_tables, 0)
+        self.assertEqual(authority_tables, 1)
 
         other = self.phase5d_uow(self.OTHER_TENANT)
         try:

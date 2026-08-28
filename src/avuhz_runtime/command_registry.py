@@ -72,6 +72,11 @@ COMMANDS = {
     "ReviseImplementationBrief": CommandDefinition("ReviseImplementationBrief", "IMPLEMENTATION_BRIEF", 1, "urn:avuhz:schema:contracts:commands:revise-implementation-brief-payload:v1", 1, required_capability="implementation_brief:draft", executable=True),
     "RecordImplementationBriefApproval": CommandDefinition("RecordImplementationBriefApproval", "IMPLEMENTATION_BRIEF", 1, "urn:avuhz:schema:contracts:commands:record-implementation-brief-approval-payload:v1", 1, required_capability="implementation_brief:approve", executable=True),
     "ApproveImplementationBrief": CommandDefinition("ApproveImplementationBrief", "IMPLEMENTATION_BRIEF", 1, "urn:avuhz:schema:contracts:commands:approve-implementation-brief-payload:v1", 1, required_capability="implementation_brief:approve", executable=True),
+    "ProposeImplementationAuthorization": CommandDefinition("ProposeImplementationAuthorization", "IMPLEMENTATION_AUTHORIZATION", 1, "urn:avuhz:schema:contracts:commands:propose-implementation-authorization-payload:v1", 1, required_capability="implementation_authorization:propose", executable=True),
+    "ReviseImplementationAuthorization": CommandDefinition("ReviseImplementationAuthorization", "IMPLEMENTATION_AUTHORIZATION", 1, "urn:avuhz:schema:contracts:commands:revise-implementation-authorization-payload:v1", 1, required_capability="implementation_authorization:propose", executable=True),
+    "RecordImplementationAuthorizationApproval": CommandDefinition("RecordImplementationAuthorizationApproval", "IMPLEMENTATION_AUTHORIZATION", 1, "urn:avuhz:schema:contracts:commands:record-implementation-authorization-approval-payload:v1", 1, required_capability="implementation_authorization:approve", executable=True),
+    "ActivateImplementationAuthorization": CommandDefinition("ActivateImplementationAuthorization", "IMPLEMENTATION_AUTHORIZATION", 1, "urn:avuhz:schema:contracts:commands:activate-implementation-authorization-payload:v1", 1, required_capability="implementation_authorization:activate", executable=True),
+    "RevokeImplementationAuthorization": CommandDefinition("RevokeImplementationAuthorization", "IMPLEMENTATION_AUTHORIZATION", 1, "urn:avuhz:schema:contracts:commands:revoke-implementation-authorization-payload:v1", 1, required_capability="implementation_authorization:revoke", executable=True),
 }
 
 

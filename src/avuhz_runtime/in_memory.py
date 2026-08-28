@@ -22,10 +22,11 @@ from .oia_finding import OIAFindingHandler
 from .oia_findings_delivery import OIAFindingsLifecycleHandler
 
 from .phase5c import PHASE5C_COMMANDS, PHASE5C_EVENTS, Phase5CHandler
+from .phase5d_brief import IMPLEMENTATION_BRIEF_COMMANDS, IMPLEMENTATION_BRIEF_EVENTS, ImplementationBriefHandler
 class CanonicalScopeDigestConflict(ValueError): pass
 from .runtime import prepare_and_guard_command
 
-COMMAND_SCOPED_IDEMPOTENCY_COMMANDS=frozenset(("CreateAssessmentAccessProposal","RecordAssessmentAccessApproval","IssueAssessmentAccessGrant","VerifyAssessmentAccess","ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd","RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification","OpenOIAAssessment","RecordOIAEvidence","RecordOIAObservation","SupersedeOIAObservation","RecordOIARootCause","CreateOIAFinding","UpdateOIAFindingAnalysis","FinalizeOIAFinding","MarkOIAAssessmentReadyForDelivery","DeliverOIAFindings","ReviseDeliveredOIAFinding","CloseOIAAssessment","CreateOIAAssessmentPlan","ReviseOIAAssessmentPlan","ReviewOIAAssessmentPlan","ApproveOIAAssessmentPlan","CreateOIAInspectionItem","UpdateOIAInspectionItem","MarkOIAInspectionItemBlocked",*PHASE5C_COMMANDS))
+COMMAND_SCOPED_IDEMPOTENCY_COMMANDS=frozenset(("CreateAssessmentAccessProposal","RecordAssessmentAccessApproval","IssueAssessmentAccessGrant","VerifyAssessmentAccess","ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd","RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification","OpenOIAAssessment","RecordOIAEvidence","RecordOIAObservation","SupersedeOIAObservation","RecordOIARootCause","CreateOIAFinding","UpdateOIAFindingAnalysis","FinalizeOIAFinding","MarkOIAAssessmentReadyForDelivery","DeliverOIAFindings","ReviseDeliveredOIAFinding","CloseOIAAssessment","CreateOIAAssessmentPlan","ReviseOIAAssessmentPlan","ReviewOIAAssessmentPlan","ApproveOIAAssessmentPlan","CreateOIAInspectionItem","UpdateOIAInspectionItem","MarkOIAInspectionItemBlocked",*PHASE5C_COMMANDS,*IMPLEMENTATION_BRIEF_COMMANDS))
 def idempotency_scope(command): return "COMMAND" if command.command_type in COMMAND_SCOPED_IDEMPOTENCY_COMMANDS else "SUBJECT:"+command.subject_id
 
 def fingerprint(command):
@@ -52,7 +53,7 @@ def fingerprint(command):
     return "fpv1:"+hashlib.sha256(json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=True).encode()).hexdigest()
 @dataclass
 class MemoryStore:
-    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); oia_assessments:dict=field(default_factory=dict); oia_evidence_items:dict=field(default_factory=dict); oia_assessment_plans:dict=field(default_factory=dict); oia_inspection_items:dict=field(default_factory=dict); oia_observations:dict=field(default_factory=dict); oia_root_causes:dict=field(default_factory=dict); oia_findings:dict=field(default_factory=dict); oia_findings_deliveries:dict=field(default_factory=dict); oia_conversion_decisions:dict=field(default_factory=dict); ongoing_agreement_authorities:dict=field(default_factory=dict); ongoing_payment_verifications:dict=field(default_factory=dict); ongoing_access_grants:dict=field(default_factory=dict); ongoing_access_revocation_verifications:dict=field(default_factory=dict); ongoing_offboardings:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
+    handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); oia_assessments:dict=field(default_factory=dict); oia_evidence_items:dict=field(default_factory=dict); oia_assessment_plans:dict=field(default_factory=dict); oia_inspection_items:dict=field(default_factory=dict); oia_observations:dict=field(default_factory=dict); oia_root_causes:dict=field(default_factory=dict); oia_findings:dict=field(default_factory=dict); oia_findings_deliveries:dict=field(default_factory=dict); oia_conversion_decisions:dict=field(default_factory=dict); ongoing_agreement_authorities:dict=field(default_factory=dict); ongoing_payment_verifications:dict=field(default_factory=dict); ongoing_access_grants:dict=field(default_factory=dict); ongoing_access_revocation_verifications:dict=field(default_factory=dict); ongoing_offboardings:dict=field(default_factory=dict); implementation_briefs:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
     fail_stage:str|None=None
     def _current_plan(self,tenant_id,plan_id):
         candidates=[value for (record_tenant,record_plan_id,_),value in self.oia_assessment_plans.items() if record_tenant==tenant_id and record_plan_id==plan_id and value.get("state")!="SUPERSEDED"]
@@ -60,6 +61,9 @@ class MemoryStore:
     def _current_finding(self,tenant_id,finding_id):
         candidates=[value for (record_tenant,record_finding_id,_),value in self.oia_findings.items() if record_tenant==tenant_id and record_finding_id==finding_id and value.get("state")!="SUPERSEDED"]
         return copy.deepcopy(max(candidates,key=lambda value:value["finding_revision"])) if candidates else None
+    def _current_brief(self,tenant_id,brief_id):
+        candidates=[value for (record_tenant,record_brief_id,_),value in self.implementation_briefs.items() if record_tenant==tenant_id and record_brief_id==brief_id and value.get("state")!="SUPERSEDED"]
+        return copy.deepcopy(max(candidates,key=lambda value:value["implementation_brief_version"])) if candidates else None
     def _phase5c_snapshot_record(self,command):
         tenant=command.tenant_id;identity=command.subject_id
         if command.subject_type=="OIA_CONVERSION_DECISION":
@@ -76,6 +80,7 @@ class MemoryStore:
     def snapshot(self,command,trusted_context=None):
         records={"ACQUISITION_HANDOFF":self.handoffs,"ENGAGEMENT":self.engagements,"DIAGNOSTIC_SCOPE":self.scopes,"DIAGNOSTIC_AGREEMENT_AUTHORITY":self.agreements,"DIAGNOSTIC_PAYMENT_VERIFICATION":self.payments}.get(command.subject_type)
         r=self.proposals.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_PROPOSAL" else self.grants.get((command.tenant_id,command.subject_id)) if command.subject_type=="ASSESSMENT_ACCESS_GRANT" else self.oia_assessments.get((command.tenant_id,command.subject_id)) if command.subject_type=="OIA_ASSESSMENT" else self.oia_evidence_items.get((command.tenant_id,command.subject_id)) if command.subject_type=="OIA_EVIDENCE_ITEM" else self._current_plan(command.tenant_id,command.subject_id) if command.subject_type=="OIA_ASSESSMENT_PLAN" else self.oia_inspection_items.get((command.tenant_id,command.subject_id)) if command.subject_type=="OIA_INSPECTION_ITEM" else self.oia_observations.get((command.tenant_id,command.subject_id)) if command.subject_type=="OIA_OBSERVATION" else self.oia_root_causes.get((command.tenant_id,command.subject_id)) if command.subject_type=="OIA_ROOT_CAUSE" else self._current_finding(command.tenant_id,command.subject_id) if command.subject_type=="OIA_FINDING" else self.oia_findings_deliveries.get((command.tenant_id,command.subject_id)) or self.oia_assessments.get((command.tenant_id,command.payload.get("oia_assessment_id"))) if command.subject_type=="OIA_FINDINGS_DELIVERY" else self._phase5c_snapshot_record(command) if command.subject_type in {"OIA_CONVERSION_DECISION","ONGOING_AGREEMENT_AUTHORITY","ONGOING_PAYMENT_VERIFICATION","ONGOING_ACCESS_GRANT","ONGOING_ACCESS_REVOCATION_VERIFICATION","ONGOING_OFFBOARDING"} else (records or {}).get(command.subject_id)
+        if command.subject_type=="IMPLEMENTATION_BRIEF":r=self._current_brief(command.tenant_id,command.subject_id)
         engagement_id=r.get("engagement_id") if r else None
         if r and command.subject_type=="OIA_EVIDENCE_ITEM":
             assessment=self.oia_assessments.get((command.tenant_id,r["oia_assessment_id"]));engagement_id=(assessment or {}).get("engagement_id")
@@ -500,6 +505,34 @@ class OngoingOffboardingMemoryRepository(_TenantRepo):
         updated=copy.deepcopy(stored);updated.update(state="COMPLETED",revocation_verification_references=copy.deepcopy(verification_references),completed_at=completed_at,completed_by=completed_by,record_version=stored["record_version"]+1)
         self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=updated;return copy.deepcopy(updated)
 
+class ImplementationBriefMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"implementation_briefs")
+    def get_version(self,tenant_id,brief_id,brief_version):
+        value=self.data.get((tenant_id,brief_id,brief_version));return copy.deepcopy(value) if value else None
+    def list_versions(self,tenant_id,brief_id):
+        return tuple(copy.deepcopy(value) for (record_tenant,record_id,_),value in sorted(self.data.items(),key=lambda item:item[0][2]) if record_tenant==tenant_id and record_id==brief_id)
+    def get_current(self,tenant_id,brief_id):
+        values=[value for value in self.list_versions(tenant_id,brief_id) if value.get("state")!="SUPERSEDED"]
+        return copy.deepcopy(max(values,key=lambda value:value["implementation_brief_version"])) if values else None
+    def create_initial(self,record):
+        key=(record["tenant_id"],record["implementation_brief_id"],record["implementation_brief_version"])
+        if key in self.data or self.list_versions(record["tenant_id"],record["implementation_brief_id"]):raise ValueError("ImplementationBrief identity already exists")
+        self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=copy.deepcopy(record);return copy.deepcopy(record)
+    def revise(self,current,replacement,revised_at):
+        key=(current["tenant_id"],current["implementation_brief_id"],current["implementation_brief_version"]);stored=self.data.get(key)
+        replacement_key=(replacement["tenant_id"],replacement["implementation_brief_id"],replacement["implementation_brief_version"])
+        if stored!=current or stored.get("state")!="APPROVED" or replacement_key in self.data:raise ValueError("ImplementationBrief revision conflict")
+        self.u.failpoint("AUTHORITATIVE_WRITE")
+        superseded=copy.deepcopy(stored);superseded.update(state="SUPERSEDED",record_version=stored["record_version"]+1,updated_at=revised_at)
+        self.data[key]=superseded;self.data[replacement_key]=copy.deepcopy(replacement);return copy.deepcopy(replacement)
+    def approve(self,current,client_approval_reference,sekinfra_approval_reference,approved_at):
+        key=(current["tenant_id"],current["implementation_brief_id"],current["implementation_brief_version"]);stored=self.data.get(key)
+        if stored!=current or stored.get("state")!="DRAFT":raise ValueError("ImplementationBrief approval conflict")
+        self.u.failpoint("AUTHORITATIVE_WRITE")
+        updated=copy.deepcopy(stored)
+        updated.update(state="APPROVED",client_approval_reference=copy.deepcopy(client_approval_reference),sekinfra_approval_reference=copy.deepcopy(sekinfra_approval_reference),approved_at=approved_at,record_version=stored["record_version"]+1,updated_at=approved_at)
+        self.data[key]=updated;return copy.deepcopy(updated)
+
 class HumanApprovalMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"approvals")
     def save(self,record):
@@ -523,6 +556,13 @@ class HumanApprovalMemoryRepository(_TenantRepo):
         if self.find_active_phase5c_binding(record["tenant_id"],record["subject_type"],record["subject_id"],record["subject_version"],binding["authority_digest"],record["actor_role"]):
             raise ValueError("duplicate active Phase 5C authority")
         self.save(copy.deepcopy(record))
+    def find_active_phase5d_binding(self,tenant_id,subject_type,subject_id,subject_version,digest,authority_role):
+        return next((copy.deepcopy(a) for a in self.data.values() if a.get("tenant_id")==tenant_id and a.get("subject_type")==subject_type and a.get("subject_id")==subject_id and a.get("subject_version")==subject_version and a.get("phase5d_authority",{}).get("authority_digest")==digest and a.get("actor_role")==authority_role and a.get("status")=="ACTIVE"),None)
+    def record_phase5d(self,record):
+        binding=record["phase5d_authority"]
+        if self.find_active_phase5d_binding(record["tenant_id"],record["subject_type"],record["subject_id"],record["subject_version"],binding["authority_digest"],record["actor_role"]):
+            raise ValueError("duplicate active Phase 5D authority")
+        self.save(copy.deepcopy(record))
 
 class IdempotencyMemoryRepository:
     def __init__(self,u):self.u=u;self.data=u.working.idempotency
@@ -540,7 +580,7 @@ class OutboxMemoryRepository:
 class UnitOfWork:
     def __init__(self,store):
         self.store=store;self.working=copy.deepcopy(store)
-        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.assessment_access_grants=AssessmentAccessGrantMemoryRepository(self);self.oia_assessments=OIAAssessmentMemoryRepository(self);self.oia_evidence_items=OIAEvidenceMemoryRepository(self);self.oia_assessment_plans=OIAAssessmentPlanMemoryRepository(self);self.oia_inspection_items=OIAInspectionItemMemoryRepository(self);self.oia_observations=OIAObservationMemoryRepository(self);self.oia_root_causes=OIARootCauseMemoryRepository(self);self.oia_findings=OIAFindingMemoryRepository(self);self.oia_findings_deliveries=OIAFindingsDeliveryMemoryRepository(self);self.oia_conversion_decisions=OIAConversionDecisionMemoryRepository(self);self.ongoing_agreement_authorities=OngoingAgreementAuthorityMemoryRepository(self);self.ongoing_payment_verifications=OngoingPaymentVerificationMemoryRepository(self);self.ongoing_access_grants=OngoingAccessGrantMemoryRepository(self);self.ongoing_access_revocation_verifications=OngoingAccessRevocationVerificationMemoryRepository(self);self.ongoing_offboardings=OngoingOffboardingMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
+        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.assessment_access_grants=AssessmentAccessGrantMemoryRepository(self);self.oia_assessments=OIAAssessmentMemoryRepository(self);self.oia_evidence_items=OIAEvidenceMemoryRepository(self);self.oia_assessment_plans=OIAAssessmentPlanMemoryRepository(self);self.oia_inspection_items=OIAInspectionItemMemoryRepository(self);self.oia_observations=OIAObservationMemoryRepository(self);self.oia_root_causes=OIARootCauseMemoryRepository(self);self.oia_findings=OIAFindingMemoryRepository(self);self.oia_findings_deliveries=OIAFindingsDeliveryMemoryRepository(self);self.oia_conversion_decisions=OIAConversionDecisionMemoryRepository(self);self.ongoing_agreement_authorities=OngoingAgreementAuthorityMemoryRepository(self);self.ongoing_payment_verifications=OngoingPaymentVerificationMemoryRepository(self);self.ongoing_access_grants=OngoingAccessGrantMemoryRepository(self);self.ongoing_access_revocation_verifications=OngoingAccessRevocationVerificationMemoryRepository(self);self.ongoing_offboardings=OngoingOffboardingMemoryRepository(self);self.implementation_briefs=ImplementationBriefMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
     def failpoint(self,name):
         if self.working.fail_stage==name: raise RuntimeError("injected failpoint")
     def commit(self):
@@ -585,6 +625,8 @@ class Executor:
         return {"result":"ACCEPTED","reason_code":"COMMAND_ACCEPTED","authoritative_record_reference":p.subject_id}
     def _handle(self,u,p,raw,raw_context=None):
         now=self.clock(); payload=p.payload
+        if p.command_type in IMPLEMENTATION_BRIEF_COMMANDS:
+            return ImplementationBriefHandler(u).execute(p.command_type,p,raw_context,now,p.command_id)
         if p.command_type in PHASE5C_COMMANDS:
             return Phase5CHandler(u,self.ongoing_access_verifier,self.ongoing_revocation_verifier).execute(p.command_type,p,raw_context,now,p.command_id)
         if p.command_type=="AcceptAcquisitionHandoff":
@@ -702,7 +744,25 @@ class Executor:
             "visibility":"TENANT_OPERATIONAL","sanitized_metadata":metadata,
         }
 
+    def _implementation_brief_event(self,p,u):
+        version=p.payload.get("implementation_brief_version") or p.payload.get("subject_version")
+        record=u.implementation_briefs.get_version(p.tenant_id,p.subject_id,version)
+        metadata={"authority_stage":"IMPLEMENTATION_BRIEF","implementation_brief_id":p.subject_id,"state":record["state"]}
+        if p.command_type=="RecordImplementationBriefApproval":metadata["approval_id"]=p.command_id
+        if p.command_type=="ReviseImplementationBrief":metadata["superseded_version"]=p.payload["supersedes_implementation_brief_reference"]["reference_version"]
+        return {
+            "event_id":self.ids(),"event_type":IMPLEMENTATION_BRIEF_EVENTS[p.command_type],"event_schema_version":1,
+            "tenant_id":p.tenant_id,"engagement_id":record["engagement_id"],
+            "authoritative_subject_reference":{"reference_type":"IMPLEMENTATION_BRIEF","reference_id":p.subject_id},
+            "authoritative_subject_version":record["record_version"],"occurred_at":self.clock(),
+            "producer_reference":"command.service-01","correlation_id":p.correlation_id,
+            "command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,
+            "visibility":"TENANT_OPERATIONAL","sanitized_metadata":metadata,
+        }
+
     def _event(self,p,u=None):
+        if p.command_type in IMPLEMENTATION_BRIEF_COMMANDS:
+            return self._implementation_brief_event(p,u)
         if p.command_type in PHASE5C_COMMANDS:
             return self._phase5c_event(p,u)
         typ={"AcceptAcquisitionHandoff":"engagement.handoff.accepted","OpenEngagement":"engagement.opened","SubmitDiagnosticScope":"diagnostic_scope.submitted","RecordHumanApproval":"human_approval.recorded","ApproveDiagnosticScope":"diagnostic_scope.approved","CanonicalizeDiagnosticScope":"diagnostic_scope.canonicalized","CreateAssessmentAccessProposal":"assessment_access.proposal_created","RecordAssessmentAccessApproval":"assessment_access.approval_recorded","IssueAssessmentAccessGrant":"assessment_access.grant_issued","VerifyAssessmentAccess":"assessment_access.verified_and_activated","ExpireAssessmentAccess":"assessment_access.expired","RevokeAssessmentAccess":"assessment_access.revoked","CloseAssessmentAccessForAgreementEnd":"assessment_access.closed","RecordDiagnosticAgreementAuthority":"diagnostic_agreement.authority_recorded","RecordDiagnosticPaymentVerification":"diagnostic_payment.verified","InvalidateDiagnosticPaymentVerification":"diagnostic_payment.invalidated","OpenOIAAssessment":"oia.assessment_opened","RecordOIAEvidence":"oia.evidence_recorded","RecordOIAObservation":"oia.observation_recorded","SupersedeOIAObservation":"oia.observation_superseded","RecordOIARootCause":"oia.root_cause_recorded","CreateOIAFinding":"oia.finding_created","UpdateOIAFindingAnalysis":"oia.finding_updated","FinalizeOIAFinding":"oia.finding_finalized","MarkOIAAssessmentReadyForDelivery":"oia.assessment_ready_for_delivery","DeliverOIAFindings":"oia.findings_delivered","ReviseDeliveredOIAFinding":"oia.finding_revision_opened","CloseOIAAssessment":"oia.assessment_closed","CreateOIAAssessmentPlan":"oia.assessment_plan_created","ReviseOIAAssessmentPlan":"oia.assessment_plan_revised","ReviewOIAAssessmentPlan":"oia.assessment_plan_reviewed","ApproveOIAAssessmentPlan":"oia.assessment_plan_approved","CreateOIAInspectionItem":"oia.inspection_item_created","UpdateOIAInspectionItem":"oia.inspection_item_progressed","MarkOIAInspectionItemBlocked":"oia.inspection_item_blocked"}[p.command_type]

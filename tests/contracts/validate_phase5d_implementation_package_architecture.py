@@ -456,8 +456,14 @@ def main() -> None:
         fail("command/idempotency vocabulary order drifted")
     if capability["enum"][-9:] != CAPABILITIES_5D or event["properties"]["event_type"]["enum"][-13:] != EVENTS_5D:
         fail("capability/event vocabulary drifted")
-    if any(command in COMMANDS for command in COMMANDS_5D) or len(SCHEMA_FILES) != 104:
-        fail("Phase 5D-A runtime boundary was crossed")
+    brief_commands = COMMANDS_5D[:4]
+    if (
+        set(COMMANDS).intersection(COMMANDS_5D) != set(brief_commands)
+        or not all(COMMANDS[command].executable for command in brief_commands)
+        or any(COMMANDS[command].subject_type != "IMPLEMENTATION_BRIEF" for command in brief_commands)
+        or len(SCHEMA_FILES) != 111
+    ):
+        fail("Phase 5D-B1 ImplementationBrief-only runtime boundary drifted")
 
     assert_approvals(schemas, values)
     assert_events(schemas, values)

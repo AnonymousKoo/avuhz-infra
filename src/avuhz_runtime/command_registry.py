@@ -68,6 +68,10 @@ COMMANDS = {
     "InitiateOngoingOffboarding": CommandDefinition("InitiateOngoingOffboarding", "ONGOING_OFFBOARDING", 1, "urn:avuhz:schema:contracts:commands:initiate-ongoing-offboarding-payload:v1", 1, required_capability="offboarding:initiate", executable=True),
     "VerifyOngoingAccessRevocation": CommandDefinition("VerifyOngoingAccessRevocation", "ONGOING_ACCESS_REVOCATION_VERIFICATION", 1, "urn:avuhz:schema:contracts:commands:verify-ongoing-access-revocation-payload:v1", 1, required_capability="offboarding:verify_revocation", executable=True),
     "CompleteOngoingOffboarding": CommandDefinition("CompleteOngoingOffboarding", "ONGOING_OFFBOARDING", 1, "urn:avuhz:schema:contracts:commands:complete-ongoing-offboarding-payload:v1", 1, required_capability="offboarding:complete", executable=True),
+    "DraftImplementationBrief": CommandDefinition("DraftImplementationBrief", "IMPLEMENTATION_BRIEF", 1, "urn:avuhz:schema:contracts:commands:draft-implementation-brief-payload:v1", 1, required_capability="implementation_brief:draft", executable=True),
+    "ReviseImplementationBrief": CommandDefinition("ReviseImplementationBrief", "IMPLEMENTATION_BRIEF", 1, "urn:avuhz:schema:contracts:commands:revise-implementation-brief-payload:v1", 1, required_capability="implementation_brief:draft", executable=True),
+    "RecordImplementationBriefApproval": CommandDefinition("RecordImplementationBriefApproval", "IMPLEMENTATION_BRIEF", 1, "urn:avuhz:schema:contracts:commands:record-implementation-brief-approval-payload:v1", 1, required_capability="implementation_brief:approve", executable=True),
+    "ApproveImplementationBrief": CommandDefinition("ApproveImplementationBrief", "IMPLEMENTATION_BRIEF", 1, "urn:avuhz:schema:contracts:commands:approve-implementation-brief-payload:v1", 1, required_capability="implementation_brief:approve", executable=True),
 }
 
 

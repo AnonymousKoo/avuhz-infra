@@ -5,7 +5,7 @@
   "description": "Closed vocabulary for a bounded action claim. A capability does not establish tenant membership or human authority; caller type and capability remain separate concepts. scope:approve does not create a HumanApproval record, and event:publish_internal is reserved for a trusted outbox publisher.",
   "type": "string",
   "minLength": 8,
-  "maxLength": 29,
+  "maxLength": 37,
   "enum": [
     "engagement:read",
     "engagement:accept_handoff",
@@ -54,6 +54,15 @@
     "ongoing_access:close",
     "offboarding:initiate",
     "offboarding:verify_revocation",
-    "offboarding:complete"
+    "offboarding:complete",
+    "implementation_brief:draft",
+    "implementation_brief:approve",
+    "implementation_authorization:propose",
+    "implementation_authorization:approve",
+    "implementation_authorization:activate",
+    "implementation_authorization:revoke",
+    "codex_build_package:draft",
+    "codex_build_package:approve",
+    "codex_build_package:release"
   ]
 }

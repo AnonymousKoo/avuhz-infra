@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:read-models:implementation-brief-readiness-view:v1","title":"Implementation Brief Readiness View v1",
+  "description":"Tenant-bounded derived readiness. The server computes readiness from exact authoritative references; callers cannot create authority by asserting a boolean.",
+  "type":"object","additionalProperties":false,
+  "required":["tenant_id","engagement_id","implementation_brief_reference","source_truth_exact","conversion_accepted","ongoing_agreement_active","commercial_authority_valid","ongoing_access_usable","client_approval_active","sekinfra_approval_active","implementation_brief_ready","reasons","implementation_authorized","deployment_authorized","production_change_authorized","generated_at"],
+  "properties":{
+    "tenant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},"engagement_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},"implementation_brief_reference":{"$ref":"urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/implementationBriefReference"},
+    "source_truth_exact":{"type":"boolean"},"conversion_accepted":{"type":"boolean"},"ongoing_agreement_active":{"type":"boolean"},"commercial_authority_valid":{"type":"boolean"},"ongoing_access_usable":{"type":"boolean"},"client_approval_active":{"type":"boolean"},"sekinfra_approval_active":{"type":"boolean"},"implementation_brief_ready":{"type":"boolean"},
+    "reasons":{"type":"array","minItems":0,"maxItems":12,"uniqueItems":true,"items":{"type":"string","enum":["BRIEF_NOT_APPROVED","SOURCE_TRUTH_MISMATCH","CONVERSION_INVALID","AGREEMENT_INVALID","COMMERCIAL_AUTHORITY_INVALID","ONGOING_ACCESS_UNUSABLE","CLIENT_APPROVAL_MISSING","SEKINFRA_APPROVAL_MISSING","SCOPE_UNTRACEABLE","ACCEPTANCE_CRITERIA_UNTRACEABLE","PROHIBITED_CHANGES_INCOMPLETE","OFFBOARDING_ACTIVE"]}},
+    "implementation_authorized":{"type":"boolean","const":false},"deployment_authorized":{"type":"boolean","const":false},"production_change_authorized":{"type":"boolean","const":false},"generated_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}
+  }
+}

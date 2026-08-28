@@ -1034,6 +1034,164 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "DraftImplementationBrief",
+                  "ReviseImplementationBrief",
+                  "RecordImplementationBriefApproval",
+                  "ApproveImplementationBrief"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {
+            "required": ["engagement_id"],
+            "properties": {"subject_type": {"const": "IMPLEMENTATION_BRIEF"}}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "ProposeImplementationAuthorization",
+                  "ReviseImplementationAuthorization",
+                  "RecordImplementationAuthorizationApproval",
+                  "ActivateImplementationAuthorization",
+                  "RevokeImplementationAuthorization"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {
+            "required": ["engagement_id"],
+            "properties": {"subject_type": {"const": "IMPLEMENTATION_AUTHORIZATION"}}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "DraftCodexBuildPackage",
+                  "ReviseCodexBuildPackage",
+                  "RecordCodexBuildPackageApproval",
+                  "ReleaseCodexBuildPackage"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {
+            "required": ["engagement_id"],
+            "properties": {"subject_type": {"const": "CODEX_BUILD_PACKAGE"}}
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordImplementationBriefApproval",
+                  "RecordImplementationAuthorizationApproval",
+                  "RevokeImplementationAuthorization",
+                  "RecordCodexBuildPackageApproval"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {"properties": {"caller_type": {"const": "HUMAN"}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "ApproveImplementationBrief",
+                  "ActivateImplementationAuthorization",
+                  "ReleaseCodexBuildPackage"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {"properties": {"caller_type": {"const": "INTERNAL_SERVICE"}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "DraftImplementationBrief",
+                  "ReviseImplementationBrief",
+                  "ProposeImplementationAuthorization",
+                  "ReviseImplementationAuthorization",
+                  "DraftCodexBuildPackage",
+                  "ReviseCodexBuildPackage"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {"properties": {"caller_type": {"enum": ["HUMAN", "INTERNAL_SERVICE"]}}}
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordImplementationBriefApproval",
+                  "ReviseImplementationBrief",
+                  "ApproveImplementationBrief",
+                  "RecordImplementationAuthorizationApproval",
+                  "ReviseImplementationAuthorization",
+                  "ActivateImplementationAuthorization",
+                  "RevokeImplementationAuthorization",
+                  "RecordCodexBuildPackageApproval",
+                  "ReviseCodexBuildPackage",
+                  "ReleaseCodexBuildPackage"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {"required": ["expected_record_version"]}
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "DraftImplementationBrief",
+                  "ReviseImplementationBrief",
+                  "RecordImplementationBriefApproval",
+                  "ApproveImplementationBrief",
+                  "ProposeImplementationAuthorization",
+                  "ReviseImplementationAuthorization",
+                  "RecordImplementationAuthorizationApproval",
+                  "ActivateImplementationAuthorization",
+                  "RevokeImplementationAuthorization",
+                  "DraftCodexBuildPackage",
+                  "ReviseCodexBuildPackage",
+                  "RecordCodexBuildPackageApproval",
+                  "ReleaseCodexBuildPackage"
+                ]
+              }
+            },
+            "required": ["command_type"]
+          },
+          "then": {
+            "properties": {
+              "caller_type": {"enum": ["HUMAN", "INTERNAL_SERVICE"]}
+            }
+          }
         }
       ]
     },
@@ -1093,7 +1251,20 @@
         "CloseOngoingAccess",
         "InitiateOngoingOffboarding",
         "VerifyOngoingAccessRevocation",
-        "CompleteOngoingOffboarding"
+        "CompleteOngoingOffboarding",
+        "DraftImplementationBrief",
+        "ReviseImplementationBrief",
+        "RecordImplementationBriefApproval",
+        "ApproveImplementationBrief",
+        "ProposeImplementationAuthorization",
+        "ReviseImplementationAuthorization",
+        "RecordImplementationAuthorizationApproval",
+        "ActivateImplementationAuthorization",
+        "RevokeImplementationAuthorization",
+        "DraftCodexBuildPackage",
+        "ReviseCodexBuildPackage",
+        "RecordCodexBuildPackageApproval",
+        "ReleaseCodexBuildPackage"
       ]
     },
     "subjectType": {
@@ -1121,7 +1292,10 @@
         "ONGOING_PAYMENT_VERIFICATION",
         "ONGOING_ACCESS_GRANT",
         "ONGOING_ACCESS_REVOCATION_VERIFICATION",
-        "ONGOING_OFFBOARDING"
+        "ONGOING_OFFBOARDING",
+        "IMPLEMENTATION_BRIEF",
+        "IMPLEMENTATION_AUTHORIZATION",
+        "CODEX_BUILD_PACKAGE"
       ]
     },
     "schemaVersion": {

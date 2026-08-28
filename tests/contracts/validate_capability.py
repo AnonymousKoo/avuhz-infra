@@ -61,6 +61,15 @@ EXPECTED_ENUM = [
     "offboarding:initiate",
     "offboarding:verify_revocation",
     "offboarding:complete",
+    "implementation_brief:draft",
+    "implementation_brief:approve",
+    "implementation_authorization:propose",
+    "implementation_authorization:approve",
+    "implementation_authorization:activate",
+    "implementation_authorization:revoke",
+    "codex_build_package:draft",
+    "codex_build_package:approve",
+    "codex_build_package:release",
 ]
 EXPECTED_KEYS = {
     "$schema",

@@ -1,0 +1,9 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:read-models:phase5d-authority-progression-view:v1","title":"Phase 5D Authority Progression View v1",
+  "description":"Derived independent stages. No true stage implies the next; deployment and production-change authority remain outside Phase 5D-A and are always false.",
+  "type":"object","additionalProperties":false,
+  "required":["tenant_id","engagement_id","findings_delivered","conversion_accepted","ongoing_commercial_valid","ongoing_access_usable","implementation_brief_ready","implementation_authorization_ready","implementation_authorization_usable","codex_build_package_ready","package_grants_authority","deployment_authorized","production_change_authorized","managed_operations_authorized","generated_at"],
+  "properties":{
+    "tenant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},"engagement_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},"findings_delivered":{"type":"boolean"},"conversion_accepted":{"type":"boolean"},"ongoing_commercial_valid":{"type":"boolean"},"ongoing_access_usable":{"type":"boolean"},"implementation_brief_ready":{"type":"boolean"},"implementation_authorization_ready":{"type":"boolean"},"implementation_authorization_usable":{"type":"boolean"},"codex_build_package_ready":{"type":"boolean"},"package_grants_authority":{"type":"boolean","const":false},"deployment_authorized":{"type":"boolean","const":false},"production_change_authorized":{"type":"boolean","const":false},"managed_operations_authorized":{"type":"boolean","const":false},"generated_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}
+  }
+}

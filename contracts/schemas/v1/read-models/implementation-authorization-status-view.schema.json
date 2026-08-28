@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:read-models:implementation-authorization-status-view:v1","title":"Implementation Authorization Status View v1",
+  "description":"Derived bounded answer for exact non-production build authority. It never reports access, deployment, or production-change authority.",
+  "type":"object","additionalProperties":false,
+  "required":["tenant_id","engagement_id","implementation_authorization_reference","state","brief_ready","commercial_authority_valid","ongoing_access_usable","within_validity_window","scope_and_targets_match","approvals_active","implementation_authorization_ready","implementation_authorization_usable","reasons","deployment_authorized","production_change_authorized","generated_at"],
+  "properties":{
+    "tenant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},"engagement_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},"implementation_authorization_reference":{"$ref":"urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/implementationAuthorizationReference"},"state":{"type":"string","enum":["PROPOSED","ACTIVE","EXPIRED","REVOKED","SUPERSEDED"]},
+    "brief_ready":{"type":"boolean"},"commercial_authority_valid":{"type":"boolean"},"ongoing_access_usable":{"type":"boolean"},"within_validity_window":{"type":"boolean"},"scope_and_targets_match":{"type":"boolean"},"approvals_active":{"type":"boolean"},"implementation_authorization_ready":{"type":"boolean"},"implementation_authorization_usable":{"type":"boolean"},
+    "reasons":{"type":"array","minItems":0,"maxItems":10,"uniqueItems":true,"items":{"type":"string","enum":["AUTHORIZATION_NOT_ACTIVE","BRIEF_NOT_READY","COMMERCIAL_AUTHORITY_INVALID","ONGOING_ACCESS_UNUSABLE","OUTSIDE_VALIDITY_WINDOW","SCOPE_MISMATCH","TARGET_MISMATCH","APPROVAL_INVALID","OFFBOARDING_ACTIVE","AUTHORIZATION_TERMINAL"]}},
+    "deployment_authorized":{"type":"boolean","const":false},"production_change_authorized":{"type":"boolean","const":false},"generated_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}
+  }
+}

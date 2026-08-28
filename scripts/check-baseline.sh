@@ -19,6 +19,7 @@ python3 tests/contracts/validate_record_assessment_access_approval.py
 python3 tests/contracts/validate_oia_methodology_contracts.py
 python3 tests/contracts/validate_oia_finding_priority_policy.py
 python3 tests/contracts/validate_phase5c_conversion_ongoing_authority.py
+python3 tests/contracts/validate_phase5d_implementation_package_architecture.py
 
 printf 'check: forbidden paths\n'
 tracked_candidates="$(mktemp)"

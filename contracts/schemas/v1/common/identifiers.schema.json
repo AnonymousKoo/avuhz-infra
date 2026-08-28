@@ -63,6 +63,9 @@
     "ongoingAccessGrantId": {"title": "Ongoing Access Grant ID", "description": "Canonical identity for one bounded ongoing access authority, distinct from diagnostic access.", "$ref": "#/$defs/canonicalUuid"},
     "ongoingAccessRevocationVerificationId": {"title": "Ongoing Access Revocation Verification ID", "description": "Canonical identity for immutable verification that external ongoing access is absent.", "$ref": "#/$defs/canonicalUuid"},
     "ongoingOffboardingId": {"title": "Ongoing Offboarding ID", "description": "Canonical identity for one governed ongoing-engagement offboarding history.", "$ref": "#/$defs/canonicalUuid"},
+    "implementationBriefId": {"title": "Implementation Brief ID", "description": "Canonical identity for one immutable versioned implementation-planning truth history.", "$ref": "#/$defs/canonicalUuid"},
+    "implementationAuthorizationId": {"title": "Implementation Authorization ID", "description": "Canonical identity for one bounded non-production implementation authority history, distinct from every access grant and deployment authority.", "$ref": "#/$defs/canonicalUuid"},
+    "codexBuildPackageId": {"title": "Codex Build Package ID", "description": "Canonical identity for one immutable versioned executor-ready build package history; it grants no authority by itself.", "$ref": "#/$defs/canonicalUuid"},
     "assessmentAccessGrantId": {
       "title": "Assessment Access Grant ID",
       "description": "Canonical identity for one temporary diagnostic assessment access authority record.",

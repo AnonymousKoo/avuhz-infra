@@ -79,7 +79,20 @@
         "ongoing_access.closed",
         "offboarding.initiated",
         "ongoing_access.revocation_verified",
-        "offboarding.completed"
+        "offboarding.completed",
+        "implementation_brief.drafted",
+        "implementation_brief.revised",
+        "implementation_brief.approval_recorded",
+        "implementation_brief.approved",
+        "implementation_authorization.proposed",
+        "implementation_authorization.revised",
+        "implementation_authorization.approval_recorded",
+        "implementation_authorization.activated",
+        "implementation_authorization.revoked",
+        "codex_build_package.drafted",
+        "codex_build_package.revised",
+        "codex_build_package.approval_recorded",
+        "codex_build_package.released"
       ]
     },
     "event_schema_version": {
@@ -449,6 +462,21 @@
         "external_revocation_verified": {
           "type": "boolean"
         }
+      }
+    },
+    "phase5dMetadata": {
+      "description": "Sanitized Phase 5D identity, stage, state, and approval linkage only; no implementation body, package body, credential material, provider payload, deployment instruction, or arbitrary metadata.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority_stage"],
+      "properties": {
+        "authority_stage": {"type": "string", "enum": ["IMPLEMENTATION_BRIEF", "IMPLEMENTATION_AUTHORIZATION", "CODEX_BUILD_PACKAGE"]},
+        "state": {"type": "string", "enum": ["DRAFT", "APPROVED", "SUPERSEDED", "PROPOSED", "ACTIVE", "EXPIRED", "REVOKED", "RELEASED"]},
+        "approval_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/approvalId"},
+        "implementation_brief_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationBriefId"},
+        "implementation_authorization_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationAuthorizationId"},
+        "codex_build_package_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/codexBuildPackageId"},
+        "superseded_version": {"type": "integer", "minimum": 1, "maximum": 2147483647}
       }
     }
   },
@@ -1431,6 +1459,54 @@
             ]
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"enum": ["implementation_brief.drafted", "implementation_brief.revised", "implementation_brief.approval_recorded", "implementation_brief.approved"]}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "required": ["engagement_id"],
+        "properties": {
+          "authoritative_subject_reference": {"properties": {"reference_type": {"const": "IMPLEMENTATION_BRIEF"}}},
+          "sanitized_metadata": {"$ref": "#/$defs/phase5dMetadata", "required": ["authority_stage", "implementation_brief_id"]}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"enum": ["implementation_authorization.proposed", "implementation_authorization.revised", "implementation_authorization.approval_recorded", "implementation_authorization.activated", "implementation_authorization.revoked"]}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "required": ["engagement_id"],
+        "properties": {
+          "authoritative_subject_reference": {"properties": {"reference_type": {"const": "IMPLEMENTATION_AUTHORIZATION"}}},
+          "sanitized_metadata": {"$ref": "#/$defs/phase5dMetadata", "required": ["authority_stage", "implementation_authorization_id"]}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"enum": ["codex_build_package.drafted", "codex_build_package.revised", "codex_build_package.approval_recorded", "codex_build_package.released"]}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "required": ["engagement_id"],
+        "properties": {
+          "authoritative_subject_reference": {"properties": {"reference_type": {"const": "CODEX_BUILD_PACKAGE"}}},
+          "sanitized_metadata": {"$ref": "#/$defs/phase5dMetadata", "required": ["authority_stage", "codex_build_package_id"]}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"enum": ["implementation_brief.revised", "implementation_authorization.revised", "codex_build_package.revised"]}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {"sanitized_metadata": {"$ref": "#/$defs/phase5dMetadata", "required": ["authority_stage", "superseded_version"]}}
       }
     }
   ]

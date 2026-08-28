@@ -86,7 +86,20 @@
         "CloseOngoingAccess",
         "InitiateOngoingOffboarding",
         "VerifyOngoingAccessRevocation",
-        "CompleteOngoingOffboarding"
+        "CompleteOngoingOffboarding",
+        "DraftImplementationBrief",
+        "ReviseImplementationBrief",
+        "RecordImplementationBriefApproval",
+        "ApproveImplementationBrief",
+        "ProposeImplementationAuthorization",
+        "ReviseImplementationAuthorization",
+        "RecordImplementationAuthorizationApproval",
+        "ActivateImplementationAuthorization",
+        "RevokeImplementationAuthorization",
+        "DraftCodexBuildPackage",
+        "ReviseCodexBuildPackage",
+        "RecordCodexBuildPackageApproval",
+        "ReleaseCodexBuildPackage"
       ]
     },
     "subject_reference": {

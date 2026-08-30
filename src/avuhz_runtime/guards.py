@@ -5,16 +5,19 @@ from .phase5c import PHASE5C_CAPABILITIES
 from .phase5d_brief import IMPLEMENTATION_BRIEF_CAPABILITIES, IMPLEMENTATION_BRIEF_COMMANDS
 from .phase5d_authorization import IMPLEMENTATION_AUTHORIZATION_CAPABILITIES, IMPLEMENTATION_AUTHORIZATION_COMMANDS
 from .phase5d_package import CODEX_BUILD_PACKAGE_CAPABILITIES, CODEX_BUILD_PACKAGE_COMMANDS
+from .phase5d_build_execution import BUILD_EXECUTION_CAPABILITIES, BUILD_EXECUTION_COMMANDS
 
 COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","RecordHumanApproval":"scope:approve","RecordAssessmentAccessApproval":"assessment_access:approve","CreateAssessmentAccessProposal":"assessment_access:propose","IssueAssessmentAccessGrant":"assessment_access:issue","VerifyAssessmentAccess":"assessment_access:verify","ExpireAssessmentAccess":"assessment_access:expire","RevokeAssessmentAccess":"assessment_access:revoke","CloseAssessmentAccessForAgreementEnd":"assessment_access:close","RecordDiagnosticAgreementAuthority":"diagnostic_agreement:record","RecordDiagnosticPaymentVerification":"diagnostic_payment:record","InvalidateDiagnosticPaymentVerification":"diagnostic_payment:invalidate","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit","OpenOIAAssessment":"oia:open","RecordOIAEvidence":"oia:evidence:record","RecordOIAObservation":"oia:observation:record","SupersedeOIAObservation":"oia:observation:record","RecordOIARootCause":"oia:root_cause:record","CreateOIAFinding":"oia:finding:write","UpdateOIAFindingAnalysis":"oia:finding:write","FinalizeOIAFinding":"oia:finding:finalize","MarkOIAAssessmentReadyForDelivery":"oia:assessment:review","DeliverOIAFindings":"oia:findings:deliver","ReviseDeliveredOIAFinding":"oia:finding:finalize","CloseOIAAssessment":"oia:assessment:close","CreateOIAAssessmentPlan":"oia:plan:write","ReviseOIAAssessmentPlan":"oia:plan:write","ReviewOIAAssessmentPlan":"oia:plan:review","ApproveOIAAssessmentPlan":"oia:plan:approve","CreateOIAInspectionItem":"oia:inspection:manage","UpdateOIAInspectionItem":"oia:inspection:manage","MarkOIAInspectionItemBlocked":"oia:inspection:manage"}
 COMMAND_CAPABILITIES.update(PHASE5C_CAPABILITIES)
 COMMAND_CAPABILITIES.update(IMPLEMENTATION_BRIEF_CAPABILITIES)
 COMMAND_CAPABILITIES.update(IMPLEMENTATION_AUTHORIZATION_CAPABILITIES)
 COMMAND_CAPABILITIES.update(CODEX_BUILD_PACKAGE_CAPABILITIES)
+COMMAND_CAPABILITIES.update(BUILD_EXECUTION_CAPABILITIES)
 PHASE5C_TRANSITIONS=frozenset(PHASE5C_CAPABILITIES)-frozenset({"RecordOIAConversionDecision","ProposeOngoingAgreement","RecordOngoingPaymentVerification","ProposeOngoingAccessGrant","InitiateOngoingOffboarding"})
 IMPLEMENTATION_BRIEF_TRANSITIONS=frozenset(IMPLEMENTATION_BRIEF_COMMANDS)-{"DraftImplementationBrief"}
 IMPLEMENTATION_AUTHORIZATION_TRANSITIONS=frozenset(IMPLEMENTATION_AUTHORIZATION_COMMANDS)-{"ProposeImplementationAuthorization"}
 CODEX_BUILD_PACKAGE_TRANSITIONS=frozenset(CODEX_BUILD_PACKAGE_COMMANDS)-{"DraftCodexBuildPackage"}
+BUILD_EXECUTION_TRANSITIONS=frozenset(BUILD_EXECUTION_COMMANDS)-{"StartBuildExecution"}
 HUMAN_AUTHORITY_ROLES=frozenset({"CLIENT_DECISION_AUTHORITY","SEKINFRA_ENGAGEMENT_AUTHORITY","CLIENT_IMPLEMENTATION_AUTHORITY","SEKINFRA_IMPLEMENTATION_AUTHORITY"})
 
 @dataclass(frozen=True)
@@ -73,6 +76,8 @@ class GuardPipeline:
             return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"authoritative ImplementationAuthorization is required and must match","subject")
         if p.command_type in CODEX_BUILD_PACKAGE_TRANSITIONS and (not s or not s.exists or s.subject_type!=p.subject_type or s.subject_id!=p.subject_id):
             return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"authoritative CodexBuildPackage is required and must match","subject")
+        if p.command_type in BUILD_EXECUTION_TRANSITIONS and (not s or not s.exists or s.subject_type!=p.subject_type or s.subject_id!=p.subject_id):
+            return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"authoritative BuildExecutionResult is required and must match","subject")
         if p.command_type in ("SubmitDiagnosticScope","RecordHumanApproval","ApproveDiagnosticScope","CanonicalizeDiagnosticScope","RecordAssessmentAccessApproval","ReviseOIAAssessmentPlan","ReviewOIAAssessmentPlan","ApproveOIAAssessmentPlan","UpdateOIAInspectionItem","MarkOIAInspectionItemBlocked","SupersedeOIAObservation","UpdateOIAFindingAnalysis","FinalizeOIAFinding","MarkOIAAssessmentReadyForDelivery","ReviseDeliveredOIAFinding","CloseOIAAssessment"):
             if not s or not s.exists or s.subject_type!=p.subject_type or s.subject_id!=p.subject_id:return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH,"authoritative subject is required and must match","subject")
         if p.command_type=="RecordOIARootCause" and p.expected_record_version is not None:
@@ -87,4 +92,6 @@ class GuardPipeline:
         if p.command_type in ("SubmitDiagnosticScope","RecordHumanApproval","ApproveDiagnosticScope","CanonicalizeDiagnosticScope","RecordAssessmentAccessApproval","ReviseOIAAssessmentPlan","ReviewOIAAssessmentPlan","ApproveOIAAssessmentPlan","UpdateOIAInspectionItem","MarkOIAInspectionItemBlocked","SupersedeOIAObservation","UpdateOIAFindingAnalysis","FinalizeOIAFinding","MarkOIAAssessmentReadyForDelivery","ReviseDeliveredOIAFinding","CloseOIAAssessment","DeliverOIAFindings") and (not s or p.expected_record_version!=s.record_version):return self.fail(RuntimeReason.VERSION_STALE,"authoritative record version is stale","version")
         if p.command_type in CODEX_BUILD_PACKAGE_TRANSITIONS and (not s or p.expected_record_version!=s.record_version):
             return self.fail(RuntimeReason.VERSION_STALE,"authoritative CodexBuildPackage record version is stale","version")
+        if p.command_type in BUILD_EXECUTION_TRANSITIONS and (not s or p.expected_record_version!=s.record_version):
+            return self.fail(RuntimeReason.VERSION_STALE,"authoritative BuildExecutionResult record version is stale","version")
         if p.command_type=="RecordOIARootCause" and p.expected_record_version is not None and (not s or p.expected_record_version!=s.record_version):return self.fail(RuntimeReason.VERSION_STALE,"authoritative record version is stale","version")

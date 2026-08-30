@@ -466,7 +466,7 @@ def main() -> None:
         or any(COMMANDS[command].subject_type != "IMPLEMENTATION_BRIEF" for command in brief_commands)
         or any(COMMANDS[command].subject_type != "IMPLEMENTATION_AUTHORIZATION" for command in authorization_commands)
         or any(COMMANDS[command].subject_type != "CODEX_BUILD_PACKAGE" for command in package_commands)
-        or len(SCHEMA_FILES) != 124
+        or len(SCHEMA_FILES) != 129
     ):
         fail("Phase 5D-B3 CodexBuildPackage runtime boundary drifted")
 

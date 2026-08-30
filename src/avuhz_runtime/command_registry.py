@@ -81,6 +81,8 @@ COMMANDS = {
     "ReviseCodexBuildPackage": CommandDefinition("ReviseCodexBuildPackage", "CODEX_BUILD_PACKAGE", 1, "urn:avuhz:schema:contracts:commands:revise-codex-build-package-payload:v1", 1, required_capability="codex_build_package:draft", executable=True),
     "RecordCodexBuildPackageApproval": CommandDefinition("RecordCodexBuildPackageApproval", "CODEX_BUILD_PACKAGE", 1, "urn:avuhz:schema:contracts:commands:record-codex-build-package-approval-payload:v1", 1, required_capability="codex_build_package:approve", executable=True),
     "ReleaseCodexBuildPackage": CommandDefinition("ReleaseCodexBuildPackage", "CODEX_BUILD_PACKAGE", 1, "urn:avuhz:schema:contracts:commands:release-codex-build-package-payload:v1", 1, required_capability="codex_build_package:release", executable=True),
+    "StartBuildExecution": CommandDefinition("StartBuildExecution", "BUILD_EXECUTION_RESULT", 1, "urn:avuhz:schema:contracts:commands:start-build-execution-payload:v1", 1, required_capability="build_execution:start", executable=True),
+    "CompleteBuildExecution": CommandDefinition("CompleteBuildExecution", "BUILD_EXECUTION_RESULT", 1, "urn:avuhz:schema:contracts:commands:complete-build-execution-payload:v1", 1, required_capability="build_execution:complete", executable=True),
 }
 
 

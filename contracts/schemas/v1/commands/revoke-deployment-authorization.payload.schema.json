@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:revoke-deployment-authorization-payload:v1",
+  "title": "Revoke Deployment Authorization Payload v1",
+  "description": "Requests immediate revocation of one exact deployment authority version.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/revokeDeploymentAuthorizationPayload"
+}

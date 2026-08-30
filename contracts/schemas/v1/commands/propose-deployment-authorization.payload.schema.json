@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:propose-deployment-authorization-payload:v1",
+  "title": "Propose Deployment Authorization Payload v1",
+  "description": "Proposes exact artifact, environment, target, action, and time-bounded deployment authority.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/proposeDeploymentAuthorizationPayload"
+}

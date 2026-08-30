@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:record-qa-result-payload:v1",
+  "title": "Record QA Result Payload v1",
+  "description": "Records complete criterion-level QA truth for one exact build; no generic QA boolean is accepted.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/recordQAResultPayload"
+}

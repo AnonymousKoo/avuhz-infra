@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:complete-build-execution-payload:v1",
+  "title": "Complete Build Execution Payload v1",
+  "description": "Records one terminal immutable build result; success grants no QA or deployment authority.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/completeBuildExecutionPayload"
+}

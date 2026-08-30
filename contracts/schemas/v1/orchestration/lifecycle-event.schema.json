@@ -92,7 +92,16 @@
         "codex_build_package.drafted",
         "codex_build_package.revised",
         "codex_build_package.approval_recorded",
-        "codex_build_package.released"
+        "codex_build_package.released",
+        "build_execution.started",
+        "build_execution.completed",
+        "qa_result.recorded",
+        "client_acceptance.recorded",
+        "deployment_authorization.proposed",
+        "deployment_authorization.revised",
+        "deployment_authorization.approval_recorded",
+        "deployment_authorization.activated",
+        "deployment_authorization.revoked"
       ]
     },
     "event_schema_version": {

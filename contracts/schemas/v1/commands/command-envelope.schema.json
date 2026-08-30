@@ -1047,11 +1047,19 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
           "then": {
-            "required": ["engagement_id"],
-            "properties": {"subject_type": {"const": "IMPLEMENTATION_BRIEF"}}
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "IMPLEMENTATION_BRIEF"
+              }
+            }
           }
         },
         {
@@ -1067,11 +1075,19 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
           "then": {
-            "required": ["engagement_id"],
-            "properties": {"subject_type": {"const": "IMPLEMENTATION_AUTHORIZATION"}}
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "IMPLEMENTATION_AUTHORIZATION"
+              }
+            }
           }
         },
         {
@@ -1086,11 +1102,19 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
           "then": {
-            "required": ["engagement_id"],
-            "properties": {"subject_type": {"const": "CODEX_BUILD_PACKAGE"}}
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "CODEX_BUILD_PACKAGE"
+              }
+            }
           }
         },
         {
@@ -1105,9 +1129,17 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
-          "then": {"properties": {"caller_type": {"const": "HUMAN"}}}
+          "then": {
+            "properties": {
+              "caller_type": {
+                "const": "HUMAN"
+              }
+            }
+          }
         },
         {
           "if": {
@@ -1120,9 +1152,17 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
-          "then": {"properties": {"caller_type": {"const": "INTERNAL_SERVICE"}}}
+          "then": {
+            "properties": {
+              "caller_type": {
+                "const": "INTERNAL_SERVICE"
+              }
+            }
+          }
         },
         {
           "if": {
@@ -1138,9 +1178,20 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
-          "then": {"properties": {"caller_type": {"enum": ["HUMAN", "INTERNAL_SERVICE"]}}}
+          "then": {
+            "properties": {
+              "caller_type": {
+                "enum": [
+                  "HUMAN",
+                  "INTERNAL_SERVICE"
+                ]
+              }
+            }
+          }
         },
         {
           "if": {
@@ -1160,9 +1211,15 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
-          "then": {"required": ["expected_record_version"]}
+          "then": {
+            "required": [
+              "expected_record_version"
+            ]
+          }
         },
         {
           "if": {
@@ -1185,12 +1242,215 @@
                 ]
               }
             },
-            "required": ["command_type"]
+            "required": [
+              "command_type"
+            ]
           },
           "then": {
             "properties": {
-              "caller_type": {"enum": ["HUMAN", "INTERNAL_SERVICE"]}
+              "caller_type": {
+                "enum": [
+                  "HUMAN",
+                  "INTERNAL_SERVICE"
+                ]
+              }
             }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "StartBuildExecution",
+                  "CompleteBuildExecution"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "BUILD_EXECUTION_RESULT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordQAResult"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "QA_RESULT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordClientAcceptance"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "CLIENT_ACCEPTANCE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "ProposeDeploymentAuthorization",
+                  "ReviseDeploymentAuthorization",
+                  "RecordDeploymentAuthorizationApproval",
+                  "ActivateDeploymentAuthorization",
+                  "RevokeDeploymentAuthorization"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "engagement_id"
+            ],
+            "properties": {
+              "subject_type": {
+                "const": "DEPLOYMENT_AUTHORIZATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "RecordClientAcceptance",
+                  "RecordDeploymentAuthorizationApproval",
+                  "RevokeDeploymentAuthorization"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "caller_type": {
+                "const": "HUMAN"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "ActivateDeploymentAuthorization"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "caller_type": {
+                "const": "INTERNAL_SERVICE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "StartBuildExecution",
+                  "CompleteBuildExecution",
+                  "RecordQAResult",
+                  "ProposeDeploymentAuthorization",
+                  "ReviseDeploymentAuthorization"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "caller_type": {
+                "enum": [
+                  "HUMAN",
+                  "INTERNAL_SERVICE"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "enum": [
+                  "CompleteBuildExecution",
+                  "ReviseDeploymentAuthorization",
+                  "RecordDeploymentAuthorizationApproval",
+                  "ActivateDeploymentAuthorization",
+                  "RevokeDeploymentAuthorization"
+                ]
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "expected_record_version"
+            ]
           }
         }
       ]
@@ -1264,7 +1524,16 @@
         "DraftCodexBuildPackage",
         "ReviseCodexBuildPackage",
         "RecordCodexBuildPackageApproval",
-        "ReleaseCodexBuildPackage"
+        "ReleaseCodexBuildPackage",
+        "StartBuildExecution",
+        "CompleteBuildExecution",
+        "RecordQAResult",
+        "RecordClientAcceptance",
+        "ProposeDeploymentAuthorization",
+        "ReviseDeploymentAuthorization",
+        "RecordDeploymentAuthorizationApproval",
+        "ActivateDeploymentAuthorization",
+        "RevokeDeploymentAuthorization"
       ]
     },
     "subjectType": {
@@ -1295,7 +1564,11 @@
         "ONGOING_OFFBOARDING",
         "IMPLEMENTATION_BRIEF",
         "IMPLEMENTATION_AUTHORIZATION",
-        "CODEX_BUILD_PACKAGE"
+        "CODEX_BUILD_PACKAGE",
+        "BUILD_EXECUTION_RESULT",
+        "QA_RESULT",
+        "CLIENT_ACCEPTANCE",
+        "DEPLOYMENT_AUTHORIZATION"
       ]
     },
     "schemaVersion": {

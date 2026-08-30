@@ -66,6 +66,10 @@
     "implementationBriefId": {"title": "Implementation Brief ID", "description": "Canonical identity for one immutable versioned implementation-planning truth history.", "$ref": "#/$defs/canonicalUuid"},
     "implementationAuthorizationId": {"title": "Implementation Authorization ID", "description": "Canonical identity for one bounded non-production implementation authority history, distinct from every access grant and deployment authority.", "$ref": "#/$defs/canonicalUuid"},
     "codexBuildPackageId": {"title": "Codex Build Package ID", "description": "Canonical identity for one immutable versioned executor-ready build package history; it grants no authority by itself.", "$ref": "#/$defs/canonicalUuid"},
+    "buildExecutionResultId": {"title": "Build Execution Result ID", "description": "Canonical identity for one immutable build execution attempt history.", "$ref": "#/$defs/canonicalUuid"},
+    "qaResultId": {"title": "QA Result ID", "description": "Canonical identity for one immutable governed QA attempt history.", "$ref": "#/$defs/canonicalUuid"},
+    "clientAcceptanceId": {"title": "Client Acceptance ID", "description": "Canonical identity for one exact client acceptance decision history.", "$ref": "#/$defs/canonicalUuid"},
+    "deploymentAuthorizationId": {"title": "Deployment Authorization ID", "description": "Canonical identity for one exact bounded deployment authority history; it is not deployment execution.", "$ref": "#/$defs/canonicalUuid"},
     "assessmentAccessGrantId": {
       "title": "Assessment Access Grant ID",
       "description": "Canonical identity for one temporary diagnostic assessment access authority record.",

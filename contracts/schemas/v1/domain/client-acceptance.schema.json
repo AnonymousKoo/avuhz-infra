@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:client-acceptance:v1",
+  "title": "ClientAcceptance v1",
+  "description": "Explicit immutable client human decision over one exact package, build, QA result, and artifact. Acceptance grants no deployment authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "client_acceptance_id",
+    "acceptance_version",
+    "tenant_id",
+    "engagement_id",
+    "codex_build_package_reference",
+    "package_digest",
+    "build_execution_reference",
+    "build_execution_digest",
+    "qa_result_reference",
+    "qa_result_digest",
+    "artifact_reference",
+    "decision",
+    "decision_rationale",
+    "client_acceptance_digest",
+    "attribution",
+    "recorded_at",
+    "record_version",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "client_acceptance_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/clientAcceptanceId"
+    },
+    "acceptance_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "codex_build_package_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/codexBuildPackageReference"
+    },
+    "package_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "build_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/buildExecutionReference"
+    },
+    "build_execution_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "qa_result_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/qaResultReference"
+    },
+    "qa_result_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "artifact_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/artifactReference"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "ACCEPTED",
+        "REJECTED"
+      ]
+    },
+    "decision_rationale": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+    },
+    "client_acceptance_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "supersedes_client_acceptance_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/clientAcceptanceReference"
+    },
+    "attribution": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/clientAcceptanceAttribution"
+    },
+    "recorded_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "record_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "acceptance_version": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "acceptance_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_client_acceptance_reference"
+        ]
+      }
+    }
+  ]
+}

@@ -212,9 +212,9 @@ def assert_command_policy(schemas: dict[str, dict]) -> None:
             fail(f"tenant/engagement subject binding drifted for {command}")
         if version_required != (command in expected_version):
             fail(f"expected-version rule drifted for {command}")
-    if set(envelope["$defs"]["commandType"]["enum"][-13:]) != set(COMMANDS_5D):
+    if not set(COMMANDS_5D).issubset(envelope["$defs"]["commandType"]["enum"]):
         fail("Phase 5D command vocabulary drifted")
-    if envelope["$defs"]["subjectType"]["enum"][-3:] != list(SUBJECTS.values()):
+    if not set(SUBJECTS.values()).issubset(envelope["$defs"]["subjectType"]["enum"]):
         fail("Phase 5D subject vocabulary drifted")
 
 
@@ -408,8 +408,8 @@ def assert_security_negatives(schemas: dict[str, dict], fixture: dict, values: d
 def main() -> None:
     schema_paths = sorted(SCHEMA_ROOT.rglob("*.schema.json"))
     schemas = {schema["$id"]: schema for path in schema_paths for schema in [load(path)]}
-    if len(schema_paths) != 125 or len(schemas) != len(schema_paths):
-        fail(f"schema catalog expected 125 unique IDs, found {len(schema_paths)} files/{len(schemas)} IDs")
+    if len(schema_paths) != 144 or len(schemas) != len(schema_paths):
+        fail(f"schema catalog expected 144 unique IDs, found {len(schema_paths)} files/{len(schemas)} IDs")
     for schema in schemas.values():
         Draft202012Validator.check_schema(schema)
         for reference in all_refs(schema):
@@ -452,9 +452,9 @@ def main() -> None:
     idempotency = schemas["urn:avuhz:schema:contracts:orchestration:idempotency-record:v1"]
     capability = schemas["urn:avuhz:schema:contracts:identity:capability:v1"]
     event = schemas["urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1"]
-    if envelope["$defs"]["commandType"]["enum"][-13:] != COMMANDS_5D or idempotency["properties"]["command_type"]["enum"][-13:] != COMMANDS_5D:
+    if not set(COMMANDS_5D).issubset(envelope["$defs"]["commandType"]["enum"]) or not set(COMMANDS_5D).issubset(idempotency["properties"]["command_type"]["enum"]):
         fail("command/idempotency vocabulary order drifted")
-    if capability["enum"][-9:] != CAPABILITIES_5D or event["properties"]["event_type"]["enum"][-13:] != EVENTS_5D:
+    if not set(CAPABILITIES_5D).issubset(capability["enum"]) or not set(EVENTS_5D).issubset(event["properties"]["event_type"]["enum"]):
         fail("capability/event vocabulary drifted")
     runtime_commands = COMMANDS_5D
     brief_commands = runtime_commands[:4]

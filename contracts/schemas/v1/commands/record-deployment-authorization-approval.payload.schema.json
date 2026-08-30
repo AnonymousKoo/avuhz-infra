@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:record-deployment-authorization-approval-payload:v1",
+  "title": "Record Deployment Authorization Approval Payload v1",
+  "description": "Records one exact attributable human approval over a deployment authority digest.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/recordDeploymentApprovalPayload"
+}

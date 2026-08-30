@@ -99,7 +99,16 @@
         "DraftCodexBuildPackage",
         "ReviseCodexBuildPackage",
         "RecordCodexBuildPackageApproval",
-        "ReleaseCodexBuildPackage"
+        "ReleaseCodexBuildPackage",
+        "StartBuildExecution",
+        "CompleteBuildExecution",
+        "RecordQAResult",
+        "RecordClientAcceptance",
+        "ProposeDeploymentAuthorization",
+        "ReviseDeploymentAuthorization",
+        "RecordDeploymentAuthorizationApproval",
+        "ActivateDeploymentAuthorization",
+        "RevokeDeploymentAuthorization"
       ]
     },
     "subject_reference": {

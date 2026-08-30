@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:start-build-execution-payload:v1",
+  "title": "Start Build Execution Payload v1",
+  "description": "Starts one exact build attempt under a released package and usable implementation authority.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/startBuildExecutionPayload"
+}

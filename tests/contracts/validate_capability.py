@@ -70,6 +70,14 @@ EXPECTED_ENUM = [
     "codex_build_package:draft",
     "codex_build_package:approve",
     "codex_build_package:release",
+    "build_execution:start",
+    "build_execution:complete",
+    "qa_result:record",
+    "client_acceptance:record",
+    "deployment_authorization:propose",
+    "deployment_authorization:approve",
+    "deployment_authorization:activate",
+    "deployment_authorization:revoke",
 ]
 EXPECTED_KEYS = {
     "$schema",

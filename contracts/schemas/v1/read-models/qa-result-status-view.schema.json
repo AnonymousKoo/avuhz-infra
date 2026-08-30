@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:read-models:qa-result-status-view:v1",
+  "title": "QA Result Status View v1",
+  "description": "Derived criterion coverage and outcome for one exact build and package; it creates no client acceptance or deployment authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "qa_result_reference",
+    "build_execution_reference",
+    "package_reference",
+    "overall_status",
+    "criteria_expected",
+    "criteria_recorded",
+    "criteria_complete",
+    "qa_passed",
+    "client_accepted",
+    "deployment_authorized",
+    "reasons",
+    "tenant_id",
+    "engagement_id",
+    "generated_at"
+  ],
+  "properties": {
+    "qa_result_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/qaResultReference"
+    },
+    "build_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/buildExecutionReference"
+    },
+    "package_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/codexBuildPackageReference"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "PASSED",
+        "FAILED",
+        "BLOCKED"
+      ]
+    },
+    "criteria_expected": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "criteria_recorded": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "criteria_complete": {
+      "type": "boolean"
+    },
+    "qa_passed": {
+      "type": "boolean"
+    },
+    "client_accepted": {
+      "const": false
+    },
+    "deployment_authorized": {
+      "const": false
+    },
+    "reasons": {
+      "type": "array",
+      "maxItems": 30,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 80,
+        "pattern": "^[A-Z][A-Z0-9_]{2,79}$"
+      }
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "generated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  }
+}

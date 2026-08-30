@@ -20,6 +20,7 @@ python3 tests/contracts/validate_oia_methodology_contracts.py
 python3 tests/contracts/validate_oia_finding_priority_policy.py
 python3 tests/contracts/validate_phase5c_conversion_ongoing_authority.py
 python3 tests/contracts/validate_phase5d_implementation_package_architecture.py
+python3 tests/contracts/validate_phase5d_build_qa_deployment_authority.py
 
 printf 'check: forbidden paths\n'
 tracked_candidates="$(mktemp)"

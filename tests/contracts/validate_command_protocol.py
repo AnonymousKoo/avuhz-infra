@@ -38,7 +38,9 @@ EXPECTED_SUBJECTS = ["ACQUISITION_HANDOFF", "ENGAGEMENT", "DIAGNOSTIC_SCOPE", "A
 EXPECTED_COMMANDS += ["RecordOIAConversionDecision", "AcceptOIAConversion", "ProposeOngoingAgreement", "RecordOngoingAgreementApproval", "ActivateOngoingAgreement", "TerminateOngoingAgreement", "RecordOngoingPaymentVerification", "InvalidateOngoingPaymentVerification", "ProposeOngoingAccessGrant", "RecordOngoingAccessApproval", "ApproveOngoingAccessGrant", "VerifyOngoingAccess", "RevokeOngoingAccess", "CloseOngoingAccess", "InitiateOngoingOffboarding", "VerifyOngoingAccessRevocation", "CompleteOngoingOffboarding"]
 EXPECTED_SUBJECTS += ["OIA_CONVERSION_DECISION", "ONGOING_AGREEMENT_AUTHORITY", "ONGOING_PAYMENT_VERIFICATION", "ONGOING_ACCESS_GRANT", "ONGOING_ACCESS_REVOCATION_VERIFICATION", "ONGOING_OFFBOARDING"]
 EXPECTED_COMMANDS += ["DraftImplementationBrief", "ReviseImplementationBrief", "RecordImplementationBriefApproval", "ApproveImplementationBrief", "ProposeImplementationAuthorization", "ReviseImplementationAuthorization", "RecordImplementationAuthorizationApproval", "ActivateImplementationAuthorization", "RevokeImplementationAuthorization", "DraftCodexBuildPackage", "ReviseCodexBuildPackage", "RecordCodexBuildPackageApproval", "ReleaseCodexBuildPackage"]
+EXPECTED_COMMANDS += ["StartBuildExecution", "CompleteBuildExecution", "RecordQAResult", "RecordClientAcceptance", "ProposeDeploymentAuthorization", "ReviseDeploymentAuthorization", "RecordDeploymentAuthorizationApproval", "ActivateDeploymentAuthorization", "RevokeDeploymentAuthorization"]
 EXPECTED_SUBJECTS += ["IMPLEMENTATION_BRIEF", "IMPLEMENTATION_AUTHORIZATION", "CODEX_BUILD_PACKAGE"]
+EXPECTED_SUBJECTS += ["BUILD_EXECUTION_RESULT", "QA_RESULT", "CLIENT_ACCEPTANCE", "DEPLOYMENT_AUTHORIZATION"]
 
 
 def load(path):

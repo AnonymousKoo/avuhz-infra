@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:build-execution-result:v1",
+  "title": "BuildExecutionResult v1",
+  "description": "Immutable exact build execution attempt. Success creates no QA, client acceptance, deployment authority, or deployment truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "build_execution_result_id",
+    "execution_attempt",
+    "tenant_id",
+    "engagement_id",
+    "codex_build_package_reference",
+    "package_digest",
+    "implementation_authorization_reference",
+    "implementation_authority_digest",
+    "status",
+    "execution_fingerprint",
+    "attribution",
+    "started_at",
+    "record_version",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "build_execution_result_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/buildExecutionResultId"
+    },
+    "execution_attempt": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "codex_build_package_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/codexBuildPackageReference"
+    },
+    "package_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "implementation_authorization_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/implementationAuthorizationReference"
+    },
+    "implementation_authority_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "IN_PROGRESS",
+        "SUCCEEDED",
+        "FAILED"
+      ]
+    },
+    "execution_fingerprint": {
+      "type": "string",
+      "pattern": "^fpv[1-9][0-9]*:[A-Za-z0-9._-]{16,200}$",
+      "minLength": 20,
+      "maxLength": 220
+    },
+    "changed_targets": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/changedTargets"
+    },
+    "artifact_references": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/artifactReferences"
+    },
+    "test_result_references": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/testResultReferences"
+    },
+    "failure_summary": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+    },
+    "execution_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "supersedes_build_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/buildExecutionReference"
+    },
+    "attribution": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/executionAttribution"
+    },
+    "started_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "completed_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "record_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "SUCCEEDED",
+              "FAILED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "changed_targets",
+          "artifact_references",
+          "test_result_references",
+          "execution_digest",
+          "completed_at"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "FAILED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "failure_summary"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "SUCCEEDED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "failure_summary"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution_attempt": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "execution_attempt"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_build_execution_reference"
+        ]
+      }
+    }
+  ]
+}

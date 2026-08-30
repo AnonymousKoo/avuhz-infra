@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:read-models:deployment-authorization-status-view:v1",
+  "title": "Deployment Authorization Status View v1",
+  "description": "Derived exact bounded deployment readiness/usability. Authority is not deployment execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_authorization_reference",
+    "implementation_authorization_reference",
+    "package_reference",
+    "build_execution_reference",
+    "qa_result_reference",
+    "client_acceptance_reference",
+    "state",
+    "prerequisites_exact",
+    "approvals_active",
+    "within_validity_window",
+    "deployment_authorized",
+    "production_target_exact",
+    "deployment_completed",
+    "reasons",
+    "tenant_id",
+    "engagement_id",
+    "generated_at"
+  ],
+  "properties": {
+    "deployment_authorization_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/deploymentAuthorizationReference"
+    },
+    "implementation_authorization_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/implementationAuthorizationReference"
+    },
+    "package_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/codexBuildPackageReference"
+    },
+    "build_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/buildExecutionReference"
+    },
+    "qa_result_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/qaResultReference"
+    },
+    "client_acceptance_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/clientAcceptanceReference"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "PROPOSED",
+        "ACTIVE",
+        "EXPIRED",
+        "REVOKED",
+        "SUPERSEDED"
+      ]
+    },
+    "prerequisites_exact": {
+      "type": "boolean"
+    },
+    "approvals_active": {
+      "type": "boolean"
+    },
+    "within_validity_window": {
+      "type": "boolean"
+    },
+    "deployment_authorized": {
+      "type": "boolean"
+    },
+    "production_target_exact": {
+      "type": "boolean"
+    },
+    "deployment_completed": {
+      "const": false
+    },
+    "reasons": {
+      "type": "array",
+      "maxItems": 30,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 80,
+        "pattern": "^[A-Z][A-Z0-9_]{2,79}$"
+      }
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "generated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  }
+}

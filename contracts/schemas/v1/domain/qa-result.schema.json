@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:qa-result:v1",
+  "title": "QAResult v1",
+  "description": "Immutable criterion-level QA truth for one exact successful build and package. QA truth is never a generic caller boolean.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "qa_result_id",
+    "qa_attempt",
+    "tenant_id",
+    "engagement_id",
+    "build_execution_reference",
+    "build_execution_digest",
+    "codex_build_package_reference",
+    "package_digest",
+    "criterion_results",
+    "overall_status",
+    "qa_digest",
+    "attribution",
+    "recorded_at",
+    "record_version",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "qa_result_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/qaResultId"
+    },
+    "qa_attempt": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "build_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/buildExecutionReference"
+    },
+    "build_execution_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "codex_build_package_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/codexBuildPackageReference"
+    },
+    "package_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "criterion_results": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/criterionResults"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "PASSED",
+        "FAILED",
+        "BLOCKED"
+      ]
+    },
+    "qa_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "supersedes_qa_result_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/qaResultReference"
+    },
+    "attribution": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/executionAttribution"
+    },
+    "recorded_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "record_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "PASSED"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "criterion_results": {
+            "items": {
+              "properties": {
+                "result": {
+                  "const": "PASS"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "FAILED"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "criterion_results": {
+            "contains": {
+              "properties": {
+                "result": {
+                  "const": "FAIL"
+                }
+              },
+              "required": [
+                "result"
+              ]
+            },
+            "minContains": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "BLOCKED"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "criterion_results": {
+            "contains": {
+              "properties": {
+                "result": {
+                  "const": "BLOCKED"
+                }
+              },
+              "required": [
+                "result"
+              ]
+            },
+            "minContains": 1,
+            "not": {
+              "contains": {
+                "properties": {
+                  "result": {
+                    "const": "FAIL"
+                  }
+                },
+                "required": [
+                  "result"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "qa_attempt": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "qa_attempt"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_qa_result_reference"
+        ]
+      }
+    }
+  ]
+}

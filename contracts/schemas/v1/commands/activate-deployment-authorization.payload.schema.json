@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:activate-deployment-authorization-payload:v1",
+  "title": "Activate Deployment Authorization Payload v1",
+  "description": "Requests activation after exact server-side prerequisite and dual-human revalidation.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/activateDeploymentAuthorizationPayload"
+}

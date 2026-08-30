@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:revise-deployment-authorization-payload:v1",
+  "title": "Revise Deployment Authorization Payload v1",
+  "description": "Proposes a complete new immutable deployment authority version with exact supersession.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/reviseDeploymentAuthorizationPayload"
+}

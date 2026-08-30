@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:record-client-acceptance-payload:v1",
+  "title": "Record Client Acceptance Payload v1",
+  "description": "Records an exact client human decision; acceptance grants no deployment authority.",
+  "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/recordClientAcceptancePayload"
+}

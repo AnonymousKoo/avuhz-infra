@@ -36,7 +36,11 @@
         "ONGOING_OFFBOARDING",
         "IMPLEMENTATION_BRIEF",
         "IMPLEMENTATION_AUTHORIZATION",
-        "CODEX_BUILD_PACKAGE"
+        "CODEX_BUILD_PACKAGE",
+        "BUILD_EXECUTION_RESULT",
+        "QA_RESULT",
+        "CLIENT_ACCEPTANCE",
+        "DEPLOYMENT_AUTHORIZATION"
       ]
     },
     "internalReference": {

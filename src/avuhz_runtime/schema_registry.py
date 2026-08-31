@@ -46,6 +46,7 @@ SCHEMA_FILES = (
     'commands/revoke-deployment-authorization.payload.schema.json',
     'commands/start-deployment-execution.payload.schema.json',
     'commands/complete-deployment-execution.payload.schema.json',
+    'commands/record-deployment-verification.payload.schema.json',
     'domain/acquisition-handoff.schema.json',
     'domain/engagement.schema.json',
     'domain/human-approval.schema.json',
@@ -60,6 +61,7 @@ SCHEMA_FILES = (
     'domain/deployment-authorization.schema.json',
     'domain/phase5d-deployment-execution-common.schema.json',
     'domain/deployment-execution.schema.json',
+    'domain/deployment-verification.schema.json',
     'orchestration/inbound-event-receipt.schema.json',
     'orchestration/idempotency-record.schema.json',
     'orchestration/lifecycle-event.schema.json',
@@ -74,6 +76,7 @@ SCHEMA_FILES = (
     'read-models/client-acceptance-status-view.schema.json',
     'read-models/deployment-authorization-status-view.schema.json',
     'read-models/deployment-execution-status-view.schema.json',
+    'read-models/deployment-verification-status-view.schema.json',
     'read-models/phase5d-authority-progression-view.schema.json',
     'read-models/phase5d-delivery-progression-view.schema.json',
 )

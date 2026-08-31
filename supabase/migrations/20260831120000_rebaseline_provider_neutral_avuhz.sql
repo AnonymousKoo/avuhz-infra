@@ -1,6 +1,6 @@
 -- Local/disposable current-tree rebaseline for provider-neutral Avuhz only.
 -- Never applied remotely; never push this baseline to a linked project.
--- Preserves governed execution through immutable DeploymentExecution truth; performs no provider operation.
+-- Preserves immutable DeploymentExecution and DeploymentVerification truth; performs no provider operation.
 
 create extension if not exists pgcrypto;
 do $$ begin
@@ -106,11 +106,11 @@ create table public.avuhz_idempotency_records (
     'StartBuildExecution','CompleteBuildExecution','RecordQAResult','RecordClientAcceptance',
     'ProposeDeploymentAuthorization','ReviseDeploymentAuthorization','RecordDeploymentAuthorizationApproval',
     'ActivateDeploymentAuthorization','RevokeDeploymentAuthorization','StartDeploymentExecution',
-    'CompleteDeploymentExecution')),
+    'CompleteDeploymentExecution','RecordDeploymentVerification')),
   subject_type text not null check (subject_type in (
     'ACQUISITION_HANDOFF','ENGAGEMENT','IMPLEMENTATION_BRIEF','IMPLEMENTATION_AUTHORIZATION',
     'CODEX_BUILD_PACKAGE','BUILD_EXECUTION_RESULT','QA_RESULT','CLIENT_ACCEPTANCE','DEPLOYMENT_AUTHORIZATION',
-    'DEPLOYMENT_EXECUTION')),
+    'DEPLOYMENT_EXECUTION','DEPLOYMENT_VERIFICATION')),
   subject_id uuid not null, subject_version integer not null check (subject_version>0),
   idempotency_key text not null check (char_length(idempotency_key) between 1 and 200),
   semantic_request_fingerprint text not null check (semantic_request_fingerprint~'^fpv[1-9][0-9]*:[A-Za-z0-9._-]{16,200}$'),
@@ -130,7 +130,7 @@ create table public.avuhz_idempotency_records (
     'CompleteBuildExecution','RecordQAResult','RecordClientAcceptance','ProposeDeploymentAuthorization',
     'ReviseDeploymentAuthorization','RecordDeploymentAuthorizationApproval',
     'ActivateDeploymentAuthorization','RevokeDeploymentAuthorization','StartDeploymentExecution',
-    'CompleteDeploymentExecution') then 'COMMAND' else 'SUBJECT:'||subject_id::text end) stored,
+    'CompleteDeploymentExecution','RecordDeploymentVerification') then 'COMMAND' else 'SUBJECT:'||subject_id::text end) stored,
   unique (tenant_id,trusted_principal_id,command_type,subject_type,idempotency_scope,idempotency_key),
   check (processing_status not in ('COMPLETED','FAILED_TERMINAL') or completed_at is not null),
   check (processing_status<>'COMPLETED' or result_reference is not null)
@@ -148,12 +148,13 @@ create table public.avuhz_lifecycle_events (
     'build_execution.completed','qa_result.recorded','client_acceptance.recorded',
     'deployment_authorization.proposed','deployment_authorization.revised',
     'deployment_authorization.approval_recorded','deployment_authorization.activated',
-    'deployment_authorization.revoked','deployment_execution.started','deployment_execution.completed')),
+    'deployment_authorization.revoked','deployment_execution.started','deployment_execution.completed',
+    'deployment_verification.recorded')),
   event_schema_version integer check (event_schema_version>0),
   authoritative_subject_type text check (authoritative_subject_type in (
     'ACQUISITION_HANDOFF','ENGAGEMENT','IMPLEMENTATION_BRIEF','IMPLEMENTATION_AUTHORIZATION',
     'CODEX_BUILD_PACKAGE','BUILD_EXECUTION_RESULT','QA_RESULT','CLIENT_ACCEPTANCE','DEPLOYMENT_AUTHORIZATION',
-    'DEPLOYMENT_EXECUTION')),
+    'DEPLOYMENT_EXECUTION','DEPLOYMENT_VERIFICATION')),
   authoritative_subject_id uuid, authoritative_subject_version integer check (authoritative_subject_version>0),
   occurred_at timestamptz, producer_reference text, correlation_id uuid, causation_id uuid,
   idempotency_key text not null check (char_length(idempotency_key) between 1 and 200),
@@ -498,10 +499,15 @@ create table public.avuhz_deployment_executions (
   started_at timestamptz not null, completed_at timestamptz,
   created_at timestamptz not null, updated_at timestamptz not null,
   primary key (tenant_id,deployment_execution_id),
+  unique (tenant_id,deployment_execution_id,record_version),
   unique (tenant_id,deployment_authorization_id,deployment_authorization_version,execution_attempt),
   foreign key (tenant_id,engagement_id) references public.avuhz_engagements (tenant_id,engagement_id),
   foreign key (tenant_id,deployment_authorization_id,deployment_authorization_version)
     references public.avuhz_deployment_authorizations (tenant_id,deployment_authorization_id,authorization_version),
+  foreign key (tenant_id,supersedes_deployment_execution_id,supersedes_record_version)
+    references public.avuhz_deployment_executions (tenant_id,deployment_execution_id,record_version),
+  foreign key (tenant_id,rollback_of_deployment_execution_id,rollback_of_record_version)
+    references public.avuhz_deployment_executions (tenant_id,deployment_execution_id,record_version),
   check ((execution_attempt=1 and supersedes_deployment_execution_id is null and supersedes_record_version is null)
     or (execution_attempt>1 and supersedes_deployment_execution_id is not null and supersedes_record_version is not null)),
   check ((execution_action='ROLLBACK_EXACT_ARTIFACT')=(rollback_of_deployment_execution_id is not null and rollback_of_record_version is not null)),
@@ -517,6 +523,57 @@ create table public.avuhz_deployment_executions (
     and record->>'execution_fingerprint'=execution_fingerprint
     and (record->>'record_version')::integer=record_version)
 );
+
+create table public.avuhz_deployment_verifications (
+  tenant_id uuid not null, deployment_verification_id uuid not null,
+  verification_attempt integer not null check (verification_attempt>0), engagement_id uuid not null,
+  deployment_execution_id uuid not null,
+  deployment_execution_record_version integer not null check (deployment_execution_record_version>0),
+  deployment_execution_digest text not null check (deployment_execution_digest~'^sha256:[0-9a-f]{64}$'),
+  execution_status text not null check (execution_status in ('SUCCEEDED','FAILED','PARTIAL')),
+  deployment_authorization_id uuid not null,
+  deployment_authorization_version integer not null check (deployment_authorization_version>0),
+  deployment_authority_digest text not null check (deployment_authority_digest~'^sha256:[0-9a-f]{64}$'),
+  overall_status text not null check (overall_status in ('VERIFIED','FAILED','PARTIAL','BLOCKED')),
+  rollback_required boolean not null,
+  verification_digest text not null check (verification_digest~'^sha256:[0-9a-f]{64}$'),
+  supersedes_deployment_verification_id uuid,
+  supersedes_record_version integer check (supersedes_record_version>0),
+  record_version integer not null check (record_version=1),
+  record jsonb not null check (jsonb_typeof(record)='object'),
+  recorded_at timestamptz not null, created_at timestamptz not null, updated_at timestamptz not null,
+  primary key (tenant_id,deployment_verification_id),
+  unique (tenant_id,deployment_verification_id,record_version),
+  unique (tenant_id,deployment_execution_id,deployment_execution_record_version,verification_attempt),
+  foreign key (tenant_id,engagement_id) references public.avuhz_engagements (tenant_id,engagement_id),
+  foreign key (tenant_id,deployment_execution_id,deployment_execution_record_version)
+    references public.avuhz_deployment_executions (tenant_id,deployment_execution_id,record_version),
+  foreign key (tenant_id,deployment_authorization_id,deployment_authorization_version)
+    references public.avuhz_deployment_authorizations (tenant_id,deployment_authorization_id,authorization_version),
+  foreign key (tenant_id,supersedes_deployment_verification_id,supersedes_record_version)
+    references public.avuhz_deployment_verifications (tenant_id,deployment_verification_id,record_version),
+  check ((verification_attempt=1 and supersedes_deployment_verification_id is null and supersedes_record_version is null)
+    or (verification_attempt>1 and supersedes_deployment_verification_id is not null and supersedes_record_version is not null)),
+  check ((overall_status='VERIFIED' and rollback_required=false)
+    or (overall_status in ('FAILED','PARTIAL','BLOCKED') and rollback_required=true)),
+  check (record->>'tenant_id'=tenant_id::text and record->>'engagement_id'=engagement_id::text
+    and record->>'deployment_verification_id'=deployment_verification_id::text
+    and (record->>'verification_attempt')::integer=verification_attempt
+    and record->'deployment_execution_reference'->>'reference_id'=deployment_execution_id::text
+    and (record->'deployment_execution_reference'->>'reference_version')::integer=deployment_execution_record_version
+    and record->>'deployment_execution_digest'=deployment_execution_digest
+    and record->>'execution_status'=execution_status
+    and record->'authority_binding'->'deployment_authorization_reference'->>'reference_id'=deployment_authorization_id::text
+    and (record->'authority_binding'->'deployment_authorization_reference'->>'reference_version')::integer=deployment_authorization_version
+    and record->'authority_binding'->>'deployment_authority_digest'=deployment_authority_digest
+    and record->>'overall_status'=overall_status
+    and (record->>'rollback_required')::boolean=rollback_required
+    and record->>'verification_digest'=verification_digest
+    and (record->>'record_version')::integer=record_version)
+);
+create index avuhz_deployment_verification_execution_history_idx on public.avuhz_deployment_verifications
+  (tenant_id,deployment_execution_id,deployment_execution_record_version,verification_attempt);
+
 create index avuhz_deployment_execution_authority_history_idx on public.avuhz_deployment_executions
   (tenant_id,deployment_authorization_id,deployment_authorization_version,execution_attempt);
 
@@ -526,6 +583,7 @@ create trigger avuhz_lifecycle_events_immutable before update or delete on publi
 create trigger avuhz_qa_results_immutable before update or delete on public.avuhz_qa_results for each row execute function public.avuhz_reject_immutable_history_mutation();
 create trigger avuhz_client_acceptances_immutable before update or delete on public.avuhz_client_acceptances for each row execute function public.avuhz_reject_immutable_history_mutation();
 create trigger avuhz_deployment_executions_no_delete before delete on public.avuhz_deployment_executions for each row execute function public.avuhz_reject_immutable_history_mutation();
+create trigger avuhz_deployment_verifications_immutable before update or delete on public.avuhz_deployment_verifications for each row execute function public.avuhz_reject_immutable_history_mutation();
 
 
 create function public.avuhz_guard_deployment_execution_transition() returns trigger
@@ -668,6 +726,7 @@ alter table public.avuhz_qa_results enable row level security;
 alter table public.avuhz_client_acceptances enable row level security;
 alter table public.avuhz_deployment_authorizations enable row level security;
 alter table public.avuhz_deployment_executions enable row level security;
+alter table public.avuhz_deployment_verifications enable row level security;
 
 do $$ declare table_name text; grantee_name text; begin
   foreach table_name in array array[
@@ -675,7 +734,7 @@ do $$ declare table_name text; grantee_name text; begin
     'avuhz_idempotency_records','avuhz_lifecycle_events','avuhz_outbox_deliveries','avuhz_implementation_briefs',
     'avuhz_implementation_authorizations','avuhz_codex_build_packages','avuhz_build_execution_results',
     'avuhz_qa_results','avuhz_client_acceptances','avuhz_deployment_authorizations',
-    'avuhz_deployment_executions'] loop
+    'avuhz_deployment_executions','avuhz_deployment_verifications'] loop
     execute format('revoke all on table public.%I from public',table_name);
     foreach grantee_name in array array['anon','authenticated'] loop
       if exists (select 1 from pg_roles where rolname=grantee_name) then
@@ -693,12 +752,14 @@ grant select on table public.avuhz_acquisition_handoffs,public.avuhz_engagements
   public.avuhz_human_approvals,public.avuhz_idempotency_records,public.avuhz_lifecycle_events,
   public.avuhz_outbox_deliveries,public.avuhz_implementation_briefs,public.avuhz_implementation_authorizations,
   public.avuhz_codex_build_packages,public.avuhz_build_execution_results,public.avuhz_qa_results,
-  public.avuhz_client_acceptances,public.avuhz_deployment_authorizations,public.avuhz_deployment_executions to avuhz_command_service;
+  public.avuhz_client_acceptances,public.avuhz_deployment_authorizations,public.avuhz_deployment_executions,
+  public.avuhz_deployment_verifications to avuhz_command_service;
 grant insert on table public.avuhz_engagements,public.avuhz_implementation_handoffs,public.avuhz_human_approvals,
   public.avuhz_idempotency_records,public.avuhz_lifecycle_events,public.avuhz_outbox_deliveries,
   public.avuhz_implementation_briefs,public.avuhz_implementation_authorizations,public.avuhz_codex_build_packages,
   public.avuhz_build_execution_results,public.avuhz_qa_results,public.avuhz_client_acceptances,
-  public.avuhz_deployment_authorizations,public.avuhz_deployment_executions to avuhz_command_service;
+  public.avuhz_deployment_authorizations,public.avuhz_deployment_executions,
+  public.avuhz_deployment_verifications to avuhz_command_service;
 grant update (accepted_at) on public.avuhz_acquisition_handoffs to avuhz_command_service;
 grant update (processing_status,result_reference,completed_at,record_version) on public.avuhz_idempotency_records to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_implementation_briefs to avuhz_command_service;

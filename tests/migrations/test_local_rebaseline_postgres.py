@@ -65,7 +65,7 @@ class LocalProviderNeutralRebaselineTests(unittest.TestCase):
             "select count(*) from pg_policies where schemaname='public' and tablename like 'avuhz_%' "
             "and roles @> array['avuhz_command_service']::name[];"
         )
-        self.assertEqual(output.splitlines(), ["15", "15", "15"])
+        self.assertEqual(output.splitlines(), ["16", "16", "16"])
         _, forbidden, _ = self._psql(
             "select count(*) from pg_tables where schemaname='public' and "
             "(tablename ilike '%oia%' or tablename ilike '%diagnostic%' or "

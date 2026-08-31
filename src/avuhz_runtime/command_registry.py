@@ -40,6 +40,7 @@ COMMANDS = {
     "RevokeDeploymentAuthorization": command("RevokeDeploymentAuthorization", "DEPLOYMENT_AUTHORIZATION", "revoke-deployment-authorization", "deployment_authorization:revoke"),
     "StartDeploymentExecution": command("StartDeploymentExecution", "DEPLOYMENT_EXECUTION", "start-deployment-execution", "deployment_execution:start"),
     "CompleteDeploymentExecution": command("CompleteDeploymentExecution", "DEPLOYMENT_EXECUTION", "complete-deployment-execution", "deployment_execution:complete"),
+    "RecordDeploymentVerification": command("RecordDeploymentVerification", "DEPLOYMENT_VERIFICATION", "record-deployment-verification", "deployment_verification:record"),
 }
 
 

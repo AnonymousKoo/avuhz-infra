@@ -25,6 +25,8 @@ from .phase5d_deployment_authorization import DEPLOYMENT_AUTHORIZATION_COMMANDS,
 from .phase5d_deployment_authorization_memory import DeploymentAuthorizationMemoryRepository
 from .phase5d_deployment_execution import DEPLOYMENT_EXECUTION_COMMANDS, DEPLOYMENT_EXECUTION_EVENTS, DeploymentExecutionHandler
 from .phase5d_deployment_execution_memory import DeploymentExecutionMemoryRepository
+from .phase5d_deployment_verification import DEPLOYMENT_VERIFICATION_COMMANDS, DEPLOYMENT_VERIFICATION_EVENTS, DeploymentVerificationHandler
+from .phase5d_deployment_verification_memory import DeploymentVerificationMemoryRepository
 
 
 COMMAND_SCOPED_IDEMPOTENCY_COMMANDS = frozenset((
@@ -32,6 +34,7 @@ COMMAND_SCOPED_IDEMPOTENCY_COMMANDS = frozenset((
     *CODEX_BUILD_PACKAGE_COMMANDS, *BUILD_EXECUTION_COMMANDS, *QA_RESULT_COMMANDS,
     *CLIENT_ACCEPTANCE_COMMANDS,
     *DEPLOYMENT_AUTHORIZATION_COMMANDS, *DEPLOYMENT_EXECUTION_COMMANDS,
+    *DEPLOYMENT_VERIFICATION_COMMANDS,
 ))
 
 
@@ -62,6 +65,7 @@ class MemoryStore:
     client_acceptances: dict = field(default_factory=dict)
     deployment_authorizations: dict = field(default_factory=dict)
     deployment_executions: dict = field(default_factory=dict)
+    deployment_verifications: dict = field(default_factory=dict)
     approvals: dict = field(default_factory=dict)
     idempotency: dict = field(default_factory=dict)
     events: list = field(default_factory=list)
@@ -105,6 +109,8 @@ class MemoryStore:
             )
         elif command.subject_type == "DEPLOYMENT_EXECUTION":
             record = self.deployment_executions.get((command.tenant_id, command.subject_id))
+        elif command.subject_type == "DEPLOYMENT_VERIFICATION":
+            record = self.deployment_verifications.get((command.tenant_id, command.subject_id))
         if not record:
             return None
         return AuthoritativeSubjectSnapshot(
@@ -223,6 +229,7 @@ class UnitOfWork:
         self.client_acceptances = ClientAcceptanceMemoryRepository(self)
         self.deployment_authorizations = DeploymentAuthorizationMemoryRepository(self)
         self.deployment_executions = DeploymentExecutionMemoryRepository(self)
+        self.deployment_verifications = DeploymentVerificationMemoryRepository(self)
         self.human_approvals = HumanApprovalMemoryRepository(self)
         self.idempotency = IdempotencyMemoryRepository(self)
         self.lifecycle_events = LifecycleEventMemoryRepository(self); self.outbox = OutboxMemoryRepository(self)
@@ -275,6 +282,7 @@ class Executor:
 
     def _handle(self, uow, prepared, context):
         now = self.clock()
+        if prepared.command_type in DEPLOYMENT_VERIFICATION_COMMANDS: return DeploymentVerificationHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in DEPLOYMENT_EXECUTION_COMMANDS: return DeploymentExecutionHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in DEPLOYMENT_AUTHORIZATION_COMMANDS: return DeploymentAuthorizationHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in CLIENT_ACCEPTANCE_COMMANDS: return ClientAcceptanceHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
@@ -310,6 +318,10 @@ class Executor:
 
     def _event(self, prepared, uow):
         command = prepared.command_type
+        if command in DEPLOYMENT_VERIFICATION_COMMANDS:
+            record = uow.deployment_verifications.get(prepared.tenant_id, prepared.subject_id)
+            metadata = {"authority_stage": "DEPLOYMENT_VERIFICATION", "deployment_verification_id": prepared.subject_id, "verification_attempt": record["verification_attempt"], "status": record["overall_status"]}
+            return self._event_record(prepared, DEPLOYMENT_VERIFICATION_EVENTS[command], record, "DEPLOYMENT_VERIFICATION", metadata)
         if command in DEPLOYMENT_EXECUTION_COMMANDS:
             record = uow.deployment_executions.get(prepared.tenant_id, prepared.subject_id)
             metadata = {"authority_stage": "DEPLOYMENT_EXECUTION", "deployment_execution_id": prepared.subject_id, "execution_attempt": record["execution_attempt"], "status": record["status"]}

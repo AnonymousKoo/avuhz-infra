@@ -101,12 +101,7 @@ class Phase5DClientAcceptancePostgresTests(PostgresHarness):
                 "select count(*) from public.avuhz_lifecycle_events where event_type='client_acceptance.recorded'",
                 "select count(*) from public.avuhz_outbox_deliveries o join public.avuhz_lifecycle_events e on e.lifecycle_event_id=o.lifecycle_event_id where e.event_type='client_acceptance.recorded' and o.status='PENDING'",
             ))
-            deployment = connection.execute(
-                "select count(*) from information_schema.tables where table_schema='public' "
-                "and table_name='avuhz_deployment_verifications'"
-            ).fetchone()["count"]
         self.assertEqual(counts, (1, 1, 1))
-        self.assertEqual(deployment, 0)
 
         other = self.acceptance_uow(helper, self.OTHER_TENANT)
         try:

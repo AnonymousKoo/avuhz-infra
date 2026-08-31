@@ -15,7 +15,7 @@ COMMANDS_C=["StartBuildExecution","CompleteBuildExecution","RecordQAResult","Rec
 CAPS_C=["build_execution:start","build_execution:complete","qa_result:record","client_acceptance:record","deployment_authorization:propose","deployment_authorization:approve","deployment_authorization:activate","deployment_authorization:revoke"]
 EVENTS_C=["build_execution.started","build_execution.completed","qa_result.recorded","client_acceptance.recorded","deployment_authorization.proposed","deployment_authorization.revised","deployment_authorization.approval_recorded","deployment_authorization.activated","deployment_authorization.revoked"]
 SUBJECTS_C=["BUILD_EXECUTION_RESULT","QA_RESULT","CLIENT_ACCEPTANCE","DEPLOYMENT_AUTHORIZATION"]
-D5_SCHEMA_FILES={"domain/deployment-verification.schema.json","commands/record-deployment-verification.payload.schema.json","read-models/deployment-verification-status-view.schema.json"}
+D5_SCHEMA_FILES=set()
 PROHIBITED=["ARTIFACT_SUBSTITUTION","TARGET_WIDENING","ENVIRONMENT_WIDENING","PERMISSION_WIDENING","CREDENTIAL_ROTATION","DATA_DELETION","BILLING_CHANGE","UNAUTHORIZED_PRODUCTION_CHANGE","OUT_OF_SCOPE_NETWORK_CHANGE","OUT_OF_SCOPE_SECURITY_CONTROL_CHANGE"]
 DOMAIN={"build":"urn:avuhz:schema:contracts:domain:build-execution-result:v1","qa":"urn:avuhz:schema:contracts:domain:qa-result:v1","acceptance":"urn:avuhz:schema:contracts:domain:client-acceptance:v1","deployment":"urn:avuhz:schema:contracts:domain:deployment-authorization:v1","approval":"urn:avuhz:schema:contracts:domain:human-approval:v1"}
 
@@ -71,7 +71,7 @@ def main():
   if s["$id"] in schemas:fail("duplicate schema ID "+s["$id"])
   schemas[s["$id"]]=s
  catalog=set(SCHEMA_FILES); actual={str(p.relative_to(SCHEMA_ROOT)) for p in paths}
- if catalog!=actual-D5_SCHEMA_FILES or catalog&D5_SCHEMA_FILES:fail("runtime schema catalog must exclude only frozen D5b verification schemas")
+ if catalog!=actual-D5_SCHEMA_FILES or catalog&D5_SCHEMA_FILES:fail("runtime schema catalog must include the complete frozen D5 surface")
  for s in schemas.values():
   for ref_value in refs(s):
    sid=ref_value.partition("#")[0]

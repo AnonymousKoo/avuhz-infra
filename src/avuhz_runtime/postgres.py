@@ -12,6 +12,7 @@ from .postgres_phase5d_qa_result import QAResultPostgresRepository
 from .postgres_phase5d_client_acceptance import ClientAcceptancePostgresRepository
 from .postgres_phase5d_deployment_authorization import DeploymentAuthorizationPostgresRepository
 from .postgres_phase5d_deployment_execution import DeploymentExecutionPostgresRepository
+from .postgres_phase5d_deployment_verification import DeploymentVerificationPostgresRepository
 
 def connection_factory_from_environment(name="AVUHZ_POSTGRES_DSN"):
     def factory():
@@ -35,6 +36,7 @@ class PostgresStore:
             "BUILD_EXECUTION_RESULT": ("select tenant_id,record_version,engagement_id,status as state from public.avuhz_build_execution_results where tenant_id=%s and build_execution_result_id=%s", "state"),
             "QA_RESULT": ("select tenant_id,record_version,engagement_id,overall_status as state from public.avuhz_qa_results where tenant_id=%s and qa_result_id=%s", "state"),
             "CLIENT_ACCEPTANCE": ("select tenant_id,record_version,engagement_id,decision as state from public.avuhz_client_acceptances where tenant_id=%s and client_acceptance_id=%s order by acceptance_version desc limit 1", "state"),
+            "DEPLOYMENT_VERIFICATION": ("select tenant_id,record_version,engagement_id,overall_status as state from public.avuhz_deployment_verifications where tenant_id=%s and deployment_verification_id=%s", "state"),
             "DEPLOYMENT_EXECUTION": ("select tenant_id,record_version,engagement_id,status as state from public.avuhz_deployment_executions where tenant_id=%s and deployment_execution_id=%s", "state"),
             "DEPLOYMENT_AUTHORIZATION": ("select tenant_id,record_version,engagement_id,state from public.avuhz_deployment_authorizations where tenant_id=%s and deployment_authorization_id=%s and state<>'SUPERSEDED' order by authorization_version desc limit 1", "state"),
         }
@@ -262,6 +264,7 @@ class PostgresUnitOfWork:
         self.client_acceptances=ClientAcceptancePostgresRepository(self)
         self.deployment_authorizations=DeploymentAuthorizationPostgresRepository(self)
         self.deployment_executions=DeploymentExecutionPostgresRepository(self)
+        self.deployment_verifications=DeploymentVerificationPostgresRepository(self)
     def bind_trusted_context(self,context):
         if not getattr(context,"authenticated",False) or not getattr(context,"tenant_id",None):raise ValueError("trusted tenant context is required")
         tenant=str(uuid.UUID(str(context.tenant_id)))

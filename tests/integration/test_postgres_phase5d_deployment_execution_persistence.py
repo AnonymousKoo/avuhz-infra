@@ -77,7 +77,6 @@ class Phase5DDeploymentExecutionPostgresTests(PostgresHarness):
             self.assertEqual(connection.execute("select count(*) from public.avuhz_deployment_executions").fetchone()["count"], 1)
             self.assertEqual(connection.execute("select count(*) from public.avuhz_lifecycle_events where event_type like 'deployment_execution.%'").fetchone()["count"], 2)
             self.assertEqual(connection.execute("select count(*) from public.avuhz_outbox_deliveries o join public.avuhz_lifecycle_events e on e.lifecycle_event_id=o.lifecycle_event_id where e.event_type like 'deployment_execution.%' and o.status='PENDING'").fetchone()["count"], 2)
-            self.assertEqual(connection.execute("select count(*) from information_schema.tables where table_schema='public' and table_name='avuhz_deployment_verifications'").fetchone()["count"], 0)
         other = self.execution_uow(helper, self.OTHER_TENANT)
         try:
             self.assertIsNone(other.deployment_executions.get(self.harness.tenant, execution_runtime.EXECUTION_ID))

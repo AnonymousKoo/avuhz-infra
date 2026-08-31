@@ -31,7 +31,7 @@ class CommandValidator:
         ))
     def _composed_schema(self, definition: CommandDefinition):
         constraints = {"type": "object", "properties": {"command_type": {"const": definition.command_type}, "subject_type": {"const": definition.subject_type}, "payload_schema": {"const": definition.payload_schema_id}}, "required": ["payload"]}
-        creations = {"AcceptAcquisitionHandoff", "OpenEngagement", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult", "RecordClientAcceptance", "ProposeDeploymentAuthorization", "StartDeploymentExecution"}
+        creations = {"AcceptAcquisitionHandoff", "OpenEngagement", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult", "RecordClientAcceptance", "ProposeDeploymentAuthorization", "StartDeploymentExecution", "RecordDeploymentVerification"}
         if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
         elif definition.command_type in creations:
             constraints["not"] = {"required": ["expected_record_version"]}; constraints["required"].append("engagement_id")

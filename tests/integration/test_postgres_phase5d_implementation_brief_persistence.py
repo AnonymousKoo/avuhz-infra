@@ -93,12 +93,7 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
                                "avuhz_idempotency_records", "avuhz_lifecycle_events",
                                "avuhz_outbox_deliveries",
                            ))
-            deployment_tables = connection.execute(
-                "select count(*) from information_schema.tables where table_schema='public' "
-                "and table_name='avuhz_deployment_verifications'"
-            ).fetchone()["count"]
         self.assertEqual(counts, (1, 1, 4, 4, 4))
-        self.assertEqual(deployment_tables, 0)
 
         other = self.phase5d_uow(self.OTHER_TENANT)
         try:

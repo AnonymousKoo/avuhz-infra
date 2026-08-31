@@ -148,12 +148,7 @@ class Phase5DCodexBuildPackagePostgresTests(PostgresHarness):
                     "select count(*) from public.avuhz_outbox_deliveries o join public.avuhz_lifecycle_events e on e.lifecycle_event_id=o.lifecycle_event_id where e.event_type like 'codex_build_package.%' and o.status='PENDING'",
                 )
             )
-            deployment_tables = connection.execute(
-                "select count(*) from information_schema.tables where table_schema='public' "
-                "and table_name='avuhz_deployment_verifications'"
-            ).fetchone()["count"]
         self.assertEqual(counts, (1, 2, 4, 4))
-        self.assertEqual(deployment_tables, 0)
 
         other = self.package_uow(helper, self.OTHER_TENANT)
         try:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -488,33 +489,27 @@ def main():
     retest["verification_attempt"] = 2
     invalid(VERIFY_PAYLOAD, retest, schemas, "retest without exact supersedes reference")
 
-    # D5a activation boundary: execution is active; verification remains contract-only.
-    active_commands = {"StartDeploymentExecution", "CompleteDeploymentExecution"}
-    if not active_commands <= set(COMMANDS) or "RecordDeploymentVerification" in COMMANDS:
-        fail("D5a execution-only command boundary drifted")
+    # D5b activation boundary: both frozen resources are active; no operation adapter exists.
+    if COMMANDS_D5 != (COMMANDS_D5 & set(COMMANDS)):
+        fail("complete D5 command boundary is not active")
     active_schema_files = {
         "domain/deployment-execution.schema.json",
+        "domain/deployment-verification.schema.json",
         "domain/phase5d-deployment-execution-common.schema.json",
         "commands/start-deployment-execution.payload.schema.json",
         "commands/complete-deployment-execution.payload.schema.json",
-        "read-models/deployment-execution-status-view.schema.json",
-    }
-    inactive_verification_files = {
-        "domain/deployment-verification.schema.json",
         "commands/record-deployment-verification.payload.schema.json",
+        "read-models/deployment-execution-status-view.schema.json",
         "read-models/deployment-verification-status-view.schema.json",
     }
-    if not active_schema_files <= set(SCHEMA_FILES) or inactive_verification_files & set(SCHEMA_FILES):
-        fail("D5a execution/D5b verification runtime schema boundary drifted")
+    if not active_schema_files <= set(SCHEMA_FILES):
+        fail("complete D5 runtime schema boundary drifted")
     migration_text = "\n".join(path.read_text().lower() for path in (ROOT / "supabase/migrations").glob("*.sql"))
-    if "avuhz_deployment_executions" not in migration_text or "avuhz_deployment_verifications" in migration_text:
-        fail("D5a execution-only persistence boundary drifted")
-    if not (ROOT / "src/avuhz_runtime/phase5d_deployment_execution.py").exists():
-        fail("D5a runtime module missing")
-    if any((ROOT / "src/avuhz_runtime" / name).exists() for name in (
-        "phase5d_deployment_verification.py", "postgres_phase5d_deployment_verification.py",
-    )):
-        fail("D5b verification runtime was implemented")
+    if not {"avuhz_deployment_executions", "avuhz_deployment_verifications"} <= set(re.findall(r"create table public\.([a-z0-9_]+)", migration_text)):
+        fail("complete D5 persistence boundary drifted")
+    for name in ("phase5d_deployment_execution.py", "phase5d_deployment_verification.py", "postgres_phase5d_deployment_execution.py", "postgres_phase5d_deployment_verification.py"):
+        if not (ROOT / "src/avuhz_runtime" / name).exists():
+            fail("D5 runtime module missing: " + name)
 
     architecture = (ROOT / "docs/phase5d-deployment-execution-verification-architecture.md").read_text()
     for phrase in (
@@ -533,7 +528,7 @@ def main():
     print(
         "phase5d-d5 validation: PASS "
         "(2 resources, 3 commands, 3 capabilities, 3 events, 2 read models, "
-        "3 industries, exact authority/rollback/security negatives, D5a execution-only runtime boundary)"
+        "3 industries, exact authority/rollback/security negatives, D5b execution-and-verification runtime boundary)"
     )
 
 

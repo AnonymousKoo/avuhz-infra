@@ -1,6 +1,6 @@
 -- Local/disposable current-tree rebaseline for provider-neutral Avuhz only.
 -- Never applied remotely; never push this baseline to a linked project.
--- Preserves governed execution through ClientAcceptance and creates no deployment authority.
+-- Preserves governed execution through DeploymentAuthorization and performs no deployment.
 
 create extension if not exists pgcrypto;
 do $$ begin
@@ -125,7 +125,9 @@ create table public.avuhz_idempotency_records (
     'RecordImplementationAuthorizationApproval','ActivateImplementationAuthorization',
     'RevokeImplementationAuthorization','DraftCodexBuildPackage','ReviseCodexBuildPackage',
     'RecordCodexBuildPackageApproval','ReleaseCodexBuildPackage','StartBuildExecution',
-    'CompleteBuildExecution','RecordQAResult','RecordClientAcceptance') then 'COMMAND' else 'SUBJECT:'||subject_id::text end) stored,
+    'CompleteBuildExecution','RecordQAResult','RecordClientAcceptance','ProposeDeploymentAuthorization',
+    'ReviseDeploymentAuthorization','RecordDeploymentAuthorizationApproval',
+    'ActivateDeploymentAuthorization','RevokeDeploymentAuthorization') then 'COMMAND' else 'SUBJECT:'||subject_id::text end) stored,
   unique (tenant_id,trusted_principal_id,command_type,subject_type,idempotency_scope,idempotency_key),
   check (processing_status not in ('COMPLETED','FAILED_TERMINAL') or completed_at is not null),
   check (processing_status<>'COMPLETED' or result_reference is not null)
@@ -390,6 +392,72 @@ create table public.avuhz_client_acceptances (
     and (record->>'record_version')::integer=record_version)
 );
 
+create table public.avuhz_deployment_authorizations (
+  tenant_id uuid not null, deployment_authorization_id uuid not null,
+  authorization_version integer not null check (authorization_version>0), engagement_id uuid not null,
+  implementation_authorization_id uuid not null,
+  implementation_authorization_version integer not null check (implementation_authorization_version>0),
+  implementation_authority_digest text not null check (implementation_authority_digest~'^sha256:[0-9a-f]{64}$'),
+  codex_build_package_id uuid not null, package_version integer not null check (package_version>0),
+  package_digest text not null check (package_digest~'^sha256:[0-9a-f]{64}$'),
+  build_execution_result_id uuid not null, build_record_version integer not null check (build_record_version>0),
+  build_execution_digest text not null check (build_execution_digest~'^sha256:[0-9a-f]{64}$'),
+  qa_result_id uuid not null, qa_record_version integer not null check (qa_record_version>0),
+  qa_result_digest text not null check (qa_result_digest~'^sha256:[0-9a-f]{64}$'),
+  client_acceptance_id uuid not null, acceptance_version integer not null check (acceptance_version>0),
+  client_acceptance_digest text not null check (client_acceptance_digest~'^sha256:[0-9a-f]{64}$'),
+  artifact_digest text not null check (artifact_digest~'^sha256:[0-9a-f]{64}$'),
+  target_environment text not null check (target_environment in ('DEVELOPMENT','TEST','STAGING','PRODUCTION')),
+  effective_at timestamptz not null, expires_at timestamptz not null check (expires_at>effective_at),
+  deployment_authority_digest text not null check (deployment_authority_digest~'^sha256:[0-9a-f]{64}$'),
+  supersedes_deployment_authorization_id uuid,
+  supersedes_authorization_version integer check (supersedes_authorization_version>0),
+  state text not null check (state in ('PROPOSED','ACTIVE','EXPIRED','REVOKED','SUPERSEDED')),
+  record_version integer not null check (record_version>0),
+  record jsonb not null check (jsonb_typeof(record)='object'),
+  created_at timestamptz not null, updated_at timestamptz not null,
+  primary key (tenant_id,deployment_authorization_id,authorization_version),
+  foreign key (tenant_id,engagement_id) references public.avuhz_engagements (tenant_id,engagement_id),
+  foreign key (tenant_id,implementation_authorization_id,implementation_authorization_version)
+    references public.avuhz_implementation_authorizations (tenant_id,implementation_authorization_id,authorization_version),
+  foreign key (tenant_id,codex_build_package_id,package_version)
+    references public.avuhz_codex_build_packages (tenant_id,codex_build_package_id,package_version),
+  foreign key (tenant_id,build_execution_result_id)
+    references public.avuhz_build_execution_results (tenant_id,build_execution_result_id),
+  foreign key (tenant_id,qa_result_id) references public.avuhz_qa_results (tenant_id,qa_result_id),
+  foreign key (tenant_id,client_acceptance_id,acceptance_version)
+    references public.avuhz_client_acceptances (tenant_id,client_acceptance_id,acceptance_version),
+  foreign key (tenant_id,supersedes_deployment_authorization_id,supersedes_authorization_version)
+    references public.avuhz_deployment_authorizations (tenant_id,deployment_authorization_id,authorization_version),
+  check ((authorization_version=1 and supersedes_deployment_authorization_id is null and supersedes_authorization_version is null)
+    or (authorization_version>1 and supersedes_deployment_authorization_id=deployment_authorization_id
+      and supersedes_authorization_version=authorization_version-1)),
+  check (record->>'tenant_id'=tenant_id::text and record->>'engagement_id'=engagement_id::text
+    and record->>'deployment_authorization_id'=deployment_authorization_id::text
+    and (record->>'authorization_version')::integer=authorization_version
+    and record->'implementation_authorization_reference'->>'reference_id'=implementation_authorization_id::text
+    and (record->'implementation_authorization_reference'->>'reference_version')::integer=implementation_authorization_version
+    and record->>'implementation_authority_digest'=implementation_authority_digest
+    and record->'codex_build_package_reference'->>'reference_id'=codex_build_package_id::text
+    and (record->'codex_build_package_reference'->>'reference_version')::integer=package_version
+    and record->>'package_digest'=package_digest
+    and record->'build_execution_reference'->>'reference_id'=build_execution_result_id::text
+    and (record->'build_execution_reference'->>'reference_version')::integer=build_record_version
+    and record->>'build_execution_digest'=build_execution_digest
+    and record->'qa_result_reference'->>'reference_id'=qa_result_id::text
+    and (record->'qa_result_reference'->>'reference_version')::integer=qa_record_version
+    and record->>'qa_result_digest'=qa_result_digest
+    and record->'client_acceptance_reference'->>'reference_id'=client_acceptance_id::text
+    and (record->'client_acceptance_reference'->>'reference_version')::integer=acceptance_version
+    and record->>'client_acceptance_digest'=client_acceptance_digest
+    and record->'artifact_reference'->>'artifact_digest'=artifact_digest
+    and record->>'target_environment'=target_environment
+    and record->>'effective_at'=to_char(effective_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
+    and record->>'expires_at'=to_char(expires_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
+    and record->>'deployment_authority_digest'=deployment_authority_digest
+    and record->>'state'=state and (record->>'record_version')::integer=record_version)
+);
+
 create index avuhz_acquisition_handoffs_tenant_account_idx on public.avuhz_acquisition_handoffs (tenant_id,canonical_account_reference);
 create index avuhz_engagements_tenant_state_idx on public.avuhz_engagements (tenant_id,engagement_state);
 create index avuhz_implementation_handoffs_history_idx on public.avuhz_implementation_handoffs (tenant_id,implementation_handoff_id,handoff_version);
@@ -403,6 +471,7 @@ create index avuhz_codex_build_package_history_idx on public.avuhz_codex_build_p
 create index avuhz_build_execution_package_history_idx on public.avuhz_build_execution_results (tenant_id,codex_build_package_id,package_version,execution_attempt);
 create index avuhz_qa_package_history_idx on public.avuhz_qa_results (tenant_id,codex_build_package_id,package_version,qa_attempt);
 create index avuhz_client_acceptance_package_history_idx on public.avuhz_client_acceptances (tenant_id,codex_build_package_id,package_version,acceptance_version);
+create index avuhz_deployment_authorization_history_idx on public.avuhz_deployment_authorizations (tenant_id,deployment_authorization_id,authorization_version);
 
 create function public.avuhz_reject_immutable_history_mutation() returns trigger
 language plpgsql set search_path=pg_catalog,public as $$ begin
@@ -413,6 +482,31 @@ create trigger avuhz_human_approvals_immutable before update or delete on public
 create trigger avuhz_lifecycle_events_immutable before update or delete on public.avuhz_lifecycle_events for each row execute function public.avuhz_reject_immutable_history_mutation();
 create trigger avuhz_qa_results_immutable before update or delete on public.avuhz_qa_results for each row execute function public.avuhz_reject_immutable_history_mutation();
 create trigger avuhz_client_acceptances_immutable before update or delete on public.avuhz_client_acceptances for each row execute function public.avuhz_reject_immutable_history_mutation();
+
+create function public.avuhz_guard_deployment_authorization_transition() returns trigger
+language plpgsql set search_path=pg_catalog,public as $$ begin
+  if new.record_version<>old.record_version+1
+    or not ((old.state='PROPOSED' and new.state in ('ACTIVE','REVOKED'))
+      or (old.state='ACTIVE' and new.state in ('REVOKED','SUPERSEDED')))
+    or row(new.tenant_id,new.deployment_authorization_id,new.authorization_version,new.engagement_id,
+      new.implementation_authorization_id,new.implementation_authorization_version,new.implementation_authority_digest,
+      new.codex_build_package_id,new.package_version,new.package_digest,new.build_execution_result_id,
+      new.build_record_version,new.build_execution_digest,new.qa_result_id,new.qa_record_version,new.qa_result_digest,
+      new.client_acceptance_id,new.acceptance_version,new.client_acceptance_digest,new.artifact_digest,
+      new.target_environment,new.effective_at,new.expires_at,new.deployment_authority_digest,
+      new.supersedes_deployment_authorization_id,new.supersedes_authorization_version,new.created_at)
+      is distinct from row(old.tenant_id,old.deployment_authorization_id,old.authorization_version,old.engagement_id,
+      old.implementation_authorization_id,old.implementation_authorization_version,old.implementation_authority_digest,
+      old.codex_build_package_id,old.package_version,old.package_digest,old.build_execution_result_id,
+      old.build_record_version,old.build_execution_digest,old.qa_result_id,old.qa_record_version,old.qa_result_digest,
+      old.client_acceptance_id,old.acceptance_version,old.client_acceptance_digest,old.artifact_digest,
+      old.target_environment,old.effective_at,old.expires_at,old.deployment_authority_digest,
+      old.supersedes_deployment_authorization_id,old.supersedes_authorization_version,old.created_at)
+    then raise exception 'invalid DeploymentAuthorization transition'; end if;
+  return new;
+end $$;
+create trigger avuhz_guard_deployment_authorization_transition before update on public.avuhz_deployment_authorizations
+  for each row execute function public.avuhz_guard_deployment_authorization_transition();
 
 create function public.avuhz_guard_brief_transition() returns trigger
 language plpgsql set search_path=pg_catalog,public as $$ begin
@@ -507,13 +601,14 @@ alter table public.avuhz_codex_build_packages enable row level security;
 alter table public.avuhz_build_execution_results enable row level security;
 alter table public.avuhz_qa_results enable row level security;
 alter table public.avuhz_client_acceptances enable row level security;
+alter table public.avuhz_deployment_authorizations enable row level security;
 
 do $$ declare table_name text; grantee_name text; begin
   foreach table_name in array array[
     'avuhz_acquisition_handoffs','avuhz_engagements','avuhz_implementation_handoffs','avuhz_human_approvals',
     'avuhz_idempotency_records','avuhz_lifecycle_events','avuhz_outbox_deliveries','avuhz_implementation_briefs',
     'avuhz_implementation_authorizations','avuhz_codex_build_packages','avuhz_build_execution_results',
-    'avuhz_qa_results','avuhz_client_acceptances'] loop
+    'avuhz_qa_results','avuhz_client_acceptances','avuhz_deployment_authorizations'] loop
     execute format('revoke all on table public.%I from public',table_name);
     foreach grantee_name in array array['anon','authenticated'] loop
       if exists (select 1 from pg_roles where rolname=grantee_name) then
@@ -531,14 +626,16 @@ grant select on table public.avuhz_acquisition_handoffs,public.avuhz_engagements
   public.avuhz_human_approvals,public.avuhz_idempotency_records,public.avuhz_lifecycle_events,
   public.avuhz_outbox_deliveries,public.avuhz_implementation_briefs,public.avuhz_implementation_authorizations,
   public.avuhz_codex_build_packages,public.avuhz_build_execution_results,public.avuhz_qa_results,
-  public.avuhz_client_acceptances to avuhz_command_service;
+  public.avuhz_client_acceptances,public.avuhz_deployment_authorizations to avuhz_command_service;
 grant insert on table public.avuhz_engagements,public.avuhz_implementation_handoffs,public.avuhz_human_approvals,
   public.avuhz_idempotency_records,public.avuhz_lifecycle_events,public.avuhz_outbox_deliveries,
   public.avuhz_implementation_briefs,public.avuhz_implementation_authorizations,public.avuhz_codex_build_packages,
-  public.avuhz_build_execution_results,public.avuhz_qa_results,public.avuhz_client_acceptances to avuhz_command_service;
+  public.avuhz_build_execution_results,public.avuhz_qa_results,public.avuhz_client_acceptances,
+  public.avuhz_deployment_authorizations to avuhz_command_service;
 grant update (accepted_at) on public.avuhz_acquisition_handoffs to avuhz_command_service;
 grant update (processing_status,result_reference,completed_at,record_version) on public.avuhz_idempotency_records to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_implementation_briefs to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_implementation_authorizations to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_codex_build_packages to avuhz_command_service;
 grant update (status,execution_digest,record_version,record,completed_at,updated_at) on public.avuhz_build_execution_results to avuhz_command_service;
+grant update (state,record_version,record,updated_at) on public.avuhz_deployment_authorizations to avuhz_command_service;

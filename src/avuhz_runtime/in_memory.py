@@ -21,12 +21,15 @@ from .phase5d_qa_result import QA_RESULT_COMMANDS, QA_RESULT_EVENTS, QAResultHan
 from .phase5d_qa_result_memory import QAResultMemoryRepository
 from .phase5d_client_acceptance import CLIENT_ACCEPTANCE_COMMANDS, CLIENT_ACCEPTANCE_EVENTS, ClientAcceptanceHandler
 from .phase5d_client_acceptance_memory import ClientAcceptanceMemoryRepository
+from .phase5d_deployment_authorization import DEPLOYMENT_AUTHORIZATION_COMMANDS, DEPLOYMENT_AUTHORIZATION_EVENTS, DeploymentAuthorizationHandler
+from .phase5d_deployment_authorization_memory import DeploymentAuthorizationMemoryRepository
 
 
 COMMAND_SCOPED_IDEMPOTENCY_COMMANDS = frozenset((
     *IMPLEMENTATION_BRIEF_COMMANDS, *IMPLEMENTATION_AUTHORIZATION_COMMANDS,
     *CODEX_BUILD_PACKAGE_COMMANDS, *BUILD_EXECUTION_COMMANDS, *QA_RESULT_COMMANDS,
     *CLIENT_ACCEPTANCE_COMMANDS,
+    *DEPLOYMENT_AUTHORIZATION_COMMANDS,
 ))
 
 
@@ -55,6 +58,7 @@ class MemoryStore:
     build_execution_results: dict = field(default_factory=dict)
     qa_results: dict = field(default_factory=dict)
     client_acceptances: dict = field(default_factory=dict)
+    deployment_authorizations: dict = field(default_factory=dict)
     approvals: dict = field(default_factory=dict)
     idempotency: dict = field(default_factory=dict)
     events: list = field(default_factory=list)
@@ -89,6 +93,13 @@ class MemoryStore:
                 if tenant == command.tenant_id and record_id == command.subject_id
             ]
             record = max(values, key=lambda value: value["acceptance_version"]) if values else None
+        elif command.subject_type == "DEPLOYMENT_AUTHORIZATION":
+            record = self._current(
+                self.deployment_authorizations,
+                command.tenant_id,
+                command.subject_id,
+                "authorization_version",
+            )
         if not record:
             return None
         return AuthoritativeSubjectSnapshot(
@@ -205,6 +216,7 @@ class UnitOfWork:
         self.build_execution_results = BuildExecutionResultMemoryRepository(self)
         self.qa_results = QAResultMemoryRepository(self)
         self.client_acceptances = ClientAcceptanceMemoryRepository(self)
+        self.deployment_authorizations = DeploymentAuthorizationMemoryRepository(self)
         self.human_approvals = HumanApprovalMemoryRepository(self)
         self.idempotency = IdempotencyMemoryRepository(self)
         self.lifecycle_events = LifecycleEventMemoryRepository(self); self.outbox = OutboxMemoryRepository(self)
@@ -257,6 +269,7 @@ class Executor:
 
     def _handle(self, uow, prepared, context):
         now = self.clock()
+        if prepared.command_type in DEPLOYMENT_AUTHORIZATION_COMMANDS: return DeploymentAuthorizationHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in CLIENT_ACCEPTANCE_COMMANDS: return ClientAcceptanceHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in QA_RESULT_COMMANDS: return QAResultHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in BUILD_EXECUTION_COMMANDS: return BuildExecutionResultHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
@@ -290,6 +303,13 @@ class Executor:
 
     def _event(self, prepared, uow):
         command = prepared.command_type
+        if command in DEPLOYMENT_AUTHORIZATION_COMMANDS:
+            version = prepared.payload.get("authorization_version") or prepared.payload.get("subject_version")
+            record = uow.deployment_authorizations.get_version(prepared.tenant_id, prepared.subject_id, version)
+            metadata = {"authority_stage": "DEPLOYMENT_AUTHORIZATION", "deployment_authorization_id": prepared.subject_id, "state": record["state"], "deployment_authorized": record["state"] == "ACTIVE"}
+            if command == "RecordDeploymentAuthorizationApproval": metadata["approval_id"] = prepared.command_id
+            if command == "ReviseDeploymentAuthorization": metadata["superseded_version"] = prepared.payload["supersedes_deployment_authorization_reference"]["reference_version"]
+            return self._event_record(prepared, DEPLOYMENT_AUTHORIZATION_EVENTS[command], record, "DEPLOYMENT_AUTHORIZATION", metadata)
         if command in CLIENT_ACCEPTANCE_COMMANDS:
             version = prepared.payload["acceptance_version"]
             record = uow.client_acceptances.get_version(prepared.tenant_id, prepared.subject_id, version)

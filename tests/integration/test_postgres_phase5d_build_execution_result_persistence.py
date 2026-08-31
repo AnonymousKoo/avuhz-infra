@@ -77,7 +77,7 @@ class Phase5DBuildExecutionResultPostgresTests(PostgresHarness):
                 "select count(*) from public.avuhz_lifecycle_events where event_type like 'build_execution.%'",
                 "select count(*) from public.avuhz_outbox_deliveries o join public.avuhz_lifecycle_events e on e.lifecycle_event_id=o.lifecycle_event_id where e.event_type like 'build_execution.%' and o.status='PENDING'",
             ))
-            later=connection.execute("select count(*) from information_schema.tables where table_schema='public' and table_name='avuhz_deployment_authorizations'").fetchone()["count"]
+            later=connection.execute("select count(*) from information_schema.tables where table_schema='public' and table_name='avuhz_deployment_executions'").fetchone()["count"]
         self.assertEqual(counts,(1,2,2));self.assertEqual(later,0)
         other=self.build_uow(helper,self.OTHER_TENANT)
         try:

@@ -8,6 +8,7 @@ from .phase5d_package import CODEX_BUILD_PACKAGE_CAPABILITIES, CODEX_BUILD_PACKA
 from .phase5d_build_execution import BUILD_EXECUTION_CAPABILITIES, BUILD_EXECUTION_COMMANDS
 from .phase5d_qa_result import QA_RESULT_CAPABILITIES
 from .phase5d_client_acceptance import CLIENT_ACCEPTANCE_CAPABILITIES
+from .phase5d_deployment_authorization import DEPLOYMENT_AUTHORIZATION_CAPABILITIES, DEPLOYMENT_AUTHORIZATION_COMMANDS
 
 
 COMMAND_CAPABILITIES = {"AcceptAcquisitionHandoff": "engagement:accept_handoff", "OpenEngagement": "engagement:open"}
@@ -17,12 +18,14 @@ COMMAND_CAPABILITIES.update(CODEX_BUILD_PACKAGE_CAPABILITIES)
 COMMAND_CAPABILITIES.update(BUILD_EXECUTION_CAPABILITIES)
 COMMAND_CAPABILITIES.update(QA_RESULT_CAPABILITIES)
 COMMAND_CAPABILITIES.update(CLIENT_ACCEPTANCE_CAPABILITIES)
+COMMAND_CAPABILITIES.update(DEPLOYMENT_AUTHORIZATION_CAPABILITIES)
 
 IMPLEMENTATION_BRIEF_TRANSITIONS = frozenset(IMPLEMENTATION_BRIEF_COMMANDS) - {"DraftImplementationBrief"}
 IMPLEMENTATION_AUTHORIZATION_TRANSITIONS = frozenset(IMPLEMENTATION_AUTHORIZATION_COMMANDS) - {"ProposeImplementationAuthorization"}
 CODEX_BUILD_PACKAGE_TRANSITIONS = frozenset(CODEX_BUILD_PACKAGE_COMMANDS) - {"DraftCodexBuildPackage"}
 BUILD_EXECUTION_TRANSITIONS = frozenset(BUILD_EXECUTION_COMMANDS) - {"StartBuildExecution"}
-HUMAN_AUTHORITY_ROLES = frozenset({"CLIENT_IMPLEMENTATION_AUTHORITY", "PROVIDER_IMPLEMENTATION_AUTHORITY"})
+DEPLOYMENT_AUTHORIZATION_TRANSITIONS = frozenset(DEPLOYMENT_AUTHORIZATION_COMMANDS) - {"ProposeDeploymentAuthorization"}
+HUMAN_AUTHORITY_ROLES = frozenset({"CLIENT_IMPLEMENTATION_AUTHORITY", "PROVIDER_IMPLEMENTATION_AUTHORITY", "CLIENT_DEPLOYMENT_AUTHORITY", "PROVIDER_DEPLOYMENT_AUTHORITY"})
 
 
 @dataclass(frozen=True)
@@ -91,12 +94,12 @@ class GuardPipeline:
         if not required: return self.fail(RuntimeReason.INTERNAL_INVARIANT_VIOLATION, "registered command policy is incomplete", "capability")
         if required not in context.capabilities: return self.fail(RuntimeReason.AUTH_CAPABILITY_MISSING, "trusted capability is required", "capability")
     def subject(self, prepared, context, snapshot, evaluated_at):
-        transitions = IMPLEMENTATION_BRIEF_TRANSITIONS | IMPLEMENTATION_AUTHORIZATION_TRANSITIONS | CODEX_BUILD_PACKAGE_TRANSITIONS | BUILD_EXECUTION_TRANSITIONS
+        transitions = IMPLEMENTATION_BRIEF_TRANSITIONS | IMPLEMENTATION_AUTHORIZATION_TRANSITIONS | CODEX_BUILD_PACKAGE_TRANSITIONS | BUILD_EXECUTION_TRANSITIONS | DEPLOYMENT_AUTHORIZATION_TRANSITIONS
         if prepared.command_type == "OpenEngagement" and snapshot and snapshot.exists:
             return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH, "proposed engagement already exists", "subject")
         if prepared.command_type in transitions and (not snapshot or not snapshot.exists or snapshot.subject_type != prepared.subject_type or snapshot.subject_id != prepared.subject_id):
             return self.fail(RuntimeReason.TENANT_SUBJECT_MISMATCH, "exact authoritative subject is required", "subject")
     def version(self, prepared, context, snapshot, evaluated_at):
-        transitions = IMPLEMENTATION_BRIEF_TRANSITIONS | IMPLEMENTATION_AUTHORIZATION_TRANSITIONS | CODEX_BUILD_PACKAGE_TRANSITIONS | BUILD_EXECUTION_TRANSITIONS
+        transitions = IMPLEMENTATION_BRIEF_TRANSITIONS | IMPLEMENTATION_AUTHORIZATION_TRANSITIONS | CODEX_BUILD_PACKAGE_TRANSITIONS | BUILD_EXECUTION_TRANSITIONS | DEPLOYMENT_AUTHORIZATION_TRANSITIONS
         if prepared.command_type in transitions and (not snapshot or prepared.expected_record_version != snapshot.record_version):
             return self.fail(RuntimeReason.VERSION_STALE, "authoritative record version is stale", "version")

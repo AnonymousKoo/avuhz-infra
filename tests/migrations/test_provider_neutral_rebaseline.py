@@ -14,6 +14,7 @@ EXPECTED_TABLES = {
     "avuhz_outbox_deliveries", "avuhz_implementation_briefs",
     "avuhz_implementation_authorizations", "avuhz_codex_build_packages",
     "avuhz_build_execution_results", "avuhz_qa_results", "avuhz_client_acceptances",
+    "avuhz_deployment_authorizations",
 }
 FORBIDDEN = (
     "sekinfra", "oia_", "oia.", "diagnostic_", "assessment_", "finding_",
@@ -38,7 +39,6 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
     def test_exact_provider_neutral_table_surface(self):
         tables = set(re.findall(r"create table public\.([a-z0-9_]+)", self.lower))
         self.assertEqual(tables, EXPECTED_TABLES)
-        self.assertNotIn("avuhz_deployment_authorizations", tables)
         for term in FORBIDDEN:
             self.assertNotIn(term, self.lower)
 
@@ -71,6 +71,7 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
             "implementation_handoff_id", "handoff_version", "handoff_digest",
             "implementation_brief_digest", "implementation_authority_digest",
             "package_digest", "execution_digest", "qa_digest", "client_acceptance_digest",
+            "deployment_authority_digest",
         ):
             self.assertIn(field, self.lower)
         self.assertIn("immutable avuhz history cannot be rewritten", self.lower)

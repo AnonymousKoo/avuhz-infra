@@ -33,6 +33,11 @@ COMMANDS = {
     "CompleteBuildExecution": command("CompleteBuildExecution", "BUILD_EXECUTION_RESULT", "complete-build-execution", "build_execution:complete"),
     "RecordQAResult": command("RecordQAResult", "QA_RESULT", "record-qa-result", "qa_result:record"),
     "RecordClientAcceptance": command("RecordClientAcceptance", "CLIENT_ACCEPTANCE", "record-client-acceptance", "client_acceptance:record"),
+    "ProposeDeploymentAuthorization": command("ProposeDeploymentAuthorization", "DEPLOYMENT_AUTHORIZATION", "propose-deployment-authorization", "deployment_authorization:propose"),
+    "ReviseDeploymentAuthorization": command("ReviseDeploymentAuthorization", "DEPLOYMENT_AUTHORIZATION", "revise-deployment-authorization", "deployment_authorization:propose"),
+    "RecordDeploymentAuthorizationApproval": command("RecordDeploymentAuthorizationApproval", "DEPLOYMENT_AUTHORIZATION", "record-deployment-authorization-approval", "deployment_authorization:approve"),
+    "ActivateDeploymentAuthorization": command("ActivateDeploymentAuthorization", "DEPLOYMENT_AUTHORIZATION", "activate-deployment-authorization", "deployment_authorization:activate"),
+    "RevokeDeploymentAuthorization": command("RevokeDeploymentAuthorization", "DEPLOYMENT_AUTHORIZATION", "revoke-deployment-authorization", "deployment_authorization:revoke"),
 }
 
 

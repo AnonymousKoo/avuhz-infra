@@ -177,7 +177,7 @@ class Phase5DImplementationAuthorizationPostgresTests(PostgresHarness):
             )
             forbidden_tables = connection.execute(
                 "select count(*) from information_schema.tables where table_schema='public' "
-                "and table_name='avuhz_deployment_authorizations'"
+                "and table_name='avuhz_deployment_executions'"
             ).fetchone()["count"]
         self.assertEqual(counts, (1, 2, 4, 4))
         self.assertEqual(forbidden_tables, 0)

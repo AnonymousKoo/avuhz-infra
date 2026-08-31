@@ -10,9 +10,10 @@ from avuhz_runtime.phase5d_package import CODEX_BUILD_PACKAGE_COMMANDS
 from avuhz_runtime.phase5d_build_execution import BUILD_EXECUTION_COMMANDS
 from avuhz_runtime.phase5d_qa_result import QA_RESULT_COMMANDS
 from avuhz_runtime.phase5d_client_acceptance import CLIENT_ACCEPTANCE_COMMANDS
+from avuhz_runtime.phase5d_deployment_authorization import DEPLOYMENT_AUTHORIZATION_COMMANDS
 class Tests(unittest.TestCase):
  def test_registry_is_exactly_active_surface(self):
-  expected={"AcceptAcquisitionHandoff","OpenEngagement"}|set(IMPLEMENTATION_BRIEF_COMMANDS)|set(IMPLEMENTATION_AUTHORIZATION_COMMANDS)|set(CODEX_BUILD_PACKAGE_COMMANDS)|set(BUILD_EXECUTION_COMMANDS)|set(QA_RESULT_COMMANDS)|set(CLIENT_ACCEPTANCE_COMMANDS)
+  expected={"AcceptAcquisitionHandoff","OpenEngagement"}|set(IMPLEMENTATION_BRIEF_COMMANDS)|set(IMPLEMENTATION_AUTHORIZATION_COMMANDS)|set(CODEX_BUILD_PACKAGE_COMMANDS)|set(BUILD_EXECUTION_COMMANDS)|set(QA_RESULT_COMMANDS)|set(CLIENT_ACCEPTANCE_COMMANDS)|set(DEPLOYMENT_AUTHORIZATION_COMMANDS)
   self.assertEqual(set(COMMANDS),expected);self.assertTrue(all(x.executable and x.validatable for x in COMMANDS.values()));self.assertIsNone(resolve_command("CompanySpecificCommand"))
  def test_schema_catalog_is_fixed_and_local(self):
   r=SchemaRegistry(ROOT/"contracts/schemas/v1");self.assertGreaterEqual(len(r.schema_ids),50)

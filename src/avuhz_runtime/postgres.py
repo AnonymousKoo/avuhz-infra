@@ -10,6 +10,7 @@ from .postgres_phase5d_package import CodexBuildPackagePostgresRepository
 from .postgres_phase5d_build_execution import BuildExecutionResultPostgresRepository
 from .postgres_phase5d_qa_result import QAResultPostgresRepository
 from .postgres_phase5d_client_acceptance import ClientAcceptancePostgresRepository
+from .postgres_phase5d_deployment_authorization import DeploymentAuthorizationPostgresRepository
 
 def connection_factory_from_environment(name="AVUHZ_POSTGRES_DSN"):
     def factory():
@@ -33,6 +34,7 @@ class PostgresStore:
             "BUILD_EXECUTION_RESULT": ("select tenant_id,record_version,engagement_id,status as state from public.avuhz_build_execution_results where tenant_id=%s and build_execution_result_id=%s", "state"),
             "QA_RESULT": ("select tenant_id,record_version,engagement_id,overall_status as state from public.avuhz_qa_results where tenant_id=%s and qa_result_id=%s", "state"),
             "CLIENT_ACCEPTANCE": ("select tenant_id,record_version,engagement_id,decision as state from public.avuhz_client_acceptances where tenant_id=%s and client_acceptance_id=%s order by acceptance_version desc limit 1", "state"),
+            "DEPLOYMENT_AUTHORIZATION": ("select tenant_id,record_version,engagement_id,state from public.avuhz_deployment_authorizations where tenant_id=%s and deployment_authorization_id=%s and state<>'SUPERSEDED' order by authorization_version desc limit 1", "state"),
         }
         query = queries.get(command.subject_type)
         subject_id = command.subject_id
@@ -147,7 +149,7 @@ class HumanApprovalPostgresRepository(_TenantRepository):
     def get(self, tenant_id, approval_id):
         row = self.uow.connection.execute(
             "select * from public.avuhz_human_approvals where tenant_id=%s and approval_id=%s "
-            "and subject_type in ('IMPLEMENTATION_BRIEF','IMPLEMENTATION_AUTHORIZATION','CODEX_BUILD_PACKAGE')",
+            "and subject_type in ('IMPLEMENTATION_BRIEF','IMPLEMENTATION_AUTHORIZATION','CODEX_BUILD_PACKAGE','DEPLOYMENT_AUTHORIZATION')",
             (tenant_id, approval_id),
         ).fetchone()
         return self._phase5d(row) if row else None
@@ -256,6 +258,7 @@ class PostgresUnitOfWork:
         self.build_execution_results=BuildExecutionResultPostgresRepository(self)
         self.qa_results=QAResultPostgresRepository(self)
         self.client_acceptances=ClientAcceptancePostgresRepository(self)
+        self.deployment_authorizations=DeploymentAuthorizationPostgresRepository(self)
     def bind_trusted_context(self,context):
         if not getattr(context,"authenticated",False) or not getattr(context,"tenant_id",None):raise ValueError("trusted tenant context is required")
         tenant=str(uuid.UUID(str(context.tenant_id)))

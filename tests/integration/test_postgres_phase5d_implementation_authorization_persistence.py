@@ -26,8 +26,8 @@ from tests.runtime import test_phase5d_implementation_brief_runtime as brief_run
 if DSN:
     from psycopg.errors import InsufficientPrivilege
     from avuhz_runtime.postgres import PostgresStore, PostgresUnitOfWork
-    from tests.integration import test_postgres_phase5c_persistence as phase5c_postgres
-    PostgresHarness = phase5c_postgres.Phase5CPostgresPersistenceTests
+    from tests.integration.provider_neutral_postgres_harness import ProviderNeutralPostgresHarness
+    PostgresHarness = ProviderNeutralPostgresHarness
 else:
     InsufficientPrivilege = Exception
     PostgresStore = PostgresUnitOfWork = None
@@ -36,7 +36,7 @@ else:
 
 @unittest.skipUnless(DSN, "local Phase 5D-B2 PostgreSQL DSN is required")
 class Phase5DImplementationAuthorizationPostgresTests(PostgresHarness):
-    """Reuse the certified Phase 5C/B1 seed and transactional harness."""
+    """Use the provider-neutral current-tree seed and transactional harness."""
 
     def brief_helper(self):
         helper = brief_runtime.ImplementationBriefRuntimeTests()

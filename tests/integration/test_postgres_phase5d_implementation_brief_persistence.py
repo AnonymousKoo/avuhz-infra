@@ -23,8 +23,8 @@ from tests.runtime import test_phase5d_implementation_brief_runtime as brief_run
 if DSN:
     from psycopg.errors import InsufficientPrivilege
     from avuhz_runtime.postgres import PostgresStore, PostgresUnitOfWork
-    from tests.integration import test_postgres_phase5c_persistence as phase5c_postgres
-    PostgresHarness = phase5c_postgres.Phase5CPostgresPersistenceTests
+    from tests.integration.provider_neutral_postgres_harness import ProviderNeutralPostgresHarness
+    PostgresHarness = ProviderNeutralPostgresHarness
 else:
     InsufficientPrivilege = Exception
     PostgresStore = PostgresUnitOfWork = None
@@ -33,7 +33,7 @@ else:
 
 @unittest.skipUnless(DSN, "local Phase 5D-B1 PostgreSQL DSN is required")
 class Phase5DImplementationBriefPostgresTests(PostgresHarness):
-    """Reuse the certified Phase 5C seed/migration/RLS harness, then add B1 only."""
+    """Use the provider-neutral current-tree seed, migration, and RLS harness."""
 
     def brief_helper(self):
         helper = brief_runtime.ImplementationBriefRuntimeTests()
@@ -85,18 +85,16 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
         with self.owner() as connection:
             counts = tuple(connection.execute(f"select count(*) from public.{table}").fetchone()["count"]
                            for table in (
-                               "avuhz_implementation_briefs",
-                               "avuhz_implementation_brief_findings",
+                               "avuhz_implementation_briefs", "avuhz_implementation_handoffs",
                                "avuhz_idempotency_records", "avuhz_lifecycle_events",
                                "avuhz_outbox_deliveries",
                            ))
-            authority_tables = connection.execute(
+            deployment_tables = connection.execute(
                 "select count(*) from information_schema.tables where table_schema='public' "
-                "and table_name in ('avuhz_implementation_authorizations',"
-                "'avuhz_codex_build_packages','avuhz_deployment_authorizations')"
+                "and table_name in ('avuhz_client_acceptances','avuhz_deployment_authorizations')"
             ).fetchone()["count"]
-        self.assertEqual(counts, (1, 1, 16, 16, 16))
-        self.assertEqual(authority_tables, 1)
+        self.assertEqual(counts, (1, 1, 4, 4, 4))
+        self.assertEqual(deployment_tables, 0)
 
         other = self.phase5d_uow(self.OTHER_TENANT)
         try:
@@ -152,7 +150,7 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
             [(1, "SUPERSEDED", 3), (2, "DRAFT", 1)],
         )
         self.assertEqual(history[0]["implementation_brief_digest"], first["implementation_brief_digest"])
-        self.assertEqual(history[1]["source_finding_revisions"], second["source_finding_revisions"])
+        self.assertEqual(history[1]["source_implementation_handoff_reference"], second["source_implementation_handoff_reference"])
 
         helper.approve(second)
 
@@ -220,11 +218,11 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
         with self.owner() as connection:
             counts = tuple(connection.execute(f"select count(*) from public.{table}").fetchone()["count"]
                            for table in (
-                               "avuhz_implementation_briefs", "avuhz_implementation_brief_findings",
+                               "avuhz_implementation_briefs", "avuhz_implementation_handoffs",
                                "avuhz_idempotency_records", "avuhz_lifecycle_events",
                                "avuhz_outbox_deliveries",
                            ))
-        self.assertEqual(counts, (0, 0, 12, 12, 12))
+        self.assertEqual(counts, (0, 1, 0, 0, 0))
 
 
 if __name__ == "__main__":

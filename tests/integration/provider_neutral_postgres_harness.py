@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 import psycopg
+from psycopg import sql
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
@@ -43,13 +44,19 @@ class ProviderNeutralPostgresHarness(unittest.TestCase):
         super().setUpClass()
         if DSN:
             with cls.owner(autocommit=True) as connection:
-                connection.execute("grant avuhz_command_service to current_user")
+                owner = connection.execute("select current_user").fetchone()["current_user"]
+                connection.execute(
+                    sql.SQL("grant avuhz_command_service to {}").format(sql.Identifier(owner))
+                )
 
     @classmethod
     def tearDownClass(cls):
         if DSN:
             with cls.owner(autocommit=True) as connection:
-                connection.execute("revoke avuhz_command_service from current_user")
+                owner = connection.execute("select current_user").fetchone()["current_user"]
+                connection.execute(
+                    sql.SQL("revoke avuhz_command_service from {}").format(sql.Identifier(owner))
+                )
         super().tearDownClass()
 
     @classmethod
@@ -62,6 +69,7 @@ class ProviderNeutralPostgresHarness(unittest.TestCase):
         self._truncate()
         self.harness = brief_runtime.ImplementationBriefRuntimeTests()
         self.harness.setUp()
+        self.harness.now = self.harness.h.now
         self.harness.executor = self.executor()
         self._seeded = False
 

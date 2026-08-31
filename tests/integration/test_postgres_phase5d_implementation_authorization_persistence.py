@@ -40,7 +40,11 @@ class Phase5DImplementationAuthorizationPostgresTests(PostgresHarness):
 
     def brief_helper(self):
         helper = brief_runtime.ImplementationBriefRuntimeTests()
-        helper.h = self.harness
+        helper.setUp()
+        helper.h = self.harness.h
+        helper.handoff = self.harness.handoff
+        helper._tenant = self.harness.tenant
+        helper._engagement_id = self.harness.engagement_id
         helper.store = self.harness.store
         helper._number = 850
         helper.executor = self.harness.executor
@@ -48,8 +52,8 @@ class Phase5DImplementationAuthorizationPostgresTests(PostgresHarness):
 
     def authorization_helper(self, brief_helper):
         helper = auth_runtime.ImplementationAuthorizationRuntimeTests()
+        helper.setUp()
         helper.b = brief_helper
-        helper.store = self.harness.store
         helper._number = 900
         helper.executor = self.harness.executor
         return helper
@@ -64,7 +68,7 @@ class Phase5DImplementationAuthorizationPostgresTests(PostgresHarness):
         )
 
     def approved_brief(self):
-        self.harness.build_active()
+        self.build_active()
         brief_helper = self.brief_helper()
         payload = brief_helper.payload()
         brief_helper.draft(payload)
@@ -173,7 +177,7 @@ class Phase5DImplementationAuthorizationPostgresTests(PostgresHarness):
             )
             forbidden_tables = connection.execute(
                 "select count(*) from information_schema.tables where table_schema='public' "
-                "and table_name in ('avuhz_codex_build_packages','avuhz_deployment_authorizations')"
+                "and table_name='avuhz_deployment_authorizations'"
             ).fetchone()["count"]
         self.assertEqual(counts, (1, 2, 4, 4))
         self.assertEqual(forbidden_tables, 0)

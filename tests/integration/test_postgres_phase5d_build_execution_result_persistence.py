@@ -33,9 +33,21 @@ class Phase5DBuildExecutionResultPostgresTests(PostgresHarness):
     def build_helper(self):
         package_helper,package_payload=self.released_package()
         helper=build_runtime.BuildExecutionResultRuntimeTests()
+        helper.setUp()
         helper.p=package_helper;helper.package_payload=package_payload
-        helper.store=self.harness.store;helper._number=980
+        helper._number=980
         helper.executor=self.harness.executor
+        original_start=helper.start
+        def start_and_sync(payload=None,**kwargs):
+            raw=original_start(payload,**kwargs)
+            fresh=self.build_uow(helper)
+            try:
+                current=fresh.build_execution_results.get(helper.tenant,raw["subject_id"])
+            finally:
+                fresh.rollback();fresh.close()
+            helper.store.build_execution_results[(helper.tenant,raw["subject_id"])]=current
+            return raw
+        helper.start=start_and_sync
         return helper
 
     def build_uow(self,helper,tenant=None):
@@ -65,7 +77,7 @@ class Phase5DBuildExecutionResultPostgresTests(PostgresHarness):
                 "select count(*) from public.avuhz_lifecycle_events where event_type like 'build_execution.%'",
                 "select count(*) from public.avuhz_outbox_deliveries o join public.avuhz_lifecycle_events e on e.lifecycle_event_id=o.lifecycle_event_id where e.event_type like 'build_execution.%' and o.status='PENDING'",
             ))
-            later=connection.execute("select count(*) from information_schema.tables where table_schema='public' and table_name in ('avuhz_qa_results','avuhz_client_acceptances','avuhz_deployment_authorizations')").fetchone()["count"]
+            later=connection.execute("select count(*) from information_schema.tables where table_schema='public' and table_name in ('avuhz_client_acceptances','avuhz_deployment_authorizations')").fetchone()["count"]
         self.assertEqual(counts,(1,2,2));self.assertEqual(later,0)
         other=self.build_uow(helper,self.OTHER_TENANT)
         try:

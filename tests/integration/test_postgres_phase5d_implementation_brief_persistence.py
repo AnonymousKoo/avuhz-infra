@@ -37,7 +37,11 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
 
     def brief_helper(self):
         helper = brief_runtime.ImplementationBriefRuntimeTests()
-        helper.h = self.harness
+        helper.setUp()
+        helper.h = self.harness.h
+        helper.handoff = self.harness.handoff
+        helper._tenant = self.harness.tenant
+        helper._engagement_id = self.harness.engagement_id
         helper.store = self.harness.store  # Deterministic source fixture used only to compose payloads.
         helper._number = 800
         helper.executor = self.harness.executor
@@ -51,7 +55,7 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
         )
 
     def test_brief_restart_durability_rls_schema_events_and_zero_authority(self):
-        self.harness.build_active()
+        self.build_active()
         helper = self.brief_helper()
         payload = helper.payload()
         helper.draft(payload)
@@ -124,13 +128,13 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
             raw.close()
 
     def test_brief_revision_history_exact_round_trip_and_stale_concurrency(self):
-        self.harness.build_active()
+        self.build_active()
         helper = self.brief_helper()
         first = helper.payload()
         helper.draft(first)
         second = helper.payload(version=2)
-        second["desired_business_outcome"] = (
-            "Preserve exact intake traceability in the bounded sandbox workflow."
+        second["current_state_context"][0]["statement"] = (
+            "The exact approved source confirms inconsistent required-field coverage."
         )
         second["implementation_brief_digest"] = implementation_brief_digest(second)
         helper.approve(first)
@@ -191,7 +195,7 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
         self.assertEqual(sorted(outcomes), ["ACCEPTED", "STALE"])
 
     def test_brief_idempotency_across_restart_and_atomic_failpoint(self):
-        self.harness.build_active()
+        self.build_active()
         helper = self.brief_helper()
         payload = helper.payload()
         raw = helper.raw(
@@ -206,7 +210,7 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
 
         self.tearDown()
         self.setUp()
-        self.harness.build_active()
+        self.build_active()
         helper = self.brief_helper()
         raw = helper.raw(
             "DraftImplementationBrief", helper.payload(), key="phase5d-postgres-atomic-0001"

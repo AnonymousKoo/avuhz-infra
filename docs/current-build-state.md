@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Architecture correction and Sekinfra extraction; full separation certification pending.
+`CURRENT_PHASE`: Avuhz/Sekinfra separation certified; Phase 5D-D3 ClientAcceptance is next and has not started.
 
-`CURRENT_HEAD`: `HEAD` (`refactor: rebaseline provider-neutral avuhz persistence`)
+`CURRENT_HEAD`: `HEAD` (`test: certify avuhz sekinfra separation`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Avuhz local persistence and migrations rebaselined to the provider-neutral current tree while preserving generic PostgreSQL/UnitOfWork infrastructure, command-service RLS, tenant isolation, idempotency, concurrency, lifecycle events, transactional outbox, ImplementationHandoff, and Phase 5D governance through QAResult.
+`LAST_GREEN_MILESTONE`: End-to-end Avuhz/Sekinfra separation certification, including independent runtime and persistence suites plus the provider-neutral Sekinfra -> ImplementationHandoff -> Avuhz -> ImplementationBrief flow.
 
 `COMPLETED`:
 
@@ -16,15 +16,19 @@
 - ImplementationHandoff and all completed Phase 5D records preserve exact ID/version/digest bindings, immutable history, bounded optimistic transitions, idempotency, events, and atomic outbox writes.
 - Every current authoritative table has command-service tenant RLS; `public`, `anon`, and `authenticated` have no direct table authority.
 - Fresh disposable PostgreSQL replay, RLS isolation, bounded grants, exact handoff round-trip, immutable history, idempotency conflict/transition, and atomic rollback certification are green.
-- Focused runtime, schema, migration, security, Semgrep, credential, and baseline checks are green. Python adapter integration tests remain cleanly skipped because no psycopg driver is installed; live Docker/psql certification covers the database baseline.
+- Focused runtime, schema, migration, security, Semgrep, credential, and baseline checks are green.
+- Avuhz runs with zero active Sekinfra/OIA runtime references and has no dependency on Sekinfra implementation internals.
+- Sekinfra owns and runs OIA independently without importing Avuhz internal modules or requiring a shared database.
+- The cross-repository handoff contract is deterministic, versioned, digest-bound, tenant-bound, and green through ImplementationBrief creation.
+- Full Avuhz and Sekinfra runtime, contract, migration, persistence, RLS/security, separation, and cross-repository certification suites are green against disposable local PostgreSQL where applicable.
 
-`IN_PROGRESS`: None. The local persistence/migration rebaseline milestone is complete.
+`IN_PROGRESS`: None. Separation certification is complete.
 
-`NEXT_TASK`: Certify Avuhz/Sekinfra separation end to end using independent repository suites and the cross-repository ImplementationHandoff flow; do not resume Phase 5D-D3 ClientAcceptance until separation is certified.
+`NEXT_TASK`: Resume Phase 5D-D3 ClientAcceptance runtime and local persistence only, following the frozen Phase 5D architecture and authority boundaries.
 
-`DO_NOT_START_YET`: Phase 5D-D3 ClientAcceptance, DeploymentAuthorization runtime, deployment execution, production changes, or later roadmap work.
+`DO_NOT_START_YET`: DeploymentAuthorization runtime, deployment execution, production changes, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the persistence rebaseline commit. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the separation certification commits. Disposable local PostgreSQL databases are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

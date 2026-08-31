@@ -194,6 +194,7 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
                 },
                 "implementation_brief_digest": payload["implementation_brief_digest"],
             }, expected=1,
+            key=f"phase5d-brief-finalize-{payload['implementation_brief_version']}",
         )
 
     def assert_no_effects(self, before):

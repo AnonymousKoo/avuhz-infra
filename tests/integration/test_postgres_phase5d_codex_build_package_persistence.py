@@ -35,7 +35,11 @@ else:
 class Phase5DCodexBuildPackagePostgresTests(PostgresHarness):
     def brief_helper(self):
         helper = brief_runtime.ImplementationBriefRuntimeTests()
-        helper.h = self.harness
+        helper.setUp()
+        helper.h = self.harness.h
+        helper.handoff = self.harness.handoff
+        helper._tenant = self.harness.tenant
+        helper._engagement_id = self.harness.engagement_id
         helper.store = self.harness.store
         helper._number = 940
         helper.executor = self.harness.executor
@@ -43,17 +47,17 @@ class Phase5DCodexBuildPackagePostgresTests(PostgresHarness):
 
     def authorization_helper(self, brief_helper):
         helper = auth_runtime.ImplementationAuthorizationRuntimeTests()
+        helper.setUp()
         helper.b = brief_helper
-        helper.store = self.harness.store
         helper._number = 950
         helper.executor = self.harness.executor
         return helper
 
     def package_helper(self, authorization_helper, authorization_payload):
         helper = package_runtime.CodexBuildPackageRuntimeTests()
+        helper.setUp()
         helper.a = authorization_helper
         helper.authorization_payload = authorization_payload
-        helper.store = self.harness.store
         helper._number = 960
         helper.executor = self.harness.executor
         return helper
@@ -68,7 +72,7 @@ class Phase5DCodexBuildPackagePostgresTests(PostgresHarness):
         )
 
     def active_authorization(self):
-        self.harness.build_active()
+        self.build_active()
         brief_helper = self.brief_helper()
         brief_payload = brief_helper.payload()
         brief_helper.draft(brief_payload)

@@ -211,23 +211,37 @@ class Executor:
         first = self.validator.prepare(raw)
         if isinstance(first, ValidationFailure): return {"result": "VALIDATION_FAILED", "reason_code": first.reason.value}
         prepared = first.prepared
-        try: uow = self.uow_factory(self.store)
-        except (ValueError, RuntimeError): return {"result": "REJECTED", "reason_code": "PREREQUISITE_STATE_INVALID"}
-        key = (prepared.tenant_id, context.principal_id, prepared.command_type, prepared.subject_type, idempotency_scope(prepared), prepared.idempotency_key)
-        request_fingerprint = fingerprint(raw); prior = uow.idempotency.get(key)
-        if prior:
-            return {"result": "DUPLICATE", "reason_code": "DUPLICATE_REQUEST", "prior_result_reference": prior["command_id"]} if prior["fingerprint"] == request_fingerprint else {"result": "CONFLICT", "reason_code": "IDEMPOTENCY_SEMANTIC_MISMATCH"}
-        guarded = prepare_and_guard_command(self.validator, self.pipeline, raw, context, self.store.snapshot(prepared, context), self.clock())
-        if not hasattr(guarded, "guarded"): return {"result": "REJECTED", "reason_code": guarded.reason.value}
+        uow = None
         try:
+            uow = self.uow_factory(self.store)
+            if hasattr(uow, "bind_trusted_context"):
+                uow.bind_trusted_context(context)
+        except (ValueError, RuntimeError):
+            if uow is not None and hasattr(uow, "close"):
+                uow.close()
+            return {"result": "REJECTED", "reason_code": "PREREQUISITE_STATE_INVALID"}
+        committed = False
+        try:
+            key = (prepared.tenant_id, context.principal_id, prepared.command_type, prepared.subject_type, idempotency_scope(prepared), prepared.idempotency_key)
+            request_fingerprint = fingerprint(raw); prior = uow.idempotency.get(key)
+            if prior:
+                return {"result": "DUPLICATE", "reason_code": "DUPLICATE_REQUEST", "prior_result_reference": prior["command_id"]} if prior["fingerprint"] == request_fingerprint else {"result": "CONFLICT", "reason_code": "IDEMPOTENCY_SEMANTIC_MISMATCH"}
+            guarded = prepare_and_guard_command(self.validator, self.pipeline, raw, context, self.store.snapshot(prepared, context), self.clock())
+            if not hasattr(guarded, "guarded"): return {"result": "REJECTED", "reason_code": guarded.reason.value}
             race = uow.idempotency.reserve(key, request_fingerprint, prepared)
             if race: return {"result": "DUPLICATE", "reason_code": "DUPLICATE_REQUEST", "prior_result_reference": race["command_id"]} if race["fingerprint"] == request_fingerprint else {"result": "CONFLICT", "reason_code": "IDEMPOTENCY_SEMANTIC_MISMATCH"}
             uow.failpoint("AUTHORITATIVE_WRITE"); self._handle(uow, prepared, context)
             event = self._event(prepared, uow); uow.lifecycle_events.append(event)
             uow.outbox.append({"event_id": event["event_id"], "status": "PENDING"})
             uow.idempotency.save_result(key, {"fingerprint": request_fingerprint, "command_id": prepared.command_id}); uow.commit()
+            committed = True
         except (ValueError, RuntimeError):
             return {"result": "REJECTED", "reason_code": "PREREQUISITE_STATE_INVALID"}
+        finally:
+            if not committed and hasattr(uow, "rollback"):
+                uow.rollback()
+            if hasattr(uow, "close"):
+                uow.close()
         return {"result": "ACCEPTED", "reason_code": "COMMAND_ACCEPTED", "authoritative_record_reference": prepared.subject_id}
 
     def _handle(self, uow, prepared, context):

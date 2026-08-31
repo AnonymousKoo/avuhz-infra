@@ -54,7 +54,8 @@ class Phase5DQAResultPostgresTests(PostgresHarness):
         finally:
             fresh.rollback();fresh.close()
         helper=qa_runtime.QAResultRuntimeTests()
-        helper.b=build;helper.store=self.harness.store;helper._number=1080
+        helper.setUp()
+        helper.b=build;helper._number=1080
         helper.source_builds={build_runtime.RESULT_ID:terminal}
         helper.executor=self.harness.executor
         return helper

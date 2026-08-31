@@ -7,6 +7,6 @@ class Tests(unittest.TestCase):
   source=inspect.getsource(Executor.execute)
   for forbidden in ("self.store.idempotency","working.events","working.outbox","working.idempotency"):
    self.assertNotIn(forbidden,source)
-  for required in ("u.idempotency.get","u.idempotency.reserve","u.idempotency.save_result","u.lifecycle_events.append","u.outbox.append"):
+  for required in ("uow.idempotency.get","uow.idempotency.reserve","uow.idempotency.save_result","uow.lifecycle_events.append","uow.outbox.append"):
    self.assertIn(required,source)
 if __name__=="__main__":unittest.main()

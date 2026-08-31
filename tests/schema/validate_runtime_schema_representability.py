@@ -11,7 +11,7 @@ def main():
  for name,schema_id in IDS.items():
   errors=list(Draft202012Validator(registry.expanded(schema_id),format_checker=checker).iter_errors(fixture[name]))
   if errors:raise SystemExit(f"runtime-schema representability: FAIL: {name}")
- uow=UnitOfWork(MemoryStore());required=("implementation_handoffs","implementation_briefs","implementation_authorizations","codex_build_packages","build_execution_results","qa_results","human_approvals","idempotency","lifecycle_events","outbox")
+ uow=UnitOfWork(MemoryStore());required=("implementation_handoffs","implementation_briefs","implementation_authorizations","codex_build_packages","build_execution_results","qa_results","client_acceptances","human_approvals","idempotency","lifecycle_events","outbox")
  if not all(hasattr(uow,name) for name in required):raise SystemExit("runtime-schema representability: FAIL: UoW surface")
  json.dumps(fixture,sort_keys=True)
  print(f"runtime-schema representability: PASS ({len(IDS)} exact handoff/Phase 5D records)")

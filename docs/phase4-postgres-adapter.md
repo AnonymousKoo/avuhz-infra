@@ -2,7 +2,7 @@
 
 `avuhz_runtime.postgres` is the provider-neutral adapter behind the repository ports. A caller injects a connection factory; connection details remain runtime-only and never enter source, state, logs, or fixtures.
 
-The current local baseline persists generic acquisition and engagement, approved `ImplementationHandoff` history, attributable human approvals, idempotency, lifecycle events, transactional outbox intents, and completed Phase 5D governance through `QAResult`. It contains no Sekinfra/OIA persistence and no `ClientAcceptance` or `DeploymentAuthorization` runtime.
+The current local baseline persists generic acquisition and engagement, approved `ImplementationHandoff` history, attributable human approvals, idempotency, lifecycle events, transactional outbox intents, and completed Phase 5D governance through `ClientAcceptance`. It contains no Sekinfra/OIA persistence and no `DeploymentAuthorization` runtime.
 
 Each PostgreSQL UnitOfWork owns one non-autocommit connection. Repositories share that transaction, expected-version updates are bounded, events append immutably, and the matching `PENDING` outbox intent commits atomically with authoritative state and idempotency completion.
 

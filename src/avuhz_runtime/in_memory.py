@@ -19,11 +19,14 @@ from .phase5d_build_execution import BUILD_EXECUTION_COMMANDS, BUILD_EXECUTION_E
 from .phase5d_build_execution_memory import BuildExecutionResultMemoryRepository
 from .phase5d_qa_result import QA_RESULT_COMMANDS, QA_RESULT_EVENTS, QAResultHandler
 from .phase5d_qa_result_memory import QAResultMemoryRepository
+from .phase5d_client_acceptance import CLIENT_ACCEPTANCE_COMMANDS, CLIENT_ACCEPTANCE_EVENTS, ClientAcceptanceHandler
+from .phase5d_client_acceptance_memory import ClientAcceptanceMemoryRepository
 
 
 COMMAND_SCOPED_IDEMPOTENCY_COMMANDS = frozenset((
     *IMPLEMENTATION_BRIEF_COMMANDS, *IMPLEMENTATION_AUTHORIZATION_COMMANDS,
     *CODEX_BUILD_PACKAGE_COMMANDS, *BUILD_EXECUTION_COMMANDS, *QA_RESULT_COMMANDS,
+    *CLIENT_ACCEPTANCE_COMMANDS,
 ))
 
 
@@ -51,6 +54,7 @@ class MemoryStore:
     codex_build_packages: dict = field(default_factory=dict)
     build_execution_results: dict = field(default_factory=dict)
     qa_results: dict = field(default_factory=dict)
+    client_acceptances: dict = field(default_factory=dict)
     approvals: dict = field(default_factory=dict)
     idempotency: dict = field(default_factory=dict)
     events: list = field(default_factory=list)
@@ -79,6 +83,12 @@ class MemoryStore:
             record = self.build_execution_results.get((command.tenant_id, command.subject_id))
         elif command.subject_type == "QA_RESULT":
             record = self.qa_results.get((command.tenant_id, command.subject_id))
+        elif command.subject_type == "CLIENT_ACCEPTANCE":
+            values = [
+                value for (tenant, record_id, _), value in self.client_acceptances.items()
+                if tenant == command.tenant_id and record_id == command.subject_id
+            ]
+            record = max(values, key=lambda value: value["acceptance_version"]) if values else None
         if not record:
             return None
         return AuthoritativeSubjectSnapshot(
@@ -194,6 +204,7 @@ class UnitOfWork:
         self.codex_build_packages = CodexBuildPackageMemoryRepository(self)
         self.build_execution_results = BuildExecutionResultMemoryRepository(self)
         self.qa_results = QAResultMemoryRepository(self)
+        self.client_acceptances = ClientAcceptanceMemoryRepository(self)
         self.human_approvals = HumanApprovalMemoryRepository(self)
         self.idempotency = IdempotencyMemoryRepository(self)
         self.lifecycle_events = LifecycleEventMemoryRepository(self); self.outbox = OutboxMemoryRepository(self)
@@ -246,6 +257,7 @@ class Executor:
 
     def _handle(self, uow, prepared, context):
         now = self.clock()
+        if prepared.command_type in CLIENT_ACCEPTANCE_COMMANDS: return ClientAcceptanceHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in QA_RESULT_COMMANDS: return QAResultHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in BUILD_EXECUTION_COMMANDS: return BuildExecutionResultHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in CODEX_BUILD_PACKAGE_COMMANDS: return CodexBuildPackageHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
@@ -278,6 +290,11 @@ class Executor:
 
     def _event(self, prepared, uow):
         command = prepared.command_type
+        if command in CLIENT_ACCEPTANCE_COMMANDS:
+            version = prepared.payload["acceptance_version"]
+            record = uow.client_acceptances.get_version(prepared.tenant_id, prepared.subject_id, version)
+            metadata = {"authority_stage": "CLIENT_ACCEPTANCE", "client_acceptance_id": prepared.subject_id, "qa_passed": True, "client_accepted": record["decision"] == "ACCEPTED", "deployment_authorized": False}
+            return self._event_record(prepared, CLIENT_ACCEPTANCE_EVENTS[command], record, "CLIENT_ACCEPTANCE", metadata)
         if command in QA_RESULT_COMMANDS:
             record = uow.qa_results.get(prepared.tenant_id, prepared.subject_id)
             metadata = {"authority_stage": "QA_RESULT", "qa_result_id": prepared.subject_id, "qa_attempt": record["qa_attempt"], "overall_status": record["overall_status"], "qa_passed": record["overall_status"] == "PASSED", "client_accepted": False, "deployment_authorized": False}

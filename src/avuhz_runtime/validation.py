@@ -31,7 +31,7 @@ class CommandValidator:
         ))
     def _composed_schema(self, definition: CommandDefinition):
         constraints = {"type": "object", "properties": {"command_type": {"const": definition.command_type}, "subject_type": {"const": definition.subject_type}, "payload_schema": {"const": definition.payload_schema_id}}, "required": ["payload"]}
-        creations = {"AcceptAcquisitionHandoff", "OpenEngagement", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult"}
+        creations = {"AcceptAcquisitionHandoff", "OpenEngagement", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult", "RecordClientAcceptance"}
         if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
         elif definition.command_type in creations:
             constraints["not"] = {"required": ["expected_record_version"]}; constraints["required"].append("engagement_id")
@@ -46,7 +46,7 @@ class CommandValidator:
             "DraftImplementationBrief": "implementation_brief_id", "ReviseImplementationBrief": "implementation_brief_id", "ApproveImplementationBrief": "implementation_brief_id",
             "ProposeImplementationAuthorization": "implementation_authorization_id", "ReviseImplementationAuthorization": "implementation_authorization_id", "ActivateImplementationAuthorization": "implementation_authorization_id", "RevokeImplementationAuthorization": "implementation_authorization_id",
             "DraftCodexBuildPackage": "codex_build_package_id", "ReviseCodexBuildPackage": "codex_build_package_id", "ReleaseCodexBuildPackage": "codex_build_package_id",
-            "StartBuildExecution": "build_execution_result_id", "CompleteBuildExecution": "build_execution_result_id", "RecordQAResult": "qa_result_id",
+            "StartBuildExecution": "build_execution_result_id", "CompleteBuildExecution": "build_execution_result_id", "RecordQAResult": "qa_result_id", "RecordClientAcceptance": "client_acceptance_id",
         }
         field = identity_fields.get(command)
         if field and payload[field] != raw["subject_id"]: return self._failure(RuntimeReason.PAYLOAD_INVALID, "payload must identify the command subject")

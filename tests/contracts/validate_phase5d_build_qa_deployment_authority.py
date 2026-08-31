@@ -79,8 +79,8 @@ def main():
  if envelope["$defs"]["commandType"]["enum"][-9:]!=COMMANDS_C or idem["properties"]["command_type"]["enum"][-9:]!=COMMANDS_C:fail("command vocabulary/order")
  if capability["enum"][-8:]!=CAPS_C or event["properties"]["event_type"]["enum"][-9:]!=EVENTS_C:fail("capability/event vocabulary/order")
  if envelope["$defs"]["subjectType"]["enum"][-4:]!=SUBJECTS_C:fail("subject vocabulary/order")
- if set(COMMANDS_C)&set(COMMANDS)!=set(COMMANDS_C[:3]):fail("D2 runtime boundary drifted")
- if len(SCHEMA_FILES)!=len(paths):fail("D2 runtime schema boundary drifted")
+ if set(COMMANDS_C)&set(COMMANDS)!=set(COMMANDS_C[:4]):fail("D3 runtime boundary drifted")
+ if len(SCHEMA_FILES)!=len(paths):fail("D3 runtime schema boundary drifted")
  approval=schemas[DOMAIN["approval"]]
  if approval["properties"]["actor_role"]["enum"][-2:]!=["CLIENT_DEPLOYMENT_AUTHORITY","PROVIDER_DEPLOYMENT_AUTHORITY"]:fail("deployment human roles")
  doc=(ROOT/"docs/phase5d-build-qa-deployment-authority-architecture.md").read_text()
@@ -114,7 +114,7 @@ def main():
   if chain_ok(bb,qq,aa,dd):fail(label+" accepted")
  bb,qq,aa,dd=examples("target.exact")
  if chain_ok(bb,qq,aa,dd,"REVOKED"):fail("revoked ImplementationAuthorization accepted")
- print("phase5d-c validation: PASS (4 resources, 9 commands, 8 capabilities, 9 events, 5 read models, 3 industries, security/stale-source negatives, D2 runtime boundary exact)")
+ print("phase5d-c validation: PASS (4 resources, 9 commands, 8 capabilities, 9 events, 5 read models, 3 industries, security/stale-source negatives, D3 runtime boundary exact)")
 
 def refs(x):
  if isinstance(x,dict):

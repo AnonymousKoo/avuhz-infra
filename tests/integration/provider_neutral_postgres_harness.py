@@ -23,7 +23,7 @@ from avuhz_runtime.validation import CommandValidator
 from tests.runtime import test_phase5d_implementation_brief_runtime as brief_runtime
 
 TABLES = (
-    "avuhz_qa_results", "avuhz_build_execution_results", "avuhz_codex_build_packages",
+    "avuhz_client_acceptances", "avuhz_qa_results", "avuhz_build_execution_results", "avuhz_codex_build_packages",
     "avuhz_implementation_authorizations", "avuhz_implementation_briefs",
     "avuhz_human_approvals", "avuhz_outbox_deliveries", "avuhz_lifecycle_events",
     "avuhz_idempotency_records", "avuhz_implementation_handoffs", "avuhz_engagements",

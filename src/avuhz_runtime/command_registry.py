@@ -32,6 +32,7 @@ COMMANDS = {
     "StartBuildExecution": command("StartBuildExecution", "BUILD_EXECUTION_RESULT", "start-build-execution", "build_execution:start"),
     "CompleteBuildExecution": command("CompleteBuildExecution", "BUILD_EXECUTION_RESULT", "complete-build-execution", "build_execution:complete"),
     "RecordQAResult": command("RecordQAResult", "QA_RESULT", "record-qa-result", "qa_result:record"),
+    "RecordClientAcceptance": command("RecordClientAcceptance", "CLIENT_ACCEPTANCE", "record-client-acceptance", "client_acceptance:record"),
 }
 
 

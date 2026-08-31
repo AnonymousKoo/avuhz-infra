@@ -4,7 +4,7 @@ The provider-neutral `public.avuhz_*` tables are authoritative command-service s
 
 RLS is enabled on every table. `public`, `anon`, and `authenticated` receive no direct table authority. The non-login `avuhz_command_service` role has only the select, insert, and column-scoped update privileges required by the existing repositories. It has no delete authority. Database privilege never replaces command validation, trusted tenant/capability context, expected versions, or attributable human approval.
 
-Tenant policies compare each row's `tenant_id` with the transaction-local `avuhz.tenant_id` value established from `TrustedExecutionContext`. Unbound service reads return no rows. Cross-tenant reads and writes fail closed. Immutable handoffs, approvals, lifecycle events, and QA history reject updates; bounded transition triggers protect mutable lifecycle records.
+Tenant policies compare each row's `tenant_id` with the transaction-local `avuhz.tenant_id` value established from `TrustedExecutionContext`. Unbound service reads return no rows. Cross-tenant reads and writes fail closed. Immutable handoffs, approvals, lifecycle events, QA history, and client-acceptance history reject updates; bounded transition triggers protect mutable lifecycle records.
 
 n8n, browsers, generic workloads, and provider adapters do not receive authoritative database credentials. They use bounded public contracts and command interfaces. Secrets and raw provider payloads remain prohibited.
 

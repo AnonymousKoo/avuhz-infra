@@ -9,6 +9,7 @@ from .postgres_phase5d_authorization import ImplementationAuthorizationPostgresR
 from .postgres_phase5d_package import CodexBuildPackagePostgresRepository
 from .postgres_phase5d_build_execution import BuildExecutionResultPostgresRepository
 from .postgres_phase5d_qa_result import QAResultPostgresRepository
+from .postgres_phase5d_client_acceptance import ClientAcceptancePostgresRepository
 
 def connection_factory_from_environment(name="AVUHZ_POSTGRES_DSN"):
     def factory():
@@ -31,6 +32,7 @@ class PostgresStore:
             "CODEX_BUILD_PACKAGE": ("select tenant_id,record_version,engagement_id,state from public.avuhz_codex_build_packages where tenant_id=%s and codex_build_package_id=%s and state<>'SUPERSEDED' order by package_version desc limit 1", "state"),
             "BUILD_EXECUTION_RESULT": ("select tenant_id,record_version,engagement_id,status as state from public.avuhz_build_execution_results where tenant_id=%s and build_execution_result_id=%s", "state"),
             "QA_RESULT": ("select tenant_id,record_version,engagement_id,overall_status as state from public.avuhz_qa_results where tenant_id=%s and qa_result_id=%s", "state"),
+            "CLIENT_ACCEPTANCE": ("select tenant_id,record_version,engagement_id,decision as state from public.avuhz_client_acceptances where tenant_id=%s and client_acceptance_id=%s order by acceptance_version desc limit 1", "state"),
         }
         query = queries.get(command.subject_type)
         subject_id = command.subject_id
@@ -253,6 +255,7 @@ class PostgresUnitOfWork:
         self.codex_build_packages=CodexBuildPackagePostgresRepository(self)
         self.build_execution_results=BuildExecutionResultPostgresRepository(self)
         self.qa_results=QAResultPostgresRepository(self)
+        self.client_acceptances=ClientAcceptancePostgresRepository(self)
     def bind_trusted_context(self,context):
         if not getattr(context,"authenticated",False) or not getattr(context,"tenant_id",None):raise ValueError("trusted tenant context is required")
         tenant=str(uuid.UUID(str(context.tenant_id)))

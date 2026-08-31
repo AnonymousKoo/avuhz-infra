@@ -29,10 +29,12 @@ from .phase5d_package import CODEX_BUILD_PACKAGE_COMMANDS, CODEX_BUILD_PACKAGE_E
 from .phase5d_package_memory import CodexBuildPackageMemoryRepository
 from .phase5d_build_execution import BUILD_EXECUTION_COMMANDS, BUILD_EXECUTION_EVENTS, BuildExecutionResultHandler
 from .phase5d_build_execution_memory import BuildExecutionResultMemoryRepository
+from .phase5d_qa_result import QA_RESULT_COMMANDS, QA_RESULT_EVENTS, QAResultHandler
+from .phase5d_qa_result_memory import QAResultMemoryRepository
 class CanonicalScopeDigestConflict(ValueError): pass
 from .runtime import prepare_and_guard_command
 
-COMMAND_SCOPED_IDEMPOTENCY_COMMANDS=frozenset(("CreateAssessmentAccessProposal","RecordAssessmentAccessApproval","IssueAssessmentAccessGrant","VerifyAssessmentAccess","ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd","RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification","OpenOIAAssessment","RecordOIAEvidence","RecordOIAObservation","SupersedeOIAObservation","RecordOIARootCause","CreateOIAFinding","UpdateOIAFindingAnalysis","FinalizeOIAFinding","MarkOIAAssessmentReadyForDelivery","DeliverOIAFindings","ReviseDeliveredOIAFinding","CloseOIAAssessment","CreateOIAAssessmentPlan","ReviseOIAAssessmentPlan","ReviewOIAAssessmentPlan","ApproveOIAAssessmentPlan","CreateOIAInspectionItem","UpdateOIAInspectionItem","MarkOIAInspectionItemBlocked",*PHASE5C_COMMANDS,*IMPLEMENTATION_BRIEF_COMMANDS,*IMPLEMENTATION_AUTHORIZATION_COMMANDS,*CODEX_BUILD_PACKAGE_COMMANDS,*BUILD_EXECUTION_COMMANDS))
+COMMAND_SCOPED_IDEMPOTENCY_COMMANDS=frozenset(("CreateAssessmentAccessProposal","RecordAssessmentAccessApproval","IssueAssessmentAccessGrant","VerifyAssessmentAccess","ExpireAssessmentAccess","RevokeAssessmentAccess","CloseAssessmentAccessForAgreementEnd","RecordDiagnosticAgreementAuthority","RecordDiagnosticPaymentVerification","InvalidateDiagnosticPaymentVerification","OpenOIAAssessment","RecordOIAEvidence","RecordOIAObservation","SupersedeOIAObservation","RecordOIARootCause","CreateOIAFinding","UpdateOIAFindingAnalysis","FinalizeOIAFinding","MarkOIAAssessmentReadyForDelivery","DeliverOIAFindings","ReviseDeliveredOIAFinding","CloseOIAAssessment","CreateOIAAssessmentPlan","ReviseOIAAssessmentPlan","ReviewOIAAssessmentPlan","ApproveOIAAssessmentPlan","CreateOIAInspectionItem","UpdateOIAInspectionItem","MarkOIAInspectionItemBlocked",*PHASE5C_COMMANDS,*IMPLEMENTATION_BRIEF_COMMANDS,*IMPLEMENTATION_AUTHORIZATION_COMMANDS,*CODEX_BUILD_PACKAGE_COMMANDS,*BUILD_EXECUTION_COMMANDS,*QA_RESULT_COMMANDS))
 def idempotency_scope(command): return "COMMAND" if command.command_type in COMMAND_SCOPED_IDEMPOTENCY_COMMANDS else "SUBJECT:"+command.subject_id
 
 def fingerprint(command):
@@ -62,6 +64,7 @@ class MemoryStore:
     handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); oia_assessments:dict=field(default_factory=dict); oia_evidence_items:dict=field(default_factory=dict); oia_assessment_plans:dict=field(default_factory=dict); oia_inspection_items:dict=field(default_factory=dict); oia_observations:dict=field(default_factory=dict); oia_root_causes:dict=field(default_factory=dict); oia_findings:dict=field(default_factory=dict); oia_findings_deliveries:dict=field(default_factory=dict); oia_conversion_decisions:dict=field(default_factory=dict); ongoing_agreement_authorities:dict=field(default_factory=dict); ongoing_payment_verifications:dict=field(default_factory=dict); ongoing_access_grants:dict=field(default_factory=dict); ongoing_access_revocation_verifications:dict=field(default_factory=dict); ongoing_offboardings:dict=field(default_factory=dict); implementation_briefs:dict=field(default_factory=dict); implementation_authorizations:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
     codex_build_packages:dict=field(default_factory=dict)
     build_execution_results:dict=field(default_factory=dict)
+    qa_results:dict=field(default_factory=dict)
     fail_stage:str|None=None
     def _current_plan(self,tenant_id,plan_id):
         candidates=[value for (record_tenant,record_plan_id,_),value in self.oia_assessment_plans.items() if record_tenant==tenant_id and record_plan_id==plan_id and value.get("state")!="SUPERSEDED"]
@@ -98,6 +101,7 @@ class MemoryStore:
         if command.subject_type=="IMPLEMENTATION_AUTHORIZATION":r=self._current_authorization(command.tenant_id,command.subject_id)
         if command.subject_type=="CODEX_BUILD_PACKAGE":r=self._current_package(command.tenant_id,command.subject_id)
         if command.subject_type=="BUILD_EXECUTION_RESULT":r=copy.deepcopy(self.build_execution_results.get((command.tenant_id,command.subject_id)))
+        if command.subject_type=="QA_RESULT":r=copy.deepcopy(self.qa_results.get((command.tenant_id,command.subject_id)))
         engagement_id=r.get("engagement_id") if r else None
         if r and command.subject_type=="OIA_EVIDENCE_ITEM":
             assessment=self.oia_assessments.get((command.tenant_id,r["oia_assessment_id"]));engagement_id=(assessment or {}).get("engagement_id")
@@ -601,6 +605,7 @@ class UnitOfWork:
         self.implementation_authorizations=ImplementationAuthorizationMemoryRepository(self)
         self.codex_build_packages=CodexBuildPackageMemoryRepository(self)
         self.build_execution_results=BuildExecutionResultMemoryRepository(self)
+        self.qa_results=QAResultMemoryRepository(self)
     def failpoint(self,name):
         if self.working.fail_stage==name: raise RuntimeError("injected failpoint")
     def commit(self):
@@ -645,6 +650,8 @@ class Executor:
         return {"result":"ACCEPTED","reason_code":"COMMAND_ACCEPTED","authoritative_record_reference":p.subject_id}
     def _handle(self,u,p,raw,raw_context=None):
         now=self.clock(); payload=p.payload
+        if p.command_type in QA_RESULT_COMMANDS:
+            return QAResultHandler(u).execute(p.command_type,p,raw_context,now,p.command_id)
         if p.command_type in BUILD_EXECUTION_COMMANDS:
             return BuildExecutionResultHandler(u).execute(p.command_type,p,raw_context,now,p.command_id)
         if p.command_type in CODEX_BUILD_PACKAGE_COMMANDS:
@@ -770,6 +777,27 @@ class Executor:
             "visibility":"TENANT_OPERATIONAL","sanitized_metadata":metadata,
         }
 
+    def _qa_result_event(self,p,u):
+        record=u.qa_results.get(p.tenant_id,p.subject_id)
+        metadata={
+            "authority_stage":"QA_RESULT",
+            "qa_result_id":p.subject_id,
+            "qa_attempt":record["qa_attempt"],
+            "overall_status":record["overall_status"],
+            "qa_passed":record["overall_status"]=="PASSED",
+            "client_accepted":False,
+            "deployment_authorized":False,
+        }
+        return {
+            "event_id":self.ids(),"event_type":QA_RESULT_EVENTS[p.command_type],"event_schema_version":1,
+            "tenant_id":p.tenant_id,"engagement_id":record["engagement_id"],
+            "authoritative_subject_reference":{"reference_type":"QA_RESULT","reference_id":p.subject_id},
+            "authoritative_subject_version":record["record_version"],"occurred_at":self.clock(),
+            "producer_reference":"command.service-01","correlation_id":p.correlation_id,
+            "command_id":p.command_id,"subject_id":p.subject_id,"idempotency_key":p.idempotency_key,
+            "visibility":"TENANT_OPERATIONAL","sanitized_metadata":metadata,
+        }
+
     def _build_execution_event(self,p,u):
         record=u.build_execution_results.get(p.tenant_id,p.subject_id)
         metadata={
@@ -841,6 +869,8 @@ class Executor:
         }
 
     def _event(self,p,u=None):
+        if p.command_type in QA_RESULT_COMMANDS:
+            return self._qa_result_event(p,u)
         if p.command_type in BUILD_EXECUTION_COMMANDS:
             return self._build_execution_event(p,u)
         if p.command_type in IMPLEMENTATION_AUTHORIZATION_COMMANDS:

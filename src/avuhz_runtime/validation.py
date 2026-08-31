@@ -49,7 +49,7 @@ class CommandValidator:
         if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
         elif definition.command_type == "RecordOIARootCause":
             constraints["required"] += ["engagement_id"]
-        elif definition.command_type in ("RecordOIAConversionDecision", "ProposeOngoingAgreement", "RecordOngoingPaymentVerification", "ProposeOngoingAccessGrant", "InitiateOngoingOffboarding", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution"):
+        elif definition.command_type in ("RecordOIAConversionDecision", "ProposeOngoingAgreement", "RecordOngoingPaymentVerification", "ProposeOngoingAccessGrant", "InitiateOngoingOffboarding", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult"):
             constraints["not"] = {"required": ["expected_record_version"]}
             constraints["required"] += ["engagement_id"]
         elif definition.command_type in ("OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem"):
@@ -64,7 +64,7 @@ class CommandValidator:
     def _semantic_failure(self, raw: dict[str, Any], definition: CommandDefinition) -> ValidationFailure | None:
         if raw["subject_type"] != definition.subject_type:
             return self._failure(RuntimeReason.PAYLOAD_INVALID, "command subject does not match registration")
-        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem", "RecordOIAConversionDecision", "ProposeOngoingAgreement", "RecordOngoingPaymentVerification", "ProposeOngoingAccessGrant", "InitiateOngoingOffboarding", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution") and "expected_record_version" in raw:
+        if definition.command_type in ("AcceptAcquisitionHandoff", "OpenEngagement", "OpenOIAAssessment", "RecordOIAEvidence", "RecordOIAObservation", "CreateOIAFinding", "CreateOIAAssessmentPlan", "CreateOIAInspectionItem", "RecordOIAConversionDecision", "ProposeOngoingAgreement", "RecordOngoingPaymentVerification", "ProposeOngoingAccessGrant", "InitiateOngoingOffboarding", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult") and "expected_record_version" in raw:
             return self._failure(RuntimeReason.VERSION_REQUIRED, "expected version is not permitted for this command")
         if definition.command_type == "AcceptAcquisitionHandoff" and "engagement_id" in raw:
             return self._failure(RuntimeReason.FIELD_FORBIDDEN, "engagement context is not permitted for handoff acceptance")
@@ -148,6 +148,9 @@ class CommandValidator:
         if definition.command_type in ("StartBuildExecution", "CompleteBuildExecution"):
             if raw["payload"]["build_execution_result_id"] != raw["subject_id"]:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "BuildExecutionResult payload must identify the command subject")
+        if definition.command_type == "RecordQAResult":
+            if raw["payload"]["qa_result_id"] != raw["subject_id"]:
+                return self._failure(RuntimeReason.PAYLOAD_INVALID, "QAResult payload must identify the command subject")
         if definition.command_type == "ReleaseCodexBuildPackage":
             payload = raw["payload"]
             if payload["client_approval_reference"] == payload["sekinfra_approval_reference"]:

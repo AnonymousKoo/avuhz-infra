@@ -26,6 +26,7 @@ from .postgres_phase5d_brief import ImplementationBriefPostgresRepository
 from .postgres_phase5d_authorization import ImplementationAuthorizationPostgresRepository
 from .postgres_phase5d_package import CodexBuildPackagePostgresRepository
 from .postgres_phase5d_build_execution import BuildExecutionResultPostgresRepository
+from .postgres_phase5d_qa_result import QAResultPostgresRepository
 
 def connection_factory_from_environment(name="AVUHZ_POSTGRES_DSN"):
     def factory():
@@ -64,6 +65,7 @@ class PostgresStore:
             "IMPLEMENTATION_AUTHORIZATION": ("select tenant_id,record_version,engagement_id,state from public.avuhz_implementation_authorizations where tenant_id=%s and implementation_authorization_id=%s and state<>'SUPERSEDED' order by authorization_version desc limit 1", "state"),
             "CODEX_BUILD_PACKAGE": ("select tenant_id,record_version,engagement_id,state from public.avuhz_codex_build_packages where tenant_id=%s and codex_build_package_id=%s and state<>'SUPERSEDED' order by package_version desc limit 1", "state"),
             "BUILD_EXECUTION_RESULT": ("select tenant_id,record_version,engagement_id,status as state from public.avuhz_build_execution_results where tenant_id=%s and build_execution_result_id=%s", "state"),
+            "QA_RESULT": ("select tenant_id,record_version,engagement_id,overall_status as state from public.avuhz_qa_results where tenant_id=%s and qa_result_id=%s", "state"),
         }
         query = queries.get(command.subject_type)
         subject_id = command.subject_id
@@ -358,6 +360,7 @@ class PostgresUnitOfWork:
         self.implementation_authorizations=ImplementationAuthorizationPostgresRepository(self)
         self.codex_build_packages=CodexBuildPackagePostgresRepository(self)
         self.build_execution_results=BuildExecutionResultPostgresRepository(self)
+        self.qa_results=QAResultPostgresRepository(self)
     def bind_trusted_context(self,context):
         if not getattr(context,"authenticated",False) or not getattr(context,"tenant_id",None):raise ValueError("trusted tenant context is required")
         tenant=str(uuid.UUID(str(context.tenant_id)))

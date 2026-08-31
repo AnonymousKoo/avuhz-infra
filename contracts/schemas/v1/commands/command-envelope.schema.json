@@ -1538,7 +1538,7 @@
     },
     "subjectType": {
       "type": "string",
-      "minLength": 10,
+      "minLength": 9,
       "maxLength": 39,
       "enum": [
         "ACQUISITION_HANDOFF",

@@ -6,6 +6,7 @@ from .phase5d_brief import IMPLEMENTATION_BRIEF_CAPABILITIES, IMPLEMENTATION_BRI
 from .phase5d_authorization import IMPLEMENTATION_AUTHORIZATION_CAPABILITIES, IMPLEMENTATION_AUTHORIZATION_COMMANDS
 from .phase5d_package import CODEX_BUILD_PACKAGE_CAPABILITIES, CODEX_BUILD_PACKAGE_COMMANDS
 from .phase5d_build_execution import BUILD_EXECUTION_CAPABILITIES, BUILD_EXECUTION_COMMANDS
+from .phase5d_qa_result import QA_RESULT_CAPABILITIES
 
 COMMAND_CAPABILITIES={"AcceptAcquisitionHandoff":"engagement:accept_handoff","OpenEngagement":"engagement:open","SubmitDiagnosticScope":"scope:submit","RecordHumanApproval":"scope:approve","RecordAssessmentAccessApproval":"assessment_access:approve","CreateAssessmentAccessProposal":"assessment_access:propose","IssueAssessmentAccessGrant":"assessment_access:issue","VerifyAssessmentAccess":"assessment_access:verify","ExpireAssessmentAccess":"assessment_access:expire","RevokeAssessmentAccess":"assessment_access:revoke","CloseAssessmentAccessForAgreementEnd":"assessment_access:close","RecordDiagnosticAgreementAuthority":"diagnostic_agreement:record","RecordDiagnosticPaymentVerification":"diagnostic_payment:record","InvalidateDiagnosticPaymentVerification":"diagnostic_payment:invalidate","ApproveDiagnosticScope":"scope:approve","CanonicalizeDiagnosticScope":"scope:submit","OpenOIAAssessment":"oia:open","RecordOIAEvidence":"oia:evidence:record","RecordOIAObservation":"oia:observation:record","SupersedeOIAObservation":"oia:observation:record","RecordOIARootCause":"oia:root_cause:record","CreateOIAFinding":"oia:finding:write","UpdateOIAFindingAnalysis":"oia:finding:write","FinalizeOIAFinding":"oia:finding:finalize","MarkOIAAssessmentReadyForDelivery":"oia:assessment:review","DeliverOIAFindings":"oia:findings:deliver","ReviseDeliveredOIAFinding":"oia:finding:finalize","CloseOIAAssessment":"oia:assessment:close","CreateOIAAssessmentPlan":"oia:plan:write","ReviseOIAAssessmentPlan":"oia:plan:write","ReviewOIAAssessmentPlan":"oia:plan:review","ApproveOIAAssessmentPlan":"oia:plan:approve","CreateOIAInspectionItem":"oia:inspection:manage","UpdateOIAInspectionItem":"oia:inspection:manage","MarkOIAInspectionItemBlocked":"oia:inspection:manage"}
 COMMAND_CAPABILITIES.update(PHASE5C_CAPABILITIES)
@@ -13,6 +14,7 @@ COMMAND_CAPABILITIES.update(IMPLEMENTATION_BRIEF_CAPABILITIES)
 COMMAND_CAPABILITIES.update(IMPLEMENTATION_AUTHORIZATION_CAPABILITIES)
 COMMAND_CAPABILITIES.update(CODEX_BUILD_PACKAGE_CAPABILITIES)
 COMMAND_CAPABILITIES.update(BUILD_EXECUTION_CAPABILITIES)
+COMMAND_CAPABILITIES.update(QA_RESULT_CAPABILITIES)
 PHASE5C_TRANSITIONS=frozenset(PHASE5C_CAPABILITIES)-frozenset({"RecordOIAConversionDecision","ProposeOngoingAgreement","RecordOngoingPaymentVerification","ProposeOngoingAccessGrant","InitiateOngoingOffboarding"})
 IMPLEMENTATION_BRIEF_TRANSITIONS=frozenset(IMPLEMENTATION_BRIEF_COMMANDS)-{"DraftImplementationBrief"}
 IMPLEMENTATION_AUTHORIZATION_TRANSITIONS=frozenset(IMPLEMENTATION_AUTHORIZATION_COMMANDS)-{"ProposeImplementationAuthorization"}

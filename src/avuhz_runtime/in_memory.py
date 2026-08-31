@@ -23,13 +23,15 @@ from .phase5d_client_acceptance import CLIENT_ACCEPTANCE_COMMANDS, CLIENT_ACCEPT
 from .phase5d_client_acceptance_memory import ClientAcceptanceMemoryRepository
 from .phase5d_deployment_authorization import DEPLOYMENT_AUTHORIZATION_COMMANDS, DEPLOYMENT_AUTHORIZATION_EVENTS, DeploymentAuthorizationHandler
 from .phase5d_deployment_authorization_memory import DeploymentAuthorizationMemoryRepository
+from .phase5d_deployment_execution import DEPLOYMENT_EXECUTION_COMMANDS, DEPLOYMENT_EXECUTION_EVENTS, DeploymentExecutionHandler
+from .phase5d_deployment_execution_memory import DeploymentExecutionMemoryRepository
 
 
 COMMAND_SCOPED_IDEMPOTENCY_COMMANDS = frozenset((
     *IMPLEMENTATION_BRIEF_COMMANDS, *IMPLEMENTATION_AUTHORIZATION_COMMANDS,
     *CODEX_BUILD_PACKAGE_COMMANDS, *BUILD_EXECUTION_COMMANDS, *QA_RESULT_COMMANDS,
     *CLIENT_ACCEPTANCE_COMMANDS,
-    *DEPLOYMENT_AUTHORIZATION_COMMANDS,
+    *DEPLOYMENT_AUTHORIZATION_COMMANDS, *DEPLOYMENT_EXECUTION_COMMANDS,
 ))
 
 
@@ -59,6 +61,7 @@ class MemoryStore:
     qa_results: dict = field(default_factory=dict)
     client_acceptances: dict = field(default_factory=dict)
     deployment_authorizations: dict = field(default_factory=dict)
+    deployment_executions: dict = field(default_factory=dict)
     approvals: dict = field(default_factory=dict)
     idempotency: dict = field(default_factory=dict)
     events: list = field(default_factory=list)
@@ -100,6 +103,8 @@ class MemoryStore:
                 command.subject_id,
                 "authorization_version",
             )
+        elif command.subject_type == "DEPLOYMENT_EXECUTION":
+            record = self.deployment_executions.get((command.tenant_id, command.subject_id))
         if not record:
             return None
         return AuthoritativeSubjectSnapshot(
@@ -217,6 +222,7 @@ class UnitOfWork:
         self.qa_results = QAResultMemoryRepository(self)
         self.client_acceptances = ClientAcceptanceMemoryRepository(self)
         self.deployment_authorizations = DeploymentAuthorizationMemoryRepository(self)
+        self.deployment_executions = DeploymentExecutionMemoryRepository(self)
         self.human_approvals = HumanApprovalMemoryRepository(self)
         self.idempotency = IdempotencyMemoryRepository(self)
         self.lifecycle_events = LifecycleEventMemoryRepository(self); self.outbox = OutboxMemoryRepository(self)
@@ -269,6 +275,7 @@ class Executor:
 
     def _handle(self, uow, prepared, context):
         now = self.clock()
+        if prepared.command_type in DEPLOYMENT_EXECUTION_COMMANDS: return DeploymentExecutionHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in DEPLOYMENT_AUTHORIZATION_COMMANDS: return DeploymentAuthorizationHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in CLIENT_ACCEPTANCE_COMMANDS: return ClientAcceptanceHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in QA_RESULT_COMMANDS: return QAResultHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
@@ -303,6 +310,10 @@ class Executor:
 
     def _event(self, prepared, uow):
         command = prepared.command_type
+        if command in DEPLOYMENT_EXECUTION_COMMANDS:
+            record = uow.deployment_executions.get(prepared.tenant_id, prepared.subject_id)
+            metadata = {"authority_stage": "DEPLOYMENT_EXECUTION", "deployment_execution_id": prepared.subject_id, "execution_attempt": record["execution_attempt"], "status": record["status"]}
+            return self._event_record(prepared, DEPLOYMENT_EXECUTION_EVENTS[command], record, "DEPLOYMENT_EXECUTION", metadata)
         if command in DEPLOYMENT_AUTHORIZATION_COMMANDS:
             version = prepared.payload.get("authorization_version") or prepared.payload.get("subject_version")
             record = uow.deployment_authorizations.get_version(prepared.tenant_id, prepared.subject_id, version)

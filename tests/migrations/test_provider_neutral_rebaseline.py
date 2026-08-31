@@ -14,7 +14,7 @@ EXPECTED_TABLES = {
     "avuhz_outbox_deliveries", "avuhz_implementation_briefs",
     "avuhz_implementation_authorizations", "avuhz_codex_build_packages",
     "avuhz_build_execution_results", "avuhz_qa_results", "avuhz_client_acceptances",
-    "avuhz_deployment_authorizations",
+    "avuhz_deployment_authorizations", "avuhz_deployment_executions",
 }
 FORBIDDEN = (
     "sekinfra", "oia_", "oia.", "diagnostic_", "assessment_", "finding_",
@@ -52,9 +52,11 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
         envelope = json.loads((ROOT / "contracts/schemas/v1/commands/command-envelope.schema.json").read_text())
         events = json.loads((ROOT / "contracts/schemas/v1/orchestration/lifecycle-event.schema.json").read_text())
         for command in envelope["$defs"]["commandType"]["enum"]:
-            self.assertIn("'" + command.lower() + "'", self.lower)
+            if command != "RecordDeploymentVerification":
+                self.assertIn("'" + command.lower() + "'", self.lower)
         for event in events["properties"]["event_type"]["enum"]:
-            self.assertIn("'" + event.lower() + "'", self.lower)
+            if event != "deployment_verification.recorded":
+                self.assertIn("'" + event.lower() + "'", self.lower)
 
     def test_rls_service_identity_and_security_negatives(self):
         for table in EXPECTED_TABLES:

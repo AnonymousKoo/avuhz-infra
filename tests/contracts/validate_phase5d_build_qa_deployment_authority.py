@@ -15,7 +15,7 @@ COMMANDS_C=["StartBuildExecution","CompleteBuildExecution","RecordQAResult","Rec
 CAPS_C=["build_execution:start","build_execution:complete","qa_result:record","client_acceptance:record","deployment_authorization:propose","deployment_authorization:approve","deployment_authorization:activate","deployment_authorization:revoke"]
 EVENTS_C=["build_execution.started","build_execution.completed","qa_result.recorded","client_acceptance.recorded","deployment_authorization.proposed","deployment_authorization.revised","deployment_authorization.approval_recorded","deployment_authorization.activated","deployment_authorization.revoked"]
 SUBJECTS_C=["BUILD_EXECUTION_RESULT","QA_RESULT","CLIENT_ACCEPTANCE","DEPLOYMENT_AUTHORIZATION"]
-D5_SCHEMA_FILES={"domain/deployment-execution.schema.json","domain/deployment-verification.schema.json","domain/phase5d-deployment-execution-common.schema.json","commands/start-deployment-execution.payload.schema.json","commands/complete-deployment-execution.payload.schema.json","commands/record-deployment-verification.payload.schema.json","read-models/deployment-execution-status-view.schema.json","read-models/deployment-verification-status-view.schema.json"}
+D5_SCHEMA_FILES={"domain/deployment-verification.schema.json","commands/record-deployment-verification.payload.schema.json","read-models/deployment-verification-status-view.schema.json"}
 PROHIBITED=["ARTIFACT_SUBSTITUTION","TARGET_WIDENING","ENVIRONMENT_WIDENING","PERMISSION_WIDENING","CREDENTIAL_ROTATION","DATA_DELETION","BILLING_CHANGE","UNAUTHORIZED_PRODUCTION_CHANGE","OUT_OF_SCOPE_NETWORK_CHANGE","OUT_OF_SCOPE_SECURITY_CONTROL_CHANGE"]
 DOMAIN={"build":"urn:avuhz:schema:contracts:domain:build-execution-result:v1","qa":"urn:avuhz:schema:contracts:domain:qa-result:v1","acceptance":"urn:avuhz:schema:contracts:domain:client-acceptance:v1","deployment":"urn:avuhz:schema:contracts:domain:deployment-authorization:v1","approval":"urn:avuhz:schema:contracts:domain:human-approval:v1"}
 
@@ -71,7 +71,7 @@ def main():
   if s["$id"] in schemas:fail("duplicate schema ID "+s["$id"])
   schemas[s["$id"]]=s
  catalog=set(SCHEMA_FILES); actual={str(p.relative_to(SCHEMA_ROOT)) for p in paths}
- if catalog!=actual-D5_SCHEMA_FILES or catalog&D5_SCHEMA_FILES:fail("D4 runtime schema catalog must exclude only frozen D5 schemas")
+ if catalog!=actual-D5_SCHEMA_FILES or catalog&D5_SCHEMA_FILES:fail("runtime schema catalog must exclude only frozen D5b verification schemas")
  for s in schemas.values():
   for ref_value in refs(s):
    sid=ref_value.partition("#")[0]
@@ -81,7 +81,7 @@ def main():
  if not set(CAPS_C)<=set(capability["enum"]) or not set(EVENTS_C)<=set(event["properties"]["event_type"]["enum"]):fail("D4 capability/event vocabulary")
  if not set(SUBJECTS_C)<=set(envelope["$defs"]["subjectType"]["enum"]):fail("D4 subject vocabulary")
  if set(COMMANDS_C)&set(COMMANDS)!=set(COMMANDS_C):fail("D4 runtime boundary drifted")
- if len(SCHEMA_FILES)!=len(paths)-len(D5_SCHEMA_FILES):fail("D4 runtime schema boundary drifted")
+ if len(SCHEMA_FILES)!=len(paths)-len(D5_SCHEMA_FILES):fail("runtime schema boundary drifted")
  approval=schemas[DOMAIN["approval"]]
  if approval["properties"]["actor_role"]["enum"][-2:]!=["CLIENT_DEPLOYMENT_AUTHORITY","PROVIDER_DEPLOYMENT_AUTHORITY"]:fail("deployment human roles")
  doc=(ROOT/"docs/phase5d-build-qa-deployment-authority-architecture.md").read_text()

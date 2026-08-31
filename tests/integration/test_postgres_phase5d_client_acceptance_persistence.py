@@ -103,7 +103,7 @@ class Phase5DClientAcceptancePostgresTests(PostgresHarness):
             ))
             deployment = connection.execute(
                 "select count(*) from information_schema.tables where table_schema='public' "
-                "and table_name='avuhz_deployment_executions'"
+                "and table_name='avuhz_deployment_verifications'"
             ).fetchone()["count"]
         self.assertEqual(counts, (1, 1, 1))
         self.assertEqual(deployment, 0)

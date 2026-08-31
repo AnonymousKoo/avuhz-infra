@@ -23,6 +23,7 @@ python3 tests/contracts/validate_read_models.py
 python3 tests/contracts/validate_slice1_acceptance.py
 python3 tests/contracts/validate_phase5d_implementation_package_architecture.py
 python3 tests/contracts/validate_phase5d_build_qa_deployment_authority.py
+python3 tests/contracts/validate_phase5d_deployment_execution_verification.py
 
 printf 'check: forbidden paths\n'
 tracked_candidates="$(mktemp)"

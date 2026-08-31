@@ -347,7 +347,7 @@ class CodexBuildPackageHandler:
             "authority_category": (
                 "CLIENT_AUTHORITY"
                 if payload["authority_role"] == "CLIENT_IMPLEMENTATION_AUTHORITY"
-                else "SEKINFRA_AUTHORITY"
+                else "PROVIDER_AUTHORITY"
             ),
             "actor_identity": context.human_principal_reference,
             "actor_organization": context.human_organization_reference,
@@ -402,7 +402,7 @@ class CodexBuildPackageHandler:
             or current.get("engagement_id") != prepared.engagement_id
             or current.get("record_version") != prepared.expected_record_version
             or current.get("package_digest") != payload["package_digest"]
-            or payload["client_approval_reference"] == payload["sekinfra_approval_reference"]
+            or payload["client_approval_reference"] == payload["provider_approval_reference"]
         ):
             raise ValueError("exact draft CodexBuildPackage is not releasable")
         _validate_safe_content(current)
@@ -413,7 +413,7 @@ class CodexBuildPackageHandler:
         approvals = []
         for role, field in (
             ("CLIENT_IMPLEMENTATION_AUTHORITY", "client_approval_reference"),
-            ("SEKINFRA_IMPLEMENTATION_AUTHORITY", "sekinfra_approval_reference"),
+            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "provider_approval_reference"),
         ):
             approval_ref = payload[field]
             approval = self.uow.human_approvals.get(
@@ -490,11 +490,6 @@ class CodexBuildPackageReadService:
         prohibited_complete = bool(
             set(package["prohibited_changes"]) == REQUIRED_PROHIBITED_CHANGES
         )
-        offboarding = bool(
-            self.uow.ongoing_offboardings.find_by_engagement(
-                tenant_id, package["engagement_id"]
-            )
-        )
         reasons = []
         for condition, reason in (
             (package.get("state") == "RELEASED", "PACKAGE_NOT_RELEASED"),
@@ -505,7 +500,6 @@ class CodexBuildPackageReadService:
             (acceptance_complete, "ACCEPTANCE_CRITERIA_INCOMPLETE"),
             (prohibited_complete, "PROHIBITED_CHANGES_INCOMPLETE"),
             (package.get("state") != "SUPERSEDED", "PACKAGE_SUPERSEDED"),
-            (not offboarding, "OFFBOARDING_ACTIVE"),
         ):
             if not condition:
                 reasons.append(reason)

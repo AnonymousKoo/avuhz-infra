@@ -1,17 +1,13 @@
-# Avuhz Infrastructure Contracts
+# Avuhz Infrastructure
 
-Clean, provider-neutral contract baseline for Avuhz infrastructure.
+Avuhz is a provider-neutral governed foundation and home for reusable cross-domain systems.
 
-This repository starts with Slice 1 contract foundations only. Authoritative changes will eventually flow through bounded command APIs; n8n will be an orchestration client and will not write authoritative state directly.
+Canonical project controls:
 
-Current implemented contract resource:
+- [Agent rules](AGENTS.md)
+- [Security model](SECURITY.md)
+- [Architecture source of truth](docs/architecture.md)
+- [Current build state](docs/current-build-state.md)
+- [Roadmap](docs/roadmap.md)
 
-- `contracts/schemas/v1/common/identifiers.schema.json`
-
-Local checks:
-
-```bash
-./scripts/check-baseline.sh
-```
-
-No legacy workflows, migrations, project-link metadata, credentials, provider payloads, or external-system configuration belong in this repository.
+Run the local baseline gate with `./scripts/check-baseline.sh`.

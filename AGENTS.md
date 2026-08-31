@@ -18,6 +18,9 @@
 
 ## Build discipline
 
+- Inspect and preserve interrupted or dirty work. Recover with `INSPECT -> PRESERVE -> COMPLETE -> VALIDATE -> COMMIT`; never reset, restore, clean, stash, or discard it without separate owner authorization.
 - Implement one resource at a time, validate it, and stop for owner review.
+- Run focused tests while implementing and the full applicable suites at certification.
+- Do not push unless explicitly authorized, and never force push.
 - Do not add agreements, payments, access, credentials, OIA, findings, conversion, implementation, deployment, managed service, or offboarding to Slice 1.
 - Before future persistence work, confirm the Supabase DATA project, AUTH project, environment, tenant identity bridge, migration target, trusted service identity, and RLS approach.

@@ -5,6 +5,7 @@ import copy
 import json
 import sys
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
@@ -13,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_runtime.guards import GuardPipeline, TrustedExecutionContext
-from avuhz_runtime.in_memory import Executor, UnitOfWork
+from avuhz_runtime.in_memory import Executor, MemoryStore, UnitOfWork
+from avuhz_runtime.implementation_handoff import ImplementationHandoffAcceptanceService, canonical_digest, handoff_reference
 from avuhz_runtime.phase5d_brief import (
     IMPLEMENTATION_BRIEF_CAPABILITIES,
     ImplementationBriefReadService,
@@ -22,7 +24,6 @@ from avuhz_runtime.phase5d_brief import (
 )
 from avuhz_runtime.schema_registry import SchemaRegistry
 from avuhz_runtime.validation import CommandValidator
-from tests.runtime import test_phase5c_runtime as phase5c_module
 
 
 BRIEF_ID = "d5100000-0000-4000-8000-000000000001"
@@ -36,26 +37,35 @@ def schema_validator(schema_id):
 
 class ImplementationBriefRuntimeTests(unittest.TestCase):
     def setUp(self):
-        self.h = phase5c_module.Phase5CRuntimeTests()
-        self.h.setUp()
-        self.h.build_active()
-        self.store = self.h.store
-        self.store.events.clear()
-        self.store.outbox.clear()
-        self.store.idempotency.clear()
+        fixture = json.loads((ROOT / "contracts/fixtures/v1/phase5d-implementation-package.cases.json").read_text())
+        self.handoff = copy.deepcopy(fixture["positive"]["implementation_handoff"])
+        self.store = MemoryStore()
+        self.h = SimpleNamespace(now="2030-01-15T14:00:00Z")
+        self._tenant = self.handoff["tenant_id"]
+        self._engagement_id = self.handoff["source_engagement_reference"]
+        uow = UnitOfWork(self.store)
+        ImplementationHandoffAcceptanceService(uow).accept(self.handoff, self.handoff_context())
+        uow.commit()
         self._number = 500
         self.executor = Executor(
             CommandValidator(ROOT / "contracts/schemas/v1"), GuardPipeline(), self.store,
             clock=lambda: self.h.now, ids=self.next_id,
         )
 
+    def handoff_context(self, tenant=None):
+        return TrustedExecutionContext(
+            True, "provider-adapter.fictional", "PROVIDER_ADAPTER", tenant or self._tenant,
+            None, frozenset({"implementation_handoff:accept"}), frozenset(), "TEST",
+            "avuhz-command-api", "STRONG", False, self.h.now, "2030-03-15T16:00:00Z",
+        )
+
     @property
     def tenant(self):
-        return self.h.tenant
+        return self._tenant
 
     @property
     def engagement_id(self):
-        return self.h.engagement_id
+        return self._engagement_id
 
     def next_id(self):
         self._number += 1
@@ -67,7 +77,7 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
         )
         principal = principal or (
             "human.client-implementation" if role == "CLIENT_IMPLEMENTATION_AUTHORITY"
-            else "human.sekinfra-implementation" if caller_type == "HUMAN"
+            else "human.provider-implementation" if caller_type == "HUMAN"
             else "service.phase5d-brief"
         )
         human = caller_type == "HUMAN"
@@ -78,7 +88,7 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
             "2030-01-15T14:00:00Z", "2030-03-15T16:00:00Z",
             principal if human else None,
             "organization.client" if role == "CLIENT_IMPLEMENTATION_AUTHORITY"
-            else "organization.sekinfra" if human else None,
+            else "organization.provider" if human else None,
             role,
         )
 
@@ -125,58 +135,18 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
         )["positive"]["implementation_brief"]
         omit = {
             "tenant_id", "engagement_id", "state", "client_approval_reference",
-            "sekinfra_approval_reference", "trusted_attribution", "approved_at",
+            "provider_approval_reference", "trusted_attribution", "approved_at",
             "record_version", "created_at", "updated_at",
         }
         payload = {key: copy.deepcopy(value) for key, value in fixture.items() if key not in omit}
-        uow = UnitOfWork(self.store)
-        assessment = uow.oia_assessments.get(self.tenant, self.h.assessment_id)
-        delivery = uow.oia_findings_deliveries.get(self.tenant, self.h.delivery_id)
-        finding = self.h.delivery_finding()
-        payload.update(
-            implementation_brief_id=brief_id,
-            implementation_brief_version=version,
-            source_oia_assessment_reference={
-                "reference_type": "OIA_ASSESSMENT", "reference_id": self.h.assessment_id,
-                "reference_version": assessment["record_version"],
-            },
-            source_findings_delivery_reference={
-                "reference_type": "OIA_FINDINGS_DELIVERY", "reference_id": self.h.delivery_id,
-                "reference_version": delivery["delivery_sequence"],
-            },
-            source_finding_revisions=[copy.deepcopy(finding)],
-            source_conversion_decision_reference={
-                "reference_type": "OIA_CONVERSION_DECISION", "reference_id": self.h.conversion_id,
-                "reference_version": 1,
-            },
-            source_ongoing_agreement_reference={
-                "reference_type": "ONGOING_AGREEMENT_AUTHORITY", "reference_id": self.h.agreement_id,
-                "reference_version": 1,
-            },
-            source_ongoing_payment_reference={
-                "reference_type": "ONGOING_PAYMENT_VERIFICATION", "reference_id": self.h.payment_id,
-                "reference_version": 1,
-            },
-            source_ongoing_access_reference={
-                "reference_type": "ONGOING_ACCESS_GRANT", "reference_id": self.h.ongoing_grant_id,
-                "reference_version": 3,
-            },
-        )
-        for field in (
-            "approved_scope", "current_state_context", "implementation_requirements",
-            "acceptance_criteria", "assumptions_and_limitations",
-        ):
-            for item in payload[field]:
-                if "finding_traceability" in item:
-                    item["finding_traceability"] = [copy.deepcopy(finding)]
+        payload["implementation_brief_id"] = brief_id
+        payload["implementation_brief_version"] = version
         if version > 1:
             payload["supersedes_implementation_brief_reference"] = {
                 "reference_type": "IMPLEMENTATION_BRIEF", "reference_id": brief_id,
                 "reference_version": version - 1,
             }
-        payload["source_truth_digest"] = implementation_brief_source_truth_digest(
-            payload, delivery["manifest_digest"]
-        )
+        payload["source_truth_digest"] = implementation_brief_source_truth_digest(payload)
         payload["implementation_brief_digest"] = implementation_brief_digest(payload)
         return payload
 
@@ -198,7 +168,7 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
         approval_ids = []
         for role, suffix in (
             ("CLIENT_IMPLEMENTATION_AUTHORITY", "client"),
-            ("SEKINFRA_IMPLEMENTATION_AUTHORITY", "sekinfra"),
+            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "provider"),
         ):
             command_id = self.next_id()
             self.execute(
@@ -218,7 +188,7 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
                     "reference_type": "HUMAN_APPROVAL", "reference_id": approval_ids[0],
                     "reference_version": 1,
                 },
-                "sekinfra_approval_reference": {
+                "provider_approval_reference": {
                     "reference_type": "HUMAN_APPROVAL", "reference_id": approval_ids[1],
                     "reference_version": 1,
                 },
@@ -282,8 +252,6 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
         first = self.payload()
         self.draft(first)
         second = self.payload(version=2)
-        second["desired_business_outcome"] = "Preserve exact intake traceability in the bounded sandbox workflow."
-        second["implementation_brief_digest"] = implementation_brief_digest(second)
         denied = self.executor.execute(
             self.raw("ReviseImplementationBrief", second, expected=1,
                      key="phase5d-draft-revision-denied-0001"),
@@ -314,15 +282,16 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
 
     def test_source_binding_negatives_fail_closed_without_side_effects(self):
         mutations = (
-            lambda p: p["source_finding_revisions"][0].update(finding_revision=99),
-            lambda p: p["source_finding_revisions"][0].update(content_digest="sha256:" + "f" * 64),
-            lambda p: p["source_findings_delivery_reference"].update(reference_id=self.next_id()),
-            lambda p: p["source_oia_assessment_reference"].update(reference_version=99),
-            lambda p: p["source_conversion_decision_reference"].update(reference_version=99),
+            lambda p: p["source_implementation_handoff_reference"].update(reference_version=99),
+            lambda p: p["source_implementation_handoff_reference"].update(reference_digest="sha256:" + "f" * 64),
+            lambda p: p["source_implementation_handoff_reference"].update(reference_id=self.next_id()),
+            lambda p: p["approved_scope"][0]["source_traceability"][0].update(reference_digest="sha256:" + "f" * 64),
+            lambda p: p.update(source_truth_digest="sha256:" + "f" * 64),
         )
         for index, mutate in enumerate(mutations):
             payload = self.payload(brief_id=f"d5100000-0000-4000-8000-{100 + index:012d}")
             mutate(payload)
+            payload["implementation_brief_digest"] = implementation_brief_digest(payload)
             before = (copy.deepcopy(self.store.implementation_briefs), copy.deepcopy(self.store.approvals),
                       copy.deepcopy(self.store.events), copy.deepcopy(self.store.outbox),
                       copy.deepcopy(self.store.idempotency))
@@ -343,19 +312,28 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
         payload = self.payload()
         self.draft(payload)
         stored_before = copy.deepcopy(self.store.implementation_briefs)
-        assessment = self.store.oia_assessments[(self.tenant, self.h.assessment_id)]
-        assessment["findings_delivery_id"] = self.next_id()
+        revoked = copy.deepcopy(self.handoff)
+        revoked.update(
+            handoff_version=2, state="REVOKED",
+            supersedes_handoff_reference=handoff_reference(self.handoff),
+            revoked_at="2030-01-15T14:01:00Z", revocation_reason="Provider approval withdrawn.",
+        )
+        revoked.pop("handoff_digest")
+        revoked["handoff_digest"] = canonical_digest(revoked)
+        uow = UnitOfWork(self.store)
+        ImplementationHandoffAcceptanceService(uow).accept(revoked, self.handoff_context())
+        uow.commit()
         readiness = ImplementationBriefReadService(UnitOfWork(self.store)).readiness(
             self.tenant, BRIEF_ID, 1, self.h.now
         )
         self.assertFalse(readiness["source_truth_exact"])
         self.assertFalse(readiness["implementation_brief_ready"])
-        self.assertIn("SOURCE_TRUTH_MISMATCH", readiness["reasons"])
+        self.assertIn("HANDOFF_SOURCE_MISMATCH", readiness["reasons"])
         self.assertEqual(self.store.implementation_briefs, stored_before)
         approval = {
             "implementation_brief_id": BRIEF_ID, "implementation_brief_version": 1,
             "client_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": self.next_id(), "reference_version": 1},
-            "sekinfra_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": self.next_id(), "reference_version": 1},
+            "provider_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": self.next_id(), "reference_version": 1},
             "implementation_brief_digest": payload["implementation_brief_digest"],
         }
         result = self.executor.execute(
@@ -375,7 +353,7 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
         }
         for caller, role in (
             ("INTERNAL_SERVICE", None),
-            ("HUMAN", "SEKINFRA_IMPLEMENTATION_AUTHORITY"),
+            ("HUMAN", "PROVIDER_IMPLEMENTATION_AUTHORITY"),
         ):
             raw = self.raw("RecordImplementationBriefApproval", approval_payload, expected=1,
                            caller_type=caller, key=f"phase5d-role-negative-{caller.lower()}")
@@ -391,7 +369,7 @@ class ImplementationBriefRuntimeTests(unittest.TestCase):
             self.context("RecordImplementationBriefApproval", role="CLIENT_IMPLEMENTATION_AUTHORITY"),
         )
         self.assertEqual(result["result"], "VALIDATION_FAILED")
-        self.assertEqual(len(self.store.approvals), 6)  # Phase 5C approvals only.
+        self.assertEqual(len(self.store.approvals), 0)
 
     def test_content_acceptance_prohibited_and_secret_boundaries(self):
         cases = []

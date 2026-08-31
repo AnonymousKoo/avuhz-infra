@@ -81,7 +81,8 @@
       "type": "string",
       "enum": [
         "CLIENT_AUTHORITY",
-        "SEKINFRA_AUTHORITY"
+        "SEKINFRA_AUTHORITY",
+        "PROVIDER_AUTHORITY"
       ]
     },
     "actor_identity": {
@@ -101,7 +102,8 @@
         "CLIENT_IMPLEMENTATION_AUTHORITY",
         "SEKINFRA_IMPLEMENTATION_AUTHORITY",
         "CLIENT_DEPLOYMENT_AUTHORITY",
-        "SEKINFRA_DEPLOYMENT_AUTHORITY"
+        "SEKINFRA_DEPLOYMENT_AUTHORITY",
+        "PROVIDER_IMPLEMENTATION_AUTHORITY"
       ]
     },
     "decision": {
@@ -754,7 +756,7 @@
             ]
           },
           "authority_category": {
-            "const": "SEKINFRA_AUTHORITY"
+            "const": "PROVIDER_AUTHORITY"
           }
         },
         "required": [
@@ -765,7 +767,7 @@
       "then": {
         "properties": {
           "actor_role": {
-            "const": "SEKINFRA_IMPLEMENTATION_AUTHORITY"
+            "const": "PROVIDER_IMPLEMENTATION_AUTHORITY"
           }
         }
       }

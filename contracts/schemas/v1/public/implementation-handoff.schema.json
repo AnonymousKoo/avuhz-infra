@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:public-contract:implementation-handoff:v1",
+  "title": "ImplementationHandoff v1",
+  "description": "Provider-neutral approved implementation input. It conveys bounded approved work but grants no implementation, access, credential, production, or deployment authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "implementation_handoff_id",
+    "tenant_id",
+    "client_reference",
+    "source_provider_reference",
+    "source_engagement_reference",
+    "handoff_version",
+    "state",
+    "problem_statement",
+    "desired_outcome",
+    "approved_scope",
+    "excluded_scope",
+    "constraints",
+    "context_references",
+    "integrations",
+    "allowed_access_level",
+    "risks",
+    "implementation_requirements",
+    "acceptance_criteria",
+    "prohibited_changes",
+    "dependencies",
+    "assumptions_limitations",
+    "upstream_approval_references",
+    "source_artifact_references",
+    "approved_at",
+    "created_at",
+    "handoff_digest"
+  ],
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "boundedText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "shortText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "opaqueReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_type",
+        "reference_id"
+      ],
+      "properties": {
+        "reference_type": {
+          "$ref": "#/$defs/shortText"
+        },
+        "reference_id": {
+          "$ref": "#/$defs/shortText"
+        },
+        "reference_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reference_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "scopeItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_item_id",
+        "description",
+        "action_classes",
+        "target_references"
+      ],
+      "properties": {
+        "scope_item_id": {
+          "$ref": "#/$defs/shortText"
+        },
+        "description": {
+          "$ref": "#/$defs/boundedText"
+        },
+        "action_classes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/shortText"
+          }
+        },
+        "target_references": {
+          "type": "array",
+          "maxItems": 50,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/opaqueReference"
+          }
+        }
+      }
+    },
+    "namedStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/shortText"
+        },
+        "statement": {
+          "$ref": "#/$defs/boundedText"
+        }
+      }
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterion_id",
+        "expected_condition",
+        "evidence_requirement"
+      ],
+      "properties": {
+        "criterion_id": {
+          "$ref": "#/$defs/shortText"
+        },
+        "expected_condition": {
+          "$ref": "#/$defs/boundedText"
+        },
+        "evidence_requirement": {
+          "$ref": "#/$defs/boundedText"
+        }
+      }
+    },
+    "approvalReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_role",
+        "approval_reference",
+        "approved_by",
+        "approved_at"
+      ],
+      "properties": {
+        "approval_role": {
+          "type": "string",
+          "enum": [
+            "CLIENT_APPROVER",
+            "PROVIDER_APPROVER"
+          ]
+        },
+        "approval_reference": {
+          "$ref": "#/$defs/shortText"
+        },
+        "approved_by": {
+          "$ref": "#/$defs/shortText"
+        },
+        "approved_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    }
+  },
+  "properties": {
+    "implementation_handoff_id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "tenant_id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "client_reference": {
+      "$ref": "#/$defs/shortText"
+    },
+    "source_provider_reference": {
+      "$ref": "#/$defs/shortText"
+    },
+    "source_engagement_reference": {
+      "$ref": "#/$defs/shortText"
+    },
+    "handoff_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "APPROVED",
+        "SUPERSEDED",
+        "REVOKED"
+      ]
+    },
+    "problem_statement": {
+      "$ref": "#/$defs/boundedText"
+    },
+    "desired_outcome": {
+      "$ref": "#/$defs/boundedText"
+    },
+    "approved_scope": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/scopeItem"
+      }
+    },
+    "excluded_scope": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/boundedText"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/boundedText"
+      }
+    },
+    "context_references": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/opaqueReference"
+      }
+    },
+    "integrations": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/namedStatement"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/namedStatement"
+      }
+    },
+    "implementation_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/namedStatement"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/acceptanceCriterion"
+      }
+    },
+    "prohibited_changes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/boundedText"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/namedStatement"
+      }
+    },
+    "assumptions_limitations": {
+      "type": "array",
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/boundedText"
+      }
+    },
+    "upstream_approval_references": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/approvalReference"
+      }
+    },
+    "source_artifact_references": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/opaqueReference"
+      }
+    },
+    "supersedes_handoff_reference": {
+      "$ref": "#/$defs/opaqueReference"
+    },
+    "revoked_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "revocation_reason": {
+      "$ref": "#/$defs/boundedText"
+    },
+    "approved_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "handoff_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "allowed_access_level": {
+      "type": "string",
+      "enum": [
+        "NO_DIRECT_ACCESS",
+        "READ_ONLY",
+        "SANDBOX_ONLY",
+        "NON_PRODUCTION_BOUNDED"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "REVOKED"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "revoked_at",
+          "revocation_reason"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "revoked_at"
+              ]
+            },
+            {
+              "required": [
+                "revocation_reason"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

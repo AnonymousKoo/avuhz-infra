@@ -2,14 +2,179 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:domain:implementation-brief:v1",
   "title": "ImplementationBrief v1",
-  "description": "Versioned governed human-readable implementation truth bound to exact immutable OIA and Phase 5C authority. It is neither implementation, access, deployment, nor production-change authority.",
-  "type": "object", "additionalProperties": false,
-  "required": ["implementation_brief_id", "implementation_brief_version", "tenant_id", "engagement_id", "source_oia_assessment_reference", "source_findings_delivery_reference", "source_finding_revisions", "source_conversion_decision_reference", "source_ongoing_agreement_reference", "source_ongoing_payment_reference", "source_ongoing_access_reference", "approved_business_problem", "desired_business_outcome", "approved_scope", "excluded_scope", "known_constraints", "current_state_context", "approved_integrations", "allowed_access_level", "risks", "implementation_requirements", "acceptance_criteria", "prohibited_changes", "dependencies", "assumptions_and_limitations", "source_truth_digest", "implementation_brief_digest", "state", "trusted_attribution", "record_version", "created_at", "updated_at"],
+  "description": "Versioned governed implementation truth bound to one exact current approved provider-neutral ImplementationHandoff. It is neither implementation, access, deployment, nor production-change authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "implementation_brief_id",
+    "implementation_brief_version",
+    "tenant_id",
+    "engagement_id",
+    "source_implementation_handoff_reference",
+    "approved_business_problem",
+    "desired_business_outcome",
+    "approved_scope",
+    "excluded_scope",
+    "known_constraints",
+    "current_state_context",
+    "approved_integrations",
+    "allowed_access_level",
+    "risks",
+    "implementation_requirements",
+    "acceptance_criteria",
+    "prohibited_changes",
+    "dependencies",
+    "assumptions_and_limitations",
+    "source_truth_digest",
+    "implementation_brief_digest",
+    "state",
+    "trusted_attribution",
+    "record_version",
+    "created_at",
+    "updated_at"
+  ],
   "properties": {
-    "implementation_brief_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationBriefId"}, "implementation_brief_version": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"}, "tenant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"}, "engagement_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
-    "source_oia_assessment_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/oiaAssessmentReference"}, "source_findings_delivery_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/findingsDeliveryReference"}, "source_finding_revisions": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/findingRevisionReferences"}, "source_conversion_decision_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/conversionDecisionReference"}, "source_ongoing_agreement_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/ongoingAgreementReference"}, "source_ongoing_payment_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/ongoingPaymentReference"}, "source_ongoing_access_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/ongoingAccessReference"},
-    "approved_business_problem": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatement"}, "desired_business_outcome": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatement"}, "approved_scope": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/scopeItems"}, "excluded_scope": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"}, "known_constraints": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"}, "current_state_context": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/contextItems"}, "approved_integrations": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/integrations"}, "allowed_access_level": {"type": "string", "enum": ["NO_DIRECT_ACCESS", "READ_ONLY", "SANDBOX_ONLY", "NON_PRODUCTION_BOUNDED"]}, "risks": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"}, "implementation_requirements": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/scopeItems"}, "acceptance_criteria": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/acceptanceCriteria"}, "prohibited_changes": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/requiredProhibitedActions"}, "dependencies": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"}, "assumptions_and_limitations": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/contextItems"},
-    "source_truth_digest": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"}, "implementation_brief_digest": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"}, "state": {"type": "string", "enum": ["DRAFT", "APPROVED", "SUPERSEDED"]}, "client_approval_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/humanApprovalReference"}, "sekinfra_approval_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/humanApprovalReference"}, "supersedes_implementation_brief_reference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/implementationBriefReference"}, "trusted_attribution": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/trustedAttribution"}, "approved_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}, "record_version": {"$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"}, "created_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}, "updated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}
+    "implementation_brief_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationBriefId"
+    },
+    "implementation_brief_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "approved_business_problem": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatement"
+    },
+    "desired_business_outcome": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatement"
+    },
+    "approved_scope": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/scopeItems"
+    },
+    "excluded_scope": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"
+    },
+    "known_constraints": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"
+    },
+    "current_state_context": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/contextItems"
+    },
+    "approved_integrations": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/integrations"
+    },
+    "allowed_access_level": {
+      "type": "string",
+      "enum": [
+        "NO_DIRECT_ACCESS",
+        "READ_ONLY",
+        "SANDBOX_ONLY",
+        "NON_PRODUCTION_BOUNDED"
+      ]
+    },
+    "risks": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"
+    },
+    "implementation_requirements": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/scopeItems"
+    },
+    "acceptance_criteria": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/acceptanceCriteria"
+    },
+    "prohibited_changes": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/requiredProhibitedActions"
+    },
+    "dependencies": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/boundedStatements"
+    },
+    "assumptions_and_limitations": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/contextItems"
+    },
+    "source_truth_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "implementation_brief_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "APPROVED",
+        "SUPERSEDED"
+      ]
+    },
+    "client_approval_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/humanApprovalReference"
+    },
+    "provider_approval_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/humanApprovalReference"
+    },
+    "supersedes_implementation_brief_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/implementationBriefReference"
+    },
+    "trusted_attribution": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/trustedAttribution"
+    },
+    "approved_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "record_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "source_implementation_handoff_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/implementationHandoffReference"
+    }
   },
-  "allOf": [{"if": {"properties": {"state": {"enum": ["APPROVED", "SUPERSEDED"]}}, "required": ["state"]}, "then": {"required": ["client_approval_reference", "sekinfra_approval_reference", "approved_at"]}}, {"if": {"properties": {"implementation_brief_version": {"minimum": 2}}, "required": ["implementation_brief_version"]}, "then": {"required": ["supersedes_implementation_brief_reference"]}}]
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": [
+              "APPROVED",
+              "SUPERSEDED"
+            ]
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "client_approval_reference",
+          "provider_approval_reference",
+          "approved_at"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "implementation_brief_version": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "implementation_brief_version"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_implementation_brief_reference"
+        ]
+      }
+    }
+  ]
 }

@@ -157,7 +157,7 @@ Omitting one is invalid. A package, capability, caller claim, or AI-generated dr
 
 ## Human approval and AI boundary
 
-Phase 5D-A adds exact roles `CLIENT_IMPLEMENTATION_AUTHORITY` and `SEKINFRA_IMPLEMENTATION_AUTHORITY`. They are separate attributable `HumanApproval` records bound to the exact Phase 5D subject ID, version, and digest through `phase5d_authority`. Existing diagnostic and Phase 5C approvals retain their roles/bindings and cannot be reused.
+Phase 5D-A adds exact roles `CLIENT_IMPLEMENTATION_AUTHORITY` and `PROVIDER_IMPLEMENTATION_AUTHORITY`. They are separate attributable `HumanApproval` records bound to the exact Phase 5D subject ID, version, and digest through `phase5d_authority`. Existing diagnostic and Phase 5C approvals retain their roles/bindings and cannot be reused.
 
 Both roles approve final brief truth, the bounded implementation authorization, and final package release.
 

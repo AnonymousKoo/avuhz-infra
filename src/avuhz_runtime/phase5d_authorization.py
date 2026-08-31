@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import copy
 
-from .phase5c import canonical_digest, reference
+from .implementation_handoff import canonical_digest
 from .phase5d_brief import (
     IMPLEMENTATION_BRIEF_ROLES,
     ImplementationBriefReadService,
     REQUIRED_PROHIBITED_CHANGES,
-    resolve_implementation_brief_sources,
+    resolve_implementation_brief_sources, reference,
 )
 
 
@@ -60,12 +60,7 @@ PERMITTED_BUILD_ACTIONS = frozenset({
     "BUILD_NON_PRODUCTION_ARTIFACT",
 })
 
-SOURCE_REFERENCE_FIELDS = (
-    "source_conversion_decision_reference",
-    "source_ongoing_agreement_reference",
-    "source_ongoing_payment_reference",
-    "source_ongoing_access_reference",
-)
+SOURCE_REFERENCE_FIELDS = ("source_implementation_handoff_reference",)
 
 AUTHORITY_BODY_FIELDS = (
     "implementation_authorization_id",
@@ -285,7 +280,7 @@ class ImplementationAuthorizationHandler:
             "authority_category": (
                 "CLIENT_AUTHORITY"
                 if payload["authority_role"] == "CLIENT_IMPLEMENTATION_AUTHORITY"
-                else "SEKINFRA_AUTHORITY"
+                else "PROVIDER_AUTHORITY"
             ),
             "actor_identity": context.human_principal_reference,
             "actor_organization": context.human_organization_reference,
@@ -348,7 +343,7 @@ class ImplementationAuthorizationHandler:
             or current.get("record_version") != prepared.expected_record_version
             or current.get("implementation_authority_digest")
             != payload["implementation_authority_digest"]
-            or payload["client_approval_reference"] == payload["sekinfra_approval_reference"]
+            or payload["client_approval_reference"] == payload["provider_approval_reference"]
         ):
             raise ValueError("exact proposed ImplementationAuthorization is not activatable")
         brief = _exact_brief(
@@ -366,7 +361,7 @@ class ImplementationAuthorizationHandler:
             )
             for role, field in (
                 ("CLIENT_IMPLEMENTATION_AUTHORITY", "client_approval_reference"),
-                ("SEKINFRA_IMPLEMENTATION_AUTHORITY", "sekinfra_approval_reference"),
+                ("PROVIDER_IMPLEMENTATION_AUTHORITY", "provider_approval_reference"),
             )
         ]
         return self.uow.implementation_authorizations.activate(
@@ -443,15 +438,6 @@ class ImplementationAuthorizationReadService:
                 )
             )
         approvals_active = all(approvals)
-        commercial_valid_now = bool(
-            brief_status and brief_status["commercial_authority_valid"]
-        )
-        access_usable = bool(brief_status and brief_status["ongoing_access_usable"])
-        offboarding = bool(
-            self.uow.ongoing_offboardings.find_by_engagement(
-                tenant_id, authorization_record["engagement_id"]
-            )
-        )
         within_window = authorization_record["effective_at"] <= generated_at < authorization_record["expires_at"]
         stored_state = authorization_record["state"]
         state = (
@@ -460,13 +446,7 @@ class ImplementationAuthorizationReadService:
             else stored_state
         )
         ready = all((
-            brief_ready,
-            commercial_valid_now,
-            access_usable,
-            within_window,
-            scope_and_targets_match,
-            approvals_active,
-            not offboarding,
+            brief_ready, within_window, scope_and_targets_match, approvals_active,
             state not in {"EXPIRED", "REVOKED", "SUPERSEDED"},
         ))
         usable = ready and state == "ACTIVE"
@@ -475,10 +455,6 @@ class ImplementationAuthorizationReadService:
             reasons.append("AUTHORIZATION_NOT_ACTIVE")
         if not brief_ready:
             reasons.append("BRIEF_NOT_READY")
-        if not commercial_valid_now:
-            reasons.append("COMMERCIAL_AUTHORITY_INVALID")
-        if not access_usable:
-            reasons.append("ONGOING_ACCESS_UNUSABLE")
         if not within_window:
             reasons.append("OUTSIDE_VALIDITY_WINDOW")
         if not scope_matches:
@@ -487,8 +463,6 @@ class ImplementationAuthorizationReadService:
             reasons.append("TARGET_MISMATCH")
         if not approvals_active:
             reasons.append("APPROVAL_INVALID")
-        if offboarding:
-            reasons.append("OFFBOARDING_ACTIVE")
         if state in {"EXPIRED", "REVOKED", "SUPERSEDED"}:
             reasons.append("AUTHORIZATION_TERMINAL")
         return {
@@ -499,8 +473,6 @@ class ImplementationAuthorizationReadService:
             ),
             "state": state,
             "brief_ready": brief_ready,
-            "commercial_authority_valid": commercial_valid_now,
-            "ongoing_access_usable": access_usable,
             "within_validity_window": within_window,
             "scope_and_targets_match": scope_and_targets_match,
             "approvals_active": approvals_active,

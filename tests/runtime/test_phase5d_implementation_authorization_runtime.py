@@ -258,7 +258,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
         approval_ids = []
         for role, suffix in (
             ("CLIENT_IMPLEMENTATION_AUTHORITY", "client"),
-            ("SEKINFRA_IMPLEMENTATION_AUTHORITY", "sekinfra"),
+            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "sekinfra"),
         ):
             command_id = self.next_id()
             self.execute(
@@ -287,7 +287,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
                     "reference_id": approval_ids[0],
                     "reference_version": 1,
                 },
-                "sekinfra_approval_reference": {
+                "provider_approval_reference": {
                     "reference_type": "HUMAN_APPROVAL",
                     "reference_id": approval_ids[1],
                     "reference_version": 1,
@@ -326,8 +326,8 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
         )
         self.assertEqual((active["state"], active["record_version"]), ("ACTIVE", 2))
         self.assertEqual(
-            active["source_ongoing_access_reference"],
-            self.brief_payload["source_ongoing_access_reference"],
+            active["source_implementation_handoff_reference"],
+            self.brief_payload["source_implementation_handoff_reference"],
         )
         self.assertFalse(list(schema_validator(
             "urn:avuhz:schema:contracts:domain:implementation-authorization:v1"
@@ -463,7 +463,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
                 "reference_id": client_id,
                 "reference_version": 1,
             },
-            "sekinfra_approval_reference": {
+            "provider_approval_reference": {
                 "reference_type": "HUMAN_APPROVAL",
                 "reference_id": self.next_id(),
                 "reference_version": 1,
@@ -478,7 +478,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
 
         approval_payload = {
             "subject_version": 1,
-            "authority_role": "SEKINFRA_IMPLEMENTATION_AUTHORITY",
+            "authority_role": "PROVIDER_IMPLEMENTATION_AUTHORITY",
             "authority_digest": payload["implementation_authority_digest"],
         }
         spoof = self.executor.execute(
@@ -518,7 +518,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
                     "implementation_authorization_id": AUTHORIZATION_ID,
                     "authorization_version": 1,
                     "client_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": self.next_id(), "reference_version": 1},
-                    "sekinfra_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": self.next_id(), "reference_version": 1},
+                    "provider_approval_reference": {"reference_type": "HUMAN_APPROVAL", "reference_id": self.next_id(), "reference_version": 1},
                     "implementation_authority_digest": "sha256:" + "a" * 64,
                     "authorized_by": "caller.spoof",
                 },
@@ -599,7 +599,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
                 "revocation_reason": "SECURITY_CONCERN",
             },
             expected=1,
-            role="SEKINFRA_IMPLEMENTATION_AUTHORITY",
+            role="PROVIDER_IMPLEMENTATION_AUTHORITY",
         )
         revoked = UnitOfWork(self.store).implementation_authorizations.get_version(
             self.tenant, AUTHORIZATION_ID, 2
@@ -639,19 +639,28 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
             self.assertEqual(result["result"], "REJECTED", stage)
             self.assert_no_effects(before)
 
-    def test_ongoing_access_is_prerequisite_not_implementation_authority(self):
-        self.assertTrue(self.store.ongoing_access_grants)
+    def test_handoff_is_prerequisite_not_implementation_authority(self):
+        self.assertTrue(self.store.implementation_handoffs)
         self.assertFalse(self.store.implementation_authorizations)
         payload = self.payload()
         self.execute("ProposeImplementationAuthorization", payload)
         self.activate(payload, self.approve(payload))
         stored_before = copy.deepcopy(self.store.implementation_authorizations)
-        grant_key = (self.tenant, self.b.h.ongoing_grant_id)
-        self.store.ongoing_access_grants[grant_key]["state"] = "REVOKED"
+        handoff = copy.deepcopy(self.b.handoff)
+        handoff.update(
+            handoff_version=2, state="REVOKED",
+            supersedes_handoff_reference=brief_runtime.handoff_reference(self.b.handoff),
+            revoked_at="2030-01-15T14:01:00Z", revocation_reason="Provider approval withdrawn.",
+        )
+        handoff.pop("handoff_digest")
+        handoff["handoff_digest"] = brief_runtime.canonical_digest(handoff)
+        uow = UnitOfWork(self.store)
+        brief_runtime.ImplementationHandoffAcceptanceService(uow).accept(handoff, self.b.handoff_context())
+        uow.commit()
         status = ImplementationAuthorizationReadService(UnitOfWork(self.store)).status(
             self.tenant, AUTHORIZATION_ID, 1, self.now
         )
-        self.assertFalse(status["ongoing_access_usable"])
+        self.assertFalse(status["brief_ready"])
         self.assertFalse(status["implementation_authorization_usable"])
         self.assertEqual(self.store.implementation_authorizations, stored_before)
 

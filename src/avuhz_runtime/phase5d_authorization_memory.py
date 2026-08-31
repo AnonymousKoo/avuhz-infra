@@ -77,7 +77,7 @@ class ImplementationAuthorizationMemoryRepository:
         self,
         current,
         client_approval_reference,
-        sekinfra_approval_reference,
+        provider_approval_reference,
         activated_at,
     ):
         key = (
@@ -93,7 +93,7 @@ class ImplementationAuthorizationMemoryRepository:
         updated.update(
             state="ACTIVE",
             client_approval_reference=copy.deepcopy(client_approval_reference),
-            sekinfra_approval_reference=copy.deepcopy(sekinfra_approval_reference),
+            provider_approval_reference=copy.deepcopy(provider_approval_reference),
             activated_at=activated_at,
             record_version=stored["record_version"] + 1,
             updated_at=activated_at,

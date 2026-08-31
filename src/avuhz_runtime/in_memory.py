@@ -62,6 +62,7 @@ def fingerprint(command):
 @dataclass
 class MemoryStore:
     handoffs:dict=field(default_factory=dict); engagements:dict=field(default_factory=dict); scopes:dict=field(default_factory=dict); approvals:dict=field(default_factory=dict); proposals:dict=field(default_factory=dict); grants:dict=field(default_factory=dict); agreements:dict=field(default_factory=dict); payments:dict=field(default_factory=dict); oia_assessments:dict=field(default_factory=dict); oia_evidence_items:dict=field(default_factory=dict); oia_assessment_plans:dict=field(default_factory=dict); oia_inspection_items:dict=field(default_factory=dict); oia_observations:dict=field(default_factory=dict); oia_root_causes:dict=field(default_factory=dict); oia_findings:dict=field(default_factory=dict); oia_findings_deliveries:dict=field(default_factory=dict); oia_conversion_decisions:dict=field(default_factory=dict); ongoing_agreement_authorities:dict=field(default_factory=dict); ongoing_payment_verifications:dict=field(default_factory=dict); ongoing_access_grants:dict=field(default_factory=dict); ongoing_access_revocation_verifications:dict=field(default_factory=dict); ongoing_offboardings:dict=field(default_factory=dict); implementation_briefs:dict=field(default_factory=dict); implementation_authorizations:dict=field(default_factory=dict); idempotency:dict=field(default_factory=dict); events:list=field(default_factory=list); outbox:list=field(default_factory=list)
+    implementation_handoffs:dict=field(default_factory=dict)
     codex_build_packages:dict=field(default_factory=dict)
     build_execution_results:dict=field(default_factory=dict)
     qa_results:dict=field(default_factory=dict)
@@ -526,6 +527,20 @@ class OngoingOffboardingMemoryRepository(_TenantRepo):
         updated=copy.deepcopy(stored);updated.update(state="COMPLETED",revocation_verification_references=copy.deepcopy(verification_references),completed_at=completed_at,completed_by=completed_by,record_version=stored["record_version"]+1)
         self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=updated;return copy.deepcopy(updated)
 
+class ImplementationHandoffMemoryRepository(_TenantRepo):
+    def __init__(self,u):super().__init__(u,"implementation_handoffs")
+    def get_version(self,tenant_id,handoff_id,handoff_version):
+        value=self.data.get((tenant_id,handoff_id,handoff_version));return copy.deepcopy(value) if value else None
+    def list_versions(self,tenant_id,handoff_id):
+        return tuple(copy.deepcopy(value) for (record_tenant,record_id,_),value in sorted(self.data.items(),key=lambda item:item[0][2]) if record_tenant==tenant_id and record_id==handoff_id)
+    def get_current(self,tenant_id,handoff_id):
+        values=self.list_versions(tenant_id,handoff_id)
+        return copy.deepcopy(max(values,key=lambda value:value["handoff_version"])) if values else None
+    def create(self,record):
+        key=(record["tenant_id"],record["implementation_handoff_id"],record["handoff_version"])
+        if key in self.data:raise ValueError("ImplementationHandoff identity/version already exists")
+        self.u.failpoint("AUTHORITATIVE_WRITE");self.data[key]=copy.deepcopy(record);return copy.deepcopy(record)
+
 class ImplementationBriefMemoryRepository(_TenantRepo):
     def __init__(self,u):super().__init__(u,"implementation_briefs")
     def get_version(self,tenant_id,brief_id,brief_version):
@@ -546,12 +561,12 @@ class ImplementationBriefMemoryRepository(_TenantRepo):
         self.u.failpoint("AUTHORITATIVE_WRITE")
         superseded=copy.deepcopy(stored);superseded.update(state="SUPERSEDED",record_version=stored["record_version"]+1,updated_at=revised_at)
         self.data[key]=superseded;self.data[replacement_key]=copy.deepcopy(replacement);return copy.deepcopy(replacement)
-    def approve(self,current,client_approval_reference,sekinfra_approval_reference,approved_at):
+    def approve(self,current,client_approval_reference,provider_approval_reference,approved_at):
         key=(current["tenant_id"],current["implementation_brief_id"],current["implementation_brief_version"]);stored=self.data.get(key)
         if stored!=current or stored.get("state")!="DRAFT":raise ValueError("ImplementationBrief approval conflict")
         self.u.failpoint("AUTHORITATIVE_WRITE")
         updated=copy.deepcopy(stored)
-        updated.update(state="APPROVED",client_approval_reference=copy.deepcopy(client_approval_reference),sekinfra_approval_reference=copy.deepcopy(sekinfra_approval_reference),approved_at=approved_at,record_version=stored["record_version"]+1,updated_at=approved_at)
+        updated.update(state="APPROVED",client_approval_reference=copy.deepcopy(client_approval_reference),provider_approval_reference=copy.deepcopy(provider_approval_reference),approved_at=approved_at,record_version=stored["record_version"]+1,updated_at=approved_at)
         self.data[key]=updated;return copy.deepcopy(updated)
 
 class HumanApprovalMemoryRepository(_TenantRepo):
@@ -601,7 +616,7 @@ class OutboxMemoryRepository:
 class UnitOfWork:
     def __init__(self,store):
         self.store=store;self.working=copy.deepcopy(store)
-        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.assessment_access_grants=AssessmentAccessGrantMemoryRepository(self);self.oia_assessments=OIAAssessmentMemoryRepository(self);self.oia_evidence_items=OIAEvidenceMemoryRepository(self);self.oia_assessment_plans=OIAAssessmentPlanMemoryRepository(self);self.oia_inspection_items=OIAInspectionItemMemoryRepository(self);self.oia_observations=OIAObservationMemoryRepository(self);self.oia_root_causes=OIARootCauseMemoryRepository(self);self.oia_findings=OIAFindingMemoryRepository(self);self.oia_findings_deliveries=OIAFindingsDeliveryMemoryRepository(self);self.oia_conversion_decisions=OIAConversionDecisionMemoryRepository(self);self.ongoing_agreement_authorities=OngoingAgreementAuthorityMemoryRepository(self);self.ongoing_payment_verifications=OngoingPaymentVerificationMemoryRepository(self);self.ongoing_access_grants=OngoingAccessGrantMemoryRepository(self);self.ongoing_access_revocation_verifications=OngoingAccessRevocationVerificationMemoryRepository(self);self.ongoing_offboardings=OngoingOffboardingMemoryRepository(self);self.implementation_briefs=ImplementationBriefMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
+        self.handoffs=AcquisitionHandoffMemoryRepository(self);self.engagements=EngagementMemoryRepository(self);self.diagnostic_scopes=DiagnosticScopeMemoryRepository(self);self.diagnostic_agreement_authorities=DiagnosticAgreementAuthorityMemoryRepository(self);self.diagnostic_payment_verifications=DiagnosticPaymentVerificationMemoryRepository(self);self.assessment_access_proposals=AssessmentAccessProposalMemoryRepository(self);self.assessment_access_grants=AssessmentAccessGrantMemoryRepository(self);self.oia_assessments=OIAAssessmentMemoryRepository(self);self.oia_evidence_items=OIAEvidenceMemoryRepository(self);self.oia_assessment_plans=OIAAssessmentPlanMemoryRepository(self);self.oia_inspection_items=OIAInspectionItemMemoryRepository(self);self.oia_observations=OIAObservationMemoryRepository(self);self.oia_root_causes=OIARootCauseMemoryRepository(self);self.oia_findings=OIAFindingMemoryRepository(self);self.oia_findings_deliveries=OIAFindingsDeliveryMemoryRepository(self);self.oia_conversion_decisions=OIAConversionDecisionMemoryRepository(self);self.ongoing_agreement_authorities=OngoingAgreementAuthorityMemoryRepository(self);self.ongoing_payment_verifications=OngoingPaymentVerificationMemoryRepository(self);self.ongoing_access_grants=OngoingAccessGrantMemoryRepository(self);self.ongoing_access_revocation_verifications=OngoingAccessRevocationVerificationMemoryRepository(self);self.ongoing_offboardings=OngoingOffboardingMemoryRepository(self);self.implementation_handoffs=ImplementationHandoffMemoryRepository(self);self.implementation_briefs=ImplementationBriefMemoryRepository(self);self.human_approvals=HumanApprovalMemoryRepository(self);self.idempotency=IdempotencyMemoryRepository(self);self.lifecycle_events=LifecycleEventMemoryRepository(self);self.outbox=OutboxMemoryRepository(self)
         self.implementation_authorizations=ImplementationAuthorizationMemoryRepository(self)
         self.codex_build_packages=CodexBuildPackageMemoryRepository(self)
         self.build_execution_results=BuildExecutionResultMemoryRepository(self)

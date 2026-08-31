@@ -48,28 +48,102 @@
       "description": "Canonical identity for one attributable human approval record.",
       "$ref": "#/$defs/canonicalUuid"
     },
-    "assessmentAccessProposalId": {"$ref": "#/$defs/canonicalUuid"},
-    "oiaAssessmentId": {"$ref": "#/$defs/canonicalUuid"},
-    "oiaAssessmentPlanId": {"title": "OIA Assessment Plan ID", "description": "Canonical identity for one versioned client-specific OIA assessment plan resource.", "$ref": "#/$defs/canonicalUuid"},
-    "oiaInspectionItemId": {"title": "OIA Inspection Item ID", "description": "Canonical identity for one first-class OIA diagnostic inspection item.", "$ref": "#/$defs/canonicalUuid"},
-    "oiaEvidenceId": {"$ref": "#/$defs/canonicalUuid"},
-    "oiaObservationId": {"$ref": "#/$defs/canonicalUuid"},
-    "oiaRootCauseId": {"$ref": "#/$defs/canonicalUuid"},
-    "oiaFindingId": {"$ref": "#/$defs/canonicalUuid"},
-    "oiaFindingsDeliveryId": {"$ref": "#/$defs/canonicalUuid"},
-    "oiaConversionDecisionId": {"title": "OIA Conversion Decision ID", "description": "Canonical identity for one delivery-bound client conversion decision history.", "$ref": "#/$defs/canonicalUuid"},
-    "ongoingAgreementAuthorityId": {"title": "Ongoing Agreement Authority ID", "description": "Canonical identity for one versioned Agreement #2 authority history.", "$ref": "#/$defs/canonicalUuid"},
-    "ongoingPaymentVerificationId": {"title": "Ongoing Payment Verification ID", "description": "Canonical identity for one bounded ongoing commercial verification.", "$ref": "#/$defs/canonicalUuid"},
-    "ongoingAccessGrantId": {"title": "Ongoing Access Grant ID", "description": "Canonical identity for one bounded ongoing access authority, distinct from diagnostic access.", "$ref": "#/$defs/canonicalUuid"},
-    "ongoingAccessRevocationVerificationId": {"title": "Ongoing Access Revocation Verification ID", "description": "Canonical identity for immutable verification that external ongoing access is absent.", "$ref": "#/$defs/canonicalUuid"},
-    "ongoingOffboardingId": {"title": "Ongoing Offboarding ID", "description": "Canonical identity for one governed ongoing-engagement offboarding history.", "$ref": "#/$defs/canonicalUuid"},
-    "implementationBriefId": {"title": "Implementation Brief ID", "description": "Canonical identity for one immutable versioned implementation-planning truth history.", "$ref": "#/$defs/canonicalUuid"},
-    "implementationAuthorizationId": {"title": "Implementation Authorization ID", "description": "Canonical identity for one bounded non-production implementation authority history, distinct from every access grant and deployment authority.", "$ref": "#/$defs/canonicalUuid"},
-    "codexBuildPackageId": {"title": "Codex Build Package ID", "description": "Canonical identity for one immutable versioned executor-ready build package history; it grants no authority by itself.", "$ref": "#/$defs/canonicalUuid"},
-    "buildExecutionResultId": {"title": "Build Execution Result ID", "description": "Canonical identity for one immutable build execution attempt history.", "$ref": "#/$defs/canonicalUuid"},
-    "qaResultId": {"title": "QA Result ID", "description": "Canonical identity for one immutable governed QA attempt history.", "$ref": "#/$defs/canonicalUuid"},
-    "clientAcceptanceId": {"title": "Client Acceptance ID", "description": "Canonical identity for one exact client acceptance decision history.", "$ref": "#/$defs/canonicalUuid"},
-    "deploymentAuthorizationId": {"title": "Deployment Authorization ID", "description": "Canonical identity for one exact bounded deployment authority history; it is not deployment execution.", "$ref": "#/$defs/canonicalUuid"},
+    "assessmentAccessProposalId": {
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaAssessmentId": {
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaAssessmentPlanId": {
+      "title": "OIA Assessment Plan ID",
+      "description": "Canonical identity for one versioned client-specific OIA assessment plan resource.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaInspectionItemId": {
+      "title": "OIA Inspection Item ID",
+      "description": "Canonical identity for one first-class OIA diagnostic inspection item.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaEvidenceId": {
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaObservationId": {
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaRootCauseId": {
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaFindingId": {
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaFindingsDeliveryId": {
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "oiaConversionDecisionId": {
+      "title": "OIA Conversion Decision ID",
+      "description": "Canonical identity for one delivery-bound client conversion decision history.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "ongoingAgreementAuthorityId": {
+      "title": "Ongoing Agreement Authority ID",
+      "description": "Canonical identity for one versioned Agreement #2 authority history.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "ongoingPaymentVerificationId": {
+      "title": "Ongoing Payment Verification ID",
+      "description": "Canonical identity for one bounded ongoing commercial verification.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "ongoingAccessGrantId": {
+      "title": "Ongoing Access Grant ID",
+      "description": "Canonical identity for one bounded ongoing access authority, distinct from diagnostic access.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "ongoingAccessRevocationVerificationId": {
+      "title": "Ongoing Access Revocation Verification ID",
+      "description": "Canonical identity for immutable verification that external ongoing access is absent.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "ongoingOffboardingId": {
+      "title": "Ongoing Offboarding ID",
+      "description": "Canonical identity for one governed ongoing-engagement offboarding history.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "implementationBriefId": {
+      "title": "Implementation Brief ID",
+      "description": "Canonical identity for one immutable versioned implementation-planning truth history.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "implementationAuthorizationId": {
+      "title": "Implementation Authorization ID",
+      "description": "Canonical identity for one bounded non-production implementation authority history, distinct from every access grant and deployment authority.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "codexBuildPackageId": {
+      "title": "Codex Build Package ID",
+      "description": "Canonical identity for one immutable versioned executor-ready build package history; it grants no authority by itself.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "buildExecutionResultId": {
+      "title": "Build Execution Result ID",
+      "description": "Canonical identity for one immutable build execution attempt history.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "qaResultId": {
+      "title": "QA Result ID",
+      "description": "Canonical identity for one immutable governed QA attempt history.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "clientAcceptanceId": {
+      "title": "Client Acceptance ID",
+      "description": "Canonical identity for one exact client acceptance decision history.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "deploymentAuthorizationId": {
+      "title": "Deployment Authorization ID",
+      "description": "Canonical identity for one exact bounded deployment authority history; it is not deployment execution.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
     "assessmentAccessGrantId": {
       "title": "Assessment Access Grant ID",
       "description": "Canonical identity for one temporary diagnostic assessment access authority record.",
@@ -125,6 +199,11 @@
           }
         }
       ]
+    },
+    "implementationHandoffId": {
+      "title": "Implementation Handoff ID",
+      "description": "Canonical identity for one immutable versioned provider-neutral approved implementation input.",
+      "$ref": "#/$defs/canonicalUuid"
     }
   }
 }

@@ -256,7 +256,7 @@ class CodexBuildPackageRuntimeTests(unittest.TestCase):
         approval_ids = []
         for role, suffix in (
             ("CLIENT_IMPLEMENTATION_AUTHORITY", "client"),
-            ("SEKINFRA_IMPLEMENTATION_AUTHORITY", "sekinfra"),
+            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "sekinfra"),
         ):
             approval_id = self.next_id()
             self.execute(
@@ -286,7 +286,7 @@ class CodexBuildPackageRuntimeTests(unittest.TestCase):
                     "reference_id": approval_ids[0],
                     "reference_version": 1,
                 },
-                "sekinfra_approval_reference": {
+                "provider_approval_reference": {
                     "reference_type": "HUMAN_APPROVAL",
                     "reference_id": approval_ids[1],
                     "reference_version": 1,
@@ -383,7 +383,7 @@ class CodexBuildPackageRuntimeTests(unittest.TestCase):
             lambda p: p["authorized_build_scope"].append({
                 "scope_item_id": "scope.outside",
                 "statement": "Attempt work outside the approved brief.",
-                "finding_traceability": copy.deepcopy(p["authorized_build_scope"][0]["finding_traceability"]),
+                "source_traceability": copy.deepcopy(p["authorized_build_scope"][0]["source_traceability"]),
             }),
             lambda p: p["allowed_targets"].append({
                 "target_reference_id": "component.unauthorized",
@@ -511,7 +511,7 @@ class CodexBuildPackageRuntimeTests(unittest.TestCase):
             spoofed_raw,
             self.context(
                 "RecordCodexBuildPackageApproval",
-                role="SEKINFRA_IMPLEMENTATION_AUTHORITY",
+                role="PROVIDER_IMPLEMENTATION_AUTHORITY",
             ),
         )
 

@@ -83,7 +83,7 @@ Completion, deployment revision, approval, activation, and revocation require an
 
 ## 8. Human and AI boundary
 
-The roles are `CLIENT_ACCEPTANCE_AUTHORITY`, `CLIENT_DEPLOYMENT_AUTHORITY`, and `SEKINFRA_DEPLOYMENT_AUTHORITY`. Client acceptance is its own record; deployment approval uses separate attributable HumanApproval records from both organizations.
+The roles are `CLIENT_ACCEPTANCE_AUTHORITY`, `CLIENT_DEPLOYMENT_AUTHORITY`, and `PROVIDER_DEPLOYMENT_AUTHORITY`. Client acceptance is its own record; deployment approval uses separate attributable HumanApproval records from both organizations.
 
 WORKLOAD/AI may execute released package tasks, run tests, record bounded evidence, draft summaries, propose authorization text, and suggest corrections. It may not approve itself, invent test success, accept for a client, widen implementation scope, authorize deployment or production change, change targets, override prohibited actions, or spoof a role. TrustedExecutionContext is authoritative.
 

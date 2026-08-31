@@ -56,7 +56,7 @@ class CodexBuildPackageMemoryRepository:
         self.data[replacement_key] = copy.deepcopy(replacement)
         return copy.deepcopy(replacement)
 
-    def release(self, current, client_approval_reference, sekinfra_approval_reference, released_at):
+    def release(self, current, client_approval_reference, provider_approval_reference, released_at):
         key = (current["tenant_id"], current["codex_build_package_id"], current["package_version"])
         stored = self.data.get(key)
         if stored != current or stored.get("state") != "DRAFT":
@@ -66,7 +66,7 @@ class CodexBuildPackageMemoryRepository:
         updated.update(
             state="RELEASED",
             client_approval_reference=copy.deepcopy(client_approval_reference),
-            sekinfra_approval_reference=copy.deepcopy(sekinfra_approval_reference),
+            provider_approval_reference=copy.deepcopy(provider_approval_reference),
             released_at=released_at,
             record_version=stored["record_version"] + 1,
             updated_at=released_at,

@@ -4,159 +4,934 @@
   "title": "Avuhz Phase 5D Common Types v1",
   "description": "Bounded shared types for implementation planning and build authority. Nothing in this schema grants deployment, production-change, or managed-operations authority.",
   "$defs": {
-    "positiveVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "digest": {"type": "string", "minLength": 71, "maxLength": 71, "pattern": "^sha256:[0-9a-f]{64}$"},
-    "boundedStatement": {"type": "string", "minLength": 1, "maxLength": 1000, "pattern": "^[^\\u0000-\\u001F\\u007F]+$"},
-    "boundedStatements": {"type": "array", "minItems": 0, "maxItems": 50, "uniqueItems": true, "items": {"$ref": "#/$defs/boundedStatement"}},
-    "trustedActorReference": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
+    "positiveVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "digest": {
+      "type": "string",
+      "minLength": 71,
+      "maxLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "boundedStatement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
+    },
+    "boundedStatements": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/boundedStatement"
+      }
+    },
+    "trustedActorReference": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
     "humanApprovalReference": {
       "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "HUMAN_APPROVAL"}}}
-      ]
-    },
-    "oiaAssessmentReference": {
-      "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "OIA_ASSESSMENT"}}}
-      ]
-    },
-    "findingsDeliveryReference": {
-      "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "OIA_FINDINGS_DELIVERY"}}}
-      ]
-    },
-    "conversionDecisionReference": {
-      "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "OIA_CONVERSION_DECISION"}}}
-      ]
-    },
-    "ongoingAgreementReference": {
-      "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "ONGOING_AGREEMENT_AUTHORITY"}}}
-      ]
-    },
-    "ongoingPaymentReference": {
-      "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "ONGOING_PAYMENT_VERIFICATION"}}}
-      ]
-    },
-    "ongoingAccessReference": {
-      "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "ONGOING_ACCESS_GRANT"}}}
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "HUMAN_APPROVAL"
+            }
+          }
+        }
       ]
     },
     "implementationBriefReference": {
       "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "IMPLEMENTATION_BRIEF"}}}
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "IMPLEMENTATION_BRIEF"
+            }
+          }
+        }
       ]
     },
     "implementationAuthorizationReference": {
       "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "IMPLEMENTATION_AUTHORIZATION"}}}
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "IMPLEMENTATION_AUTHORIZATION"
+            }
+          }
+        }
       ]
     },
     "codexBuildPackageReference": {
       "allOf": [
-        {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"},
-        {"properties": {"reference_type": {"const": "CODEX_BUILD_PACKAGE"}}}
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "CODEX_BUILD_PACKAGE"
+            }
+          }
+        }
       ]
     },
-    "findingRevisionReference": {"$ref": "urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/findingRevisionReference"},
-    "findingRevisionReferences": {"type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": {"$ref": "#/$defs/findingRevisionReference"}},
-    "traceability": {"type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "#/$defs/findingRevisionReference"}},
     "scopeItem": {
-      "type": "object", "additionalProperties": false,
-      "required": ["scope_item_id", "statement", "finding_traceability"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_item_id",
+        "statement",
+        "source_traceability"
+      ],
       "properties": {
-        "scope_item_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "statement": {"$ref": "#/$defs/boundedStatement"},
-        "finding_traceability": {"$ref": "#/$defs/traceability"}
+        "scope_item_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "statement": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "source_traceability": {
+          "$ref": "#/$defs/sourceTraceability"
+        }
       }
     },
-    "scopeItems": {"type": "array", "minItems": 1, "maxItems": 50, "uniqueItems": true, "items": {"$ref": "#/$defs/scopeItem"}},
+    "scopeItems": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/scopeItem"
+      }
+    },
     "contextItem": {
-      "type": "object", "additionalProperties": false,
-      "required": ["context_item_id", "statement", "truth_class"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_item_id",
+        "statement",
+        "truth_class"
+      ],
       "properties": {
-        "context_item_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "statement": {"$ref": "#/$defs/boundedStatement"},
-        "truth_class": {"type": "string", "enum": ["VERIFIED_OIA", "CLIENT_APPROVED", "ASSUMPTION", "LIMITATION"]},
-        "finding_traceability": {"$ref": "#/$defs/traceability"}
+        "context_item_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "statement": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "truth_class": {
+          "type": "string",
+          "enum": [
+            "VERIFIED_SOURCE",
+            "CLIENT_APPROVED",
+            "ASSUMPTION",
+            "LIMITATION"
+          ]
+        },
+        "source_traceability": {
+          "$ref": "#/$defs/sourceTraceability"
+        }
       },
-      "allOf": [{"if": {"properties": {"truth_class": {"const": "VERIFIED_OIA"}}, "required": ["truth_class"]}, "then": {"required": ["finding_traceability"]}}]
-    },
-    "contextItems": {"type": "array", "minItems": 1, "maxItems": 50, "uniqueItems": true, "items": {"$ref": "#/$defs/contextItem"}},
-    "integration": {
-      "type": "object", "additionalProperties": false,
-      "required": ["integration_reference", "purpose", "access_level"],
-      "properties": {
-        "integration_reference": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "purpose": {"$ref": "#/$defs/boundedStatement"},
-        "access_level": {"type": "string", "enum": ["NO_DIRECT_ACCESS", "READ_ONLY", "SANDBOX_ONLY", "NON_PRODUCTION_BOUNDED"]}
-      }
-    },
-    "integrations": {"type": "array", "minItems": 0, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "#/$defs/integration"}},
-    "acceptanceCriterion": {
-      "type": "object", "additionalProperties": false,
-      "required": ["criterion_id", "category", "statement", "verification_method", "scope_item_ids", "finding_traceability"],
-      "properties": {
-        "criterion_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "category": {"type": "string", "enum": ["BUSINESS", "TECHNICAL", "SECURITY_COMPLIANCE"]},
-        "statement": {"$ref": "#/$defs/boundedStatement"},
-        "verification_method": {"$ref": "#/$defs/boundedStatement"},
-        "scope_item_ids": {"type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"}},
-        "finding_traceability": {"$ref": "#/$defs/traceability"}
-      }
-    },
-    "acceptanceCriteria": {"type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": {"$ref": "#/$defs/acceptanceCriterion"}, "contains": {"properties": {"category": {"const": "BUSINESS"}}}},
-    "prohibitedActionClass": {"type": "string", "enum": ["OUT_OF_SCOPE_SYSTEM_CHANGE", "PERMISSION_WIDENING", "DATA_DELETION", "CREDENTIAL_ROTATION", "PRODUCTION_DEPLOYMENT", "PRODUCTION_CHANGE", "BILLING_CHANGE", "OUT_OF_SCOPE_NETWORK_CHANGE", "OUT_OF_SCOPE_SECURITY_CONTROL_CHANGE"]},
-    "requiredProhibitedActions": {
-      "type": "array", "minItems": 9, "maxItems": 9, "uniqueItems": true,
-      "items": {"$ref": "#/$defs/prohibitedActionClass"},
       "allOf": [
-        {"contains": {"const": "OUT_OF_SCOPE_SYSTEM_CHANGE"}}, {"contains": {"const": "PERMISSION_WIDENING"}}, {"contains": {"const": "DATA_DELETION"}},
-        {"contains": {"const": "CREDENTIAL_ROTATION"}}, {"contains": {"const": "PRODUCTION_DEPLOYMENT"}}, {"contains": {"const": "PRODUCTION_CHANGE"}},
-        {"contains": {"const": "BILLING_CHANGE"}}, {"contains": {"const": "OUT_OF_SCOPE_NETWORK_CHANGE"}}, {"contains": {"const": "OUT_OF_SCOPE_SECURITY_CONTROL_CHANGE"}}
+        {
+          "if": {
+            "properties": {
+              "truth_class": {
+                "const": "VERIFIED_SOURCE"
+              }
+            },
+            "required": [
+              "truth_class"
+            ]
+          },
+          "then": {
+            "required": [
+              "source_traceability"
+            ]
+          }
+        }
       ]
     },
-    "permittedBuildActionClass": {"type": "string", "enum": ["READ_REPOSITORY", "CREATE_CODE", "MODIFY_CODE", "CREATE_TEST", "MODIFY_TEST", "RUN_TEST", "CREATE_DOCUMENTATION", "MODIFY_DOCUMENTATION", "BUILD_NON_PRODUCTION_ARTIFACT"]},
-    "permittedBuildActions": {"type": "array", "minItems": 1, "maxItems": 9, "uniqueItems": true, "items": {"$ref": "#/$defs/permittedBuildActionClass"}},
-    "targetReference": {"type": "object", "additionalProperties": false, "required": ["target_reference_id", "target_class"], "properties": {"target_reference_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"}, "target_class": {"type": "string", "enum": ["REPOSITORY", "COMPONENT", "NON_PRODUCTION_SYSTEM"]}}},
-    "targetReferences": {"type": "array", "minItems": 1, "maxItems": 50, "uniqueItems": true, "items": {"$ref": "#/$defs/targetReference"}},
+    "contextItems": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/contextItem"
+      }
+    },
+    "integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "integration_reference",
+        "purpose",
+        "access_level"
+      ],
+      "properties": {
+        "integration_reference": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "purpose": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "access_level": {
+          "type": "string",
+          "enum": [
+            "NO_DIRECT_ACCESS",
+            "READ_ONLY",
+            "SANDBOX_ONLY",
+            "NON_PRODUCTION_BOUNDED"
+          ]
+        }
+      }
+    },
+    "integrations": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/integration"
+      }
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterion_id",
+        "category",
+        "statement",
+        "verification_method",
+        "scope_item_ids",
+        "source_traceability"
+      ],
+      "properties": {
+        "criterion_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "BUSINESS",
+            "TECHNICAL",
+            "SECURITY_COMPLIANCE"
+          ]
+        },
+        "statement": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "verification_method": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "scope_item_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+          }
+        },
+        "source_traceability": {
+          "$ref": "#/$defs/sourceTraceability"
+        }
+      }
+    },
+    "acceptanceCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/acceptanceCriterion"
+      },
+      "contains": {
+        "properties": {
+          "category": {
+            "const": "BUSINESS"
+          }
+        }
+      }
+    },
+    "prohibitedActionClass": {
+      "type": "string",
+      "enum": [
+        "OUT_OF_SCOPE_SYSTEM_CHANGE",
+        "PERMISSION_WIDENING",
+        "DATA_DELETION",
+        "CREDENTIAL_ROTATION",
+        "PRODUCTION_DEPLOYMENT",
+        "PRODUCTION_CHANGE",
+        "BILLING_CHANGE",
+        "OUT_OF_SCOPE_NETWORK_CHANGE",
+        "OUT_OF_SCOPE_SECURITY_CONTROL_CHANGE"
+      ]
+    },
+    "requiredProhibitedActions": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/prohibitedActionClass"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "OUT_OF_SCOPE_SYSTEM_CHANGE"
+          }
+        },
+        {
+          "contains": {
+            "const": "PERMISSION_WIDENING"
+          }
+        },
+        {
+          "contains": {
+            "const": "DATA_DELETION"
+          }
+        },
+        {
+          "contains": {
+            "const": "CREDENTIAL_ROTATION"
+          }
+        },
+        {
+          "contains": {
+            "const": "PRODUCTION_DEPLOYMENT"
+          }
+        },
+        {
+          "contains": {
+            "const": "PRODUCTION_CHANGE"
+          }
+        },
+        {
+          "contains": {
+            "const": "BILLING_CHANGE"
+          }
+        },
+        {
+          "contains": {
+            "const": "OUT_OF_SCOPE_NETWORK_CHANGE"
+          }
+        },
+        {
+          "contains": {
+            "const": "OUT_OF_SCOPE_SECURITY_CONTROL_CHANGE"
+          }
+        }
+      ]
+    },
+    "permittedBuildActionClass": {
+      "type": "string",
+      "enum": [
+        "READ_REPOSITORY",
+        "CREATE_CODE",
+        "MODIFY_CODE",
+        "CREATE_TEST",
+        "MODIFY_TEST",
+        "RUN_TEST",
+        "CREATE_DOCUMENTATION",
+        "MODIFY_DOCUMENTATION",
+        "BUILD_NON_PRODUCTION_ARTIFACT"
+      ]
+    },
+    "permittedBuildActions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/permittedBuildActionClass"
+      }
+    },
+    "targetReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_reference_id",
+        "target_class"
+      ],
+      "properties": {
+        "target_reference_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "target_class": {
+          "type": "string",
+          "enum": [
+            "REPOSITORY",
+            "COMPONENT",
+            "NON_PRODUCTION_SYSTEM"
+          ]
+        }
+      }
+    },
+    "targetReferences": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/targetReference"
+      }
+    },
     "trustedAttribution": {
-      "type": "object", "additionalProperties": false,
-      "required": ["drafted_by", "recorded_by"],
-      "properties": {"drafted_by": {"$ref": "#/$defs/trustedActorReference"}, "recorded_by": {"$ref": "#/$defs/trustedActorReference"}, "draft_assistance": {"type": "string", "enum": ["NONE", "AI_ASSISTED"]}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "drafted_by",
+        "recorded_by"
+      ],
+      "properties": {
+        "drafted_by": {
+          "$ref": "#/$defs/trustedActorReference"
+        },
+        "recorded_by": {
+          "$ref": "#/$defs/trustedActorReference"
+        },
+        "draft_assistance": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "AI_ASSISTED"
+          ]
+        }
+      }
     },
     "draftImplementationBriefPayload": {
-      "type": "object", "additionalProperties": false,
-      "required": ["implementation_brief_id", "implementation_brief_version", "source_oia_assessment_reference", "source_findings_delivery_reference", "source_finding_revisions", "source_conversion_decision_reference", "source_ongoing_agreement_reference", "source_ongoing_payment_reference", "source_ongoing_access_reference", "approved_business_problem", "desired_business_outcome", "approved_scope", "excluded_scope", "known_constraints", "current_state_context", "approved_integrations", "allowed_access_level", "risks", "implementation_requirements", "acceptance_criteria", "prohibited_changes", "dependencies", "assumptions_and_limitations", "source_truth_digest", "implementation_brief_digest"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_brief_id",
+        "implementation_brief_version",
+        "source_implementation_handoff_reference",
+        "approved_business_problem",
+        "desired_business_outcome",
+        "approved_scope",
+        "excluded_scope",
+        "known_constraints",
+        "current_state_context",
+        "approved_integrations",
+        "allowed_access_level",
+        "risks",
+        "implementation_requirements",
+        "acceptance_criteria",
+        "prohibited_changes",
+        "dependencies",
+        "assumptions_and_limitations",
+        "source_truth_digest",
+        "implementation_brief_digest"
+      ],
       "properties": {
-        "implementation_brief_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationBriefId"}, "implementation_brief_version": {"$ref": "#/$defs/positiveVersion"},
-        "source_oia_assessment_reference": {"$ref": "#/$defs/oiaAssessmentReference"}, "source_findings_delivery_reference": {"$ref": "#/$defs/findingsDeliveryReference"}, "source_finding_revisions": {"$ref": "#/$defs/findingRevisionReferences"},
-        "source_conversion_decision_reference": {"$ref": "#/$defs/conversionDecisionReference"}, "source_ongoing_agreement_reference": {"$ref": "#/$defs/ongoingAgreementReference"}, "source_ongoing_payment_reference": {"$ref": "#/$defs/ongoingPaymentReference"}, "source_ongoing_access_reference": {"$ref": "#/$defs/ongoingAccessReference"},
-        "approved_business_problem": {"$ref": "#/$defs/boundedStatement"}, "desired_business_outcome": {"$ref": "#/$defs/boundedStatement"}, "approved_scope": {"$ref": "#/$defs/scopeItems"}, "excluded_scope": {"$ref": "#/$defs/boundedStatements"}, "known_constraints": {"$ref": "#/$defs/boundedStatements"}, "current_state_context": {"$ref": "#/$defs/contextItems"}, "approved_integrations": {"$ref": "#/$defs/integrations"}, "allowed_access_level": {"type": "string", "enum": ["NO_DIRECT_ACCESS", "READ_ONLY", "SANDBOX_ONLY", "NON_PRODUCTION_BOUNDED"]}, "risks": {"$ref": "#/$defs/boundedStatements"}, "implementation_requirements": {"$ref": "#/$defs/scopeItems"}, "acceptance_criteria": {"$ref": "#/$defs/acceptanceCriteria"}, "prohibited_changes": {"$ref": "#/$defs/requiredProhibitedActions"}, "dependencies": {"$ref": "#/$defs/boundedStatements"}, "assumptions_and_limitations": {"$ref": "#/$defs/contextItems"},
-        "source_truth_digest": {"$ref": "#/$defs/digest"}, "implementation_brief_digest": {"$ref": "#/$defs/digest"}, "supersedes_implementation_brief_reference": {"$ref": "#/$defs/implementationBriefReference"}
+        "implementation_brief_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationBriefId"
+        },
+        "implementation_brief_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "approved_business_problem": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "desired_business_outcome": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "approved_scope": {
+          "$ref": "#/$defs/scopeItems"
+        },
+        "excluded_scope": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "known_constraints": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "current_state_context": {
+          "$ref": "#/$defs/contextItems"
+        },
+        "approved_integrations": {
+          "$ref": "#/$defs/integrations"
+        },
+        "allowed_access_level": {
+          "type": "string",
+          "enum": [
+            "NO_DIRECT_ACCESS",
+            "READ_ONLY",
+            "SANDBOX_ONLY",
+            "NON_PRODUCTION_BOUNDED"
+          ]
+        },
+        "risks": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "implementation_requirements": {
+          "$ref": "#/$defs/scopeItems"
+        },
+        "acceptance_criteria": {
+          "$ref": "#/$defs/acceptanceCriteria"
+        },
+        "prohibited_changes": {
+          "$ref": "#/$defs/requiredProhibitedActions"
+        },
+        "dependencies": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "assumptions_and_limitations": {
+          "$ref": "#/$defs/contextItems"
+        },
+        "source_truth_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "implementation_brief_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "supersedes_implementation_brief_reference": {
+          "$ref": "#/$defs/implementationBriefReference"
+        },
+        "source_implementation_handoff_reference": {
+          "$ref": "#/$defs/implementationHandoffReference"
+        }
       }
     },
-    "reviseImplementationBriefPayload": {"allOf": [{"$ref": "#/$defs/draftImplementationBriefPayload"}, {"required": ["supersedes_implementation_brief_reference"]}]},
-    "recordPhase5dApprovalPayload": {"type": "object", "additionalProperties": false, "required": ["subject_version", "authority_role", "authority_digest"], "properties": {"subject_version": {"$ref": "#/$defs/positiveVersion"}, "authority_role": {"type": "string", "enum": ["CLIENT_IMPLEMENTATION_AUTHORITY", "SEKINFRA_IMPLEMENTATION_AUTHORITY"]}, "authority_digest": {"$ref": "#/$defs/digest"}}},
-    "approveImplementationBriefPayload": {"type": "object", "additionalProperties": false, "required": ["implementation_brief_id", "implementation_brief_version", "client_approval_reference", "sekinfra_approval_reference", "implementation_brief_digest"], "properties": {"implementation_brief_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationBriefId"}, "implementation_brief_version": {"$ref": "#/$defs/positiveVersion"}, "client_approval_reference": {"$ref": "#/$defs/humanApprovalReference"}, "sekinfra_approval_reference": {"$ref": "#/$defs/humanApprovalReference"}, "implementation_brief_digest": {"$ref": "#/$defs/digest"}}},
-    "proposeImplementationAuthorizationPayload": {"type": "object", "additionalProperties": false, "required": ["implementation_authorization_id", "authorization_version", "implementation_brief_reference", "implementation_brief_digest", "authorized_scope_digest", "target_references", "permitted_action_classes", "prohibited_action_classes", "effective_at", "expires_at", "implementation_authority_digest"], "properties": {"implementation_authorization_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationAuthorizationId"}, "authorization_version": {"$ref": "#/$defs/positiveVersion"}, "implementation_brief_reference": {"$ref": "#/$defs/implementationBriefReference"}, "implementation_brief_digest": {"$ref": "#/$defs/digest"}, "authorized_scope_digest": {"$ref": "#/$defs/digest"}, "target_references": {"$ref": "#/$defs/targetReferences"}, "permitted_action_classes": {"$ref": "#/$defs/permittedBuildActions"}, "prohibited_action_classes": {"$ref": "#/$defs/requiredProhibitedActions"}, "effective_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}, "expires_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}, "implementation_authority_digest": {"$ref": "#/$defs/digest"}, "supersedes_implementation_authorization_reference": {"$ref": "#/$defs/implementationAuthorizationReference"}}},
-    "reviseImplementationAuthorizationPayload": {"allOf": [{"$ref": "#/$defs/proposeImplementationAuthorizationPayload"}, {"required": ["supersedes_implementation_authorization_reference"]}]},
-    "activateImplementationAuthorizationPayload": {"type": "object", "additionalProperties": false, "required": ["implementation_authorization_id", "authorization_version", "client_approval_reference", "sekinfra_approval_reference", "implementation_authority_digest"], "properties": {"implementation_authorization_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationAuthorizationId"}, "authorization_version": {"$ref": "#/$defs/positiveVersion"}, "client_approval_reference": {"$ref": "#/$defs/humanApprovalReference"}, "sekinfra_approval_reference": {"$ref": "#/$defs/humanApprovalReference"}, "implementation_authority_digest": {"$ref": "#/$defs/digest"}}},
-    "revokeImplementationAuthorizationPayload": {"type": "object", "additionalProperties": false, "required": ["implementation_authorization_id", "revocation_reason"], "properties": {"implementation_authorization_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationAuthorizationId"}, "revocation_reason": {"type": "string", "enum": ["CLIENT_WITHDRAWAL", "SEKINFRA_WITHDRAWAL", "SCOPE_CHANGED", "COMMERCIAL_AUTHORITY_INVALID", "ONGOING_ACCESS_INVALID", "SECURITY_CONCERN"]}}},
-    "codexBuildPackageContent": {"type": "object", "required": ["authorized_build_scope", "problem_statement", "desired_outcome", "current_architecture_context", "required_integrations", "implementation_requirements", "acceptance_criteria", "constraints", "prohibited_changes", "allowed_targets", "test_obligations", "rollback_recovery_expectations"], "properties": {"authorized_build_scope": {"$ref": "#/$defs/scopeItems"}, "problem_statement": {"$ref": "#/$defs/boundedStatement"}, "desired_outcome": {"$ref": "#/$defs/boundedStatement"}, "current_architecture_context": {"$ref": "#/$defs/contextItems"}, "required_integrations": {"$ref": "#/$defs/integrations"}, "implementation_requirements": {"$ref": "#/$defs/scopeItems"}, "acceptance_criteria": {"$ref": "#/$defs/acceptanceCriteria"}, "constraints": {"$ref": "#/$defs/boundedStatements"}, "prohibited_changes": {"$ref": "#/$defs/requiredProhibitedActions"}, "allowed_targets": {"$ref": "#/$defs/targetReferences"}, "test_obligations": {"$ref": "#/$defs/boundedStatements"}, "rollback_recovery_expectations": {"$ref": "#/$defs/boundedStatements"}}},
-    "draftCodexBuildPackagePayload": {"type": "object", "additionalProperties": false, "required": ["codex_build_package_id", "package_version", "implementation_brief_reference", "implementation_brief_digest", "implementation_authorization_reference", "implementation_authority_digest", "authorized_build_scope", "problem_statement", "desired_outcome", "current_architecture_context", "required_integrations", "implementation_requirements", "acceptance_criteria", "constraints", "prohibited_changes", "allowed_targets", "test_obligations", "rollback_recovery_expectations", "package_digest"], "properties": {"codex_build_package_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/codexBuildPackageId"}, "package_version": {"$ref": "#/$defs/positiveVersion"}, "implementation_brief_reference": {"$ref": "#/$defs/implementationBriefReference"}, "implementation_brief_digest": {"$ref": "#/$defs/digest"}, "implementation_authorization_reference": {"$ref": "#/$defs/implementationAuthorizationReference"}, "implementation_authority_digest": {"$ref": "#/$defs/digest"}, "authorized_build_scope": {"$ref": "#/$defs/scopeItems"}, "problem_statement": {"$ref": "#/$defs/boundedStatement"}, "desired_outcome": {"$ref": "#/$defs/boundedStatement"}, "current_architecture_context": {"$ref": "#/$defs/contextItems"}, "required_integrations": {"$ref": "#/$defs/integrations"}, "implementation_requirements": {"$ref": "#/$defs/scopeItems"}, "acceptance_criteria": {"$ref": "#/$defs/acceptanceCriteria"}, "constraints": {"$ref": "#/$defs/boundedStatements"}, "prohibited_changes": {"$ref": "#/$defs/requiredProhibitedActions"}, "allowed_targets": {"$ref": "#/$defs/targetReferences"}, "test_obligations": {"$ref": "#/$defs/boundedStatements"}, "rollback_recovery_expectations": {"$ref": "#/$defs/boundedStatements"}, "package_digest": {"$ref": "#/$defs/digest"}, "supersedes_codex_build_package_reference": {"$ref": "#/$defs/codexBuildPackageReference"}}},
-    "reviseCodexBuildPackagePayload": {"allOf": [{"$ref": "#/$defs/draftCodexBuildPackagePayload"}, {"required": ["supersedes_codex_build_package_reference"]}]},
-    "releaseCodexBuildPackagePayload": {"type": "object", "additionalProperties": false, "required": ["codex_build_package_id", "package_version", "client_approval_reference", "sekinfra_approval_reference", "package_digest"], "properties": {"codex_build_package_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/codexBuildPackageId"}, "package_version": {"$ref": "#/$defs/positiveVersion"}, "client_approval_reference": {"$ref": "#/$defs/humanApprovalReference"}, "sekinfra_approval_reference": {"$ref": "#/$defs/humanApprovalReference"}, "package_digest": {"$ref": "#/$defs/digest"}}}
+    "reviseImplementationBriefPayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/draftImplementationBriefPayload"
+        },
+        {
+          "required": [
+            "supersedes_implementation_brief_reference"
+          ]
+        }
+      ]
+    },
+    "recordPhase5dApprovalPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_version",
+        "authority_role",
+        "authority_digest"
+      ],
+      "properties": {
+        "subject_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "authority_role": {
+          "type": "string",
+          "enum": [
+            "CLIENT_IMPLEMENTATION_AUTHORITY",
+            "PROVIDER_IMPLEMENTATION_AUTHORITY"
+          ]
+        },
+        "authority_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "approveImplementationBriefPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_brief_id",
+        "implementation_brief_version",
+        "client_approval_reference",
+        "provider_approval_reference",
+        "implementation_brief_digest"
+      ],
+      "properties": {
+        "implementation_brief_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationBriefId"
+        },
+        "implementation_brief_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "client_approval_reference": {
+          "$ref": "#/$defs/humanApprovalReference"
+        },
+        "provider_approval_reference": {
+          "$ref": "#/$defs/humanApprovalReference"
+        },
+        "implementation_brief_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "proposeImplementationAuthorizationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_authorization_id",
+        "authorization_version",
+        "implementation_brief_reference",
+        "implementation_brief_digest",
+        "authorized_scope_digest",
+        "target_references",
+        "permitted_action_classes",
+        "prohibited_action_classes",
+        "effective_at",
+        "expires_at",
+        "implementation_authority_digest"
+      ],
+      "properties": {
+        "implementation_authorization_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationAuthorizationId"
+        },
+        "authorization_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "implementation_brief_reference": {
+          "$ref": "#/$defs/implementationBriefReference"
+        },
+        "implementation_brief_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "authorized_scope_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "target_references": {
+          "$ref": "#/$defs/targetReferences"
+        },
+        "permitted_action_classes": {
+          "$ref": "#/$defs/permittedBuildActions"
+        },
+        "prohibited_action_classes": {
+          "$ref": "#/$defs/requiredProhibitedActions"
+        },
+        "effective_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        },
+        "expires_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        },
+        "implementation_authority_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "supersedes_implementation_authorization_reference": {
+          "$ref": "#/$defs/implementationAuthorizationReference"
+        }
+      }
+    },
+    "reviseImplementationAuthorizationPayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/proposeImplementationAuthorizationPayload"
+        },
+        {
+          "required": [
+            "supersedes_implementation_authorization_reference"
+          ]
+        }
+      ]
+    },
+    "activateImplementationAuthorizationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_authorization_id",
+        "authorization_version",
+        "client_approval_reference",
+        "provider_approval_reference",
+        "implementation_authority_digest"
+      ],
+      "properties": {
+        "implementation_authorization_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationAuthorizationId"
+        },
+        "authorization_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "client_approval_reference": {
+          "$ref": "#/$defs/humanApprovalReference"
+        },
+        "provider_approval_reference": {
+          "$ref": "#/$defs/humanApprovalReference"
+        },
+        "implementation_authority_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "revokeImplementationAuthorizationPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_authorization_id",
+        "revocation_reason"
+      ],
+      "properties": {
+        "implementation_authorization_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationAuthorizationId"
+        },
+        "revocation_reason": {
+          "type": "string",
+          "enum": [
+            "CLIENT_WITHDRAWAL",
+            "PROVIDER_WITHDRAWAL",
+            "SCOPE_CHANGED",
+            "COMMERCIAL_AUTHORITY_INVALID",
+            "ONGOING_ACCESS_INVALID",
+            "SECURITY_CONCERN"
+          ]
+        }
+      }
+    },
+    "codexBuildPackageContent": {
+      "type": "object",
+      "required": [
+        "authorized_build_scope",
+        "problem_statement",
+        "desired_outcome",
+        "current_architecture_context",
+        "required_integrations",
+        "implementation_requirements",
+        "acceptance_criteria",
+        "constraints",
+        "prohibited_changes",
+        "allowed_targets",
+        "test_obligations",
+        "rollback_recovery_expectations"
+      ],
+      "properties": {
+        "authorized_build_scope": {
+          "$ref": "#/$defs/scopeItems"
+        },
+        "problem_statement": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "desired_outcome": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "current_architecture_context": {
+          "$ref": "#/$defs/contextItems"
+        },
+        "required_integrations": {
+          "$ref": "#/$defs/integrations"
+        },
+        "implementation_requirements": {
+          "$ref": "#/$defs/scopeItems"
+        },
+        "acceptance_criteria": {
+          "$ref": "#/$defs/acceptanceCriteria"
+        },
+        "constraints": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "prohibited_changes": {
+          "$ref": "#/$defs/requiredProhibitedActions"
+        },
+        "allowed_targets": {
+          "$ref": "#/$defs/targetReferences"
+        },
+        "test_obligations": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "rollback_recovery_expectations": {
+          "$ref": "#/$defs/boundedStatements"
+        }
+      }
+    },
+    "draftCodexBuildPackagePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "codex_build_package_id",
+        "package_version",
+        "implementation_brief_reference",
+        "implementation_brief_digest",
+        "implementation_authorization_reference",
+        "implementation_authority_digest",
+        "authorized_build_scope",
+        "problem_statement",
+        "desired_outcome",
+        "current_architecture_context",
+        "required_integrations",
+        "implementation_requirements",
+        "acceptance_criteria",
+        "constraints",
+        "prohibited_changes",
+        "allowed_targets",
+        "test_obligations",
+        "rollback_recovery_expectations",
+        "package_digest"
+      ],
+      "properties": {
+        "codex_build_package_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/codexBuildPackageId"
+        },
+        "package_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "implementation_brief_reference": {
+          "$ref": "#/$defs/implementationBriefReference"
+        },
+        "implementation_brief_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "implementation_authorization_reference": {
+          "$ref": "#/$defs/implementationAuthorizationReference"
+        },
+        "implementation_authority_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "authorized_build_scope": {
+          "$ref": "#/$defs/scopeItems"
+        },
+        "problem_statement": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "desired_outcome": {
+          "$ref": "#/$defs/boundedStatement"
+        },
+        "current_architecture_context": {
+          "$ref": "#/$defs/contextItems"
+        },
+        "required_integrations": {
+          "$ref": "#/$defs/integrations"
+        },
+        "implementation_requirements": {
+          "$ref": "#/$defs/scopeItems"
+        },
+        "acceptance_criteria": {
+          "$ref": "#/$defs/acceptanceCriteria"
+        },
+        "constraints": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "prohibited_changes": {
+          "$ref": "#/$defs/requiredProhibitedActions"
+        },
+        "allowed_targets": {
+          "$ref": "#/$defs/targetReferences"
+        },
+        "test_obligations": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "rollback_recovery_expectations": {
+          "$ref": "#/$defs/boundedStatements"
+        },
+        "package_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "supersedes_codex_build_package_reference": {
+          "$ref": "#/$defs/codexBuildPackageReference"
+        }
+      }
+    },
+    "reviseCodexBuildPackagePayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/draftCodexBuildPackagePayload"
+        },
+        {
+          "required": [
+            "supersedes_codex_build_package_reference"
+          ]
+        }
+      ]
+    },
+    "releaseCodexBuildPackagePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "codex_build_package_id",
+        "package_version",
+        "client_approval_reference",
+        "provider_approval_reference",
+        "package_digest"
+      ],
+      "properties": {
+        "codex_build_package_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/codexBuildPackageId"
+        },
+        "package_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "client_approval_reference": {
+          "$ref": "#/$defs/humanApprovalReference"
+        },
+        "provider_approval_reference": {
+          "$ref": "#/$defs/humanApprovalReference"
+        },
+        "package_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "sourceArtifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_type",
+        "reference_id"
+      ],
+      "properties": {
+        "reference_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "reference_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "reference_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reference_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "sourceTraceability": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/sourceArtifactReference"
+      }
+    },
+    "implementationHandoffReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_type",
+        "reference_id",
+        "reference_version",
+        "reference_digest"
+      ],
+      "properties": {
+        "reference_type": {
+          "const": "IMPLEMENTATION_HANDOFF"
+        },
+        "reference_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/implementationHandoffId"
+        },
+        "reference_version": {
+          "$ref": "#/$defs/positiveVersion"
+        },
+        "reference_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    }
   }
 }

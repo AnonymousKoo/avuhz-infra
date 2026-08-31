@@ -9,6 +9,7 @@ from typing import Any
 
 
 SCHEMA_FILES = (
+    "public/implementation-handoff.schema.json",
     "common/identifiers.schema.json", "common/timestamps.schema.json", "common/environment.schema.json", "common/references.schema.json",
     "identity/caller-type.schema.json", "identity/capability.schema.json", "identity/caller-identity.schema.json",
     "commands/reason-code.schema.json", "commands/command-result.schema.json", "commands/command-envelope.schema.json",

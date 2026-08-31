@@ -133,14 +133,14 @@ class CommandValidator:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "ImplementationBrief payload must identify the command subject")
         if definition.command_type == "ApproveImplementationBrief":
             payload = raw["payload"]
-            if payload["client_approval_reference"] == payload["sekinfra_approval_reference"]:
+            if payload["client_approval_reference"] == payload["provider_approval_reference"]:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "ImplementationBrief approval references must be distinct")
         if definition.command_type in ("ProposeImplementationAuthorization", "ReviseImplementationAuthorization", "ActivateImplementationAuthorization", "RevokeImplementationAuthorization"):
             if raw["payload"]["implementation_authorization_id"] != raw["subject_id"]:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "ImplementationAuthorization payload must identify the command subject")
         if definition.command_type == "ActivateImplementationAuthorization":
             payload = raw["payload"]
-            if payload["client_approval_reference"] == payload["sekinfra_approval_reference"]:
+            if payload["client_approval_reference"] == payload["provider_approval_reference"]:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "ImplementationAuthorization approval references must be distinct")
         if definition.command_type in ("DraftCodexBuildPackage", "ReviseCodexBuildPackage", "ReleaseCodexBuildPackage"):
             if raw["payload"]["codex_build_package_id"] != raw["subject_id"]:
@@ -153,7 +153,7 @@ class CommandValidator:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "QAResult payload must identify the command subject")
         if definition.command_type == "ReleaseCodexBuildPackage":
             payload = raw["payload"]
-            if payload["client_approval_reference"] == payload["sekinfra_approval_reference"]:
+            if payload["client_approval_reference"] == payload["provider_approval_reference"]:
                 return self._failure(RuntimeReason.PAYLOAD_INVALID, "CodexBuildPackage approval references must be distinct")
 
         return None

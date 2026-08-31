@@ -8,6 +8,9 @@
 4. Canonical internal identifiers are distinct from opaque external/provider references.
 5. Contract fixtures use only explicit fictional test values.
 6. Every commit must pass schema validation, fixture validation, secret scanning, and forbidden-file/path checks.
+7. Trusted execution context and separate attributable human approval records determine authority; caller payloads do not.
+8. Tenant-scoped repositories and RLS must fail closed for missing or cross-tenant identity.
+9. No remote database or infrastructure mutation is permitted without explicit owner authorization for the exact target and environment.
 
 ## Local security gate
 

@@ -58,7 +58,10 @@
         "ReviseDeploymentAuthorization",
         "RecordDeploymentAuthorizationApproval",
         "ActivateDeploymentAuthorization",
-        "RevokeDeploymentAuthorization"
+        "RevokeDeploymentAuthorization",
+        "StartDeploymentExecution",
+        "CompleteDeploymentExecution",
+        "RecordDeploymentVerification"
       ]
     },
     "subject_reference": {

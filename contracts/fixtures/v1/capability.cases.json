@@ -93,6 +93,18 @@
     {
       "name": "deployment_authorization:revoke",
       "value": "deployment_authorization:revoke"
+    },
+    {
+      "name": "deployment_execution:start",
+      "value": "deployment_execution:start"
+    },
+    {
+      "name": "deployment_execution:complete",
+      "value": "deployment_execution:complete"
+    },
+    {
+      "name": "deployment_verification:record",
+      "value": "deployment_verification:record"
     }
   ],
   "negative": [

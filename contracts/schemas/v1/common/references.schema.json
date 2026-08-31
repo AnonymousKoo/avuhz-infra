@@ -22,7 +22,9 @@
         "BUILD_EXECUTION_RESULT",
         "QA_RESULT",
         "CLIENT_ACCEPTANCE",
-        "DEPLOYMENT_AUTHORIZATION"
+        "DEPLOYMENT_AUTHORIZATION",
+        "DEPLOYMENT_EXECUTION",
+        "DEPLOYMENT_VERIFICATION"
       ]
     },
     "internalReference": {

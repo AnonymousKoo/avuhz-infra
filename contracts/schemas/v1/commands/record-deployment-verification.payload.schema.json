@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:record-deployment-verification-payload:v1",
+  "title": "Record Deployment Verification Payload v1",
+  "description": "Records bounded observed target facts and evidence for an exact terminal deployment attempt. Runtime derives overall status, rollback requirement, and digest.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verification_attempt",
+    "deployment_execution_reference",
+    "deployment_execution_digest",
+    "authority_binding",
+    "target_verifications"
+  ],
+  "properties": {
+    "verification_attempt": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "deployment_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentExecutionReference"
+    },
+    "deployment_execution_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "authority_binding": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/authorityBinding"
+    },
+    "target_verifications": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetVerifications"
+    },
+    "supersedes_deployment_verification_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentVerificationReference"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verification_attempt": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "verification_attempt"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_deployment_verification_reference"
+        ]
+      }
+    }
+  ]
+}

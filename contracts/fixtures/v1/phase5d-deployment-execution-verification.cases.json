@@ -1,0 +1,40 @@
+{
+  "fixture_set": "provider-neutral-phase5d-deployment-execution-verification-v1",
+  "fictional_only": true,
+  "industries": [
+    {
+      "name": "roofing-home-services",
+      "target_reference_id": "service.scheduling",
+      "target_class": "SERVICE"
+    },
+    {
+      "name": "security-staffing",
+      "target_reference_id": "system.dispatch",
+      "target_class": "SYSTEM"
+    },
+    {
+      "name": "medical-office-operations",
+      "target_reference_id": "component.intake",
+      "target_class": "COMPONENT"
+    }
+  ],
+  "required_negatives": [
+    "inactive-expired-revoked-or-superseded-authorization",
+    "wrong-authorization-version-or-digest",
+    "wrong-upstream-identity-version-or-digest",
+    "wrong-artifact-environment-target-or-action",
+    "attempt-treated-as-success",
+    "execution-success-treated-as-verification",
+    "generic-deployment-succeeded-claim",
+    "generic-verification-passed-claim",
+    "missing-target-outcome",
+    "missing-target-verification",
+    "invented-or-unproven-evidence",
+    "workload-authority-widening",
+    "role-or-attribution-spoofing",
+    "stale-record-version",
+    "duplicate-identity-or-version",
+    "idempotency-conflict",
+    "raw-secret-or-provider-payload"
+  ]
+}

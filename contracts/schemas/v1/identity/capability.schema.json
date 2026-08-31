@@ -29,6 +29,9 @@
     "deployment_authorization:propose",
     "deployment_authorization:approve",
     "deployment_authorization:activate",
-    "deployment_authorization:revoke"
+    "deployment_authorization:revoke",
+    "deployment_execution:start",
+    "deployment_execution:complete",
+    "deployment_verification:record"
   ]
 }

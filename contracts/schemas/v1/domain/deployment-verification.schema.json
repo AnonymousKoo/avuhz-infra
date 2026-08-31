@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:deployment-verification:v1",
+  "title": "DeploymentVerification v1",
+  "description": "Immutable target-by-target evidence that an exact deployment attempt does or does not match the exact authorized artifact and targets. It is separate from execution truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_verification_id",
+    "verification_attempt",
+    "tenant_id",
+    "engagement_id",
+    "deployment_execution_reference",
+    "deployment_execution_digest",
+    "execution_status",
+    "authority_binding",
+    "target_verifications",
+    "overall_status",
+    "rollback_required",
+    "verification_digest",
+    "attribution",
+    "recorded_at",
+    "record_version",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "deployment_verification_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/deploymentVerificationId"
+    },
+    "verification_attempt": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "deployment_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentExecutionReference"
+    },
+    "deployment_execution_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "execution_status": {
+      "type": "string",
+      "enum": [
+        "SUCCEEDED",
+        "FAILED",
+        "PARTIAL"
+      ]
+    },
+    "authority_binding": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/authorityBinding"
+    },
+    "target_verifications": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetVerifications"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "VERIFIED",
+        "FAILED",
+        "PARTIAL",
+        "BLOCKED"
+      ]
+    },
+    "rollback_required": {
+      "type": "boolean"
+    },
+    "verification_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "supersedes_deployment_verification_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentVerificationReference"
+    },
+    "attribution": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/executionAttribution"
+    },
+    "recorded_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "record_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "overall_status": {
+            "const": "VERIFIED"
+          }
+        },
+        "required": [
+          "overall_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "rollback_required": {
+            "const": false
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "rollback_required": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verification_attempt": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "verification_attempt"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_deployment_verification_reference"
+        ]
+      }
+    }
+  ]
+}

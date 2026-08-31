@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1",
+  "title": "Phase 5D-D5 Deployment Execution and Verification Common v1",
+  "description": "Provider-neutral exact deployment-attempt and target-state verification primitives. No field contains credentials, raw provider payloads, or caller success authority.",
+  "$defs": {
+    "positiveVersion": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "boundedStatement": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+    },
+    "deploymentExecutionReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "DEPLOYMENT_EXECUTION"
+            }
+          }
+        }
+      ]
+    },
+    "deploymentVerificationReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "DEPLOYMENT_VERIFICATION"
+            }
+          }
+        }
+      ]
+    },
+    "targetResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_reference_id",
+        "target_class"
+      ],
+      "properties": {
+        "target_reference_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "target_class": {
+          "type": "string",
+          "enum": [
+            "SYSTEM",
+            "SERVICE",
+            "COMPONENT",
+            "HOST_GROUP"
+          ]
+        }
+      }
+    },
+    "targetResources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetResource"
+      }
+    },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_reference_id",
+        "evidence_class",
+        "evidence_digest",
+        "provenance_reference"
+      ],
+      "properties": {
+        "evidence_reference_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "evidence_class": {
+          "type": "string",
+          "enum": [
+            "DEPLOYMENT_OPERATION",
+            "TARGET_STATE",
+            "HEALTH_CHECK",
+            "AUDIT_RECORD",
+            "MANUAL_INSPECTION"
+          ]
+        },
+        "evidence_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "provenance_reference": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        }
+      }
+    },
+    "evidenceReferences": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/evidenceReference"
+      }
+    },
+    "authorityBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deployment_authorization_reference",
+        "deployment_authority_digest",
+        "implementation_authorization_reference",
+        "implementation_authority_digest",
+        "codex_build_package_reference",
+        "package_digest",
+        "build_execution_reference",
+        "build_execution_digest",
+        "qa_result_reference",
+        "qa_result_digest",
+        "client_acceptance_reference",
+        "client_acceptance_digest",
+        "artifact_reference",
+        "target_environment",
+        "target_resources"
+      ],
+      "properties": {
+        "deployment_authorization_reference": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/deploymentAuthorizationReference"
+        },
+        "deployment_authority_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "implementation_authorization_reference": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/implementationAuthorizationReference"
+        },
+        "implementation_authority_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "codex_build_package_reference": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/codexBuildPackageReference"
+        },
+        "package_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "build_execution_reference": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/buildExecutionReference"
+        },
+        "build_execution_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "qa_result_reference": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/qaResultReference"
+        },
+        "qa_result_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "client_acceptance_reference": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/clientAcceptanceReference"
+        },
+        "client_acceptance_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "artifact_reference": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/artifactReference"
+        },
+        "target_environment": {
+          "type": "string",
+          "enum": [
+            "DEVELOPMENT",
+            "TEST",
+            "STAGING",
+            "PRODUCTION"
+          ]
+        },
+        "target_resources": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetResources"
+        }
+      }
+    },
+    "targetOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_resource",
+        "outcome",
+        "evidence_references"
+      ],
+      "properties": {
+        "target_resource": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetResource"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "UNCHANGED",
+            "FAILED",
+            "BLOCKED"
+          ]
+        },
+        "evidence_references": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/evidenceReferences"
+        },
+        "detail": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+        }
+      }
+    },
+    "targetOutcomes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetOutcome"
+      }
+    },
+    "targetVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_resource",
+        "result",
+        "expected_artifact_digest",
+        "evidence_references",
+        "verified_at"
+      ],
+      "properties": {
+        "target_resource": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetResource"
+        },
+        "result": {
+          "type": "string",
+          "enum": [
+            "MATCHED",
+            "MISMATCHED",
+            "BLOCKED"
+          ]
+        },
+        "expected_artifact_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "observed_artifact_digest": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+        },
+        "observed_state_fingerprint": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 220,
+          "pattern": "^fpv[1-9][0-9]*:[A-Za-z0-9._-]{16,200}$"
+        },
+        "evidence_references": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/evidenceReferences"
+        },
+        "detail": {
+          "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+        },
+        "verified_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "enum": [
+                  "MATCHED",
+                  "MISMATCHED"
+                ]
+              }
+            },
+            "required": [
+              "result"
+            ]
+          },
+          "then": {
+            "required": [
+              "observed_artifact_digest",
+              "observed_state_fingerprint"
+            ]
+          }
+        }
+      ]
+    },
+    "targetVerifications": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetVerification"
+      }
+    },
+    "executionFingerprint": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 220,
+      "pattern": "^fpv[1-9][0-9]*:[A-Za-z0-9._-]{16,200}$"
+    }
+  }
+}

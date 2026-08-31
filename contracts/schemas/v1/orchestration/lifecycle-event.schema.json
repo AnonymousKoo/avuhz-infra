@@ -50,7 +50,10 @@
         "deployment_authorization.revised",
         "deployment_authorization.approval_recorded",
         "deployment_authorization.activated",
-        "deployment_authorization.revoked"
+        "deployment_authorization.revoked",
+        "deployment_execution.started",
+        "deployment_execution.completed",
+        "deployment_verification.recorded"
       ]
     },
     "event_schema_version": {
@@ -148,7 +151,9 @@
             "BUILD_EXECUTION",
             "QA_RESULT",
             "CLIENT_ACCEPTANCE",
-            "DEPLOYMENT_AUTHORIZATION"
+            "DEPLOYMENT_AUTHORIZATION",
+            "DEPLOYMENT_EXECUTION",
+            "DEPLOYMENT_VERIFICATION"
           ]
         },
         "state": {
@@ -211,6 +216,16 @@
         },
         "deployment_authorized": {
           "type": "boolean"
+        },
+        "deployment_execution_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/deploymentExecutionId"
+        },
+        "deployment_verification_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/deploymentVerificationId"
+        },
+        "verification_attempt": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     }
@@ -554,6 +569,77 @@
             "required": [
               "authority_stage",
               "superseded_version"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "deployment_execution.started",
+              "deployment_execution.completed"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DEPLOYMENT_EXECUTION"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/governanceMetadata",
+            "required": [
+              "authority_stage",
+              "deployment_execution_id"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "deployment_verification.recorded"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "engagement_id"
+        ],
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "DEPLOYMENT_VERIFICATION"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/governanceMetadata",
+            "required": [
+              "authority_stage",
+              "deployment_verification_id"
             ]
           }
         }

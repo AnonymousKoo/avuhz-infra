@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:deployment-execution:v1",
+  "title": "DeploymentExecution v1",
+  "description": "Versioned immutable deployment operation attempt under one exact valid DeploymentAuthorization. Operation completion is not verified deployment success.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_execution_id",
+    "execution_attempt",
+    "tenant_id",
+    "engagement_id",
+    "authority_binding",
+    "execution_action",
+    "status",
+    "execution_fingerprint",
+    "attribution",
+    "started_at",
+    "record_version",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "deployment_execution_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/deploymentExecutionId"
+    },
+    "execution_attempt": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "authority_binding": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/authorityBinding"
+    },
+    "execution_action": {
+      "type": "string",
+      "enum": [
+        "DEPLOY_EXACT_ARTIFACT",
+        "ROLLBACK_EXACT_ARTIFACT"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "IN_PROGRESS",
+        "SUCCEEDED",
+        "FAILED",
+        "PARTIAL",
+        "BLOCKED"
+      ]
+    },
+    "execution_fingerprint": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/executionFingerprint"
+    },
+    "target_outcomes": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetOutcomes"
+    },
+    "completion_summary": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+    },
+    "failure_summary": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+    },
+    "blocker_summary": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+    },
+    "rollback_disposition": {
+      "type": "string",
+      "enum": [
+        "PENDING_VERIFICATION",
+        "REQUIRED",
+        "NOT_REQUIRED"
+      ]
+    },
+    "execution_digest": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/digest"
+    },
+    "supersedes_deployment_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentExecutionReference"
+    },
+    "rollback_of_deployment_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentExecutionReference"
+    },
+    "attribution": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/executionAttribution"
+    },
+    "started_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "completed_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "record_version": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "SUCCEEDED",
+              "FAILED",
+              "PARTIAL",
+              "BLOCKED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "target_outcomes",
+          "completion_summary",
+          "rollback_disposition",
+          "execution_digest",
+          "completed_at"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "IN_PROGRESS"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "target_outcomes"
+              ]
+            },
+            {
+              "required": [
+                "rollback_disposition"
+              ]
+            },
+            {
+              "required": [
+                "execution_digest"
+              ]
+            },
+            {
+              "required": [
+                "completed_at"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "SUCCEEDED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "rollback_disposition": {
+            "const": "PENDING_VERIFICATION"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "PARTIAL"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "failure_summary"
+        ],
+        "properties": {
+          "rollback_disposition": {
+            "const": "REQUIRED"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "FAILED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "failure_summary"
+        ],
+        "properties": {
+          "rollback_disposition": {
+            "const": "NOT_REQUIRED"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "BLOCKED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "blocker_summary"
+        ],
+        "properties": {
+          "rollback_disposition": {
+            "const": "NOT_REQUIRED"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution_attempt": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "execution_attempt"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_deployment_execution_reference"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution_action": {
+            "const": "ROLLBACK_EXACT_ARTIFACT"
+          }
+        },
+        "required": [
+          "execution_action"
+        ]
+      },
+      "then": {
+        "required": [
+          "rollback_of_deployment_execution_reference"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "rollback_of_deployment_execution_reference"
+          ]
+        }
+      }
+    }
+  ]
+}

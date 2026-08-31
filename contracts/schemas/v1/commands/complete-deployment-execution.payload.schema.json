@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:complete-deployment-execution-payload:v1",
+  "title": "Complete Deployment Execution Payload v1",
+  "description": "Records bounded target operation outcomes for one in-progress attempt. Runtime derives terminal status, rollback disposition, and digest; no generic success claim is accepted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "execution_attempt",
+    "target_outcomes",
+    "completion_summary"
+  ],
+  "properties": {
+    "execution_attempt": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "target_outcomes": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/targetOutcomes"
+    },
+    "completion_summary": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/boundedStatement"
+    }
+  }
+}

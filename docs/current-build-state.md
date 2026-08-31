@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Phase 5D-D4 DeploymentAuthorization runtime and local persistence complete; DeploymentExecution architecture/contracts are next and have not started.
+`CURRENT_PHASE`: Phase 5D-D5 DeploymentExecution and DeploymentVerification architecture/contracts frozen; D5 runtime and persistence have not started.
 
-`CURRENT_HEAD`: `HEAD` (`feat: add phase5d deployment authorization runtime`)
+`CURRENT_HEAD`: `HEAD` (`docs: define phase5d deployment execution verification architecture`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Phase 5D-D4 explicit, attributable, versioned, immutable DeploymentAuthorization runtime and local PostgreSQL persistence over exact accepted ClientAcceptance and complete upstream authority-chain bindings.
+`LAST_GREEN_MILESTONE`: Phase 5D-D5 provider-neutral DeploymentExecution and separate DeploymentVerification architecture/contracts, with exact DeploymentAuthorization/upstream bindings and deterministic failure, partial, blocked, verification, and rollback-required semantics.
 
 `COMPLETED`:
 
@@ -28,14 +28,18 @@
 - Deployment authority requires separate attributable CLIENT and SEKINFRA human approvals, remains exact to the approved artifact, environment, targets, actions, prohibited actions, and validity window, and cannot be established by workload or payload claims.
 - DeploymentAuthorization proposal, activation, revision, revocation, expiry, immutable-history, tenant-RLS, concurrency, idempotency, lifecycle-event, transactional-outbox, restart-durability, and rollback behavior is green against disposable local PostgreSQL.
 - DeploymentAuthorization creates authorization only. No DeploymentExecution resource, persistence table, command, production deployment, or remote infrastructure mutation was introduced.
+- D5 freezes distinct DeploymentExecution operation-attempt truth and DeploymentVerification target-state truth; a started or `SUCCEEDED` attempt never establishes verified deployment.
+- D5 defines two resources, three commands, three capabilities, three lifecycle events, and two read models with exact authority-chain IDs/versions/digests, immutable attempt history, deterministic outcome derivation, and fail-closed rollback requirements.
+- D5 contracts are provider-neutral across roofing/home services, security staffing, and medical-office operations, reject generic success/verification claims and secret-bearing fields, and preserve trusted attribution, expected-version, idempotency, concurrency, event/outbox, and tenant boundaries for later runtime.
+- No D5 runtime handler, repository port, UnitOfWork member, persistence table, RLS policy, migration, deployment operation, rollback operation, or remote mutation exists.
 
-`IN_PROGRESS`: None. Phase 5D-D4 is complete.
+`IN_PROGRESS`: None. Phase 5D-D5 architecture/contracts are complete.
 
-`NEXT_TASK`: Define Phase 5D-D5 DeploymentExecution and deployment-verification architecture/contracts only; do not implement runtime or perform deployment.
+`NEXT_TASK`: Implement Phase 5D-D5a DeploymentExecution runtime and local persistence only from the frozen D5 contracts; do not implement DeploymentVerification runtime or perform deployment.
 
-`DO_NOT_START_YET`: DeploymentExecution runtime, production changes, remote infrastructure mutation, or later roadmap work.
+`DO_NOT_START_YET`: DeploymentVerification runtime, rollback execution runtime, real deployment, production changes, remote infrastructure mutation, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the D4 milestone commit. Disposable local PostgreSQL databases are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the D5 architecture milestone commit. Disposable local PostgreSQL databases are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

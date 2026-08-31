@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:read-models:deployment-execution-status-view:v1",
+  "title": "Deployment Execution Status View v1",
+  "description": "Derived operation-attempt status. Even SUCCEEDED operation truth does not establish verified deployment success.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_execution_reference",
+    "deployment_authorization_reference",
+    "status",
+    "operation_completed",
+    "deployment_verified",
+    "rollback_disposition",
+    "tenant_id",
+    "engagement_id",
+    "generated_at"
+  ],
+  "properties": {
+    "deployment_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentExecutionReference"
+    },
+    "deployment_authorization_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-delivery-common:v1#/$defs/deploymentAuthorizationReference"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "IN_PROGRESS",
+        "SUCCEEDED",
+        "FAILED",
+        "PARTIAL",
+        "BLOCKED"
+      ]
+    },
+    "operation_completed": {
+      "type": "boolean"
+    },
+    "deployment_verified": {
+      "const": false
+    },
+    "rollback_disposition": {
+      "type": "string",
+      "enum": [
+        "NOT_EVALUATED",
+        "PENDING_VERIFICATION",
+        "REQUIRED",
+        "NOT_REQUIRED"
+      ]
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "engagement_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "generated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "IN_PROGRESS"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "operation_completed": {
+            "const": false
+          },
+          "rollback_disposition": {
+            "const": "NOT_EVALUATED"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "SUCCEEDED",
+              "FAILED",
+              "PARTIAL",
+              "BLOCKED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "operation_completed": {
+            "const": true
+          },
+          "rollback_disposition": {
+            "not": {
+              "const": "NOT_EVALUATED"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:start-deployment-execution-payload:v1",
+  "title": "Start Deployment Execution Payload v1",
+  "description": "Requests one exact deployment or rollback attempt under an exact currently valid DeploymentAuthorization. It carries no outcome or success claim.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "execution_attempt",
+    "authority_binding",
+    "execution_action",
+    "execution_fingerprint"
+  ],
+  "properties": {
+    "execution_attempt": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-common:v1#/$defs/positiveVersion"
+    },
+    "authority_binding": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/authorityBinding"
+    },
+    "execution_action": {
+      "type": "string",
+      "enum": [
+        "DEPLOY_EXACT_ARTIFACT",
+        "ROLLBACK_EXACT_ARTIFACT"
+      ]
+    },
+    "execution_fingerprint": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/executionFingerprint"
+    },
+    "supersedes_deployment_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentExecutionReference"
+    },
+    "rollback_of_deployment_execution_reference": {
+      "$ref": "urn:avuhz:schema:contracts:domain:phase5d-deployment-execution-common:v1#/$defs/deploymentExecutionReference"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution_attempt": {
+            "minimum": 2
+          }
+        },
+        "required": [
+          "execution_attempt"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes_deployment_execution_reference"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "execution_action": {
+            "const": "ROLLBACK_EXACT_ARTIFACT"
+          }
+        },
+        "required": [
+          "execution_action"
+        ]
+      },
+      "then": {
+        "required": [
+          "rollback_of_deployment_execution_reference"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "rollback_of_deployment_execution_reference"
+          ]
+        }
+      }
+    }
+  ]
+}

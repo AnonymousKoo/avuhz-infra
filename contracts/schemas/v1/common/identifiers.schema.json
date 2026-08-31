@@ -123,6 +123,16 @@
           }
         }
       ]
+    },
+    "deploymentExecutionId": {
+      "title": "Deployment Execution ID",
+      "description": "Canonical identity for immutable versioned deployment-operation attempt history; it is not verification truth.",
+      "$ref": "#/$defs/canonicalUuid"
+    },
+    "deploymentVerificationId": {
+      "title": "Deployment Verification ID",
+      "description": "Canonical identity for immutable exact target-state verification history.",
+      "$ref": "#/$defs/canonicalUuid"
     }
   }
 }

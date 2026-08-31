@@ -49,7 +49,10 @@
         "ReviseDeploymentAuthorization",
         "RecordDeploymentAuthorizationApproval",
         "ActivateDeploymentAuthorization",
-        "RevokeDeploymentAuthorization"
+        "RevokeDeploymentAuthorization",
+        "StartDeploymentExecution",
+        "CompleteDeploymentExecution",
+        "RecordDeploymentVerification"
       ]
     },
     "subjectType": {
@@ -63,7 +66,9 @@
         "BUILD_EXECUTION_RESULT",
         "QA_RESULT",
         "CLIENT_ACCEPTANCE",
-        "DEPLOYMENT_AUTHORIZATION"
+        "DEPLOYMENT_AUTHORIZATION",
+        "DEPLOYMENT_EXECUTION",
+        "DEPLOYMENT_VERIFICATION"
       ]
     },
     "schemaVersion": {
@@ -609,6 +614,66 @@
             "properties": {
               "subject_type": {
                 "const": "DEPLOYMENT_AUTHORIZATION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "StartDeploymentExecution"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DEPLOYMENT_EXECUTION"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "CompleteDeploymentExecution"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DEPLOYMENT_EXECUTION"
+              }
+            },
+            "required": [
+              "expected_record_version"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "RecordDeploymentVerification"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "DEPLOYMENT_VERIFICATION"
               }
             }
           }

@@ -122,8 +122,9 @@ def main():
         fail("handoff qualification vocabulary drifted")
     if schemas[ENGAGEMENT_ID]["properties"]["engagement_state"]["enum"] != ["OPEN", "ONBOARDING"]:
         fail("engagement state vocabulary drifted")
-    if schemas[ENGAGEMENT_ID]["properties"]["engagement_type"].get("const") != "DIAGNOSTIC_OIA":
-        fail("engagement type must remain DIAGNOSTIC_OIA")
+    engagement_type = schemas[ENGAGEMENT_ID]["properties"]["engagement_type"]
+    if "const" in engagement_type or engagement_type.get("pattern") != "^[A-Z][A-Z0-9_]{2,79}$":
+        fail("engagement type must remain provider-neutral and bounded")
     forbidden = {"metadata", "lead_history", "nurture_history", "campaign_history", "opener_verification", "communication_history", "transcript", "credentials", "payment", "agreement_authority", "access_authority", "implementation_authority", "deployment_authority"}
     if forbidden & set(schemas[HANDOFF_ID]["properties"]):
         fail("handoff exposes prohibited acquisition or authority fields")

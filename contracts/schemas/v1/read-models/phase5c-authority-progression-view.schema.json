@@ -1,6 +1,0 @@
-{
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:read-models:phase5c-authority-progression-view:v1","title":"Phase 5C Authority Progression View v1",
-  "description":"Derived bounded progression summary. Each stage is independent; later authority cannot be inferred from an earlier true value.",
-  "type":"object","additionalProperties":false,"required":["tenant_id","engagement_id","conversion_accepted","ongoing_agreement_active","ongoing_commercial_valid","ongoing_access_usable","implementation_authorized","deployment_authorized","managed_operations_authorized","generated_at"],
-  "properties":{"tenant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},"engagement_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},"conversion_accepted":{"type":"boolean"},"ongoing_agreement_active":{"type":"boolean"},"ongoing_commercial_valid":{"type":"boolean"},"ongoing_access_usable":{"type":"boolean"},"implementation_authorized":{"type":"boolean","const":false},"deployment_authorized":{"type":"boolean","const":false},"managed_operations_authorized":{"type":"boolean","const":false},"generated_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}}
-}

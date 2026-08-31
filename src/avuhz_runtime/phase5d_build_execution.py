@@ -4,7 +4,8 @@ from __future__ import annotations
 import copy
 import re
 
-from .phase5c import canonical_digest, reference
+from .implementation_handoff import canonical_digest
+from .phase5d_brief import reference
 from .phase5d_authorization import ImplementationAuthorizationReadService
 from .phase5d_package import CodexBuildPackageReadService
 

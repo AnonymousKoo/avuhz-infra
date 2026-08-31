@@ -173,7 +173,7 @@ class Phase5DImplementationBriefPostgresTests(PostgresHarness):
                 replacement.update(state="DRAFT", record_version=1,
                                    created_at=self.harness.now, updated_at=self.harness.now)
                 replacement.pop("client_approval_reference", None)
-                replacement.pop("sekinfra_approval_reference", None)
+                replacement.pop("provider_approval_reference", None)
                 replacement.pop("approved_at", None)
                 barrier.wait()
                 uow.implementation_briefs.revise(current, replacement, self.harness.now)

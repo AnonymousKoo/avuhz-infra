@@ -1,6 +1,0 @@
-{
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:read-models:ongoing-offboarding-status-view:v1","title":"Ongoing Offboarding Status View v1",
-  "description":"Derived non-destructive offboarding progress and external revocation-verification status.",
-  "type":"object","additionalProperties":false,"required":["tenant_id","engagement_id","ongoing_offboarding_id","state","reason","access_revocation_required","access_revocation_verified","generated_at"],
-  "properties":{"tenant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},"engagement_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},"ongoing_offboarding_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingOffboardingId"},"state":{"type":"string","enum":["INITIATED","ACCESS_REVOCATION_PENDING","COMPLETED"]},"reason":{"type":"string","enum":["CONVERSION_DECLINED","AGREEMENT_ENDED","CLIENT_TERMINATION","SEKINFRA_TERMINATION","ENGAGEMENT_COMPLETED"]},"access_revocation_required":{"type":"boolean"},"access_revocation_verified":{"type":"boolean"},"generated_at":{"$ref":"urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}}
-}

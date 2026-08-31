@@ -1,43 +1,128 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:read-models:engagement-summary:v1",
-  "title": "Avuhz Slice 1 Engagement Summary v1",
-  "description": "Non-authoritative, bounded operational projection of an Engagement. It is generated from authoritative records, may be stale, and cannot authorize commands or substitute for engagement, scope, or approval records.",
+  "title": "Avuhz Engagement Summary v1",
+  "description": "Non-authoritative provider-neutral engagement projection; it grants no authority.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["engagement_reference", "tenant_id", "account_reference", "acquisition_opportunity_reference", "engagement_type", "engagement_state", "engagement_version", "record_version", "handoff_status", "diagnostic_scope_status", "client_scope_approval_status", "sekinfra_scope_approval_status", "onboarding_readiness", "opened_at", "updated_at", "generated_at", "read_model_version"],
+  "required": [
+    "engagement_reference",
+    "tenant_id",
+    "account_reference",
+    "acquisition_opportunity_reference",
+    "engagement_type",
+    "engagement_state",
+    "engagement_version",
+    "record_version",
+    "handoff_status",
+    "onboarding_readiness",
+    "opened_at",
+    "updated_at",
+    "generated_at",
+    "read_model_version"
+  ],
   "properties": {
-    "engagement_reference": {"$ref": "#/$defs/engagementReference"},
-    "tenant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
-    "account_reference": {"$ref": "#/$defs/accountReference"},
-    "acquisition_opportunity_reference": {"$ref": "#/$defs/opportunityReference"},
-    "engagement_type": {"type": "string", "const": "DIAGNOSTIC_OIA"},
-    "engagement_state": {"type": "string", "enum": ["OPEN", "ONBOARDING"]},
-    "engagement_version": {"$ref": "#/$defs/positiveVersion"},
-    "record_version": {"$ref": "#/$defs/positiveVersion"},
-    "handoff_status": {"type": "string", "enum": ["ACCEPTED", "UNKNOWN"]},
-    "diagnostic_scope_status": {"type": "string", "enum": ["NOT_STARTED", "DRAFT", "REVIEW_PENDING", "APPROVED", "REJECTED", "SUPERSEDED", "CANCELLED"]},
-    "diagnostic_scope_reference": {"$ref": "#/$defs/scopeReference"},
-    "client_scope_approval_status": {"$ref": "#/$defs/approvalStatus"},
-    "sekinfra_scope_approval_status": {"$ref": "#/$defs/approvalStatus"},
-    "onboarding_readiness": {"$ref": "urn:avuhz:schema:contracts:read-models:onboarding-readiness:v1"},
-    "last_lifecycle_event_reference": {"$ref": "#/$defs/eventReference"},
-    "opened_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "updated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "generated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "read_model_version": {"$ref": "#/$defs/positiveVersion"}
+    "engagement_reference": {
+      "$ref": "#/$defs/engagementReference"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "account_reference": {
+      "$ref": "#/$defs/accountReference"
+    },
+    "acquisition_opportunity_reference": {
+      "$ref": "#/$defs/opportunityReference"
+    },
+    "engagement_type": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,79}$"
+    },
+    "engagement_state": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "ONBOARDING",
+        "ACTIVE",
+        "CLOSED"
+      ]
+    },
+    "engagement_version": {
+      "$ref": "#/$defs/positiveVersion"
+    },
+    "record_version": {
+      "$ref": "#/$defs/positiveVersion"
+    },
+    "handoff_status": {
+      "type": "string",
+      "enum": [
+        "ACCEPTED",
+        "UNKNOWN"
+      ]
+    },
+    "onboarding_readiness": {
+      "$ref": "urn:avuhz:schema:contracts:read-models:onboarding-readiness:v1"
+    },
+    "opened_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "generated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "read_model_version": {
+      "$ref": "#/$defs/positiveVersion"
+    }
   },
   "$defs": {
-    "positiveVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "engagementReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"properties": {"reference_type": {"const": "ENGAGEMENT"}}}]},
-    "scopeReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"}, {"properties": {"reference_type": {"const": "DIAGNOSTIC_SCOPE"}}}]},
-    "eventReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"properties": {"reference_type": {"const": "LIFECYCLE_EVENT"}}}]},
-    "accountReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}, {"properties": {"object_type": {"const": "CANONICAL_ACCOUNT"}}}]},
-    "opportunityReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}, {"properties": {"object_type": {"const": "ACQUISITION_OPPORTUNITY"}}}]},
-    "approvalStatus": {"type": "string", "enum": ["NOT_REQUIRED", "MISSING", "ACTIVE", "EXPIRED", "REVOKED", "SUPERSEDED", "REJECTED"]}
-  },
-  "allOf": [
-    {"if": {"properties": {"diagnostic_scope_status": {"const": "NOT_STARTED"}}, "required": ["diagnostic_scope_status"]}, "then": {"not": {"required": ["diagnostic_scope_reference"]}}},
-    {"if": {"properties": {"diagnostic_scope_status": {"const": "APPROVED"}}, "required": ["diagnostic_scope_status"]}, "then": {"required": ["diagnostic_scope_reference"]}}
-  ]
+    "positiveVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "engagementReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "ENGAGEMENT"
+            }
+          }
+        }
+      ]
+    },
+    "accountReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"
+        },
+        {
+          "properties": {
+            "object_type": {
+              "const": "CANONICAL_ACCOUNT"
+            }
+          }
+        }
+      ]
+    },
+    "opportunityReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"
+        },
+        {
+          "properties": {
+            "object_type": {
+              "const": "ACQUISITION_OPPORTUNITY"
+            }
+          }
+        }
+      ]
+    }
+  }
 }

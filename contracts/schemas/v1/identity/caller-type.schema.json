@@ -1,17 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:identity:caller-type:v1",
-  "title": "Avuhz Slice 1 Caller Type v1",
-  "description": "Closed classification of the actor that originates a request. Caller type is descriptive only and never grants capabilities, roles, tenant assignments, or approval authority.",
+  "title": "Avuhz Caller Type v1",
+  "description": "Provider-neutral trusted actor classification; it grants no capability or approval authority.",
   "type": "string",
-  "minLength": 5,
-  "maxLength": 20,
   "enum": [
     "HUMAN",
-    "CLIENT_USER",
-    "SEKINFRA_USER",
+    "WORKLOAD",
     "INTERNAL_SERVICE",
-    "N8N_ORCHESTRATOR",
     "PROVIDER_ADAPTER",
     "SCHEDULED_AUTOMATION",
     "SECURITY_AUTOMATION"

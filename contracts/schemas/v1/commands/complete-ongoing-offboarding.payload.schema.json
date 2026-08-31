@@ -1,6 +1,0 @@
-{
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:complete-ongoing-offboarding-payload:v1","title":"Complete Ongoing Offboarding Payload v1",
-  "description":"Requests completion only after every required external access revocation has an immutable trusted verification. No authoritative history is deleted.",
-  "type":"object","additionalProperties":false,"required":["ongoing_offboarding_id"],
-  "properties":{"ongoing_offboarding_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingOffboardingId"}}
-}

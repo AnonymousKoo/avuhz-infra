@@ -83,7 +83,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
         principal = principal or (
             "human.client-implementation"
             if role == "CLIENT_IMPLEMENTATION_AUTHORITY"
-            else "human.sekinfra-implementation"
+            else "human.provider-implementation"
             if caller_type == "HUMAN"
             else "service.phase5d-authorization"
         )
@@ -106,7 +106,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
             (
                 "organization.client"
                 if role == "CLIENT_IMPLEMENTATION_AUTHORITY"
-                else "organization.sekinfra"
+                else "organization.provider"
                 if human
                 else None
             ),
@@ -258,7 +258,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
         approval_ids = []
         for role, suffix in (
             ("CLIENT_IMPLEMENTATION_AUTHORITY", "client"),
-            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "sekinfra"),
+            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "provider"),
         ):
             command_id = self.next_id()
             self.execute(
@@ -507,7 +507,7 @@ class ImplementationAuthorizationRuntimeTests(unittest.TestCase):
                 caller_type="WORKLOAD",
             ),
         )
-        self.assertEqual(workload["result"], "VALIDATION_FAILED")
+        self.assertEqual(workload["result"], "REJECTED")
 
     def test_payload_authority_spoof_and_deployment_claims_are_not_contract_fields(self):
         cases = (

@@ -2,66 +2,255 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:domain:acquisition-handoff:v1",
   "title": "Avuhz Slice 1 Acquisition Handoff v1",
-  "description": "Immutable accepted-transfer snapshot from sekinfra-acquisition. It preserves only governed engagement context, not acquisition history, communication records, credentials, commercial authority, or operational authority. Immutability is enforced by the accepting command and persistence layer.",
+  "description": "Immutable accepted-transfer snapshot from a configured acquisition provider. It preserves only governed engagement context, not acquisition history, communication records, credentials, commercial authority, or operational authority. Immutability is enforced by the accepting command and persistence layer.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["handoff_id", "handoff_version", "tenant_id", "canonical_account_reference", "acquisition_opportunity_reference", "qualification_status", "target_outcome", "validated_constraints", "stakeholder_context", "assumptions", "exclusions", "requested_engagement_type", "source_system", "source_record_version", "producer_identity", "produced_at", "correlation_id", "idempotency_key"],
+  "required": [
+    "handoff_id",
+    "handoff_version",
+    "tenant_id",
+    "canonical_account_reference",
+    "acquisition_opportunity_reference",
+    "qualification_status",
+    "target_outcome",
+    "validated_constraints",
+    "stakeholder_context",
+    "assumptions",
+    "exclusions",
+    "requested_engagement_type",
+    "source_system",
+    "source_record_version",
+    "producer_identity",
+    "produced_at",
+    "correlation_id",
+    "idempotency_key"
+  ],
   "properties": {
-    "handoff_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/handoffId"},
-    "handoff_version": {"readOnly": true, "$ref": "#/$defs/positiveVersion"},
-    "tenant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
-    "canonical_account_reference": {"readOnly": true, "$ref": "#/$defs/canonicalAccountReference"},
-    "acquisition_opportunity_reference": {"readOnly": true, "$ref": "#/$defs/acquisitionOpportunityReference"},
-    "qualification_status": {"readOnly": true, "type": "string", "minLength": 9, "maxLength": 25, "enum": ["QUALIFIED", "QUALIFIED_WITH_CONDITIONS"]},
-    "target_outcome": {"readOnly": true, "type": "string", "minLength": 1, "maxLength": 2000, "pattern": "^[^\\u0000-\\u001F\\u007F]{1,2000}$"},
-    "validated_constraints": {"readOnly": true, "type": "array", "minItems": 0, "maxItems": 25, "uniqueItems": true, "items": {"$ref": "#/$defs/validatedConstraint"}},
-    "stakeholder_context": {"readOnly": true, "type": "array", "minItems": 0, "maxItems": 20, "uniqueItems": true, "items": {"$ref": "#/$defs/stakeholderContext"}},
-    "assumptions": {"readOnly": true, "$ref": "#/$defs/boundedStatements"},
-    "exclusions": {"readOnly": true, "$ref": "#/$defs/boundedStatements"},
-    "requested_engagement_type": {"readOnly": true, "type": "string", "const": "DIAGNOSTIC_OIA"},
-    "source_system": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-    "source_record_version": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalVersion"},
-    "producer_identity": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-    "produced_at": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "correlation_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId"},
-    "idempotency_key": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"}
+    "handoff_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/handoffId"
+    },
+    "handoff_version": {
+      "readOnly": true,
+      "$ref": "#/$defs/positiveVersion"
+    },
+    "tenant_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "canonical_account_reference": {
+      "readOnly": true,
+      "$ref": "#/$defs/canonicalAccountReference"
+    },
+    "acquisition_opportunity_reference": {
+      "readOnly": true,
+      "$ref": "#/$defs/acquisitionOpportunityReference"
+    },
+    "qualification_status": {
+      "readOnly": true,
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 25,
+      "enum": [
+        "QUALIFIED",
+        "QUALIFIED_WITH_CONDITIONS"
+      ]
+    },
+    "target_outcome": {
+      "readOnly": true,
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "pattern": "^[^\\u0000-\\u001F\\u007F]{1,2000}$"
+    },
+    "validated_constraints": {
+      "readOnly": true,
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 25,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/validatedConstraint"
+      }
+    },
+    "stakeholder_context": {
+      "readOnly": true,
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/stakeholderContext"
+      }
+    },
+    "assumptions": {
+      "readOnly": true,
+      "$ref": "#/$defs/boundedStatements"
+    },
+    "exclusions": {
+      "readOnly": true,
+      "$ref": "#/$defs/boundedStatements"
+    },
+    "requested_engagement_type": {
+      "readOnly": true,
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80,
+      "pattern": "^[A-Z][A-Z0-9_]{2,79}$"
+    },
+    "source_system": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "source_record_version": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalVersion"
+    },
+    "producer_identity": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "produced_at": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "correlation_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/correlationId"
+    },
+    "idempotency_key": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"
+    }
   },
   "$defs": {
-    "positiveVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "canonicalAccountReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}, {"properties": {"object_type": {"const": "CANONICAL_ACCOUNT"}}}]},
-    "acquisitionOpportunityReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}, {"properties": {"object_type": {"const": "ACQUISITION_OPPORTUNITY"}}}]},
+    "positiveVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "canonicalAccountReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"
+        },
+        {
+          "properties": {
+            "object_type": {
+              "const": "CANONICAL_ACCOUNT"
+            }
+          }
+        }
+      ]
+    },
+    "acquisitionOpportunityReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"
+        },
+        {
+          "properties": {
+            "object_type": {
+              "const": "ACQUISITION_OPPORTUNITY"
+            }
+          }
+        }
+      ]
+    },
     "constraintCategory": {
       "description": "Strict reference to a taxonomy owned outside Avuhz; Avuhz does not own the acquisition constraint taxonomy.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["taxonomy_source", "taxonomy_id"],
+      "required": [
+        "taxonomy_source",
+        "taxonomy_id"
+      ],
       "properties": {
-        "taxonomy_source": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "taxonomy_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "taxonomy_version": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalVersion"}
+        "taxonomy_source": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "taxonomy_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "taxonomy_version": {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalVersion"
+        }
       }
     },
-    "evidenceReference": {"oneOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}]},
+    "evidenceReference": {
+      "oneOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"
+        },
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"
+        }
+      ]
+    },
     "validatedConstraint": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["constraint_id", "category", "statement", "validation_status", "evidence_references"],
+      "required": [
+        "constraint_id",
+        "category",
+        "statement",
+        "validation_status",
+        "evidence_references"
+      ],
       "properties": {
-        "constraint_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "category": {"$ref": "#/$defs/constraintCategory"},
-        "statement": {"type": "string", "minLength": 1, "maxLength": 1000, "pattern": "^[^\\u0000-\\u001F\\u007F]{1,1000}$"},
-        "validation_status": {"type": "string", "minLength": 9, "maxLength": 26, "enum": ["VALIDATED", "VALIDATED_WITH_LIMITATION"]},
-        "evidence_references": {"type": "array", "minItems": 0, "maxItems": 10, "uniqueItems": true, "items": {"$ref": "#/$defs/evidenceReference"}}
+        "constraint_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "category": {
+          "$ref": "#/$defs/constraintCategory"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "pattern": "^[^\\u0000-\\u001F\\u007F]{1,1000}$"
+        },
+        "validation_status": {
+          "type": "string",
+          "minLength": 9,
+          "maxLength": 26,
+          "enum": [
+            "VALIDATED",
+            "VALIDATED_WITH_LIMITATION"
+          ]
+        },
+        "evidence_references": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidenceReference"
+          }
+        }
       }
     },
     "stakeholderContext": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stakeholder_reference", "role_reference", "context"],
+      "required": [
+        "stakeholder_reference",
+        "role_reference",
+        "context"
+      ],
       "properties": {
-        "stakeholder_reference": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"},
-        "role_reference": {"$ref": "#/$defs/constraintCategory"},
-        "context": {"type": "string", "minLength": 1, "maxLength": 500, "pattern": "^[^\\u0000-\\u001F\\u007F]{1,500}$"}
+        "stakeholder_reference": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+        },
+        "role_reference": {
+          "$ref": "#/$defs/constraintCategory"
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "^[^\\u0000-\\u001F\\u007F]{1,500}$"
+        }
       }
     },
     "boundedStatements": {
@@ -69,7 +258,12 @@
       "minItems": 0,
       "maxItems": 25,
       "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1, "maxLength": 500, "pattern": "^[^\\u0000-\\u001F\\u007F]{1,500}$"}
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500,
+        "pattern": "^[^\\u0000-\\u001F\\u007F]{1,500}$"
+      }
     }
   }
 }

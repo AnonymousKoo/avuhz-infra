@@ -176,7 +176,7 @@
         }
       ]
     },
-    "sekinfra_approval_reference": {
+    "provider_approval_reference": {
       "allOf": [
         {
           "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
@@ -200,7 +200,7 @@
       "type": "string",
       "enum": [
         "CLIENT_WITHDRAWAL",
-        "SEKINFRA_WITHDRAWAL",
+        "PROVIDER_WITHDRAWAL",
         "ARTIFACT_INVALID",
         "QA_INVALID",
         "TARGET_CHANGED",
@@ -246,7 +246,7 @@
       "then": {
         "required": [
           "client_approval_reference",
-          "sekinfra_approval_reference",
+          "provider_approval_reference",
           "activated_at"
         ]
       }

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:identity:caller-identity:v1",
-  "title": "Avuhz Slice 1 Caller Identity v1",
-  "description": "Server-derived and verified identity context for a request. It is never trusted merely because a caller supplies it. Caller type does not imply capabilities, capabilities do not imply tenant membership or human authority, and step-up status does not grant a capability.",
+  "title": "Avuhz Caller Identity v1",
+  "description": "Server-verified identity claim shape. Human role and approval authority are intentionally absent: TrustedExecutionContext and separate attributable approval records are authoritative.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -39,13 +39,6 @@
         "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
       }
     },
-    "organization_id": {
-      "description": "Bounded opaque reference to the verified organization represented by a human caller.",
-      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
-    },
-    "role": {
-      "$ref": "#/$defs/humanRole"
-    },
     "capabilities": {
       "description": "Verified bounded action claims. The list may be empty for an identity that is not authorized to invoke commands; command access requires an applicable capability.",
       "type": "array",
@@ -73,18 +66,6 @@
     }
   },
   "$defs": {
-    "humanRole": {
-      "title": "Slice 1 Human Role",
-      "description": "Minimal bounded role vocabulary. Roles identify a human authority context but do not themselves create an approval or capability.",
-      "type": "string",
-      "minLength": 25,
-      "maxLength": 31,
-      "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$",
-      "enum": [
-        "CLIENT_DECISION_AUTHORITY",
-        "SEKINFRA_ENGAGEMENT_AUTHORITY"
-      ]
-    },
     "authenticationStrength": {
       "title": "Authentication Strength",
       "description": "Verified authentication assurance classification; it never grants a capability.",
@@ -99,83 +80,6 @@
     }
   },
   "allOf": [
-    {
-      "if": {
-        "properties": {
-          "caller_type": {
-            "enum": [
-              "CLIENT_USER",
-              "SEKINFRA_USER"
-            ]
-          }
-        },
-        "required": [
-          "caller_type"
-        ]
-      },
-      "then": {
-        "required": [
-          "organization_id",
-          "role"
-        ],
-        "allOf": [
-          {
-            "if": {
-              "properties": {
-                "caller_type": {
-                  "const": "CLIENT_USER"
-                }
-              },
-              "required": [
-                "caller_type"
-              ]
-            },
-            "then": {
-              "properties": {
-                "role": {
-                  "const": "CLIENT_DECISION_AUTHORITY"
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "caller_type": {
-                  "const": "SEKINFRA_USER"
-                }
-              },
-              "required": [
-                "caller_type"
-              ]
-            },
-            "then": {
-              "properties": {
-                "role": {
-                  "const": "SEKINFRA_ENGAGEMENT_AUTHORITY"
-                }
-              }
-            }
-          }
-        ]
-      },
-      "else": {
-        "not": {
-          "anyOf": [
-            {
-              "required": [
-                "organization_id"
-              ]
-            },
-            {
-              "required": [
-                "role"
-              ]
-            }
-          ]
-        }
-      }
-    },
     {
       "if": {
         "properties": {

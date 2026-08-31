@@ -1,6 +1,0 @@
-{
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:revoke-ongoing-access-payload:v1","title":"Revoke Ongoing Access Payload v1",
-  "description":"Immediately revokes internal ongoing access authority for one bounded manual or emergency reason. External removal requires separate verification and agreement termination is not implied.",
-  "type":"object","additionalProperties":false,"required":["ongoing_access_grant_id","revocation_reason"],
-  "properties":{"ongoing_access_grant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAccessGrantId"},"revocation_reason":{"type":"string","enum":["MANUAL_AUTHORIZED_REVOCATION","EMERGENCY_SECURITY_REVOCATION"]}}
-}

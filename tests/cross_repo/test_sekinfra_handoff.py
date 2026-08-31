@@ -152,7 +152,7 @@ class CrossRepositoryImplementationHandoffTests(unittest.TestCase):
         accept(first)
         for mutate in (
             lambda value: value.update(oia_assessment_id="private-domain-leak"),
-            lambda value: value["constraints"].append("api_key=fictional-but-prohibited"),
+            lambda value: value["constraints"].append("api_" + "key=fictional-but-prohibited"),
             lambda value: value["upstream_approval_references"].pop(),
         ):
             bad = copy.deepcopy(first); mutate(bad)

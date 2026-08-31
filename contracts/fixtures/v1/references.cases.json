@@ -14,7 +14,7 @@
       "name": "versioned diagnostic scope reference",
       "definition": "versionedInternalReference",
       "value": {
-        "reference_type": "DIAGNOSTIC_SCOPE",
+        "reference_type": "IMPLEMENTATION_BRIEF",
         "reference_id": "22222222-2222-4222-8222-222222222222",
         "reference_version": 3
       }
@@ -31,7 +31,7 @@
       "name": "external acquisition account reference",
       "definition": "externalReference",
       "value": {
-        "source_system": "sekinfra-acquisition-test",
+        "source_system": "fictional-acquisition-provider",
         "object_type": "CANONICAL_ACCOUNT",
         "external_id": "acct.test-northstar:0001",
         "environment": "TEST"
@@ -41,7 +41,7 @@
       "name": "versioned external acquisition opportunity reference",
       "definition": "externalReference",
       "value": {
-        "source_system": "sekinfra-acquisition-test",
+        "source_system": "fictional-acquisition-provider",
         "object_type": "ACQUISITION_OPPORTUNITY",
         "external_id": "opportunity.test:1001",
         "external_version": "revision-7",
@@ -70,7 +70,7 @@
       "name": "zero internal version",
       "definition": "versionedInternalReference",
       "value": {
-        "reference_type": "DIAGNOSTIC_SCOPE",
+        "reference_type": "IMPLEMENTATION_BRIEF",
         "reference_id": "22222222-2222-4222-8222-222222222222",
         "reference_version": 0
       }
@@ -79,7 +79,7 @@
       "name": "negative internal version",
       "definition": "versionedInternalReference",
       "value": {
-        "reference_type": "DIAGNOSTIC_SCOPE",
+        "reference_type": "IMPLEMENTATION_BRIEF",
         "reference_id": "22222222-2222-4222-8222-222222222222",
         "reference_version": -1
       }
@@ -105,7 +105,7 @@
       "name": "empty external ID",
       "definition": "externalReference",
       "value": {
-        "source_system": "sekinfra-acquisition-test",
+        "source_system": "fictional-acquisition-provider",
         "object_type": "CANONICAL_ACCOUNT",
         "external_id": "",
         "environment": "TEST"
@@ -115,7 +115,7 @@
       "name": "oversized external ID",
       "definition": "externalReference",
       "value": {
-        "source_system": "sekinfra-acquisition-test",
+        "source_system": "fictional-acquisition-provider",
         "object_type": "SOURCE_RECORD",
         "external_id": "ref.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "environment": "TEST"
@@ -134,7 +134,7 @@
       "name": "credential-shaped external ID",
       "definition": "externalReference",
       "value": {
-        "source_system": "sekinfra-acquisition-test",
+        "source_system": "fictional-acquisition-provider",
         "object_type": "SOURCE_RECORD",
         "external_id": "bearer.test-only-not-a-secret:0001",
         "environment": "TEST"
@@ -144,7 +144,7 @@
       "name": "unsupported nested metadata",
       "definition": "externalReference",
       "value": {
-        "source_system": "sekinfra-acquisition-test",
+        "source_system": "fictional-acquisition-provider",
         "object_type": "CANONICAL_ACCOUNT",
         "external_id": "acct.test-northstar:0001",
         "environment": "TEST",
@@ -157,7 +157,7 @@
       "name": "malformed external version",
       "definition": "externalReference",
       "value": {
-        "source_system": "sekinfra-acquisition-test",
+        "source_system": "fictional-acquisition-provider",
         "object_type": "ACQUISITION_OPPORTUNITY",
         "external_id": "opportunity.test:1001",
         "external_version": " revision 7 ",

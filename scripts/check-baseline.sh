@@ -10,15 +10,17 @@ find . -path ./.git -prune -o -path ./supabase/.temp -prune -o -type f -name '*.
 
 printf 'check: JSON Schema and fixtures\n'
 python3 tests/contracts/validate_identifiers.py
-python3 tests/contracts/validate_diagnostic_agreement_authority.py
-python3 tests/contracts/validate_diagnostic_payment_verification.py
-python3 tests/contracts/validate_assessment_access_grant.py
-python3 tests/contracts/validate_assessment_access_human_approval.py
-python3 tests/contracts/validate_assessment_access_proposal.py
-python3 tests/contracts/validate_record_assessment_access_approval.py
-python3 tests/contracts/validate_oia_methodology_contracts.py
-python3 tests/contracts/validate_oia_finding_priority_policy.py
-python3 tests/contracts/validate_phase5c_conversion_ongoing_authority.py
+python3 tests/contracts/validate_references.py
+python3 tests/contracts/validate_timestamps_environment.py
+python3 tests/contracts/validate_caller_type.py
+python3 tests/contracts/validate_capability.py
+python3 tests/contracts/validate_caller_identity.py
+python3 tests/contracts/validate_command_protocol.py
+python3 tests/contracts/validate_command_payloads.py
+python3 tests/contracts/validate_handoff_engagement.py
+python3 tests/contracts/validate_orchestration_foundation.py
+python3 tests/contracts/validate_read_models.py
+python3 tests/contracts/validate_slice1_acceptance.py
 python3 tests/contracts/validate_phase5d_implementation_package_architecture.py
 python3 tests/contracts/validate_phase5d_build_qa_deployment_authority.py
 

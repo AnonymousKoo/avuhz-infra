@@ -1,4 +1,12 @@
 {
-  "positive": ["summary-no-scope", "summary-review-pending", "summary-approved", "summary-rejected", "readiness-handoff-pending", "readiness-ready-to-open", "readiness-scope-required", "readiness-scope-approvals-required", "readiness-scope-review-pending", "readiness-scope-approved"],
-  "negative": ["summary-unknown-state", "summary-future-state", "summary-not-started-with-reference", "summary-approved-without-reference", "summary-embedded-approval", "summary-embedded-handoff", "summary-credential-field", "summary-metadata", "summary-invalid-time", "summary-malformed-reference", "readiness-future-state", "readiness-unknown-check", "readiness-unknown-status", "readiness-metadata", "readiness-embedded-record", "readiness-malformed-reference", "readiness-invalid-time", "readiness-authority-boolean", "readiness-future-field"]
+  "fixture_set": "provider-neutral-read-models-v1",
+  "fictional_only": true,
+  "positive": [
+    "engagement summary",
+    "engagement readiness"
+  ],
+  "negative": [
+    "authority claim",
+    "company-specific field"
+  ]
 }

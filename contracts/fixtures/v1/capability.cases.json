@@ -1,37 +1,112 @@
 {
-  "fixture_set": "capability.v1",
+  "fixture_set": "provider-neutral-capabilities-v1",
   "fictional_only": true,
   "positive": [
-    { "name": "engagement read", "value": "engagement:read" },
-    { "name": "accept handoff", "value": "engagement:accept_handoff" },
-    { "name": "open engagement", "value": "engagement:open" },
-    { "name": "scope read", "value": "scope:read" },
-    { "name": "scope submit", "value": "scope:submit" },
-    { "name": "scope approve", "value": "scope:approve" },
-    { "name": "propose assessment access", "value": "assessment_access:propose" },
-    { "name": "approve assessment access", "value": "assessment_access:approve" },
-    { "name": "issue assessment access", "value": "assessment_access:issue" },
-    { "name": "create approval", "value": "approval:create" },
-    { "name": "verify assessment access", "value": "assessment_access:verify" },
-    { "name": "record inbound event", "value": "inbound_event:record" },
-    { "name": "publish internal event", "value": "event:publish_internal" }
+    {
+      "name": "engagement:read",
+      "value": "engagement:read"
+    },
+    {
+      "name": "engagement:accept_handoff",
+      "value": "engagement:accept_handoff"
+    },
+    {
+      "name": "engagement:open",
+      "value": "engagement:open"
+    },
+    {
+      "name": "implementation_handoff:accept",
+      "value": "implementation_handoff:accept"
+    },
+    {
+      "name": "inbound_event:record",
+      "value": "inbound_event:record"
+    },
+    {
+      "name": "event:publish_internal",
+      "value": "event:publish_internal"
+    },
+    {
+      "name": "implementation_brief:draft",
+      "value": "implementation_brief:draft"
+    },
+    {
+      "name": "implementation_brief:approve",
+      "value": "implementation_brief:approve"
+    },
+    {
+      "name": "implementation_authorization:propose",
+      "value": "implementation_authorization:propose"
+    },
+    {
+      "name": "implementation_authorization:approve",
+      "value": "implementation_authorization:approve"
+    },
+    {
+      "name": "implementation_authorization:activate",
+      "value": "implementation_authorization:activate"
+    },
+    {
+      "name": "implementation_authorization:revoke",
+      "value": "implementation_authorization:revoke"
+    },
+    {
+      "name": "codex_build_package:draft",
+      "value": "codex_build_package:draft"
+    },
+    {
+      "name": "codex_build_package:approve",
+      "value": "codex_build_package:approve"
+    },
+    {
+      "name": "codex_build_package:release",
+      "value": "codex_build_package:release"
+    },
+    {
+      "name": "build_execution:start",
+      "value": "build_execution:start"
+    },
+    {
+      "name": "build_execution:complete",
+      "value": "build_execution:complete"
+    },
+    {
+      "name": "qa_result:record",
+      "value": "qa_result:record"
+    },
+    {
+      "name": "client_acceptance:record",
+      "value": "client_acceptance:record"
+    },
+    {
+      "name": "deployment_authorization:propose",
+      "value": "deployment_authorization:propose"
+    },
+    {
+      "name": "deployment_authorization:approve",
+      "value": "deployment_authorization:approve"
+    },
+    {
+      "name": "deployment_authorization:activate",
+      "value": "deployment_authorization:activate"
+    },
+    {
+      "name": "deployment_authorization:revoke",
+      "value": "deployment_authorization:revoke"
+    }
   ],
   "negative": [
-    { "name": "wildcard", "value": "*" },
-    { "name": "admin", "value": "admin" },
-    { "name": "admin wildcard", "value": "admin:*" },
-    { "name": "engagement wildcard", "value": "engagement:*" },
-    { "name": "unimplemented deployment capability", "value": "deployment:approve" },
-    { "name": "unimplemented assessment capability", "value": "assessment_access:activate" },
-    { "name": "uppercase", "value": "ENGAGEMENT:READ" },
-    { "name": "extra segment", "value": "scope:read:all" },
-    { "name": "unknown capability", "value": "billing:read" },
-    { "name": "empty string", "value": "" },
-    { "name": "leading whitespace", "value": " scope:read" },
-    { "name": "trailing whitespace", "value": "scope:read " },
-    { "name": "null", "value": null },
-    { "name": "object", "value": { "capability": "scope:read" } },
-    { "name": "array", "value": ["scope:read"] },
-    { "name": "number", "value": 1 }
+    {
+      "name": "wildcard",
+      "value": "*"
+    },
+    {
+      "name": "company-specific",
+      "value": "company:admin"
+    },
+    {
+      "name": "caller type",
+      "value": "HUMAN"
+    }
   ]
 }

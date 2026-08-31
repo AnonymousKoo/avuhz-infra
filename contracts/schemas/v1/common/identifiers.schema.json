@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:common:identifiers:v1",
-  "title": "Avuhz Slice 1 Foundational Identifiers v1",
+  "title": "Avuhz Foundation Identifiers v1",
   "description": "Provider-neutral, bounded identifier primitives for the Avuhz Slice 1 contract boundary. Canonical internal UUIDs are distinct from opaque external references.",
   "$defs": {
     "canonicalUuid": {
@@ -48,65 +48,9 @@
       "description": "Canonical identity for one attributable human approval record.",
       "$ref": "#/$defs/canonicalUuid"
     },
-    "assessmentAccessProposalId": {
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaAssessmentId": {
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaAssessmentPlanId": {
-      "title": "OIA Assessment Plan ID",
-      "description": "Canonical identity for one versioned client-specific OIA assessment plan resource.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaInspectionItemId": {
-      "title": "OIA Inspection Item ID",
-      "description": "Canonical identity for one first-class OIA diagnostic inspection item.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaEvidenceId": {
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaObservationId": {
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaRootCauseId": {
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaFindingId": {
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaFindingsDeliveryId": {
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "oiaConversionDecisionId": {
-      "title": "OIA Conversion Decision ID",
-      "description": "Canonical identity for one delivery-bound client conversion decision history.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "ongoingAgreementAuthorityId": {
-      "title": "Ongoing Agreement Authority ID",
-      "description": "Canonical identity for one versioned Agreement #2 authority history.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "ongoingPaymentVerificationId": {
-      "title": "Ongoing Payment Verification ID",
-      "description": "Canonical identity for one bounded ongoing commercial verification.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "ongoingAccessGrantId": {
-      "title": "Ongoing Access Grant ID",
-      "description": "Canonical identity for one bounded ongoing access authority, distinct from diagnostic access.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "ongoingAccessRevocationVerificationId": {
-      "title": "Ongoing Access Revocation Verification ID",
-      "description": "Canonical identity for immutable verification that external ongoing access is absent.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "ongoingOffboardingId": {
-      "title": "Ongoing Offboarding ID",
-      "description": "Canonical identity for one governed ongoing-engagement offboarding history.",
+    "implementationHandoffId": {
+      "title": "Implementation Handoff ID",
+      "description": "Canonical identity for one immutable versioned provider-neutral approved implementation input.",
       "$ref": "#/$defs/canonicalUuid"
     },
     "implementationBriefId": {
@@ -144,26 +88,6 @@
       "description": "Canonical identity for one exact bounded deployment authority history; it is not deployment execution.",
       "$ref": "#/$defs/canonicalUuid"
     },
-    "assessmentAccessGrantId": {
-      "title": "Assessment Access Grant ID",
-      "description": "Canonical identity for one temporary diagnostic assessment access authority record.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "diagnosticPaymentVerificationId": {
-      "title": "Diagnostic Payment Verification ID",
-      "description": "Canonical identity for one diagnostic/OIA payment verification record.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "diagnosticAgreementAuthorityId": {
-      "title": "Diagnostic Agreement Authority ID",
-      "description": "Canonical identity for one verified diagnostic/OIA agreement-authority record.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
-    "scopeId": {
-      "title": "Diagnostic Scope ID",
-      "description": "Canonical identity for a diagnostic scope aggregate.",
-      "$ref": "#/$defs/canonicalUuid"
-    },
     "handoffId": {
       "title": "Acquisition Handoff ID",
       "description": "Canonical Avuhz identity for an accepted handoff snapshot; provider/source references remain separate.",
@@ -199,11 +123,6 @@
           }
         }
       ]
-    },
-    "implementationHandoffId": {
-      "title": "Implementation Handoff ID",
-      "description": "Canonical identity for one immutable versioned provider-neutral approved implementation input.",
-      "$ref": "#/$defs/canonicalUuid"
     }
   }
 }

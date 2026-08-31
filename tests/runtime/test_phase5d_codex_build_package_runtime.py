@@ -78,7 +78,7 @@ class CodexBuildPackageRuntimeTests(unittest.TestCase):
         principal = (
             "human.client-package"
             if role == "CLIENT_IMPLEMENTATION_AUTHORITY"
-            else "human.sekinfra-package"
+            else "human.provider-package"
             if caller_type == "HUMAN"
             else "service.phase5d-package"
         )
@@ -101,7 +101,7 @@ class CodexBuildPackageRuntimeTests(unittest.TestCase):
             (
                 "organization.client"
                 if role == "CLIENT_IMPLEMENTATION_AUTHORITY"
-                else "organization.sekinfra"
+                else "organization.provider"
                 if human
                 else None
             ),
@@ -256,7 +256,7 @@ class CodexBuildPackageRuntimeTests(unittest.TestCase):
         approval_ids = []
         for role, suffix in (
             ("CLIENT_IMPLEMENTATION_AUTHORITY", "client"),
-            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "sekinfra"),
+            ("PROVIDER_IMPLEMENTATION_AUTHORITY", "provider"),
         ):
             approval_id = self.next_id()
             self.execute(

@@ -94,12 +94,12 @@ class CodexBuildPackagePostgresRepository:
         self._insert(replacement)
         return copy.deepcopy(replacement)
 
-    def release(self, current, client_approval_reference, sekinfra_approval_reference, released_at):
+    def release(self, current, client_approval_reference, provider_approval_reference, released_at):
         updated = copy.deepcopy(current)
         updated.update(
             state="RELEASED",
             client_approval_reference=copy.deepcopy(client_approval_reference),
-            sekinfra_approval_reference=copy.deepcopy(sekinfra_approval_reference),
+            provider_approval_reference=copy.deepcopy(provider_approval_reference),
             released_at=released_at,
             record_version=current["record_version"] + 1,
             updated_at=released_at,

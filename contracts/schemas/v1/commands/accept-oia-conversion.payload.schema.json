@@ -1,6 +1,0 @@
-{
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:accept-oia-conversion-payload:v1","title":"Accept OIA Conversion Payload v1",
-  "description":"Requests trusted Sekinfra acceptance of one client PROCEED decision. It creates no agreement, payment, access, implementation, or deployment authority.",
-  "type":"object","additionalProperties":false,"required":["oia_conversion_decision_id","decision_version"],
-  "properties":{"oia_conversion_decision_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/oiaConversionDecisionId"},"decision_version":{"$ref":"urn:avuhz:schema:contracts:domain:phase5c-common:v1#/$defs/positiveVersion"}}
-}

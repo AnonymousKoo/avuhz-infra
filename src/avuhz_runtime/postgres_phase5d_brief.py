@@ -44,44 +44,25 @@ class ImplementationBriefPostgresRepository:
         ).fetchone())
 
     def _insert(self, record):
-        assessment = record["source_oia_assessment_reference"]
-        delivery = record["source_findings_delivery_reference"]
-        conversion = record["source_conversion_decision_reference"]
-        agreement = record["source_ongoing_agreement_reference"]
-        payment = record["source_ongoing_payment_reference"]
-        access = record["source_ongoing_access_reference"]
+        handoff = record["source_implementation_handoff_reference"]
         cur = self.uow.connection.execute(
             "insert into public.avuhz_implementation_briefs "
             "(tenant_id,implementation_brief_id,implementation_brief_version,engagement_id,"
-            "oia_assessment_id,oia_assessment_record_version,oia_findings_delivery_id,delivery_sequence,"
-            "oia_conversion_decision_id,decision_version,ongoing_agreement_authority_id,agreement_version,"
-            "ongoing_payment_verification_id,payment_record_version,ongoing_access_grant_id,access_record_version,"
-            "source_truth_digest,implementation_brief_digest,state,record_version,record,created_at,updated_at) "
-            "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) "
+            "implementation_handoff_id,handoff_version,handoff_digest,source_truth_digest,"
+            "implementation_brief_digest,state,record_version,record,created_at,updated_at) "
+            "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) "
             "on conflict do nothing returning implementation_brief_id",
             (
-                record["tenant_id"], record["implementation_brief_id"], record["implementation_brief_version"],
-                record["engagement_id"], assessment["reference_id"], assessment["reference_version"],
-                delivery["reference_id"], delivery["reference_version"], conversion["reference_id"],
-                conversion["reference_version"], agreement["reference_id"], agreement["reference_version"],
-                payment["reference_id"], payment["reference_version"], access["reference_id"],
-                access["reference_version"], record["source_truth_digest"], record["implementation_brief_digest"],
-                record["state"], record["record_version"], _json(record), record["created_at"], record["updated_at"],
+                record["tenant_id"], record["implementation_brief_id"],
+                record["implementation_brief_version"], record["engagement_id"],
+                handoff["reference_id"], handoff["reference_version"],
+                handoff["reference_digest"], record["source_truth_digest"],
+                record["implementation_brief_digest"], record["state"],
+                record["record_version"], _json(record), record["created_at"], record["updated_at"],
             ),
         )
         if not cur.fetchone():
             raise ValueError("ImplementationBrief identity/version conflict")
-        for finding in record["source_finding_revisions"]:
-            self.uow.connection.execute(
-                "insert into public.avuhz_implementation_brief_findings "
-                "(tenant_id,implementation_brief_id,implementation_brief_version,oia_findings_delivery_id,"
-                "oia_finding_id,finding_revision,content_digest) values (%s,%s,%s,%s,%s,%s,%s)",
-                (
-                    record["tenant_id"], record["implementation_brief_id"], record["implementation_brief_version"],
-                    delivery["reference_id"], finding["oia_finding_id"], finding["finding_revision"],
-                    finding["content_digest"],
-                ),
-            )
 
     def create_initial(self, record):
         self.uow.failpoint("AUTHORITATIVE_WRITE")
@@ -109,11 +90,11 @@ class ImplementationBriefPostgresRepository:
         self._insert(replacement)
         return copy.deepcopy(replacement)
 
-    def approve(self, current, client_approval_reference, sekinfra_approval_reference, approved_at):
+    def approve(self, current, client_approval_reference, provider_approval_reference, approved_at):
         updated = copy.deepcopy(current)
         updated.update(
             state="APPROVED", client_approval_reference=copy.deepcopy(client_approval_reference),
-            sekinfra_approval_reference=copy.deepcopy(sekinfra_approval_reference), approved_at=approved_at,
+            provider_approval_reference=copy.deepcopy(provider_approval_reference), approved_at=approved_at,
             record_version=current["record_version"] + 1, updated_at=approved_at,
         )
         self.uow.failpoint("AUTHORITATIVE_WRITE")

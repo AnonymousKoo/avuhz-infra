@@ -47,32 +47,23 @@ class ImplementationAuthorizationPostgresRepository:
 
     def _insert(self, record):
         brief = record["implementation_brief_reference"]
-        conversion = record["source_conversion_decision_reference"]
-        agreement = record["source_ongoing_agreement_reference"]
-        payment = record["source_ongoing_payment_reference"]
-        access = record["source_ongoing_access_reference"]
+        handoff = record["source_implementation_handoff_reference"]
         cur = self.uow.connection.execute(
             "insert into public.avuhz_implementation_authorizations "
             "(tenant_id,implementation_authorization_id,authorization_version,engagement_id,"
             "implementation_brief_id,implementation_brief_version,implementation_brief_digest,"
-            "oia_conversion_decision_id,decision_version,ongoing_agreement_authority_id,agreement_version,"
-            "ongoing_payment_verification_id,payment_record_version,ongoing_access_grant_id,access_record_version,"
-            "authorized_scope_digest,implementation_authority_digest,effective_at,expires_at,state,"
-            "record_version,record,created_at,updated_at) "
-            "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) "
+            "implementation_handoff_id,handoff_version,handoff_digest,authorized_scope_digest,"
+            "implementation_authority_digest,effective_at,expires_at,state,record_version,record,"
+            "created_at,updated_at) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) "
             "on conflict do nothing returning implementation_authorization_id",
             (
                 record["tenant_id"], record["implementation_authorization_id"],
-                record["authorization_version"], record["engagement_id"],
-                brief["reference_id"], brief["reference_version"],
-                record["implementation_brief_digest"], conversion["reference_id"],
-                conversion["reference_version"], agreement["reference_id"],
-                agreement["reference_version"], payment["reference_id"],
-                payment["reference_version"], access["reference_id"],
-                access["reference_version"], record["authorized_scope_digest"],
-                record["implementation_authority_digest"], record["effective_at"],
-                record["expires_at"], record["state"], record["record_version"],
-                _json(record), record["created_at"], record["updated_at"],
+                record["authorization_version"], record["engagement_id"], brief["reference_id"],
+                brief["reference_version"], record["implementation_brief_digest"],
+                handoff["reference_id"], handoff["reference_version"], handoff["reference_digest"],
+                record["authorized_scope_digest"], record["implementation_authority_digest"],
+                record["effective_at"], record["expires_at"], record["state"],
+                record["record_version"], _json(record), record["created_at"], record["updated_at"],
             ),
         )
         if not cur.fetchone():
@@ -111,14 +102,14 @@ class ImplementationAuthorizationPostgresRepository:
         self,
         current,
         client_approval_reference,
-        sekinfra_approval_reference,
+        provider_approval_reference,
         activated_at,
     ):
         updated = copy.deepcopy(current)
         updated.update(
             state="ACTIVE",
             client_approval_reference=copy.deepcopy(client_approval_reference),
-            sekinfra_approval_reference=copy.deepcopy(sekinfra_approval_reference),
+            provider_approval_reference=copy.deepcopy(provider_approval_reference),
             activated_at=activated_at,
             record_version=current["record_version"] + 1,
             updated_at=activated_at,

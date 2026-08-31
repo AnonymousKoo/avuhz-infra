@@ -1,6 +1,0 @@
-{
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"urn:avuhz:schema:contracts:commands:verify-ongoing-access-payload:v1","title":"Verify Ongoing Access Payload v1",
-  "description":"Requests technical verification and activation of one APPROVED ongoing grant. Outcome, timestamps, credentials, provider responses, and caller-declared access validity are forbidden.",
-  "type":"object","additionalProperties":false,"required":["ongoing_access_grant_id"],
-  "properties":{"ongoing_access_grant_id":{"$ref":"urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/ongoingAccessGrantId"}}
-}

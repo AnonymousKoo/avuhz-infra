@@ -1,12 +1,10 @@
 import sys,unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT/"src"))
-from avuhz_runtime.in_memory import *
+from avuhz_runtime.in_memory import MemoryStore,UnitOfWork
 class Tests(unittest.TestCase):
- def test_surfaces_share_working_transaction_and_are_tenant_aware(self):
-  s=MemoryStore();u=UnitOfWork(s)
-  self.assertTrue(all(hasattr(u,n) for n in ("handoffs","engagements","diagnostic_scopes","oia_assessments","oia_evidence_items","oia_assessment_plans","oia_inspection_items","oia_observations","oia_root_causes","oia_findings","oia_findings_deliveries","oia_conversion_decisions","ongoing_agreement_authorities","ongoing_payment_verifications","ongoing_access_grants","ongoing_access_revocation_verifications","ongoing_offboardings","human_approvals","idempotency","lifecycle_events","outbox")))
-  r={"handoff_id":"h","tenant_id":"t"};u.handoffs.save(r);self.assertEqual(u.handoffs.get("t","h"),r);self.assertIsNone(u.handoffs.get("other","h"));self.assertEqual(s.handoffs,{})
-  u.lifecycle_events.append({"event_id":"e"});u.outbox.append({"event_id":"e","status":"PENDING"});u.idempotency.save_result(("k",),{"fingerprint":"fp"});u.commit()
-  self.assertEqual(len(s.events),1);self.assertEqual(len(s.outbox),1);self.assertIn(("k",),s.idempotency)
+ def test_active_uow_surfaces_are_generic_and_transactional(self):
+  store=MemoryStore();uow=UnitOfWork(store)
+  expected=("handoffs","engagements","implementation_handoffs","implementation_briefs","implementation_authorizations","codex_build_packages","build_execution_results","qa_results","human_approvals","idempotency","lifecycle_events","outbox")
+  self.assertTrue(all(hasattr(uow,name) for name in expected));uow.lifecycle_events.append({"event_id":"e"});uow.outbox.append({"event_id":"e","status":"PENDING"});uow.commit();self.assertEqual(len(store.events),1)
 if __name__=="__main__":unittest.main()

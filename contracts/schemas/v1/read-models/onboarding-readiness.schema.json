@@ -1,21 +1,116 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:read-models:onboarding-readiness:v1",
-  "title": "Avuhz Slice 1 Onboarding Readiness v1",
-  "description": "Non-authoritative Slice 1 readiness projection. It explains derived prerequisites, may be stale, and never grants authority or replaces command guards or authoritative records.",
+  "title": "Avuhz Engagement Readiness v1",
+  "description": "Non-authoritative provider-neutral readiness projection. It never grants authority.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["engagement_reference", "tenant_id", "readiness_state", "evaluated_at", "read_model_version", "checks"],
+  "required": [
+    "engagement_reference",
+    "tenant_id",
+    "readiness_state",
+    "evaluated_at",
+    "read_model_version",
+    "checks"
+  ],
   "properties": {
-    "engagement_reference": {"$ref": "#/$defs/engagementReference"},
-    "tenant_id": {"$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
-    "readiness_state": {"type": "string", "enum": ["HANDOFF_PENDING", "READY_TO_OPEN_ENGAGEMENT", "ENGAGEMENT_OPEN", "SCOPE_REQUIRED", "SCOPE_REVIEW_PENDING", "SCOPE_APPROVALS_REQUIRED", "SCOPE_APPROVED"]},
-    "evaluated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "read_model_version": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "checks": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"$ref": "#/$defs/readinessCheck"}}
+    "engagement_reference": {
+      "$ref": "#/$defs/engagementReference"
+    },
+    "tenant_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "readiness_state": {
+      "type": "string",
+      "enum": [
+        "HANDOFF_PENDING",
+        "READY_TO_OPEN_ENGAGEMENT",
+        "ENGAGEMENT_OPEN"
+      ]
+    },
+    "evaluated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "read_model_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/readinessCheck"
+      }
+    }
   },
   "$defs": {
-    "engagementReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"properties": {"reference_type": {"const": "ENGAGEMENT"}}}]},
-    "readinessCheck": {"type": "object", "additionalProperties": false, "required": ["check_code", "status", "reason_code", "subject_reference", "evaluated_at"], "properties": {"check_code": {"type": "string", "enum": ["HANDOFF_ACCEPTED", "ENGAGEMENT_EXISTS", "ENGAGEMENT_STATE_ALLOWED", "DIAGNOSTIC_SCOPE_EXISTS", "DIAGNOSTIC_SCOPE_REVIEW_PENDING", "CLIENT_SCOPE_APPROVAL_ACTIVE", "SEKINFRA_SCOPE_APPROVAL_ACTIVE", "DIAGNOSTIC_SCOPE_APPROVED"]}, "status": {"type": "string", "enum": ["SATISFIED", "UNSATISFIED", "NOT_APPLICABLE", "UNKNOWN"]}, "reason_code": {"oneOf": [{"$ref": "urn:avuhz:schema:contracts:commands:reason-code:v1"}, {"type": "string", "enum": ["READINESS_SATISFIED", "READINESS_PREREQUISITE_UNSATISFIED", "READINESS_NOT_EVALUATED", "READINESS_DERIVATION_UNKNOWN"]}]}, "subject_reference": {"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, "evaluated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"}}}
+    "engagementReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "ENGAGEMENT"
+            }
+          }
+        }
+      ]
+    },
+    "readinessCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_code",
+        "status",
+        "reason_code",
+        "subject_reference",
+        "evaluated_at"
+      ],
+      "properties": {
+        "check_code": {
+          "type": "string",
+          "enum": [
+            "HANDOFF_ACCEPTED",
+            "ENGAGEMENT_EXISTS",
+            "ENGAGEMENT_STATE_ALLOWED"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "SATISFIED",
+            "UNSATISFIED",
+            "NOT_APPLICABLE",
+            "UNKNOWN"
+          ]
+        },
+        "reason_code": {
+          "oneOf": [
+            {
+              "$ref": "urn:avuhz:schema:contracts:commands:reason-code:v1"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "READINESS_SATISFIED",
+                "READINESS_PREREQUISITE_UNSATISFIED",
+                "READINESS_NOT_EVALUATED",
+                "READINESS_DERIVATION_UNKNOWN"
+              ]
+            }
+          ]
+        },
+        "subject_reference": {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"
+        },
+        "evaluated_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        }
+      }
+    }
   }
 }

@@ -5,28 +5,140 @@
   "description": "Avuhz-owned engagement aggregate rooted in an exact accepted acquisition handoff. Identity, tenant, source handoff, and type are immutable; state and versions are governed by future commands and persistence transition rules.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["engagement_id", "tenant_id", "account_reference", "acquisition_opportunity_reference", "source_handoff_reference", "engagement_type", "engagement_state", "engagement_version", "record_version", "opened_at", "created_at", "updated_at"],
+  "required": [
+    "engagement_id",
+    "tenant_id",
+    "account_reference",
+    "acquisition_opportunity_reference",
+    "source_handoff_reference",
+    "engagement_type",
+    "engagement_state",
+    "engagement_version",
+    "record_version",
+    "opened_at",
+    "created_at",
+    "updated_at"
+  ],
   "properties": {
-    "engagement_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"},
-    "tenant_id": {"readOnly": true, "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"},
-    "account_reference": {"readOnly": true, "$ref": "#/$defs/canonicalAccountReference"},
-    "acquisition_opportunity_reference": {"readOnly": true, "$ref": "#/$defs/acquisitionOpportunityReference"},
-    "source_handoff_reference": {"readOnly": true, "$ref": "#/$defs/sourceHandoffReference"},
-    "engagement_type": {"readOnly": true, "type": "string", "const": "DIAGNOSTIC_OIA"},
-    "engagement_state": {"type": "string", "minLength": 4, "maxLength": 10, "enum": ["OPEN", "ONBOARDING"]},
-    "engagement_version": {"$ref": "#/$defs/positiveVersion"},
-    "record_version": {"$ref": "#/$defs/positiveVersion"},
-    "opened_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "created_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "updated_at": {"$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"},
-    "parent_engagement_reference": {"$ref": "#/$defs/engagementReference"},
-    "successor_engagement_reference": {"$ref": "#/$defs/engagementReference"}
+    "engagement_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/engagementId"
+    },
+    "tenant_id": {
+      "readOnly": true,
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/tenantId"
+    },
+    "account_reference": {
+      "readOnly": true,
+      "$ref": "#/$defs/canonicalAccountReference"
+    },
+    "acquisition_opportunity_reference": {
+      "readOnly": true,
+      "$ref": "#/$defs/acquisitionOpportunityReference"
+    },
+    "source_handoff_reference": {
+      "readOnly": true,
+      "$ref": "#/$defs/sourceHandoffReference"
+    },
+    "engagement_type": {
+      "readOnly": true,
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80,
+      "pattern": "^[A-Z][A-Z0-9_]{2,79}$"
+    },
+    "engagement_state": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 10,
+      "enum": [
+        "OPEN",
+        "ONBOARDING"
+      ]
+    },
+    "engagement_version": {
+      "$ref": "#/$defs/positiveVersion"
+    },
+    "record_version": {
+      "$ref": "#/$defs/positiveVersion"
+    },
+    "opened_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "parent_engagement_reference": {
+      "$ref": "#/$defs/engagementReference"
+    },
+    "successor_engagement_reference": {
+      "$ref": "#/$defs/engagementReference"
+    }
   },
   "$defs": {
-    "positiveVersion": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-    "canonicalAccountReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}, {"properties": {"object_type": {"const": "CANONICAL_ACCOUNT"}}}]},
-    "acquisitionOpportunityReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"}, {"properties": {"object_type": {"const": "ACQUISITION_OPPORTUNITY"}}}]},
-    "sourceHandoffReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"}, {"properties": {"reference_type": {"const": "ACQUISITION_HANDOFF"}}}]},
-    "engagementReference": {"allOf": [{"$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"}, {"properties": {"reference_type": {"const": "ENGAGEMENT"}}}]}
+    "positiveVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "canonicalAccountReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"
+        },
+        {
+          "properties": {
+            "object_type": {
+              "const": "CANONICAL_ACCOUNT"
+            }
+          }
+        }
+      ]
+    },
+    "acquisitionOpportunityReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/externalReference"
+        },
+        {
+          "properties": {
+            "object_type": {
+              "const": "ACQUISITION_OPPORTUNITY"
+            }
+          }
+        }
+      ]
+    },
+    "sourceHandoffReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/versionedInternalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "ACQUISITION_HANDOFF"
+            }
+          }
+        }
+      ]
+    },
+    "engagementReference": {
+      "allOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:references:v1#/$defs/internalReference"
+        },
+        {
+          "properties": {
+            "reference_type": {
+              "const": "ENGAGEMENT"
+            }
+          }
+        }
+      ]
+    }
   }
 }

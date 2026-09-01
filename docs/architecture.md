@@ -184,22 +184,22 @@ This package is a frozen plan, not provider access or runtime wiring. AUTH and D
 
 - AUTH signature verification uses the exact issuer public verification material and requires no provider credential when the issuer exposes asymmetric public keys. The runtime bearer token is request-scoped untrusted input, is never a server credential, and must never be logged, persisted, or included in evidence. If the approved issuer cannot be verified without symmetric secret material, an exact environment-scoped verification-secret reference becomes `OWNER_VALUE_REQUIRED` and validation stops; a Supabase service-role key is not an acceptable substitute.
 - The first AUTH discovery check uses no credential, anon key, user session, admin API, or service-role key. A later end-to-end token check requires a separately approved short-lived synthetic DEVELOPMENT identity and token-delivery procedure; it is outside this package.
-- The exact signed DEVELOPMENT tenant-claim name and the server-owned subject/caller/capability policy binding remain `OWNER_VALUE_REQUIRED`. The adapter must not default to caller-editable user metadata, accept token-provided authority roles, or infer these values from DATA.
+- The signed DEVELOPMENT tenant-claim path, one-tenant selection rule, service audience, and exact server-owned capability-policy key are frozen in `OWNER_DECISIONS` below. Concrete provider-assigned synthetic subject and DEVELOPMENT-only tenant values remain unresolved and must never be invented. The adapter must not default to caller-editable user metadata, accept token-provided authority roles, or infer authority from DATA.
 - DATA runtime requires one environment-scoped database login credential resolved only at runtime from the approved Render secret boundary. Its login role may inherit only the canonical no-login `avuhz_command_service` role: database `CONNECT`, schema `USAGE`, and the exact table/column grants in the canonical migration. It receives no ownership, schema `CREATE`, DDL, `DELETE`, `TRUNCATE`, `TRIGGER`, `REFERENCES`, replication, superuser, `BYPASSRLS`, `CREATEDB`, `CREATEROLE`, migration, cross-tenant, or provider-admin authority.
 - The concrete DEVELOPMENT database endpoint reference, runtime login binding, and secret-manager reference remain `OWNER_VALUE_REQUIRED`. Values stay outside Git, prompts, logs, evidence, and generated output. The separate `avuhz_migration_service_dev` authority is excluded from both connected-validation steps; the command identity cannot assume it and CI cannot substitute for it.
 
 #### First connected validation
 
-AUTH and DATA are separately reviewable and separately authorized. AUTH is first. Passing either step proves only that bounded dependency evidence; it does not make hosted readiness true, authorize adapter wiring, permit a command, or authorize migration/provider change.
+AUTH and DATA are separately reviewable and separately authorized. The first credential-free AUTH discovery is complete and its one-use authorization is consumed. Passing either step proves only that bounded dependency evidence; it does not make hosted readiness true, authorize adapter wiring, permit a command, or authorize migration/provider change.
 
-1. **AUTH discovery:** perform exactly one credential-free `GET` to `https://pwlhruwutoitnieactol.supabase.co/auth/v1/.well-known/jwks.json`, with redirects disabled and a bounded response size/time. Record only UTC attempt time, exact target, HTTP status, content type, response SHA-256, key count, and boolean structural/algorithm checks. Do not retain the raw response. Stop on redirect, origin/path mismatch, credential request, non-`200`, invalid content type/JSON/JWKS, unsupported algorithm/key type, duplicate/missing key identity, oversized response, timeout, or any secret-shaped content. Do not test sign-in, users, sessions, claims, tokens, or DATA.
+1. **AUTH discovery — completed:** one credential-free `GET` to `https://pwlhruwutoitnieactol.supabase.co/auth/v1/.well-known/jwks.json` used redirects disabled and bounded response size/time. The retained evidence is limited to UTC attempt time, exact target, HTTP status, content type, response SHA-256, key count, and boolean structural/algorithm checks; the raw response was discarded. It did not test sign-in, users, sessions, claims, tokens, or DATA, and its one-use authorization is consumed.
 2. **DATA catalog/RLS validation:** only after separate authorization and owner binding of the exact non-secret database endpoint, runtime login identity, and secret-manager reference, open one connection as that runtime identity and immediately begin a read-only transaction. Inspect only current database/user role attributes, the 16 canonical `avuhz_*` table identities, canonical migration-compatible columns/constraints, RLS enablement/policy expressions, and effective grants. Compare locally to the committed migration; emit only counts, booleans, expected/actual digests, safe error codes, and timestamps; then roll back and close. Stop on endpoint/project mismatch, credential-resolution failure, unexpected role membership or grants, superuser/`BYPASSRLS`, missing/extra schema objects, RLS/policy mismatch, any non-synthetic row requirement, any attempted write/DDL, or any request for migration/service-role authority. Do not inspect business rows or AUTH data.
 
-The AUTH evidence is reviewed before requesting DATA authorization. A failure stops that step and creates no authority to repair provider state. DATA failure stops without migration, grant, RLS, schema, credential, Render, or provider changes. Evidence is bounded and secret-free; command output, connection strings, tokens, raw provider responses, and tenant/business data are prohibited.
+The completed AUTH evidence creates no DATA or further AUTH authority. DATA failure stops without migration, grant, RLS, schema, credential, Render, or provider changes. Evidence is bounded and secret-free; command output, connection strings, tokens, raw provider responses, and tenant/business data are prohibited.
 
-#### Exact owner-authorization text
+#### Consumed AUTH-discovery authorization and separate DATA gate
 
-The first provider call remains prohibited until the owner supplies this exact authorization in a new request:
+The owner supplied the following one-use authorization for the completed credential-free AUTH discovery. It is retained only as bounded historical control evidence and is consumed:
 
 > I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT AUTH discovery validation defined in `docs/architecture.md` against only `https://pwlhruwutoitnieactol.supabase.co/auth/v1/.well-known/jwks.json`: one credential-free GET, redirects disabled, bounded metadata evidence only, no token/user/session access, no DATA access, no mutation, no Render change, no staging/production, and stop on every documented condition. This authorization expires when that single validation completes or fails.
 
@@ -207,7 +207,38 @@ DATA remains unauthorized after that call. Before the DATA call, the owner must 
 
 > I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT DATA catalog/RLS validation defined in `docs/architecture.md` against only Supabase project `pwlhruwutoitnieactol`, using the separately owner-bound runtime database endpoint, login identity, and secret-manager references: one read-only transaction, catalog/role/grant/RLS inspection only, rollback and close, bounded secret-free evidence, no business-row or AUTH-data access, no writes, no DDL, no migration, no service-role access, no grant/RLS/schema repair, no Render change, no staging/production, and stop on every documented condition. This authorization expires when that single validation completes or fails.
 
-Neither authorization permits credential creation, provider configuration, adapter deployment/wiring, readiness changes, remediation, or a second call.
+Neither the consumed AUTH authorization nor the unapplied DATA authorization permits credential creation, provider configuration, adapter deployment/wiring, readiness changes, remediation, or a second call.
+
+### OWNER_DECISIONS
+
+These owner-approved DEVELOPMENT policies are canonical and frozen. They contain no provider credential, resource identifier, user identity, tenant identity, or token, and they grant no connection, hook creation/enablement, user/tenant creation, token issuance, migration, deployment, or other remote authority.
+
+| Decision | Frozen DEVELOPMENT value | Security consequence |
+|---|---|---|
+| Tenant claim path | Top-level `avuhz_tenant_id` | Nested, alternate, absent, malformed, non-UUID, or multi-valued tenant evidence fails closed. |
+| Tenant selection | Exactly one canonical tenant UUID per token | Tenant switching requires a newly issued token; request payloads cannot select or replace the tenant. |
+| Command-service audience | `audience.avuhz.command-service.development` | The JWT `aud` must match exactly; default Supabase `aud=authenticated` is rejected by Avuhz. |
+| JWT authority boundary | JWT `role`, `roles`, `permissions`, `scope`, `capability`, `capabilities`, and authority claims are ignored for Avuhz authority | Caller JWT claims cannot grant capabilities, approvals, or human authority. |
+| Capability source | Environment-scoped injected server-owned allowlist | Capabilities never originate in caller-controlled token claims or payloads. |
+| Capability lookup key | Exact `(issuer, audience, subject, tenant_id, caller_type)` tuple | Partial, wildcard, latest, fallback, or cross-environment lookup is prohibited. |
+| Synthetic caller type | `HUMAN` | This test classification does not itself establish an attributable authority role. |
+| Initial synthetic capability | `engagement:read` | The first synthetic validation is read-bounded and grants no mutation capability. |
+| Synthetic authority roles | Empty | Synthetic identity cannot approve, accept, authorize, migrate, or deploy. |
+| Synthetic subject | Provider-assigned opaque `sub` | The value remains unresolved until provider assignment and must not be invented. |
+| Synthetic token delivery | Ephemeral local injection only | A token must never enter prompts, Git, logs, documentation, fixtures, or retained evidence. |
+| Supabase boundary | Supabase is an AUTH/DATA adapter; Avuhz core remains provider-neutral | Provider claims or APIs cannot become alternate Avuhz authority or persistence paths. |
+| AUTH/DATA separation | Responsibilities remain logically distinct | Current DEVELOPMENT reuse of one physical Supabase project is not evidence of production-grade AUTH/DATA isolation. |
+| Custom Access Token Hook | Required by the current Supabase adapter design to emit the approved tenant claim and service audience | The hook must emit no Avuhz capability or authority-role claims and remains uncreated and disabled. |
+
+### Local observability evidence
+
+This is owner-confirmed local-only operational evidence, separate from the unresolved hosted observability binding:
+
+- Prometheus is healthy and ready; its self-scrape is `UP`.
+- The local `node_exporter` scrape is `UP`.
+- The managed local Grafana `12.4.2` instance is healthy at `127.0.0.1:3002`, uses the recovered persistent Grafana data, and has a validated Grafana-to-Prometheus query path.
+- A legacy orphaned Grafana instance remains on port `3000`; cleanup is deferred to a controlled Docker maintenance window.
+- This evidence is not Render-hosted telemetry and does not establish any Grafana Cloud organization, stack, destination, endpoint, credential, collector, or other provider resource.
 
 ## Engineering orchestration boundary
 

@@ -136,7 +136,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "immediately begin a read-only transaction",
             "I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT AUTH discovery validation",
             "I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT DATA catalog/RLS validation",
-            "Neither authorization permits credential creation",
+            "Neither the consumed AUTH authorization nor the unapplied DATA authorization permits credential creation",
         ):
             self.assertIn(value, ARCHITECTURE)
         self.assertIn("AUTH and DATA are separately reviewable and separately authorized", ARCHITECTURE)
@@ -151,12 +151,70 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "private key material absent",
             "validation `PASS`",
             "c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af",
-            "one-use authorization is consumed",
+            "one-use DEVELOPMENT AUTH JWKS read authorization was consumed",
             "No further AUTH call, DATA access",
-            "hosted readiness remains fail-closed",
+            "live hosted DEVELOPMENT composition still uses its unavailable real-provider resolver",
         ):
             self.assertIn(value, STATE)
-        self.assertIn("raw JWKS response was never persisted", STATE)
+        self.assertIn("raw-response persistence", STATE)
+
+    def test_development_owner_decisions_are_canonical_and_non_authorizing(self):
+        for value in (
+            "### OWNER_DECISIONS",
+            "Top-level `avuhz_tenant_id`",
+            "Exactly one canonical tenant UUID per token",
+            "Tenant switching requires a newly issued token",
+            "`audience.avuhz.command-service.development`",
+            "default Supabase `aud=authenticated` is rejected by Avuhz",
+            "JWT `role`, `roles`, `permissions`, `scope`, `capability`, `capabilities`",
+            "Environment-scoped injected server-owned allowlist",
+            "`(issuer, audience, subject, tenant_id, caller_type)`",
+            "`HUMAN`",
+            "`engagement:read`",
+            "Synthetic authority roles",
+            "Provider-assigned opaque `sub`",
+            "Ephemeral local injection only",
+            "Supabase is an AUTH/DATA adapter; Avuhz core remains provider-neutral",
+            "not evidence of production-grade AUTH/DATA isolation",
+            "Required by the current Supabase adapter design",
+            "must emit no Avuhz capability or authority-role claims",
+            "remains uncreated and disabled",
+        ):
+            self.assertIn(value, ARCHITECTURE)
+        self.assertIn("grant no connection, hook creation/enablement", ARCHITECTURE)
+
+    def test_local_observability_is_recorded_without_hosted_claims(self):
+        for value in (
+            "### Local observability evidence",
+            "Prometheus is healthy and ready",
+            "self-scrape is `UP`",
+            "`node_exporter` scrape is `UP`",
+            "Grafana `12.4.2`",
+            "`127.0.0.1:3002`",
+            "recovered persistent Grafana data",
+            "Grafana-to-Prometheus query path",
+            "port `3000`",
+            "controlled Docker maintenance window",
+            "not Render-hosted telemetry",
+            "does not establish any Grafana Cloud",
+        ):
+            self.assertIn(value, ARCHITECTURE)
+        self.assertIn("no Grafana Cloud resource is claimed", STATE)
+
+    def test_phase_b_state_is_reconciled_through_canonical_initial_migration(self):
+        for value in (
+            "5591dd6a99dd2d56dba6b682ab45198143d7539f",
+            "https://avuhz-command-dev.onrender.com",
+            "GET /health/live = 200",
+            "GET /health/ready = 503",
+            "deterministic fake positive/negative identity tests are implemented and green",
+            "disposable local PostgreSQL DEVELOPMENT DATA composition and UnitOfWork tests are green",
+            "default Supabase `aud=authenticated` is rejected by Avuhz",
+            "clean disposable replay passes nine PostgreSQL tests",
+            "No hook migration exists",
+            "Define the bounded DEVELOPMENT AUTH integration authorization plan",
+        ):
+            self.assertIn(value, STATE)
 
     def test_autonomous_dry_run_is_bounded_and_non_authoritative(self):
         self.assertIn("## Autonomous engineering dry-run", ARCHITECTURE)

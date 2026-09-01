@@ -1,16 +1,16 @@
 # Phase 5D-C -- Build, QA, Acceptance, and Deployment Authority Architecture
 
-Status: frozen architecture and JSON Schema 2020-12 contract boundary
+Status: frozen JSON Schema 2020-12 contracts; D1–D4 runtime and local persistence active
 Scope: exact build execution truth, governed QA truth, explicit client acceptance, and bounded deployment authorization
-Out of scope: runtime, repositories, persistence, migrations, RLS, deployment execution, credentials, n8n, website work, and remote Supabase
+Out of scope: provider deployment operations, rollback execution, credentials, production changes, n8n, website work, and remote infrastructure
 
 ## 1. Normative authority chain
 
 The following resources are distinct and non-substitutable:
 
 ```text
-AssessmentAccessGrant
-!= OngoingAccessGrant
+ImplementationHandoff
+!= ImplementationBrief
 != ImplementationAuthorization
 != CodexBuildPackage
 != DeploymentAuthorization
@@ -30,7 +30,7 @@ No earlier record, state, boolean, caller assertion, or read-model projection cr
 
 ## 2. Frozen contract surface
 
-This batch defines exactly four resources, nine commands, eight capabilities, nine lifecycle events, and five derived read models. All are provider-neutral JSON Schema 2020-12 contracts. They are intentionally absent from runtime registries.
+This boundary defines exactly four resources, nine commands, eight capabilities, nine lifecycle events, and five derived read models. All are provider-neutral JSON Schema 2020-12 contracts and active runtime surfaces.
 
 | Resource | Purpose | Frozen states |
 |---|---|---|
@@ -59,7 +59,7 @@ WORKLOAD/AI cannot accept for the client. Acceptance does not authorize deployme
 
 ## 6. DeploymentAuthorization
 
-DeploymentAuthorization is separate from ImplementationAuthorization and CodexBuildPackage. It requires an ACTIVE exact ImplementationAuthorization, the exact RELEASED package, a SUCCEEDED exact build, a PASSED exact QA result, exact ACCEPTED client acceptance where required, and separate approvals from CLIENT and SEKINFRA humans.
+DeploymentAuthorization is separate from ImplementationAuthorization and CodexBuildPackage. It requires an ACTIVE exact ImplementationAuthorization, the exact RELEASED package, a SUCCEEDED exact build, a PASSED exact QA result, exact ACCEPTED client acceptance where required, and separate approvals from CLIENT and PROVIDER humans.
 
 The authorization binds one exact artifact identity/version/digest, target environment, target resources, permitted deployment actions, prohibited actions, rollback/recovery requirements, validity window, record version, digest, and immutable history. Permitted actions are only `DEPLOY_EXACT_ARTIFACT` and `ROLLBACK_EXACT_ARTIFACT`. Prohibited actions always win: artifact substitution, target or environment widening, permission widening, credential rotation, data deletion, billing changes, unauthorized production change, and out-of-scope network or security-control changes.
 
@@ -100,7 +100,7 @@ WORKLOAD/AI may execute released package tasks, run tests, record bounded eviden
 - Expired or revoked DeploymentAuthorization cannot be reactivated; replacement is a new version.
 - No rule resolves a prerequisite using mutable current or "latest" state.
 
-Accepted transitions must eventually use the existing command executor, trusted context, UnitOfWork, idempotency, lifecycle event, transactional outbox, and persistence architecture, but no such runtime is implemented in this batch.
+Accepted transitions use the existing command executor, trusted context, UnitOfWork, idempotency, lifecycle events, transactional outbox, local persistence, and tenant RLS architecture.
 
 ## 10. Read models
 
@@ -118,4 +118,4 @@ The same contracts represent roofing/home services, security staffing, and medic
 
 ## 13. Compatibility and runtime boundary
 
-Phase 5B, Phase 5C, Phase 5D-A, Phase 5D-B1, Phase 5D-B2, and Phase 5D-B3 vocabularies remain additive and unchanged. Existing runtime schema registries intentionally remain unchanged. The recommended first runtime resource is BuildExecutionResult. DeploymentAuthorization runtime, deployment execution, production credential handling, production changes, remote Supabase, n8n, and website work remain outside this batch.
+The provider-neutral handoff and B1–B3 vocabularies remain compatible. D1–D4 resources, commands, read models, repositories, UnitOfWork members, local persistence tables, and RLS policies are active. DeploymentAuthorization grants only exact authority; it performs no deployment. Provider deployment operations, production credential handling, production changes, remote infrastructure, n8n, and website work remain outside this boundary.

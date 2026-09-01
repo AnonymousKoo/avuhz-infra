@@ -1,8 +1,8 @@
 # Phase 5D-D5 -- Deployment Execution and Verification Architecture
 
-Status: frozen architecture and JSON Schema 2020-12 contract boundary
+Status: frozen architecture and JSON Schema 2020-12 contract boundary; D5a/D5b runtime and local persistence active
 Scope: exact deployment-operation attempt truth and separate exact deployed-state verification truth
-Out of scope: runtime, repositories, persistence, migrations, rollback execution runtime, credentials, production operations, remote infrastructure, n8n, and website work
+Out of scope: provider deployment adapters, rollback execution runtime, credentials, production operations, remote infrastructure, n8n, and website work
 
 ## 1. Normative truth and authority chain
 
@@ -32,7 +32,7 @@ A command request, event, outbox intent, read model, generic boolean, or caller 
 
 ## 2. Frozen contract surface
 
-D5 defines exactly two authoritative resources, three commands, three capabilities, three lifecycle events, and two derived read models. They are provider-neutral JSON Schema 2020-12 contracts and are intentionally absent from runtime command and resource-schema registries.
+D5 defines exactly two authoritative resources, three commands, three capabilities, three lifecycle events, and two derived read models. They are provider-neutral JSON Schema 2020-12 contracts and are active in the runtime command and resource-schema registries.
 
 | Resource | Purpose | Frozen states |
 |---|---|---|
@@ -141,8 +141,8 @@ Schema and semantic validation reject or deny:
 
 Rejected commands create no authoritative record, event, idempotency success, or outbox intent.
 
-## 11. Read models and runtime hard stop
+## 11. Read models and runtime boundary
 
 `DeploymentExecutionStatusView` exposes operation truth and always fixes `deployment_verified` to false. `DeploymentVerificationStatusView` exposes exact verification truth; `deployment_verified` is true only for `VERIFIED` and `rollback_required` is its deterministic inverse.
 
-This D5 batch changes contracts, fixtures, validators, and architecture documentation only. It adds no command handler, repository port, UnitOfWork member, persistence table, RLS policy, migration, provider adapter, deployment operation, rollback operation, production change, or remote mutation. The first later runtime resource is `DeploymentExecution`; `DeploymentVerification` runtime follows only after execution runtime is green.
+D5a/D5b implement the frozen `DeploymentExecution` and `DeploymentVerification` command handlers, repository ports, UnitOfWork members, local persistence tables, and tenant RLS policies. They add no provider adapter, rollback operation, production change, credential handling, or remote mutation. Runtime records bounded execution and verification truth only; it does not perform a real deployment.

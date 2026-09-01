@@ -72,7 +72,8 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
             "implementation_handoff_id", "handoff_version", "handoff_digest",
             "implementation_brief_digest", "implementation_authority_digest",
             "package_digest", "execution_digest", "qa_digest", "client_acceptance_digest",
-            "deployment_authority_digest",
+            "deployment_authority_digest", "deployment_execution_digest",
+            "verification_digest",
         ):
             self.assertIn(field, self.lower)
         self.assertIn("immutable avuhz history cannot be rewritten", self.lower)

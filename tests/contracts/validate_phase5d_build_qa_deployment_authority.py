@@ -85,7 +85,7 @@ def main():
  approval=schemas[DOMAIN["approval"]]
  if approval["properties"]["actor_role"]["enum"][-2:]!=["CLIENT_DEPLOYMENT_AUTHORITY","PROVIDER_DEPLOYMENT_AUTHORITY"]:fail("deployment human roles")
  doc=(ROOT/"docs/phase5d-build-qa-deployment-authority-architecture.md").read_text()
- for phrase in ["RELEASED != build completed","build completed != QA passed","QA passed != client accepted","client accepted != deployment authorized","CLIENT HUMAN","WORKLOAD/AI cannot accept","No deployment execution"]:
+ for phrase in ["RELEASED != build completed","build completed != QA passed","QA passed != client accepted","client accepted != deployment authorized","CLIENT HUMAN","WORKLOAD/AI cannot accept","it performs no deployment"]:
   if phrase not in doc:fail("missing architecture invariant: "+phrase)
  for industry,target in [("roofing / home services","roofing.dispatch"),("security staffing","security.scheduling"),("medical-office operations","medical.workflow")]:
   b,q,a,d=examples(target)
@@ -115,7 +115,7 @@ def main():
   if chain_ok(bb,qq,aa,dd):fail(label+" accepted")
  bb,qq,aa,dd=examples("target.exact")
  if chain_ok(bb,qq,aa,dd,"REVOKED"):fail("revoked ImplementationAuthorization accepted")
- print("phase5d-c validation: PASS (4 resources, 9 commands, 8 capabilities, 9 events, 5 read models, 3 industries, security/stale-source negatives, D4 runtime boundary exact)")
+ print("phase5d-c validation: PASS (4 resources, 9 commands, 8 capabilities, 9 events, 5 read models, 3 industries, security/stale-source negatives, D4 provider-neutral runtime boundary exact)")
 
 def refs(x):
  if isinstance(x,dict):

@@ -4,6 +4,7 @@ import copy, json, os, uuid
 import psycopg
 from psycopg.rows import dict_row
 from .guards import AuthoritativeSubjectSnapshot
+from .outbox_delivery import claim_delivery, fail_delivery, publish_delivery
 from .postgres_phase5d_brief import ImplementationBriefPostgresRepository
 from .postgres_phase5d_authorization import ImplementationAuthorizationPostgresRepository
 from .postgres_phase5d_package import CodexBuildPackagePostgresRepository
@@ -233,8 +234,99 @@ class LifecycleEventPostgresRepository:
 class OutboxPostgresRepository:
     def __init__(self,uow): self.uow=uow
     def append(self,intent):
-        self.uow.failpoint("OUTBOX_APPEND"); cur=self.uow.connection.execute("insert into public.avuhz_outbox_deliveries (tenant_id,lifecycle_event_id,status) select tenant_id,%s,%s from public.avuhz_lifecycle_events where lifecycle_event_id=%s",(intent["event_id"],intent["status"],intent["event_id"]))
+        self.uow.failpoint("OUTBOX_APPEND")
+        event_id = intent["event_id"]
+        cur=self.uow.connection.execute(
+            "insert into public.avuhz_outbox_deliveries "
+            "(tenant_id,lifecycle_event_id,destination_reference,status,delivery_idempotency_key) "
+            "select tenant_id,%s,'internal.lifecycle-events',%s,%s from public.avuhz_lifecycle_events "
+            "where lifecycle_event_id=%s",
+            (event_id,intent["status"],"outbox-delivery:"+event_id,event_id),
+        )
         if cur.rowcount != 1: raise ValueError("outbox event missing")
+    @staticmethod
+    def _delivery(row):
+        record = {
+            "outbox_delivery_id": str(row["outbox_delivery_id"]),
+            "event_reference": {"reference_type": "LIFECYCLE_EVENT", "reference_id": str(row["lifecycle_event_id"])},
+            "destination_reference": row["destination_reference"], "status": row["status"],
+            "attempt_count": row["attempt_count"], "attempt_history": copy.deepcopy(_load(row["attempt_history"]) or []),
+            "last_safe_error_code": row["last_safe_error_code"],
+            "delivery_idempotency_key": row["delivery_idempotency_key"], "record_version": row["record_version"],
+            "created_at": _time(row["created_at"]), "updated_at": _time(row["updated_at"]),
+        }
+        for field in ("next_attempt_at","last_attempt_at","published_at","lease_expires_at"):
+            if row.get(field) is not None: record[field] = _time(row[field])
+        if row.get("lease_owner_reference") is not None: record["lease_owner_reference"] = row["lease_owner_reference"]
+        if row.get("lease_token") is not None: record["lease_token"] = str(row["lease_token"])
+        return record
+    def _event(self, tenant_id, event_id):
+        row = self.uow.connection.execute(
+            "select * from public.avuhz_lifecycle_events where tenant_id=%s and lifecycle_event_id=%s",
+            (tenant_id,event_id),
+        ).fetchone()
+        if not row or row.get("event_schema_version") is None: return None
+        event = {
+            "event_id": str(row["lifecycle_event_id"]), "event_type": row["event_type"],
+            "event_schema_version": row["event_schema_version"], "tenant_id": str(row["tenant_id"]),
+            "authoritative_subject_reference": {"reference_type": row["authoritative_subject_type"], "reference_id": str(row["authoritative_subject_id"])},
+            "authoritative_subject_version": row["authoritative_subject_version"], "occurred_at": _time(row["occurred_at"]),
+            "producer_reference": row["producer_reference"], "correlation_id": str(row["correlation_id"]),
+            "idempotency_key": row["idempotency_key"], "visibility": row["visibility"],
+            "sanitized_metadata": copy.deepcopy(_load(row["sanitized_metadata"]) or {}),
+        }
+        if row.get("engagement_id") is not None: event["engagement_id"] = str(row["engagement_id"])
+        if row.get("causation_id") is not None: event["causation_id"] = str(row["causation_id"])
+        return event
+    def _save(self, tenant_id, record, expected_version):
+        cur = self.uow.connection.execute(
+            "update public.avuhz_outbox_deliveries set destination_reference=%s,status=%s,attempt_count=%s,"
+            "next_attempt_at=%s,last_attempt_at=%s,published_at=%s,lease_owner_reference=%s,lease_token=%s,"
+            "lease_expires_at=%s,attempt_history=%s::jsonb,last_safe_error_code=%s,delivery_idempotency_key=%s,"
+            "record_version=%s,updated_at=%s where tenant_id=%s and outbox_delivery_id=%s and record_version=%s",
+            (record["destination_reference"],record["status"],record["attempt_count"],record.get("next_attempt_at"),
+             record.get("last_attempt_at"),record.get("published_at"),record.get("lease_owner_reference"),
+             record.get("lease_token"),record.get("lease_expires_at"),_json(record["attempt_history"]),
+             record.get("last_safe_error_code"),record["delivery_idempotency_key"],record["record_version"],
+             record["updated_at"],tenant_id,record["outbox_delivery_id"],expected_version),
+        )
+        if cur.rowcount != 1: raise ValueError("outbox delivery transition conflict")
+    def claim_next(self, tenant_id, worker_reference, destination_reference, now, lease_expires_at, max_attempts):
+        self.uow.failpoint("OUTBOX_CLAIM")
+        row = self.uow.connection.execute(
+            "select * from public.avuhz_outbox_deliveries where tenant_id=%s "
+            "and (destination_reference is null or destination_reference=%s) and (status='PENDING' "
+            "or (status='FAILED_RETRYABLE' and next_attempt_at<=%s) "
+            "or (status='PUBLISHING' and lease_expires_at<=%s)) "
+            "order by coalesce(next_attempt_at,created_at),created_at,outbox_delivery_id "
+            "for update skip locked limit 1",
+            (tenant_id,destination_reference,now,now),
+        ).fetchone()
+        if not row: return None
+        record = self._delivery(row)
+        if record["destination_reference"] is None: record["destination_reference"] = destination_reference
+        if record["delivery_idempotency_key"] is None:
+            record["delivery_idempotency_key"] = "outbox-delivery:" + record["event_reference"]["reference_id"]
+        disposition, updated = claim_delivery(
+            record,worker_reference,destination_reference,now,lease_expires_at,max_attempts,str(uuid.uuid4()),
+        )
+        if disposition == "NONE": return None
+        self._save(tenant_id,updated,record["record_version"])
+        event = self._event(tenant_id,updated["event_reference"]["reference_id"]) if disposition == "CLAIMED" else None
+        return {"disposition": disposition,"delivery": updated,"event": event}
+    def _locked(self, tenant_id, delivery_id):
+        row = self.uow.connection.execute(
+            "select * from public.avuhz_outbox_deliveries where tenant_id=%s and outbox_delivery_id=%s for update",
+            (tenant_id,delivery_id),
+        ).fetchone()
+        if not row: raise ValueError("outbox delivery is missing")
+        return self._delivery(row)
+    def mark_published(self, tenant_id, delivery_id, lease_token, published_at):
+        self.uow.failpoint("OUTBOX_PUBLISH"); current=self._locked(tenant_id,delivery_id)
+        updated=publish_delivery(current,lease_token,published_at);self._save(tenant_id,updated,current["record_version"]);return updated
+    def mark_failed(self, tenant_id, delivery_id, lease_token, failed_at, safe_error_code, next_attempt_at):
+        self.uow.failpoint("OUTBOX_FAILURE"); current=self._locked(tenant_id,delivery_id)
+        updated=fail_delivery(current,lease_token,failed_at,safe_error_code,next_attempt_at);self._save(tenant_id,updated,current["record_version"]);return updated
 
 class PostgresUnitOfWork:
     def __init__(self,store,trusted_context=None):

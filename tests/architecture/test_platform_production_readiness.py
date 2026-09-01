@@ -71,7 +71,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertIn("`PLATFORM_PRODUCTION_READINESS`: `NOT_READY`", STATE)
         self.assertIn("`READY_FOR_PHASE6`: `NO`", STATE)
         for blocker in (
-            "outbox worker", "production AUTH/DATA registry",
+            "production outbox identity/provider sink", "production AUTH/DATA registry",
             "GitHub workflows/branch/environment protections", "observability/alerting",
             "backup/PITR RPO/RTO", "deployment/rollback rehearsal",
         ):
@@ -80,7 +80,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertFalse(any(ROOT.glob("Dockerfile*")))
         self.assertTrue((ROOT / "pyproject.toml").is_file())
         self.assertTrue((ROOT / "src/avuhz_service/__main__.py").is_file())
-        self.assertIn("transactional outbox delivery worker", ROADMAP)
+        self.assertIn("local CI artifact/evidence pipeline and autonomous dry-run harness. — NEXT", ROADMAP)
         self.assertIn("Phase 6", ROADMAP)
         self.assertIn("DO NOT START YET", ROADMAP)
 

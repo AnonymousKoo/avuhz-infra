@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 
 from .guards import AuthoritativeSubjectSnapshot
 from .models import ValidationFailure
+from .outbox_delivery import claim_delivery, fail_delivery, normalize_delivery, publish_delivery
 from .runtime import prepare_and_guard_command
 from .phase5d_brief import IMPLEMENTATION_BRIEF_COMMANDS, IMPLEMENTATION_BRIEF_EVENTS, ImplementationBriefHandler
 from .phase5d_authorization import IMPLEMENTATION_AUTHORIZATION_COMMANDS, IMPLEMENTATION_AUTHORIZATION_EVENTS, ImplementationAuthorizationHandler
@@ -213,7 +214,39 @@ class LifecycleEventMemoryRepository:
 class OutboxMemoryRepository:
     def __init__(self, uow): self.uow = uow
     def append(self, intent): self.uow.failpoint("OUTBOX_APPEND"); self.uow.working.outbox.append(intent)
-    def list(self): return tuple(self.uow.working.outbox)
+    def list(self): return tuple(copy.deepcopy(self.uow.working.outbox))
+    def _event(self, event_id):
+        return next((copy.deepcopy(event) for event in self.uow.working.events if event.get("event_id") == event_id), None)
+    def claim_next(self, tenant_id, worker_reference, destination_reference, now, lease_expires_at, max_attempts):
+        self.uow.failpoint("OUTBOX_CLAIM")
+        for index, intent in sorted(enumerate(self.uow.working.outbox), key=lambda item: (item[1].get("next_attempt_at") or item[1].get("created_at") or "", item[0])):
+            event_id = intent.get("event_id") or intent.get("event_reference", {}).get("reference_id")
+            event = self._event(event_id)
+            if not event or event.get("tenant_id") != tenant_id:
+                continue
+            record = normalize_delivery(intent, event, destination_reference, now)
+            disposition, updated = claim_delivery(record, worker_reference, destination_reference, now, lease_expires_at, max_attempts, str(uuid.uuid4()))
+            if disposition != "NONE":
+                self.uow.working.outbox[index] = updated
+                return {"disposition": disposition, "delivery": copy.deepcopy(updated), "event": event if disposition == "CLAIMED" else None}
+        return None
+    def _replace(self, tenant_id, delivery_id, transition):
+        for index, intent in enumerate(self.uow.working.outbox):
+            if intent.get("outbox_delivery_id") == delivery_id:
+                event_id = intent["event_reference"]["reference_id"]
+                event = self._event(event_id)
+                if not event or event.get("tenant_id") != tenant_id:
+                    raise ValueError("tenant-bound outbox delivery is required")
+                updated = transition(intent)
+                self.uow.working.outbox[index] = updated
+                return copy.deepcopy(updated)
+        raise ValueError("outbox delivery is missing")
+    def mark_published(self, tenant_id, delivery_id, lease_token, published_at):
+        self.uow.failpoint("OUTBOX_PUBLISH")
+        return self._replace(tenant_id, delivery_id, lambda current: publish_delivery(current, lease_token, published_at))
+    def mark_failed(self, tenant_id, delivery_id, lease_token, failed_at, safe_error_code, next_attempt_at):
+        self.uow.failpoint("OUTBOX_FAILURE")
+        return self._replace(tenant_id, delivery_id, lambda current: fail_delivery(current, lease_token, failed_at, safe_error_code, next_attempt_at))
 
 
 class UnitOfWork:

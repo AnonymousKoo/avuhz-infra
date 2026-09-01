@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Local-only production-shaped Avuhz command/query service packaging and bounded health surfaces complete; remaining platform production-readiness implementation is blocked.
+`CURRENT_PHASE`: Local-only transactional outbox delivery worker with bounded leasing, retry, dead-letter behavior, and an idempotent fake sink complete; remaining platform production-readiness implementation is blocked.
 
-`CURRENT_HEAD`: `HEAD` (`feat: add local avuhz command query service`)
+`CURRENT_HEAD`: `HEAD` (`feat: add local transactional outbox worker`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Runnable local WSGI command/query service and wheel/console artifact using the existing Executor, TrustedExecutionContext, UnitOfWork, repositories, and Phase 5 read services, with bounded startup/liveness/readiness and fail-closed security behavior.
+`LAST_GREEN_MILESTONE`: Tenant-bound local outbox delivery worker over existing committed lifecycle-event intents, with atomic leases, stable delivery idempotency, bounded exponential retry, explicit terminal dead-letter state, immutable attempt provenance, restart recovery, and a fake local sink only.
 
 `COMPLETED`:
 
@@ -47,7 +47,10 @@
 - Codex/Claude remain untrusted engineering workloads: they may build, test, scan, and draft evidence but cannot approve, merge, select production targets, access production secrets, migrate, deploy, or establish success. A nine-step autonomous local/staging dry-run is defined but has not been implemented or executed.
 - The local service is a real buildable wheel/console artifact with a framework-neutral WSGI application, loopback-only memory composition, one governed command route, nine allowlisted read-only query types, explicit `engagement:read` access, fixed non-human trusted identity, request limits, and sanitized error handling.
 - `GET /health/startup`, `/health/live`, and `/health/ready` are bounded and non-sensitive. Readiness checks required local data/identity dependencies, returns `503` on unavailable/exceptional probes, and never returns connection details or stack traces.
-- Platform production remains `NOT_READY`: the local service is not a production deployment artifact and there is still no outbox worker, production AUTH/DATA registry, trusted issuer integration, secret manager/service identities, GitHub workflows/branch/environment protections, artifact provenance/SBOM pipeline, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
+- The local outbox worker consumes only existing committed outbox intents, requires tenant-bound `INTERNAL_SERVICE` context plus `event:publish_internal`, and cannot commit domain collections. The fake sink is bounded, local, and idempotent; no provider integration or remote delivery exists.
+- Claims use lease tokens, record versions, and PostgreSQL `FOR UPDATE SKIP LOCKED`; failures retain the immutable event, schedule bounded exponential retry, or enter explicit `FAILED_TERMINAL`. Attempt history records worker provenance and timestamps without error messages, responses, credentials, or provider payloads.
+- Restart, expired-lease recovery, post-sink commit interruption, concurrent exclusion, idempotent replay, missing-event terminal handling, tenant/trusted-worker denial, schema, migration, and frozen Phase 5 compatibility tests are green. The opt-in PostgreSQL adapter test is present but skipped here because no local DSN or psycopg driver is available.
+- Platform production remains `NOT_READY`: the local service/worker are not production deployment artifacts and there is still no production AUTH/DATA registry, trusted issuer integration, production outbox identity/provider sink, secret manager/service identities, GitHub workflows/branch/environment protections, artifact provenance/SBOM pipeline, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
 - The existing PostgreSQL migration and Supabase configuration remain local/disposable only. No remote project was selected, contacted, changed, or certified.
 
 
@@ -55,13 +58,13 @@
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The local command/query service packaging milestone is complete.
+`IN_PROGRESS`: None. The local transactional outbox worker milestone is complete.
 
-`NEXT_TASK`: Implement the local-only transactional outbox delivery worker around existing `PENDING` outbox intents, with bounded leasing/retry/dead-letter behavior and a fake local sink. Do not contact providers, deploy, or start Phase 6.
+`NEXT_TASK`: Implement the local CI artifact/evidence pipeline and autonomous engineering dry-run harness against the frozen Phase 5 service/worker baseline. Keep it local-only; do not deploy, contact providers, configure production identities, or start Phase 6.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the local command/query service milestone commit. Disposable local service/PostgreSQL processes and wheel files are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the local transactional outbox worker milestone commit. Disposable local service/worker/PostgreSQL processes and wheel files are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

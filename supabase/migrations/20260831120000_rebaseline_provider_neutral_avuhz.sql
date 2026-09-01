@@ -177,10 +177,20 @@ create table public.avuhz_outbox_deliveries (
     'PENDING','PUBLISHING','PUBLISHED','FAILED_RETRYABLE','FAILED_TERMINAL')),
   attempt_count integer not null default 0 check (attempt_count>=0), next_attempt_at timestamptz,
   last_attempt_at timestamptz, published_at timestamptz,
+  lease_owner_reference text, lease_token uuid, lease_expires_at timestamptz,
+  attempt_history jsonb not null default '[]'::jsonb check (
+    jsonb_typeof(attempt_history)='array' and jsonb_array_length(attempt_history)<=32),
   last_safe_error_code text check (last_safe_error_code is null or last_safe_error_code in (
-    'OUTBOX_COMMIT_FAILED','COMMAND_REJECTED','SECURITY_BLOCKED')),
+    'OUTBOX_COMMIT_FAILED','COMMAND_REJECTED','SECURITY_BLOCKED','DELIVERY_UNAVAILABLE',
+    'DELIVERY_REJECTED','LEASE_EXPIRED','EVENT_UNAVAILABLE')),
   delivery_idempotency_key text, record_version integer not null default 1 check (record_version>0),
   created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  check ((status='PUBLISHING' and lease_owner_reference is not null and lease_token is not null
+      and lease_expires_at is not null and next_attempt_at is null and published_at is null)
+    or (status<>'PUBLISHING' and lease_owner_reference is null and lease_token is null and lease_expires_at is null)),
+  check (status<>'PUBLISHED' or (published_at is not null and next_attempt_at is null)),
+  check (status<>'FAILED_RETRYABLE' or (next_attempt_at is not null and published_at is null)),
+  check (status<>'FAILED_TERMINAL' or (next_attempt_at is null and published_at is null)),
   unique (tenant_id,lifecycle_event_id),
   foreign key (tenant_id,lifecycle_event_id) references public.avuhz_lifecycle_events (tenant_id,lifecycle_event_id)
 );
@@ -711,6 +721,33 @@ language plpgsql set search_path=pg_catalog,public as $$ begin
 end $$;
 create trigger avuhz_guard_idempotency_transition before update on public.avuhz_idempotency_records for each row execute function public.avuhz_guard_idempotency_transition();
 
+create function public.avuhz_guard_outbox_transition() returns trigger language plpgsql as $$
+declare attempt_index integer;
+begin
+  if row(new.tenant_id,new.lifecycle_event_id,new.outbox_delivery_id,new.created_at)
+      is distinct from row(old.tenant_id,old.lifecycle_event_id,old.outbox_delivery_id,old.created_at)
+    or (old.destination_reference is not null and new.destination_reference is distinct from old.destination_reference)
+    or (old.delivery_idempotency_key is not null and new.delivery_idempotency_key is distinct from old.delivery_idempotency_key)
+    or new.record_version<>old.record_version+1
+    or new.attempt_count<old.attempt_count or new.attempt_count>old.attempt_count+1
+    or jsonb_array_length(new.attempt_history)<jsonb_array_length(old.attempt_history)
+    or jsonb_array_length(new.attempt_history)>jsonb_array_length(old.attempt_history)+1
+    or old.status in ('PUBLISHED','FAILED_TERMINAL')
+    or (old.status='PENDING' and new.status<>'PUBLISHING')
+    or (old.status='FAILED_RETRYABLE' and new.status<>'PUBLISHING')
+    or (old.status='PUBLISHING' and new.status not in ('PUBLISHING','PUBLISHED','FAILED_RETRYABLE','FAILED_TERMINAL'))
+  then raise exception 'invalid outbox delivery transition'; end if;
+  if jsonb_array_length(old.attempt_history)>0 then
+    for attempt_index in 0..jsonb_array_length(old.attempt_history)-1 loop
+      if old.attempt_history->attempt_index is distinct from new.attempt_history->attempt_index
+      then raise exception 'outbox attempt history cannot be rewritten'; end if;
+    end loop;
+  end if;
+  return new;
+end $$;
+create trigger avuhz_guard_outbox_transition before update on public.avuhz_outbox_deliveries
+  for each row execute function public.avuhz_guard_outbox_transition();
+
 alter table public.avuhz_acquisition_handoffs enable row level security;
 alter table public.avuhz_engagements enable row level security;
 alter table public.avuhz_implementation_handoffs enable row level security;
@@ -762,6 +799,9 @@ grant insert on table public.avuhz_engagements,public.avuhz_implementation_hando
   public.avuhz_deployment_verifications to avuhz_command_service;
 grant update (accepted_at) on public.avuhz_acquisition_handoffs to avuhz_command_service;
 grant update (processing_status,result_reference,completed_at,record_version) on public.avuhz_idempotency_records to avuhz_command_service;
+grant update (destination_reference,status,attempt_count,next_attempt_at,last_attempt_at,published_at,
+  lease_owner_reference,lease_token,lease_expires_at,attempt_history,last_safe_error_code,
+  delivery_idempotency_key,record_version,updated_at) on public.avuhz_outbox_deliveries to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_implementation_briefs to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_implementation_authorizations to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_codex_build_packages to avuhz_command_service;

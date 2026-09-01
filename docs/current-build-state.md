@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Owner-confirmed Render DEVELOPMENT command-service binding and bounded health evidence recorded; DATA and trusted-identity adapters remain absent and readiness intentionally fails closed.
+`CURRENT_PHASE`: Provider-neutral DEVELOPMENT trusted-identity resolver boundary implemented and certified locally with deterministic verifier fakes; no real provider adapter is wired and readiness remains fail-closed.
 
-`CURRENT_HEAD`: `HEAD` (`docs: record render development service validation`)
+`CURRENT_HEAD`: `HEAD` (`feat: add development trusted identity resolver boundary`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Canonical registry records the exact owner-confirmed Render DEVELOPMENT service, deployed source commit, build/start/health configuration, successful deployment, `200` liveness, and intentional `503` readiness boundary.
+`LAST_GREEN_MILESTONE`: DEVELOPMENT identity evidence is accepted only through an injected verifier and exact issuer/audience/tenant/subject/capability checks; malformed, untrusted, authority-bearing, stale, or cross-environment evidence fails closed.
 
 `COMPLETED`:
 
@@ -66,19 +66,21 @@
 - DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while DATA and trusted-identity adapters are unavailable, and command/query requests fail at trusted identity resolution. No connected DATA/AUTH validation or Supabase mutation is authorized.
 - The wheel packages the single canonical `contracts/schemas/v1` catalog as `avuhz_contracts` package data. An isolated install outside the repository resolves `schema_root()` from `site-packages` and loads the complete fixed catalog; repository development may continue using the same source tree directly.
 - Owner-confirmed Render evidence records successful deployment of commit `6bff57065151462fc74861c68a232454b2ef9a20`, `GET /health/live = 200`, and intentional fail-closed `GET /health/ready = 503`. Recording this evidence grants no further deployment or provider authority.
+- The provider-neutral DEVELOPMENT trusted-identity resolver maps only exact verifier-produced evidence for the approved issuer and audience into tenant-bound `TrustedExecutionContext` semantics. It accepts only the frozen caller/capability vocabulary, establishes no human authority, validates bounded UTC lifetime, and rejects invalid or malformed evidence without exposing details.
+- Deterministic identity verification exists only in focused tests. The live DEVELOPMENT composition still uses its unavailable resolver, DATA and identity readiness remain unavailable, and no Supabase/JWT/provider adapter, credential, token, secret, connection, or remote mutation exists.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The owner-confirmed Render DEVELOPMENT binding and bounded health-evidence milestone is complete.
+`IN_PROGRESS`: None. The local DEVELOPMENT trusted-identity resolver-boundary milestone is complete.
 
-`NEXT_TASK`: Implement and test the DEVELOPMENT trusted-identity resolver adapter locally against the approved issuer, audience, and tenant bridge, using deterministic local fakes only. Do not connect to Supabase, authorize connected AUTH validation, implement the DATA adapter, touch staging or production, or begin Phase 6.
+`NEXT_TASK`: Implement and test the DEVELOPMENT DATA adapter composition against disposable local PostgreSQL only, preserving tenant/RLS, UnitOfWork, idempotency, concurrency, events, and outbox boundaries. Do not connect to Supabase, wire a real identity provider, authorize connected validation, touch staging or production, or begin Phase 6.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the Render DEVELOPMENT registry and health-evidence documentation commit. Generated evidence, virtual environments, and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the DEVELOPMENT trusted-identity resolver-boundary commit. Generated evidence, virtual environments, and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push and no current Render, Supabase, or other infrastructure mutation. The owner-confirmed prior Render deployment and health evidence are recorded facts, not continuing provider authority. Connected DATA/AUTH validation remains unauthorized; never force push.
 

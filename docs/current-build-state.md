@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Existing command/query service packaged with a separate fail-closed Render DEVELOPMENT entry point; no provider adapter, resource, connection, secret, or remote mutation exists.
+`CURRENT_PHASE`: Installed-wheel schema catalog defect corrected; the existing canonical schemas are packaged as normal Python package resources and resolve without repository-relative or provider-specific paths.
 
-`CURRENT_HEAD`: `HEAD` (`feat: add render development service entrypoint`)
+`CURRENT_HEAD`: `HEAD` (`fix: package canonical schema catalog in wheel`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Render-ready DEVELOPMENT service composition requiring exact approved non-secret references, binding `0.0.0.0:$PORT`, preserving LOCAL/TEST isolation, and denying readiness and command/query identity until real adapters exist.
+`LAST_GREEN_MILESTONE`: Isolated wheel installation resolves and validates every frozen schema from the installed `avuhz_contracts` package while repository development retains its canonical-tree fallback.
 
 `COMPLETED`:
 
@@ -64,19 +64,20 @@
 - Only the command/query service may have public ingress; the worker has no public inbound endpoint; outbound access is limited to approved environment Supabase and telemetry destinations; development/staging resources and credentials remain isolated.
 - The wheel exposes `avuhz-service-development` separately from the unchanged loopback-only `avuhz-service`. DEVELOPMENT accepts only the exact approved development project, issuer, audience, tenant/RLS, workload identity, and Render `PORT` configuration.
 - DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while data/identity adapters are unavailable, and command/query requests fail at trusted identity resolution. No Supabase/Render/provider connection or mutation exists.
+- The wheel packages the single canonical `contracts/schemas/v1` catalog as `avuhz_contracts` package data. An isolated install outside the repository resolves `schema_root()` from `site-packages` and loads the complete fixed catalog; repository development may continue using the same source tree directly.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The Render DEVELOPMENT service-preparation milestone is complete.
+`IN_PROGRESS`: None. The installed-wheel schema catalog correction is complete.
 
-`NEXT_TASK`: Define and explicitly authorize the exact Render DEVELOPMENT web-service resource-creation batch, including the concrete service identifier, region, plan, environment bindings, and allowed non-secret configuration. Keep Supabase connectivity, secrets, migration, deployment, staging, production, and Phase 6 outside that batch unless separately authorized.
+`NEXT_TASK`: Record the exact existing Render DEVELOPMENT service binding and explicitly authorize a corrected-wheel rebuild/redeploy and bounded startup/liveness/readiness validation. Keep Supabase connectivity or mutation, secrets, migrations, staging, production, and Phase 6 outside that batch unless separately authorized.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the Render DEVELOPMENT service-preparation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the installed-wheel schema catalog correction commit. Generated evidence, virtual environments, and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

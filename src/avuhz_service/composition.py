@@ -5,7 +5,7 @@ import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from importlib.metadata import PackageNotFoundError, distribution
+from importlib.resources import files
 from pathlib import Path
 from typing import Mapping
 
@@ -21,8 +21,8 @@ def schema_root() -> Path:
     if repository_root.is_dir():
         return repository_root
     try:
-        installed_root = Path(distribution("avuhz-service").locate_file("avuhz/contracts/schemas/v1"))
-    except PackageNotFoundError as error:
+        installed_root = Path(str(files("avuhz_contracts").joinpath("schemas", "v1")))
+    except (ModuleNotFoundError, TypeError) as error:
         raise RuntimeError("canonical schema catalog is unavailable") from error
     if not installed_root.is_dir():
         raise RuntimeError("canonical schema catalog is unavailable")

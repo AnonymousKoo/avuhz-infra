@@ -17,14 +17,9 @@ dependencies = [
 avuhz-service = "avuhz_service.__main__:main"
 avuhz-service-development = "avuhz_service.development:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["avuhz_engineering", "avuhz_runtime", "avuhz_service", "avuhz_worker", "avuhz_contracts"]
+package-dir = {"" = "src", "avuhz_contracts" = "contracts"}
 
-[tool.setuptools.data-files]
-"avuhz/contracts/schemas/v1/commands" = ["contracts/schemas/v1/commands/*.json"]
-"avuhz/contracts/schemas/v1/common" = ["contracts/schemas/v1/common/*.json"]
-"avuhz/contracts/schemas/v1/domain" = ["contracts/schemas/v1/domain/*.json"]
-"avuhz/contracts/schemas/v1/identity" = ["contracts/schemas/v1/identity/*.json"]
-"avuhz/contracts/schemas/v1/orchestration" = ["contracts/schemas/v1/orchestration/*.json"]
-"avuhz/contracts/schemas/v1/public" = ["contracts/schemas/v1/public/*.json"]
-"avuhz/contracts/schemas/v1/read-models" = ["contracts/schemas/v1/read-models/*.json"]
+[tool.setuptools.package-data]
+avuhz_contracts = ["schemas/v1/*/*.json"]

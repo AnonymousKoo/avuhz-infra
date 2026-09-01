@@ -1,11 +1,66 @@
--- Local/disposable current-tree rebaseline for provider-neutral Avuhz only.
--- Never applied remotely; never push this baseline to a linked project.
--- Preserves immutable DeploymentExecution and DeploymentVerification truth; performs no provider operation.
+-- Candidate canonical initial migration for a proven-empty provider-neutral Avuhz schema.
+-- Remote application is unauthorized by default. A future DEVELOPMENT application requires
+-- separate owner authorization and read-only proof that the target has no Avuhz schema state.
+-- This file performs no provider operation and is not authorization to push or repair history.
+-- Failed execution rolls back atomically. Successful initial-schema rollback is intentionally
+-- not defined here: destructive schema/data rollback requires separate authority and planning.
 
-create extension if not exists pgcrypto;
+begin;
+
+do $avuhz_initial_preflight$
+declare
+  service_role pg_roles%rowtype;
+begin
+  if not exists (select 1 from pg_namespace where nspname='public') then
+    raise exception 'Avuhz initial migration requires the public schema';
+  end if;
+  if not has_schema_privilege(current_user,'public','USAGE')
+    or not has_schema_privilege(current_user,'public','CREATE') then
+    raise exception 'Avuhz migration identity lacks required public schema privileges';
+  end if;
+  if to_regprocedure('pg_catalog.gen_random_uuid()') is null then
+    raise exception 'Avuhz initial migration requires built-in gen_random_uuid support';
+  end if;
+  if exists (
+      select 1 from pg_namespace where nspname='avuhz' or nspname like 'avuhz\_%' escape '\'
+    ) or exists (
+      select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname='public' and c.relname like 'avuhz\_%' escape '\'
+    ) or exists (
+      select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public' and p.proname like 'avuhz\_%' escape '\'
+    ) or exists (
+      select 1 from pg_type t join pg_namespace n on n.oid=t.typnamespace
+      where n.nspname='public' and t.typname like 'avuhz\_%' escape '\'
+    ) or exists (
+      select 1 from pg_trigger where not tgisinternal and tgname like 'avuhz\_%' escape '\'
+    ) or exists (
+      select 1 from pg_policy where polname like 'avuhz\_%' escape '\'
+    ) then
+    raise exception 'Avuhz initial migration refuses unexpected pre-existing Avuhz schema state';
+  end if;
+
+  select * into service_role from pg_roles where rolname='avuhz_command_service';
+  if found then
+    if service_role.rolcanlogin or service_role.rolsuper or service_role.rolinherit
+      or service_role.rolcreaterole or service_role.rolcreatedb
+      or service_role.rolreplication or service_role.rolbypassrls
+      or service_role.rolconfig is not null
+      or exists (select 1 from pg_auth_members where member=service_role.oid) then
+      raise exception 'pre-existing avuhz_command_service role violates the least-privilege contract';
+    end if;
+  elsif not exists (
+    select 1 from pg_roles where rolname=current_user and (rolsuper or rolcreaterole)
+  ) then
+    raise exception 'Avuhz migration identity lacks authority to create the command-service role';
+  end if;
+end
+$avuhz_initial_preflight$;
+
 do $$ begin
   if not exists (select 1 from pg_roles where rolname='avuhz_command_service') then
-    create role avuhz_command_service nologin nosuperuser nobypassrls nocreatedb nocreaterole noinherit;
+    create role avuhz_command_service nologin nosuperuser nobypassrls nocreatedb nocreaterole
+      noinherit noreplication;
   end if;
 end $$;
 grant usage on schema public to avuhz_command_service;
@@ -773,7 +828,7 @@ do $$ declare table_name text; grantee_name text; begin
     'avuhz_qa_results','avuhz_client_acceptances','avuhz_deployment_authorizations',
     'avuhz_deployment_executions','avuhz_deployment_verifications'] loop
     execute format('revoke all on table public.%I from public',table_name);
-    foreach grantee_name in array array['anon','authenticated'] loop
+    foreach grantee_name in array array['anon','authenticated','service_role'] loop
       if exists (select 1 from pg_roles where rolname=grantee_name) then
         execute format('revoke all on table public.%I from %I',table_name,grantee_name);
       end if;
@@ -782,6 +837,22 @@ do $$ declare table_name text; grantee_name text; begin
       for all to avuhz_command_service
       using (tenant_id=nullif(current_setting('avuhz.tenant_id',true),'')::uuid)
       with check (tenant_id=nullif(current_setting('avuhz.tenant_id',true),'')::uuid)$policy$,table_name);
+  end loop;
+end $$;
+
+do $$ declare routine_name text; routine_arguments text; grantee_name text; begin
+  for routine_name,routine_arguments in
+    select p.proname,pg_get_function_identity_arguments(p.oid)
+    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname like 'avuhz\_%' escape '\'
+  loop
+    execute format('revoke all on function public.%I(%s) from public',routine_name,routine_arguments);
+    foreach grantee_name in array array['anon','authenticated','service_role'] loop
+      if exists (select 1 from pg_roles where rolname=grantee_name) then
+        execute format('revoke all on function public.%I(%s) from %I',
+          routine_name,routine_arguments,grantee_name);
+      end if;
+    end loop;
   end loop;
 end $$;
 
@@ -808,3 +879,5 @@ grant update (state,record_version,record,updated_at) on public.avuhz_codex_buil
 grant update (status,execution_digest,record_version,record,completed_at,updated_at) on public.avuhz_build_execution_results to avuhz_command_service;
 grant update (state,record_version,record,updated_at) on public.avuhz_deployment_authorizations to avuhz_command_service;
 grant update (status,execution_digest,record_version,record,completed_at,updated_at) on public.avuhz_deployment_executions to avuhz_command_service;
+
+commit;

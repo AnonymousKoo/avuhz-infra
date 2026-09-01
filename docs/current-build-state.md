@@ -1,17 +1,17 @@
 # Current Build State
 
-`CURRENT_PHASE`: The one-use credential-free DEVELOPMENT AUTH JWKS discovery is complete and valid; no provider adapter is wired and hosted readiness remains fail-closed.
+`CURRENT_PHASE`: The provider-neutral 16-table baseline is hardened as the candidate canonical initial migration and first member of an ordered Git lineage; remote application remains unauthorized.
 
-`CURRENT_HEAD`: `HEAD` (`docs: record development auth discovery evidence`)
+`CURRENT_HEAD`: `HEAD` (`refactor: harden canonical initial migration lineage`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: One authorized credential-free, redirect-disabled GET to the exact DEVELOPMENT JWKS endpoint returned a valid public `ES256/EC/P-256` key set with no private key material; the raw response was discarded and the authorization consumed.
+`LAST_GREEN_MILESTONE`: Fresh disposable PostgreSQL proves clean canonical-initial replay, the exact 16-table/RLS surface, bounded service privileges, pre-existing-state rejection, and complete rollback after an injected transactional failure; no provider was contacted.
 
 `COMPLETED`:
 
 - Avuhz active runtime and contracts contain zero Sekinfra/OIA implementation dependencies.
-- The active migration directory contains one clean current-tree baseline with 16 provider-neutral Avuhz tables and no extracted-domain tables.
+- The active migration directory starts with one hardened candidate canonical initial migration containing 16 provider-neutral Avuhz tables and no extracted-domain tables; validators permit only later unique timestamp-ordered, transaction-enclosed migrations.
 - Historical mixed migration provenance remains recoverable in Git history; repository evidence confirms Phase 5A-5D mixed migrations were local-only and absent from the recorded remote migration history.
 - ImplementationHandoff and all completed Phase 5D records preserve exact ID/version/digest bindings, immutable history, bounded optimistic transitions, idempotency, events, and atomic outbox writes.
 - Every current authoritative table has command-service tenant RLS; `public`, `anon`, and `authenticated` have no direct table authority.
@@ -40,7 +40,7 @@
 - Fresh disposable PostgreSQL replay certifies 16 tables, tenant RLS/policies, bounded service grants, immutable verification history, and the existing atomicity/security baseline. The psycopg adapter suite is present but skipped in this interpreter because the pinned dependency is not installed; no remote dependency fetch was attempted.
 - The complete frozen D5 execution/verification runtime boundary is active. No provider deployment operation, rollback operation, production change, remote mutation, Phase 6 work, or Avuhz push occurred.
 - Phase 5 freeze certification validates the complete ten-record chain from ImplementationHandoff through DeploymentVerification with exact identity/version/digest bindings, schema-valid authoritative records, one tenant/engagement boundary, immutable history, bounded evidence/provenance, and attributable protected human authority.
-- The active command registry, migration binding guard, and D5 architecture status are reconciled to the complete D5a/D5b runtime. The provider-neutral migration remains one 16-table local baseline with complete tenant RLS and no extracted-domain tables.
+- The active command registry, migration binding guard, and D5 architecture status are reconciled to the complete D5a/D5b runtime. The provider-neutral canonical initial migration preserves the exact 16-table surface, complete tenant RLS, and no extracted-domain tables.
 - Full runtime, architecture/separation, cross-repository, Sekinfra boundary/producer, contract, schema, static migration, disposable PostgreSQL replay, atomicity, RLS, Semgrep, credential, forbidden-path, compilation, and diff checks are green. Optional psycopg adapter tests remain skipped because no local driver is installed; no dependency or remote access was attempted.
 - Active Avuhz runtime/contract references to Sekinfra/OIA remain zero. Phase 5 is frozen; later work must preserve this baseline and may not infer real deployment or production authority.
 - Avuhz platform production is explicitly separate from client-system deployment. The minimum API/worker/data/auth/identity/secrets/migration/observability/backup/CI/CD/environment/rollback architecture and owner-authorized registry are defined in canonical architecture/security documentation.
@@ -81,13 +81,13 @@
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The bounded DEVELOPMENT AUTH JWKS discovery milestone is complete and its one-use authorization is consumed.
+`IN_PROGRESS`: None. The bounded local baseline-lineage hardening milestone is complete; no hook migration or provider operation was performed.
 
-`NEXT_TASK`: Owner-review the bounded JWKS evidence, bind the exact signed DEVELOPMENT tenant-claim name and server-owned subject/caller/capability policy, and define the separate synthetic-identity token-verification authorization package. Do not request or use a token, contact AUTH or DATA, wire an adapter, change Render, mutate a provider, touch staging/production, or begin Phase 6.
+`NEXT_TASK`: Add and locally validate the first ordered migration containing only the versioned DEVELOPMENT Custom Access Token Hook function and its least-privilege ACL. Do not apply or enable the hook, create a user or tenant, issue a token, contact AUTH or DATA, repair migration history, change Render, touch staging/production, or begin Phase 6.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the DEVELOPMENT AUTH JWKS discovery evidence commit. The raw JWKS response was never persisted. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the canonical-initial migration hardening commit. No hook migration was created. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority.
 
 `REMOTE_AUTHORIZATION`: The one-use DEVELOPMENT AUTH JWKS read authorization was consumed at `2026-09-01T15:14:17.159453Z`. No further AUTH call, DATA access, Render change, Supabase mutation, Avuhz push, or other remote action is authorized; AUTH discovery never implies DATA authorization. Never force push.
 

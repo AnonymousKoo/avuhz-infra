@@ -1,4 +1,4 @@
-"""Opt-in disposable Docker/PostgreSQL certification for the current-tree baseline."""
+"""Opt-in disposable Docker/PostgreSQL certification for the canonical initial migration."""
 from __future__ import annotations
 
 import os
@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql"
 CONTAINER = os.environ.get("AVUHZ_LOCAL_POSTGRES_CONTAINER")
 DATABASE = "avuhz_rebaseline_certification"
+PREFLIGHT_DATABASE = "avuhz_rebaseline_preflight_failure"
+ATOMIC_DATABASE = "avuhz_rebaseline_atomic_failure"
 TENANT = "e1000000-0000-4000-8000-000000000001"
 OTHER = "e1000000-0000-4000-8000-000000000002"
 
@@ -28,12 +30,24 @@ class LocalProviderNeutralRebaselineTests(unittest.TestCase):
         return result
 
     @classmethod
-    def _psql(cls, statement, *, check=True):
+    def _psql(cls, statement, *, database=DATABASE, check=True):
         result = cls._docker(
-            "psql", "-q", "-v", "ON_ERROR_STOP=1", "-At", "-U", "postgres", "-d", DATABASE,
+            "psql", "-q", "-v", "ON_ERROR_STOP=1", "-At", "-U", "postgres", "-d", database,
             "-c", statement, check=check,
         )
         return result.returncode, result.stdout.decode().strip(), result.stderr.decode().strip()
+
+    @classmethod
+    def _apply(cls, database, sql, *, check=True):
+        return cls._docker(
+            "psql", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", database,
+            input_bytes=sql.encode(), check=check,
+        )
+
+    @classmethod
+    def _fresh_database(cls, database):
+        cls._docker("dropdb", "--if-exists", "-U", "postgres", database)
+        cls._docker("createdb", "-U", "postgres", database)
 
     @classmethod
     def setUpClass(cls):
@@ -42,19 +56,16 @@ class LocalProviderNeutralRebaselineTests(unittest.TestCase):
             return
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", CONTAINER):
             raise RuntimeError("invalid local container name")
-        cls._docker("dropdb", "--if-exists", "-U", "postgres", DATABASE)
-        cls._docker("createdb", "-U", "postgres", DATABASE)
-        cls._docker(
-            "psql", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", DATABASE,
-            input_bytes=MIGRATION.read_bytes(),
-        )
+        cls._fresh_database(DATABASE)
+        cls._apply(DATABASE, MIGRATION.read_text())
         cls._psql("grant avuhz_command_service to postgres")
 
     @classmethod
     def tearDownClass(cls):
         if CONTAINER:
             cls._psql("revoke avuhz_command_service from postgres", check=False)
-            cls._docker("dropdb", "--if-exists", "-U", "postgres", DATABASE)
+            for database in (DATABASE, PREFLIGHT_DATABASE, ATOMIC_DATABASE):
+                cls._docker("dropdb", "--if-exists", "-U", "postgres", database)
         super().tearDownClass()
 
     def test_exact_tables_rls_and_policies(self):
@@ -76,9 +87,62 @@ class LocalProviderNeutralRebaselineTests(unittest.TestCase):
     def test_no_public_anon_or_authenticated_table_authority(self):
         _, output, _ = self._psql(
             "select count(*) from information_schema.role_table_grants where table_schema='public' "
-            "and table_name like 'avuhz_%' and grantee in ('PUBLIC','anon','authenticated')"
+            "and table_name like 'avuhz_%' and grantee in ('PUBLIC','anon','authenticated','service_role');"
+            "select count(*) from information_schema.routine_privileges where routine_schema='public' "
+            "and routine_name like 'avuhz_%' and grantee in ('PUBLIC','anon','authenticated','service_role')"
         )
-        self.assertEqual(output, "0")
+        self.assertEqual(output.splitlines(), ["0", "0"])
+
+    def test_role_and_uuid_preflight_contract(self):
+        _, output, _ = self._psql(
+            "select rolcanlogin::int||':'||rolsuper::int||':'||rolinherit::int||':'||"
+            "rolcreaterole::int||':'||rolcreatedb::int||':'||rolreplication::int||':'||"
+            "rolbypassrls::int||':'||(rolconfig is null)::int from pg_roles "
+            "where rolname='avuhz_command_service';"
+            "select (to_regprocedure('pg_catalog.gen_random_uuid()') is not null)::int;"
+            "select count(*) from pg_auth_members m join pg_roles r on r.oid=m.member "
+            "where r.rolname='avuhz_command_service'"
+        )
+        self.assertEqual(output.splitlines(), ["0:0:0:0:0:0:0:1", "1", "0"])
+
+    def test_preflight_rejects_existing_avuhz_state_without_partial_schema(self):
+        self._fresh_database(PREFLIGHT_DATABASE)
+        self._psql(
+            "create table public.avuhz_unexpected_state(id integer)",
+            database=PREFLIGHT_DATABASE,
+        )
+        result = self._apply(PREFLIGHT_DATABASE, MIGRATION.read_text(), check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            "refuses unexpected pre-existing Avuhz schema state",
+            result.stderr.decode(),
+        )
+        _, output, _ = self._psql(
+            "select count(*) from pg_tables where schemaname='public' "
+            "and tablename='avuhz_unexpected_state';"
+            "select count(*) from pg_tables where schemaname='public' "
+            "and tablename like 'avuhz_%' and tablename<>'avuhz_unexpected_state';"
+            "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace "
+            "where n.nspname='public' and p.proname like 'avuhz_%'",
+            database=PREFLIGHT_DATABASE,
+        )
+        self.assertEqual(output.splitlines(), ["1", "0", "0"])
+
+    def test_injected_transaction_failure_leaves_no_partial_avuhz_schema(self):
+        self._fresh_database(ATOMIC_DATABASE)
+        migration = MIGRATION.read_text()
+        self.assertEqual(migration.count("\ncommit;"), 1)
+        injected = migration.replace("\ncommit;", "\nselect 1/0;\ncommit;")
+        result = self._apply(ATOMIC_DATABASE, injected, check=False)
+        self.assertNotEqual(result.returncode, 0)
+        _, output, _ = self._psql(
+            "select count(*) from pg_tables where schemaname='public' and tablename like 'avuhz_%';"
+            "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace "
+            "where n.nspname='public' and p.proname like 'avuhz_%';"
+            "select count(*) from pg_policies where schemaname='public' and tablename like 'avuhz_%'",
+            database=ATOMIC_DATABASE,
+        )
+        self.assertEqual(output.splitlines(), ["0", "0", "0"])
 
     def test_tenant_isolation_and_bounded_service_access(self):
         account = "'{\"reference_type\":\"ACCOUNT\",\"reference_id\":\"account.fictional\"}'::jsonb"

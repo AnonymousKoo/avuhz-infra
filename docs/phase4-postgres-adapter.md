@@ -8,4 +8,6 @@ Each PostgreSQL UnitOfWork owns one non-autocommit connection. Repositories shar
 
 Every authoritative table enables RLS. `avuhz_command_service` is the only application database role with bounded table privileges, and every policy binds `TrustedExecutionContext.tenant_id` through the transaction-local `avuhz.tenant_id` setting. `public`, `anon`, and `authenticated` have no direct authoritative-table privileges.
 
-The migration chain is a clean current-tree baseline for disposable local PostgreSQL only. Historical mixed migrations remain recoverable in Git history and must never be pushed blindly or treated as remote migration lineage.
+The migration chain begins with the hardened provider-neutral candidate canonical initial migration and may be extended only by later unique, timestamp-ordered, transaction-enclosed migrations. The initial preflight fails closed on unknown Avuhz schema state and unsafe command-service role attributes; its clean and injected-failure paths are certified against disposable local PostgreSQL. Historical mixed migrations remain recoverable in Git history and are not part of this current canonical chain.
+
+Remote application remains unauthorized by default. Before any future DEVELOPMENT application, a separately authorized read-only target inventory must prove the target is empty of Avuhz state, followed by exact owner authorization for the reviewed migration digest and target. Failed application is transactionally reversible; successful initial-schema removal is destructive and has no standing rollback authority.

@@ -18,7 +18,7 @@ Run `./scripts/check-baseline.sh` before staging or committing. A failed check b
 
 ## External systems
 
-This baseline is unconnected. Owner-approved non-secret development/staging project selections are recorded only in the canonical environment registry in `docs/architecture.md`; registration grants no connection or mutation authority. The repository contains no n8n credential, provider integration, production secret, or deployment configuration, and the current-tree migration baseline remains local/disposable only.
+This baseline is unconnected. Owner-approved non-secret development/staging project selections are recorded only in the canonical environment registry in `docs/architecture.md`; registration grants no connection or mutation authority. The repository contains no n8n credential, provider integration, production secret, or deployment configuration. The provider-neutral baseline is the candidate canonical initial migration for a proven-empty Avuhz schema and starts an ordered Git lineage, but remote application remains unauthorized by default. Repository registration, local replay, or candidate status never authorizes a provider read, migration, history repair, or mutation.
 
 ## Production secrets and provider configuration
 

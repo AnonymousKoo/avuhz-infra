@@ -1,4 +1,4 @@
-"""Static invariants for the clean provider-neutral local migration baseline."""
+"""Static invariants for the canonical provider-neutral migration lineage."""
 from __future__ import annotations
 
 import json
@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION_ROOT = ROOT / "supabase/migrations"
+INITIAL_MIGRATION_NAME = "20260831120000_rebaseline_provider_neutral_avuhz.sql"
 EXPECTED_TABLES = {
     "avuhz_acquisition_handoffs", "avuhz_engagements", "avuhz_implementation_handoffs",
     "avuhz_human_approvals", "avuhz_idempotency_records", "avuhz_lifecycle_events",
@@ -27,15 +28,50 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.paths = sorted(MIGRATION_ROOT.glob("*.sql"))
-        cls.sql = cls.paths[0].read_text() if len(cls.paths) == 1 else ""
+        cls.initial_path = MIGRATION_ROOT / INITIAL_MIGRATION_NAME
+        cls.initial_sql = cls.initial_path.read_text() if cls.initial_path in cls.paths else ""
+        cls.initial_lower = cls.initial_sql.lower()
+        cls.sql = "\n".join(path.read_text() for path in cls.paths)
         cls.lower = cls.sql.lower()
 
-    def test_one_current_tree_baseline(self):
-        self.assertEqual([path.name for path in self.paths], [
-            "20260831120000_rebaseline_provider_neutral_avuhz.sql"
-        ])
-        self.assertIn("local/disposable current-tree rebaseline", self.lower)
-        self.assertIn("never applied remotely", self.lower)
+    def test_canonical_initial_migration_starts_strict_ordered_lineage(self):
+        self.assertTrue(self.paths)
+        self.assertEqual(self.paths[0].name, INITIAL_MIGRATION_NAME)
+        names = [path.name for path in self.paths]
+        self.assertEqual(names, sorted(names))
+        timestamps = []
+        for path in self.paths:
+            match = re.fullmatch(r"([0-9]{14})_[A-Za-z0-9][A-Za-z0-9_-]*\.sql", path.name)
+            self.assertIsNotNone(match, path.name)
+            timestamps.append(match.group(1))
+            migration = path.read_text().strip().lower()
+            self.assertEqual(len(re.findall(r"(?m)^begin;$", migration)), 1, path.name)
+            self.assertTrue(migration.endswith("commit;"), path.name)
+            self.assertIn("remote application is unauthorized by default", migration, path.name)
+        self.assertEqual(len(timestamps), len(set(timestamps)))
+        self.assertIn("candidate canonical initial migration", self.initial_lower)
+        self.assertIn("separate owner authorization", self.initial_lower)
+
+    def test_initial_migration_has_fail_closed_preflight_and_rollback_boundary(self):
+        for phrase in (
+            "avuhz_initial_preflight",
+            "requires the public schema",
+            "lacks required public schema privileges",
+            "requires built-in gen_random_uuid support",
+            "refuses unexpected pre-existing avuhz schema state",
+            "pre-existing avuhz_command_service role violates the least-privilege contract",
+            "lacks authority to create the command-service role",
+            "successful initial-schema rollback is intentionally",
+            "destructive schema/data rollback requires separate authority",
+        ):
+            self.assertIn(phrase, self.initial_lower)
+        self.assertLess(
+            self.initial_lower.index("avuhz_initial_preflight"),
+            self.initial_lower.index("create table"),
+        )
+        self.assertNotIn("create extension", self.initial_lower)
+        self.assertIn("service_role.rolconfig is not null", self.initial_lower)
+        self.assertIn("pg_auth_members", self.initial_lower)
 
     def test_exact_provider_neutral_table_surface(self):
         tables = set(re.findall(r"create table public\.([a-z0-9_]+)", self.lower))
@@ -63,9 +99,18 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
         self.assertIn("avuhz_command_service", self.lower)
         self.assertIn("revoke all on table", self.lower)
         self.assertIn("from public", self.lower)
-        self.assertIn("'anon','authenticated'", self.lower)
+        self.assertIn("'anon','authenticated','service_role'", self.lower)
+        self.assertIn("revoke all on function", self.lower)
         self.assertIn("current_setting('avuhz.tenant_id',true)", self.lower)
-        self.assertNotRegex(self.lower, r"grant\s+(?:all|insert|update|delete).*\b(?:anon|authenticated)\b")
+        self.assertNotRegex(
+            self.lower,
+            r"grant\s+(?:all|select|insert|update|delete|execute).*\b(?:anon|authenticated|service_role)\b",
+        )
+        for attribute in (
+            "nologin", "nosuperuser", "nobypassrls", "nocreatedb", "nocreaterole",
+            "noinherit", "noreplication",
+        ):
+            self.assertIn(attribute, self.lower)
 
     def test_exact_handoff_and_phase5d_bindings(self):
         for field in (

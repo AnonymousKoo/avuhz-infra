@@ -40,3 +40,15 @@ python3 scripts/run-engineering-dry-run.py run \
 ```
 
 The runner is local-only, removes configured remote DATA/AUTH/provider variables from child processes, performs no deployment, and fails closed on failed, missing, expired, or source/artifact-stale evidence.
+
+## Render development service preparation
+
+The separate DEVELOPMENT entry point is prepared for an owner-authorized Render web-service resource. It reuses the existing governed command/query application but never uses the local static identity resolver. It accepts only the exact approved non-secret development project, issuer, audience, tenant/RLS, and workload-identity references; it creates no provider adapter and performs no provider connection or mutation.
+
+- Render build command: `python -m pip install .`
+- Render start command: `avuhz-service-development`
+- Render health path: `/health/live`
+
+Render supplies `PORT`; the DEVELOPMENT server binds `0.0.0.0:$PORT`. Required non-secret configuration names are `AVUHZ_SERVICE_ENVIRONMENT`, `AVUHZ_DATA_PROJECT_REF`, `AVUHZ_DATA_PROJECT_URL`, `AVUHZ_AUTH_PROJECT_REF`, `AVUHZ_AUTH_ISSUER`, `AVUHZ_SERVICE_AUDIENCE`, `AVUHZ_TENANT_BRIDGE`, `AVUHZ_RLS_POLICY_REFERENCE`, and `AVUHZ_COMMAND_SERVICE_IDENTITY`. Values must match the canonical development registry in `docs/architecture.md`.
+
+Startup and liveness are available for safe resource creation. Until separately implemented and authorized data and trusted-identity adapters are injected, readiness remains `503` with bounded unavailable checks and command/query requests fail at trusted identity resolution. No provider connection or mutation is performed, and this entry point supports neither staging nor production.

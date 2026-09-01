@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Owner, provider-choice, AUTH issuer, non-production recovery, rollback, and network policies recorded for development/staging; concrete provider resources and connected-validation authorization remain unresolved.
+`CURRENT_PHASE`: Existing command/query service packaged with a separate fail-closed Render DEVELOPMENT entry point; no provider adapter, resource, connection, secret, or remote mutation exists.
 
-`CURRENT_HEAD`: `HEAD` (`docs: record development staging readiness bindings`)
+`CURRENT_HEAD`: `HEAD` (`feat: add render development service entrypoint`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Owner-approved development/staging owner bindings, provider choices, AUTH issuers, rebuild recovery policy, application/database rollback policy, and bounded network policy recorded without secrets, provider contact, or remote mutation.
+`LAST_GREEN_MILESTONE`: Render-ready DEVELOPMENT service composition requiring exact approved non-secret references, binding `0.0.0.0:$PORT`, preserving LOCAL/TEST isolation, and denying readiness and command/query identity until real adapters exist.
 
 `COMPLETED`:
 
@@ -62,19 +62,21 @@
 - Render, Render runtime secrets plus GitHub CI/environment secrets, and Grafana Cloud via OpenTelemetry are approved provider choices. Concrete environment-scoped services, secret boundaries, telemetry destinations, and network enforcement resources remain `OWNER_VALUE_REQUIRED`.
 - Development/staging recovery is rebuild plus canonical Git migrations and approved synthetic seed after a separately authorized logical dump for risky migrations; no PITR capability is claimed. Application rollback uses an exact prior artifact, database rollback defaults to forward correction, destructive migrations are prohibited, and data-restoration rollback is unauthorized.
 - Only the command/query service may have public ingress; the worker has no public inbound endpoint; outbound access is limited to approved environment Supabase and telemetry destinations; development/staging resources and credentials remain isolated.
+- The wheel exposes `avuhz-service-development` separately from the unchanged loopback-only `avuhz-service`. DEVELOPMENT accepts only the exact approved development project, issuer, audience, tenant/RLS, workload identity, and Render `PORT` configuration.
+- DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while data/identity adapters are unavailable, and command/query requests fail at trusted identity resolution. No Supabase/Render/provider connection or mutation exists.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The owner-approved development/staging binding and policy documentation milestone is complete.
+`IN_PROGRESS`: None. The Render DEVELOPMENT service-preparation milestone is complete.
 
-`NEXT_TASK`: Provide or separately authorize creation of the concrete environment-scoped Render runtime targets, Render/GitHub secret boundaries, Grafana/OpenTelemetry destinations, and network enforcement resources, then define and authorize the exact first connected validation scope. Do not contact or mutate any provider before that authorization.
+`NEXT_TASK`: Define and explicitly authorize the exact Render DEVELOPMENT web-service resource-creation batch, including the concrete service identifier, region, plan, environment bindings, and allowed non-secret configuration. Keep Supabase connectivity, secrets, migration, deployment, staging, production, and Phase 6 outside that batch unless separately authorized.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the development/staging readiness-binding documentation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the Render DEVELOPMENT service-preparation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

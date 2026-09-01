@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 avuhz-service = "avuhz_service.__main__:main"
+avuhz-service-development = "avuhz_service.development:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

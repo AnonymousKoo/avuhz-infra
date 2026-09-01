@@ -44,6 +44,8 @@ The minimum production topology is:
 
 No production service may embed credentials, accept direct browser/n8n writes to authoritative tables, reuse a human identity as a workload, or treat an event/read model as authoritative truth.
 
+The DEVELOPMENT deployment composition is separate from the unchanged LOCAL/TEST adapter. It may bind `0.0.0.0` and the platform-supplied `PORT`, but it must match the exact approved development registry and may never use a local/static trusted identity resolver. Startup/liveness do not imply dependency readiness; command/query access and readiness fail closed until separately authorized data and trusted-identity adapters are present. This composition creates no provider connection, deployment, or mutation authority and has no staging or production mode.
+
 ## Environment model
 
 Mutable data, identity issuers/clients, secrets, service identities, network policy, observability, and deployment authority are isolated by environment. The same immutable artifact digest is promoted; configuration is injected at runtime and never copied between environments.

@@ -1,0 +1,597 @@
+{
+  "plan_id": "a7100000-0000-4000-8000-000000000101",
+  "plan_version": 1,
+  "plan_digest": "sha256:97079c0a9cc171b5c6adc21b5de7cba5be6aeb6d4b8bf6f398a67129669b042f",
+  "definition_status": "DRAFT_BLOCKED",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-01T17:13:40Z",
+  "authorization_window": {
+    "binding_state": "UNRESOLVED_BLOCKER",
+    "starts_at": null,
+    "expires_at": null
+  },
+  "ordered_step_ids": [
+    "development.auth.step.01.local-hook-migration",
+    "development.auth.step.02.apply-hook-migration",
+    "development.auth.step.03.verify-disabled-hook",
+    "development.auth.step.04.create-synthetic-identity",
+    "development.auth.step.05.bind-synthetic-tenant",
+    "development.auth.step.06.bind-server-capability",
+    "development.auth.step.07.enable-hook",
+    "development.auth.step.08.issue-ephemeral-token",
+    "development.auth.step.09.fetch-jwks",
+    "development.auth.step.10.validate-token-locally",
+    "development.auth.step.11.record-evidence-and-terminate"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.step.01.local-hook-migration",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "migration.artifact",
+        "resource_reference": "migration.development-custom-access-token-hook.v1",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "local.migration.create-and-validate",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "baseline.lineage.green",
+          "source_step_id": null,
+          "binding_state": "UNRESOLVED_BLOCKER",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "One committed ordered local migration defines only public.avuhz_development_custom_access_token_hook_v1(jsonb) and its least-privilege ACL; it is not applied or enabled.",
+      "prohibited_actions": [
+        "provider.contact",
+        "migration.apply",
+        "hook.enable",
+        "extra.schema.change"
+      ],
+      "stop_conditions": [
+        "baseline.digest.mismatch",
+        "migration.surface.unexpected",
+        "security.validation.failed"
+      ],
+      "correction_reference": "correction.local-revision-before-approval",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "migration.filename",
+        "migration.commit",
+        "migration.digest",
+        "baseline.evidence.digest"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.02.apply-hook-migration",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "database.function-and-acl",
+        "resource_reference": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "provider.migration.apply-exact",
+      "dependency_step_ids": [
+        "development.auth.step.01.local-hook-migration"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "migration.artifact.validated",
+          "source_step_id": "development.auth.step.01.local-hook-migration",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The exact committed migration creates one versioned DEVELOPMENT hook function and ACL atomically in the approved project while hook enablement remains unchanged.",
+      "prohibited_actions": [
+        "migration.include-all",
+        "migration.history-repair",
+        "hook.enable",
+        "extra.schema.change"
+      ],
+      "stop_conditions": [
+        "remote.schema.not-empty-as-approved",
+        "migration.digest.mismatch",
+        "migration.outcome.ambiguous"
+      ],
+      "correction_reference": "correction.development-hook-forward-only",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "MIGRATION_IDENTITY"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "migration.commit",
+        "migration.digest",
+        "migration.identity.binding",
+        "authorization.window"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.03.verify-disabled-hook",
+      "ordinal": 3,
+      "resource": {
+        "resource_type": "database.function-and-acl",
+        "resource_reference": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.verify-disabled-and-acl",
+      "dependency_step_ids": [
+        "development.auth.step.02.apply-hook-migration"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "migration.application.verified",
+          "source_step_id": "development.auth.step.02.apply-hook-migration",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The exact v1 hook function body and ACL match the committed migration, EXECUTE is least-privilege, and the hook remains disabled.",
+      "prohibited_actions": [
+        "hook.enable",
+        "acl.widen",
+        "resource.repair",
+        "data.query"
+      ],
+      "stop_conditions": [
+        "function.body.mismatch",
+        "acl.mismatch",
+        "hook.unexpectedly-enabled"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "MIGRATION_IDENTITY"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "function.digest",
+        "verification.identity.binding"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.04.create-synthetic-identity",
+      "ordinal": 4,
+      "resource": {
+        "resource_type": "auth.synthetic-identity",
+        "resource_reference": "identity.development.synthetic-avuhz",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-identity.create-one",
+      "dependency_step_ids": [
+        "development.auth.step.03.verify-disabled-hook"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "hook.disabled-acl.verified",
+          "source_step_id": "development.auth.step.03.verify-disabled-hook",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Exactly one dedicated synthetic DEVELOPMENT Auth identity exists and its provider-assigned opaque subject is recorded only as a bounded local reference.",
+      "prohibited_actions": [
+        "customer.identity.create",
+        "identity.bulk-create",
+        "credential.persist",
+        "hook.enable"
+      ],
+      "stop_conditions": [
+        "identity.already-exists-unexpectedly",
+        "multiple-identities-created",
+        "subject.outcome.ambiguous"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "synthetic.identity.provider-reference",
+        "synthetic.subject"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.05.bind-synthetic-tenant",
+      "ordinal": 5,
+      "resource": {
+        "resource_type": "auth.identity-app-metadata",
+        "resource_reference": "identity.development.synthetic-avuhz.app_metadata.avuhz_tenant_id",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-metadata.bind-one-tenant",
+      "dependency_step_ids": [
+        "development.auth.step.04.create-synthetic-identity"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.identity.created",
+          "source_step_id": "development.auth.step.04.create-synthetic-identity",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Provider-controlled app_metadata contains exactly one top-level avuhz_tenant_id with the dedicated DEVELOPMENT-only canonical tenant UUID.",
+      "prohibited_actions": [
+        "user-metadata.use",
+        "multiple-tenant.bind",
+        "customer-tenant.bind",
+        "authority-claim.bind"
+      ],
+      "stop_conditions": [
+        "tenant.uuid.unresolved",
+        "metadata.shape.mismatch",
+        "identity.reference.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "synthetic.identity.provider-reference",
+        "synthetic.tenant.uuid"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.06.bind-server-capability",
+      "ordinal": 6,
+      "resource": {
+        "resource_type": "server.capability-policy-entry",
+        "resource_reference": "policy.development.synthetic-engagement-read",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "local.capability-policy.bind-exact-tuple",
+      "dependency_step_ids": [
+        "development.auth.step.05.bind-synthetic-tenant"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.tenant-metadata.verified",
+          "source_step_id": "development.auth.step.05.bind-synthetic-tenant",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The environment-scoped server allowlist binds exact issuer, audience, provider subject, tenant UUID, and HUMAN caller type to only engagement:read with empty authority roles.",
+      "prohibited_actions": [
+        "jwt-authority.trust",
+        "capability.wildcard",
+        "authority-role.add",
+        "cross-environment.bind"
+      ],
+      "stop_conditions": [
+        "subject.mismatch",
+        "tenant.mismatch",
+        "policy.scope.mismatch"
+      ],
+      "correction_reference": "correction.local-policy-revision",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "synthetic.subject",
+        "synthetic.tenant.uuid",
+        "capability-policy.digest"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.07.enable-hook",
+      "ordinal": 7,
+      "resource": {
+        "resource_type": "auth.hook-configuration",
+        "resource_reference": "hook.development.custom-access-token",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "provider.auth-hook.enable-exact",
+      "dependency_step_ids": [
+        "development.auth.step.06.bind-server-capability"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": "development.auth.step.06.bind-server-capability",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Only public.avuhz_development_custom_access_token_hook_v1(jsonb) is enabled for DEVELOPMENT access-token customization.",
+      "prohibited_actions": [
+        "other-hook.enable",
+        "hook-body.modify",
+        "audience.widen",
+        "authority-claim.emit"
+      ],
+      "stop_conditions": [
+        "hook-target.mismatch",
+        "multiple-hooks.enabled",
+        "enablement.outcome.ambiguous"
+      ],
+      "correction_reference": "correction.disable-exact-hook-after-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "hook-function.digest",
+        "hook-config.resource-reference"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.08.issue-ephemeral-token",
+      "ordinal": 8,
+      "resource": {
+        "resource_type": "auth.synthetic-access-token",
+        "resource_reference": "token.development.synthetic-one-use",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-token.issue-one-short-lived",
+      "dependency_step_ids": [
+        "development.auth.step.07.enable-hook"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "hook.enablement.verified",
+          "source_step_id": "development.auth.step.07.enable-hook",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "One short-lived DEVELOPMENT access token is delivered ephemerally for the dedicated synthetic identity and is not retained in any output or evidence.",
+      "prohibited_actions": [
+        "token.persist",
+        "token.print",
+        "token.log",
+        "token.reuse"
+      ],
+      "stop_conditions": [
+        "identity.reference.mismatch",
+        "token.delivery.not-ephemeral",
+        "token.outcome.ambiguous"
+      ],
+      "correction_reference": "correction.stop-and-expire-token",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SYNTHETIC_IDENTITY"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "synthetic.identity.provider-reference",
+        "synthetic.credential-delivery-procedure"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.09.fetch-jwks",
+      "ordinal": 9,
+      "resource": {
+        "resource_type": "auth.public-jwks",
+        "resource_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1/.well-known/jwks.json",
+        "binding_state": "BOUND",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-jwks.read-once",
+      "dependency_step_ids": [
+        "development.auth.step.08.issue-ephemeral-token"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.token.issued-ephemerally",
+          "source_step_id": "development.auth.step.08.issue-ephemeral-token",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "One credential-free bounded JWKS response is validated and discarded after retaining only sanitized key metadata and its evidence digest.",
+      "prohibited_actions": [
+        "credential.use",
+        "redirect.follow",
+        "raw-response.persist",
+        "data.contact"
+      ],
+      "stop_conditions": [
+        "jwks.origin.mismatch",
+        "jwks.invalid",
+        "private-key-material.present"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": []
+    },
+    {
+      "step_id": "development.auth.step.10.validate-token-locally",
+      "ordinal": 10,
+      "resource": {
+        "resource_type": "auth.synthetic-access-token",
+        "resource_reference": "token.development.synthetic-one-use",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "local.auth-token.validate-exact",
+      "dependency_step_ids": [
+        "development.auth.step.09.fetch-jwks"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "jwks.public-key-set.validated",
+          "source_step_id": "development.auth.step.09.fetch-jwks",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Local validation proves exact issuer, ES256 signature, DEVELOPMENT audience, one avuhz_tenant_id UUID, provider subject, HUMAN policy tuple, engagement:read only, and empty authority roles without retaining the token.",
+      "prohibited_actions": [
+        "jwt-authority.trust",
+        "token.persist",
+        "provider.call",
+        "command.mutate"
+      ],
+      "stop_conditions": [
+        "issuer.mismatch",
+        "audience.mismatch",
+        "tenant-claim.invalid",
+        "policy-tuple.mismatch"
+      ],
+      "correction_reference": "correction.stop-and-expire-token",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "synthetic.token.ephemeral-injection",
+        "synthetic.subject",
+        "synthetic.tenant.uuid"
+      ]
+    },
+    {
+      "step_id": "development.auth.step.11.record-evidence-and-terminate",
+      "ordinal": 11,
+      "resource": {
+        "resource_type": "authorization-plan.evidence-bundle",
+        "resource_reference": "evidence.development-auth-integration.v1",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "local.evidence.record-and-terminate",
+      "dependency_step_ids": [
+        "development.auth.step.10.validate-token-locally"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.token-validation.passed",
+          "source_step_id": "development.auth.step.10.validate-token-locally",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "A sanitized digest-bound evidence record contains no token, credential, raw provider payload, customer data, or authority claim and the plan terminates completed.",
+      "prohibited_actions": [
+        "token.persist",
+        "raw-provider-payload.persist",
+        "authorization.reuse",
+        "next-plan.start"
+      ],
+      "stop_conditions": [
+        "evidence.incomplete",
+        "evidence.sensitive",
+        "digest.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": []
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "scope.expansion",
+    "step.skip",
+    "step.reorder",
+    "failed-mutation.retry",
+    "automatic.self-repair",
+    "data.operation",
+    "render.operation",
+    "staging.target",
+    "production.target",
+    "jwt.authority",
+    "secret.persist",
+    "raw-provider-payload.persist"
+  ],
+  "stop_conditions": [
+    "plan.binding.mismatch",
+    "authorization.expired",
+    "authorization.consumed",
+    "target.mismatch",
+    "environment.mismatch",
+    "resource.mismatch",
+    "operation.mismatch",
+    "dependency.mismatch",
+    "evidence.missing-or-stale",
+    "postcondition.mismatch",
+    "unexpected.remote-state",
+    "extra.privilege",
+    "unauthorized.migration-surface",
+    "scope.drift",
+    "outcome.irreversible-or-ambiguous"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

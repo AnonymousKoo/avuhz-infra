@@ -54,6 +54,8 @@ These controls are requirements, not current repository capabilities. Until bran
 
 Prohibited changes always win. AI/workloads may classify and recommend but cannot approve risk, lower a classification, merge, authorize production, or establish success. Client-system `DeploymentAuthorization` is separate and cannot substitute for Avuhz platform change approval; platform approval cannot authorize a client-system deployment.
 
+An owner may approve one immutable bounded provider-change plan version/digest, but that approval is not batched mutation authority. Every listed resource requires its own exact preflight, execution, verification, evidence gate, and authorization consumption before the next listed resource can start. Drift, missing evidence, expiry, failure, partial or ambiguous outcomes, extra privilege, scope expansion, skip/reorder, or replay stops without self-repair or silent retry. Unlisted resources/actions, other environments, and other responsibilities remain unauthorized.
+
 ## Platform deployment evidence gate
 
 Before any Avuhz platform production deployment, the evidence bundle must prove:

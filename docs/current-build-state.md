@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Phase B canonical-state reconciliation is complete through baseline-lineage commit `5591dd6a99dd2d56dba6b682ab45198143d7539f`; approved DEVELOPMENT identity decisions are frozen and every hosted dependency remains fail-closed unless separately authorized.
+`CURRENT_PHASE`: The provider-neutral bounded authorization-plan contracts and local enforcement model are complete; the exact DEVELOPMENT AUTH sequence exists only as an unapproved `DRAFT_BLOCKED` plan with no executed step.
 
-`CURRENT_HEAD`: `HEAD` (`docs: reconcile development owner decisions and build state`)
+`CURRENT_HEAD`: `HEAD` (`feat: define bounded provider authorization plans`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Canonical build-state and owner-decision reconciliation is documentation-consistent and security-green; it records existing local/owner-confirmed evidence without creating remote truth or contacting a provider.
+`LAST_GREEN_MILESTONE`: Three canonical JSON Schema contracts, deterministic digests, separate exact owner approval, versioned resumable progress, per-step preflight/evidence enforcement, and the blocked 11-step DEVELOPMENT AUTH draft are locally validated with no provider contact.
 
 `COMPLETED`:
 
@@ -79,19 +79,22 @@
 - Under the current Supabase adapter design a Custom Access Token Hook is required to emit the approved tenant claim and service audience. It must emit no Avuhz capabilities or authority roles and has not been created or enabled. Supabase remains an adapter, AUTH and DATA remain logically separate, and their current DEVELOPMENT physical-project reuse is not proof of production-grade isolation.
 - The canonical initial migration lineage is hardened at `5591dd6a99dd2d56dba6b682ab45198143d7539f`. Its explicit transaction and remote-safety preflight are validated; clean disposable replay passes nine PostgreSQL tests with the 16-table tenant-RLS surface intact. No hook migration exists.
 - Local-only observability evidence is recorded separately from hosted telemetry: Prometheus health/readiness, self-scrape, and `node_exporter` scrape are green; managed local Grafana `12.4.2` is healthy at `127.0.0.1:3002`, uses recovered persistent data, and queries Prometheus. A legacy orphaned Grafana remains on port `3000` pending a controlled Docker maintenance window. This is not Render telemetry and no Grafana Cloud resource is claimed.
+- The provider-neutral bounded authorization-plan model separates immutable plan definition, attributable exact owner approval, and versioned progress. It enforces plan ID/version/digest binding, expiry, one-resource-at-a-time order, exact target/operation/credential scope, prior evidence, independent verification, stop-on-drift, consumed authorization, and resume without replay. It has no provider executor or alternate Avuhz/JWT authority path.
+- The first DEVELOPMENT AUTH plan is exact to Supabase project `pwlhruwutoitnieactol`, AUTH issuer `https://pwlhruwutoitnieactol.supabase.co/auth/v1`, audience `audience.avuhz.command-service.development`, and planned `public.avuhz_development_custom_access_token_hook_v1(jsonb)`. Its 11 steps preserve separate local, provider-read, and provider-mutation boundaries.
+- DEVELOPMENT AUTH plan v1 is `DRAFT_BLOCKED` with digest `sha256:97079c0a9cc171b5c6adc21b5de7cba5be6aeb6d4b8bf6f398a67129669b042f`. No owner approval record or authorization window exists; all step states are pending/unstarted/unverified/unconsumed. Migration identity/digest, provider subject, tenant UUID, policy digest, hook configuration, and ephemeral delivery bindings remain unresolved rather than invented.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. Phase B canonical-state reconciliation and owner-decision freeze are complete; no hook, user, tenant, token, provider connection, migration application, or remote operation was performed.
+`IN_PROGRESS`: None. Authorization-plan design and local enforcement are complete; no hook migration, approval, provider connection, user, tenant, token, migration application, or remote operation was performed.
 
-`NEXT_TASK`: Define the bounded DEVELOPMENT AUTH integration authorization plan for the already-designed hook/synthetic-identity/token-validation sequence, preserving one-resource-at-a-time execution and explicit stop conditions.
+`NEXT_TASK`: Create and locally validate the ordered DEVELOPMENT Custom Access Token Hook migration and its least-privilege ACL, without applying or enabling it remotely.
 
-`DO_NOT_START_YET`: Hook creation or enablement, synthetic user/tenant creation, token issuance or validation, remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, hosted observability/backup integrations, Phase 6, or later roadmap work.
+`DO_NOT_START_YET`: Remote migration application, hook enablement, synthetic user/tenant creation, capability binding, token issuance or validation, provider contact, remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, hosted observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the Phase B documentation reconciliation commit. No hook migration exists. The legacy local Grafana cleanup is deferred to a controlled Docker maintenance window. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the bounded authorization-plan commit. No hook migration or approval record exists. The legacy local Grafana cleanup is deferred to a controlled Docker maintenance window. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority.
 
 `REMOTE_AUTHORIZATION`: The one-use DEVELOPMENT AUTH JWKS read authorization was consumed at `2026-09-01T15:14:17.159453Z`. No further AUTH call, DATA access, Render change, Supabase mutation, Avuhz push, or other remote action is authorized; AUTH discovery never implies DATA authorization. Never force push.
 

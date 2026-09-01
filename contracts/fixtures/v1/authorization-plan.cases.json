@@ -1,0 +1,21 @@
+{
+  "fixture_set": "bounded-authorization-plan-v1",
+  "fictional_only": true,
+  "positive": [
+    "exact plan-bound owner approval",
+    "ordered one-resource step progression",
+    "verified resume from next incomplete boundary",
+    "provider-neutral target classes"
+  ],
+  "negative": [
+    "plan digest drift",
+    "target or operation scope drift",
+    "missing or stale evidence",
+    "skipped or replayed step",
+    "expired approval",
+    "failed or ambiguous mutation retry",
+    "credential class widening",
+    "caller JWT authority injection",
+    "secret-bearing state"
+  ]
+}

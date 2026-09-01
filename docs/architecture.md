@@ -240,6 +240,10 @@ This is owner-confirmed local-only operational evidence, separate from the unres
 - A legacy orphaned Grafana instance remains on port `3000`; cleanup is deferred to a controlled Docker maintenance window.
 - This evidence is not Render-hosted telemetry and does not establish any Grafana Cloud organization, stack, destination, endpoint, credential, collector, or other provider resource.
 
+### Bounded provider-change authorization plans
+
+Multi-resource provider work uses the provider-neutral immutable plan, separate owner approval, and versioned progress contracts defined in `docs/development-auth-integration-authorization-plan.md`. One approval may bind an exact ordered plan, but each resource remains independently preflighted, executed, verified, and authorization-consumed. Plans never batch mutations, infer JWT authority, self-repair drift, replay successful work, or cross environment/responsibility boundaries. The first DEVELOPMENT AUTH instance is a blocked, unapproved 11-step draft; no hook, identity, tenant, token, provider mutation, or remote authority exists.
+
 ## Engineering orchestration boundary
 
 Codex, Claude, and other engineering agents are equivalent untrusted engineering workloads. They may inspect authorized repositories, create bounded branches/patches, run local or CI checks, prepare evidence, draft pull-request/change summaries, and propose remediation. They may not supply trusted human identity, approve or merge their own work, weaken tests/policy, access production secrets, select or alter a production registry target, apply a production migration, deploy, attest success without evidence, or create client/platform deployment authority.

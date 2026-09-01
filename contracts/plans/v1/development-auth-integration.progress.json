@@ -1,0 +1,122 @@
+{
+  "progress_id": "a7100000-0000-4000-8000-000000000102",
+  "plan_id": "a7100000-0000-4000-8000-000000000101",
+  "plan_version": 1,
+  "plan_digest": "sha256:97079c0a9cc171b5c6adc21b5de7cba5be6aeb6d4b8bf6f398a67129669b042f",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.step.01.local-hook-migration",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.02.apply-hook-migration",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.03.verify-disabled-hook",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.04.create-synthetic-identity",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.05.bind-synthetic-tenant",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.06.bind-server-capability",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.07.enable-hook",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.08.issue-ephemeral-token",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.09.fetch-jwks",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.10.validate-token-locally",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.11.record-evidence-and-terminate",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    }
+  ],
+  "updated_at": "2026-09-01T17:13:40Z",
+  "progress_digest": "sha256:d66fa3ea7ae73d9ed398721bb36ac28143caa15684d2b1ab02c1b9401bdc0bbe"
+}

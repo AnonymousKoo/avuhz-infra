@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1",
+  "title": "Bounded Provider Change Authorization Plan v1",
+  "description": "Immutable provider-neutral definition of an ordered, evidence-gated change plan. The plan grants no authority without a separate exact owner approval and never batches resource mutations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "plan_version",
+    "plan_digest",
+    "definition_status",
+    "environment",
+    "target",
+    "owner_identity",
+    "created_at",
+    "authorization_window",
+    "ordered_step_ids",
+    "steps",
+    "prohibited_actions",
+    "stop_conditions",
+    "authority_effect"
+  ],
+  "properties": {
+    "plan_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+    },
+    "plan_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "definition_status": {
+      "enum": [
+        "DRAFT_BLOCKED",
+        "READY_FOR_APPROVAL"
+      ]
+    },
+    "environment": {
+      "$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "owner_identity": {
+      "$ref": "#/$defs/boundedText"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "authorization_window": {
+      "$ref": "#/$defs/authorizationWindow"
+    },
+    "ordered_step_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/reference"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "prohibited_actions": {
+      "$ref": "#/$defs/referenceList"
+    },
+    "stop_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/reference"
+      }
+    },
+    "authority_effect": {
+      "const": "NONE_UNTIL_SEPARATELY_APPROVED"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "reference": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z][A-Za-z0-9._:-]{2,159}$"
+    },
+    "boundedText": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 500
+    },
+    "referenceList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/reference"
+      }
+    },
+    "nullableTimestamp": {
+      "oneOf": [
+        {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "authorizationWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_state",
+        "starts_at",
+        "expires_at"
+      ],
+      "properties": {
+        "binding_state": {
+          "enum": [
+            "BOUND",
+            "UNRESOLVED_BLOCKER"
+          ]
+        },
+        "starts_at": {
+          "$ref": "#/$defs/nullableTimestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/nullableTimestamp"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_class",
+        "provider_reference",
+        "project_reference",
+        "responsibility",
+        "issuer_reference",
+        "audience_reference"
+      ],
+      "properties": {
+        "provider_class": {
+          "$ref": "#/$defs/reference"
+        },
+        "provider_reference": {
+          "$ref": "#/$defs/reference"
+        },
+        "project_reference": {
+          "$ref": "#/$defs/reference"
+        },
+        "responsibility": {
+          "enum": [
+            "AUTH",
+            "DATA",
+            "RUNTIME",
+            "WORKER",
+            "OBSERVABILITY",
+            "PLATFORM"
+          ]
+        },
+        "issuer_reference": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://[^@]+$",
+              "maxLength": 300
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "audience_reference": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_type",
+        "resource_reference",
+        "binding_state",
+        "exact_version",
+        "exact_digest"
+      ],
+      "properties": {
+        "resource_type": {
+          "$ref": "#/$defs/reference"
+        },
+        "resource_reference": {
+          "$ref": "#/$defs/boundedText"
+        },
+        "binding_state": {
+          "enum": [
+            "BOUND",
+            "UNRESOLVED_BLOCKER"
+          ]
+        },
+        "exact_version": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "exact_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "credentialPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "permitted",
+        "allowed_classes",
+        "values_stored"
+      ],
+      "properties": {
+        "permitted": {
+          "type": "boolean"
+        },
+        "allowed_classes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "NONE",
+              "OWNER_INTERACTIVE_SESSION",
+              "MIGRATION_IDENTITY",
+              "SYNTHETIC_IDENTITY",
+              "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN"
+            ]
+          }
+        },
+        "values_stored": {
+          "const": false
+        }
+      }
+    },
+    "evidenceRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_type",
+        "source_step_id",
+        "binding_state",
+        "exact_digest"
+      ],
+      "properties": {
+        "evidence_type": {
+          "$ref": "#/$defs/reference"
+        },
+        "source_step_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "binding_state": {
+          "enum": [
+            "BOUND",
+            "DERIVED_FROM_SOURCE_STEP",
+            "UNRESOLVED_BLOCKER"
+          ]
+        },
+        "exact_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "ordinal",
+        "resource",
+        "operation",
+        "dependency_step_ids",
+        "required_evidence",
+        "expected_postcondition",
+        "prohibited_actions",
+        "stop_conditions",
+        "correction_reference",
+        "execution_class",
+        "credential_policy",
+        "unresolved_bindings"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "#/$defs/reference"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "resource": {
+          "$ref": "#/$defs/resource"
+        },
+        "operation": {
+          "$ref": "#/$defs/reference"
+        },
+        "dependency_step_ids": {
+          "type": "array",
+          "maxItems": 31,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/evidenceRequirement"
+          }
+        },
+        "expected_postcondition": {
+          "$ref": "#/$defs/boundedText"
+        },
+        "prohibited_actions": {
+          "$ref": "#/$defs/referenceList"
+        },
+        "stop_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "correction_reference": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "execution_class": {
+          "enum": [
+            "LOCAL_ONLY",
+            "PROVIDER_READ",
+            "PROVIDER_MUTATION"
+          ]
+        },
+        "credential_policy": {
+          "$ref": "#/$defs/credentialPolicy"
+        },
+        "unresolved_bindings": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        }
+      }
+    }
+  }
+}

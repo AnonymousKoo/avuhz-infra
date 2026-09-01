@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan-progress:v1",
+  "title": "Bounded Authorization Plan Progress v1",
+  "description": "Versioned resumable progress for one exact approved plan. Successful verified steps are not replayable; failures and ambiguity stop the plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "progress_id",
+    "plan_id",
+    "plan_version",
+    "plan_digest",
+    "record_version",
+    "overall_state",
+    "step_states",
+    "updated_at",
+    "progress_digest"
+  ],
+  "properties": {
+    "progress_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+    },
+    "plan_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+    },
+    "plan_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "record_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "overall_state": {
+      "enum": [
+        "NOT_STARTED",
+        "IN_PROGRESS",
+        "STOPPED",
+        "COMPLETED",
+        "EXPIRED"
+      ]
+    },
+    "step_states": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/stepState"
+      }
+    },
+    "updated_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "progress_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "stepState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "authorization_state",
+        "execution_state",
+        "verification_state",
+        "authorization_consumed",
+        "evidence",
+        "observed_postcondition",
+        "safe_error_code"
+      ],
+      "properties": {
+        "step_id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z][A-Za-z0-9._:-]{2,159}$"
+        },
+        "authorization_state": {
+          "enum": [
+            "PENDING",
+            "AUTHORIZED",
+            "CONSUMED",
+            "BLOCKED",
+            "EXPIRED"
+          ]
+        },
+        "execution_state": {
+          "enum": [
+            "NOT_STARTED",
+            "IN_PROGRESS",
+            "SUCCEEDED",
+            "FAILED",
+            "PARTIAL",
+            "AMBIGUOUS"
+          ]
+        },
+        "verification_state": {
+          "enum": [
+            "NOT_STARTED",
+            "PASS",
+            "FAIL",
+            "AMBIGUOUS"
+          ]
+        },
+        "authorization_consumed": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "observed_postcondition": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_error_code": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{2,79}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_type",
+        "evidence_reference",
+        "evidence_digest",
+        "recorded_at"
+      ],
+      "properties": {
+        "evidence_type": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z][A-Za-z0-9._:-]{2,159}$"
+        },
+        "evidence_reference": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160,
+          "pattern": "^[A-Za-z][A-Za-z0-9._:-]{2,159}$"
+        },
+        "evidence_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "recorded_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        }
+      }
+    }
+  }
+}

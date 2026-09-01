@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan-approval:v1",
+  "title": "Bounded Authorization Plan Owner Approval v1",
+  "description": "Separate attributable owner approval binding one exact immutable plan version and digest. It grants no caller, JWT, domain, staging, production, DATA, or unlisted resource authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "approval_id",
+    "plan_id",
+    "plan_version",
+    "plan_digest",
+    "approval_digest",
+    "owner_identity",
+    "decision",
+    "environment",
+    "effective_at",
+    "expires_at",
+    "approved_at",
+    "status",
+    "authority_scope"
+  ],
+  "properties": {
+    "approval_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/approvalId"
+    },
+    "plan_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+    },
+    "plan_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "plan_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "approval_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "owner_identity": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200
+    },
+    "decision": {
+      "const": "APPROVE"
+    },
+    "environment": {
+      "$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"
+    },
+    "effective_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "expires_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "approved_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "status": {
+      "enum": [
+        "ACTIVE",
+        "EXPIRED",
+        "REVOKED",
+        "SUPERSEDED"
+      ]
+    },
+    "authority_scope": {
+      "const": "EXACT_PLAN_ONLY"
+    }
+  }
+}

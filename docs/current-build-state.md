@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Provider-neutral DEVELOPMENT trusted-identity resolver boundary implemented and certified locally with deterministic verifier fakes; no real provider adapter is wired and readiness remains fail-closed.
+`CURRENT_PHASE`: Local-only DEVELOPMENT DATA composition implemented and certified against disposable PostgreSQL; no real provider adapter is wired and hosted readiness remains fail-closed.
 
-`CURRENT_HEAD`: `HEAD` (`feat: add development trusted identity resolver boundary`)
+`CURRENT_HEAD`: `HEAD` (`feat: add local development postgres composition`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: DEVELOPMENT identity evidence is accepted only through an injected verifier and exact issuer/audience/tenant/subject/capability checks; malformed, untrusted, authority-bearing, stale, or cross-environment evidence fails closed.
+`LAST_GREEN_MILESTONE`: DEVELOPMENT DATA can be composed only with an injected loopback disposable-PostgreSQL connector, the existing PostgresStore/PostgresUnitOfWork, exact approved non-secret project configuration, and tenant-bound non-bypass RLS.
 
 `COMPLETED`:
 
@@ -68,19 +68,22 @@
 - Owner-confirmed Render evidence records successful deployment of commit `6bff57065151462fc74861c68a232454b2ef9a20`, `GET /health/live = 200`, and intentional fail-closed `GET /health/ready = 503`. Recording this evidence grants no further deployment or provider authority.
 - The provider-neutral DEVELOPMENT trusted-identity resolver maps only exact verifier-produced evidence for the approved issuer and audience into tenant-bound `TrustedExecutionContext` semantics. It accepts only the frozen caller/capability vocabulary, establishes no human authority, validates bounded UTC lifetime, and rejects invalid or malformed evidence without exposing details.
 - Deterministic identity verification exists only in focused tests. The live DEVELOPMENT composition still uses its unavailable resolver, DATA and identity readiness remain unavailable, and no Supabase/JWT/provider adapter, credential, token, secret, connection, or remote mutation exists.
+- The local DEVELOPMENT DATA composition reuses the canonical PostgresStore, PostgresUnitOfWork, repository ports, and `avuhz_command_service` database role. It accepts only loopback disposable databases, preserves the approved DATA project reference as configuration, and keeps `avuhz_command_service_dev` distinct from `avuhz_migration_service_dev`.
+- Trusted DEVELOPMENT context is required before UnitOfWork creation, and `TrustedExecutionContext.tenant_id` remains transaction-locally bound to `avuhz.tenant_id`. Staging/wrong-audience contexts fail before connection; unauthenticated or missing-tenant contexts close the opened transaction.
+- Fresh disposable PostgreSQL replay certifies all 16 canonical tables, tenant RLS, no superuser/BYPASSRLS runtime role, bounded grants, cross-tenant denial, restart round-trip, immutable history, idempotency conflict/transition, and event/outbox atomic rollback. The hosted Render DEVELOPMENT composition remains unwired and reports DATA/identity readiness unavailable.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The local DEVELOPMENT trusted-identity resolver-boundary milestone is complete.
+`IN_PROGRESS`: None. The local-only DEVELOPMENT DATA composition milestone is complete.
 
-`NEXT_TASK`: Implement and test the DEVELOPMENT DATA adapter composition against disposable local PostgreSQL only, preserving tenant/RLS, UnitOfWork, idempotency, concurrency, events, and outbox boundaries. Do not connect to Supabase, wire a real identity provider, authorize connected validation, touch staging or production, or begin Phase 6.
+`NEXT_TASK`: Define the bounded real DEVELOPMENT DATA/AUTH adapter and first connected-validation authorization package, including exact secret-reference inputs, least-privilege runtime and migration roles, permitted read-only checks, rollback limits, and owner approval. Do not contact or mutate Supabase, Render, or another provider until that connected scope is separately authorized.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the DEVELOPMENT trusted-identity resolver-boundary commit. Generated evidence, virtual environments, and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the local DEVELOPMENT DATA composition commit. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push and no current Render, Supabase, or other infrastructure mutation. The owner-confirmed prior Render deployment and health evidence are recorded facts, not continuing provider authority. Connected DATA/AUTH validation remains unauthorized; never force push.
 

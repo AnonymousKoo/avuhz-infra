@@ -1,8 +1,12 @@
 """PostgreSQL persistence adapter for Slice 1; connection details are injected."""
 from __future__ import annotations
 import copy, json, os, uuid
-import psycopg
-from psycopg.rows import dict_row
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ModuleNotFoundError:  # Deterministic boundary tests need no downloaded driver.
+    psycopg = None
+    dict_row = None
 from .guards import AuthoritativeSubjectSnapshot
 from .outbox_delivery import claim_delivery, fail_delivery, publish_delivery
 from .postgres_phase5d_brief import ImplementationBriefPostgresRepository
@@ -17,6 +21,7 @@ from .postgres_phase5d_deployment_verification import DeploymentVerificationPost
 
 def connection_factory_from_environment(name="AVUHZ_POSTGRES_DSN"):
     def factory():
+        if psycopg is None: raise RuntimeError("Postgres driver is required")
         dsn = os.environ.get(name)
         if not dsn: raise RuntimeError("Postgres connection configuration is required")
         return psycopg.connect(dsn, autocommit=False, row_factory=dict_row)

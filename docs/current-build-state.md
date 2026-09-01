@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Owner-approved non-secret development/staging AUTH/DATA project selections recorded in the canonical environment registry; the baseline remains unconnected and production remains unconfigured.
+`CURRENT_PHASE`: Canonical development/staging production-readiness logical reference model defined over the approved environment selections; unresolved owner/provider bindings fail closed, the baseline remains unconnected, and production remains unconfigured.
 
-`CURRENT_HEAD`: `HEAD` (`docs: record owner-approved environment registry`)
+`CURRENT_HEAD`: `HEAD` (`docs: define development staging readiness references`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Canonical development/staging environment project selection registry recorded without credentials, connection, remote mutation, or production configuration.
+`LAST_GREEN_MILESTONE`: Distinct development/staging workload identities, audiences, tenant-RLS policy references, and unresolved production-readiness reference slots defined without provider resources, secrets, connection, or authority.
 
 `COMPLETED`:
 
@@ -57,19 +57,21 @@
 - Platform production remains `NOT_READY`: the locally packaged service/worker artifact is not a certified production deployable and there is still no production AUTH/DATA registry, trusted issuer integration, production outbox identity/provider sink, secret manager/service identities, GitHub workflows/branch/environment protections, protected CI provenance/SBOM publication, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
 - Development project `pwlhruwutoitnieactol` and staging project `gnuqaefotwgkwurjpyik` are owner-approved non-secret AUTH/DATA selections with the exact `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` bridge. They were not contacted, changed, migrated, or certified.
 - Production is unconfigured, its project does not exist, and no remote mutation is authorized. The current PostgreSQL migration baseline remains local/disposable only.
+- Development and staging have distinct provider-neutral command, outbox, migration, CI, issuer, audience, and tenant-RLS logical references. Runtime identities remain tenant-bound with no universal RLS bypass, and migration authority remains separate from application/runtime and CI authority.
+- Secrets, observability, runtime target, network, recovery, rollback, and attributable platform/security/data/deployment owner slots are `OWNER_VALUE_REQUIRED`; their logical names do not create provider bindings or authority.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The environment registry documentation milestone is complete.
+`IN_PROGRESS`: None. The development/staging production-readiness reference-model milestone is complete.
 
-`NEXT_TASK`: Define the remaining owner-approved development/staging identity, issuer/audience, RLS, secret-manager, observability, backup/recovery, runtime, artifact-registry, network, and approval-owner references required before connected implementation. Do not connect to or mutate either registered project without separate explicit authorization.
+`NEXT_TASK`: Supply and approve the real provider bindings and attributable human owners for every `OWNER_VALUE_REQUIRED` development/staging reference, then separately authorize the exact first connected validation batch. Do not connect to or mutate either registered project before both conditions are satisfied.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the environment registry documentation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the development/staging reference-model documentation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

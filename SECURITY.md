@@ -28,6 +28,8 @@ This baseline is unconnected. Owner-approved non-secret development/staging proj
 - Logs, traces, errors, evidence bundles, command/event records, and CI artifacts must redact secret values and minimize customer/business payloads. Secret scanning runs before artifact publication.
 - Rotation, revocation, break-glass access, and suspected-exposure response require attributable human authorization and audit evidence. Break-glass access is time-bound and cannot bypass tenant or authority checks.
 - Provider configuration is an allowlisted, schema-validated reference owned by the environment registry. Unknown endpoints, mutable-latest targets, and caller-selected provider credentials fail closed.
+- The canonical logical reference names and resolution statuses exist only in `docs/architecture.md`. `DEFINED_LOGICAL` is not a provider binding; `OWNER_VALUE_REQUIRED` blocks connected use. Neither status grants access, approval, migration, deployment, or production truth.
+- Command, outbox, migration, and CI workloads use distinct environment-scoped identities and audiences. Application/runtime identities never receive table ownership, `BYPASSRLS`, universal tenant access, or migration authority; the migration identity is separately gated and cannot be substituted by CI.
 
 ## GitHub and CI/CD controls
 

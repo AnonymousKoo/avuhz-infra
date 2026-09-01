@@ -51,6 +51,38 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertIn("registration grants no connection or mutation authority", SECURITY)
         self.assertIn("no remote mutation is authorized", STATE)
 
+    def test_environment_reference_model_is_distinct_tenant_bound_and_fail_closed(self):
+        for value in (
+            "avuhz_command_service_dev", "avuhz_command_service_staging",
+            "avuhz_outbox_worker_dev", "avuhz_outbox_worker_staging",
+            "avuhz_migration_service_dev", "avuhz_migration_service_staging",
+            "avuhz_ci_service_dev", "avuhz_ci_service_staging",
+            "auth-issuer.avuhz.development", "auth-issuer.avuhz.staging",
+            "audience.avuhz.command-service.development", "audience.avuhz.command-service.staging",
+            "audience.avuhz.outbox-worker.development", "audience.avuhz.outbox-worker.staging",
+            "audience.avuhz.migration.development", "audience.avuhz.migration.staging",
+            "audience.avuhz.ci.development", "audience.avuhz.ci.staging",
+            "policy.avuhz.tenant-rls.development.v1", "policy.avuhz.tenant-rls.staging.v1",
+            "secrets.avuhz.development", "secrets.avuhz.staging",
+            "observability.avuhz.development", "observability.avuhz.staging",
+            "runtime-target.avuhz.development", "runtime-target.avuhz.staging",
+            "network-boundary.avuhz.development", "network-boundary.avuhz.staging",
+            "recovery.avuhz.development", "recovery.avuhz.staging",
+            "rollback.avuhz.development", "rollback.avuhz.staging",
+            "approval-owner.platform.avuhz.development", "approval-owner.platform.avuhz.staging",
+            "approval-owner.security.avuhz.development", "approval-owner.security.avuhz.staging",
+            "approval-owner.data-migration.avuhz.development", "approval-owner.data-migration.avuhz.staging",
+            "approval-owner.deployment.avuhz.development", "approval-owner.deployment.avuhz.staging",
+            "DEFINED_LOGICAL", "OWNER_VALUE_REQUIRED",
+            "must never own authoritative tables or receive `BYPASSRLS`",
+            "migration identity is separate from command, worker, and CI identities",
+            "Production has no logical or provider references",
+        ):
+            self.assertIn(value, ARCHITECTURE)
+        self.assertIn("| AUTH issuer reference | `auth-issuer.avuhz.development` | `OWNER_VALUE_REQUIRED`", ARCHITECTURE)
+        self.assertIn("Application/runtime identities never receive table ownership", SECURITY)
+        self.assertIn("every `OWNER_VALUE_REQUIRED` development/staging reference", STATE)
+
     def test_ci_secrets_change_policy_and_evidence_gates_are_defined(self):
         for heading in (
             "## Production secrets and provider configuration",

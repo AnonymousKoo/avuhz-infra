@@ -92,6 +92,37 @@ This is the single canonical record of owner-approved, non-secret project select
 
 Production is unconfigured and its project does not exist. No entry contains credentials or secret material, and no entry establishes that a project was contacted, validated, migrated, or made deployment-ready.
 
+### Development and staging production-readiness references
+
+`DEFINED_LOGICAL` means the stable provider-neutral reference and its separation semantics are defined, but it is not a provider binding or authority grant. `OWNER_VALUE_REQUIRED` means the stable reference slot is defined but its real provider resource, policy, or attributable human owner must still be supplied and approved. Both statuses fail closed for connected use until every required binding and separate connection authorization exists.
+
+| Reference | Development | Status | Staging | Status |
+|---|---|---|---|---|
+| Command service identity | `avuhz_command_service_dev` | `DEFINED_LOGICAL` | `avuhz_command_service_staging` | `DEFINED_LOGICAL` |
+| Outbox worker identity | `avuhz_outbox_worker_dev` | `DEFINED_LOGICAL` | `avuhz_outbox_worker_staging` | `DEFINED_LOGICAL` |
+| Migration identity | `avuhz_migration_service_dev` | `DEFINED_LOGICAL` | `avuhz_migration_service_staging` | `DEFINED_LOGICAL` |
+| CI identity | `avuhz_ci_service_dev` | `DEFINED_LOGICAL` | `avuhz_ci_service_staging` | `DEFINED_LOGICAL` |
+| AUTH issuer reference | `auth-issuer.avuhz.development` | `OWNER_VALUE_REQUIRED` | `auth-issuer.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Command-service audience | `audience.avuhz.command-service.development` | `DEFINED_LOGICAL` | `audience.avuhz.command-service.staging` | `DEFINED_LOGICAL` |
+| Outbox-worker audience | `audience.avuhz.outbox-worker.development` | `DEFINED_LOGICAL` | `audience.avuhz.outbox-worker.staging` | `DEFINED_LOGICAL` |
+| Migration audience | `audience.avuhz.migration.development` | `DEFINED_LOGICAL` | `audience.avuhz.migration.staging` | `DEFINED_LOGICAL` |
+| CI audience | `audience.avuhz.ci.development` | `DEFINED_LOGICAL` | `audience.avuhz.ci.staging` | `DEFINED_LOGICAL` |
+| Tenant/RLS policy | `policy.avuhz.tenant-rls.development.v1` | `DEFINED_LOGICAL` | `policy.avuhz.tenant-rls.staging.v1` | `DEFINED_LOGICAL` |
+| Secrets provider/reference boundary | `secrets.avuhz.development` | `OWNER_VALUE_REQUIRED` | `secrets.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Observability | `observability.avuhz.development` | `OWNER_VALUE_REQUIRED` | `observability.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Runtime/deployment target | `runtime-target.avuhz.development` | `OWNER_VALUE_REQUIRED` | `runtime-target.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Network boundary | `network-boundary.avuhz.development` | `OWNER_VALUE_REQUIRED` | `network-boundary.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Backup/recovery | `recovery.avuhz.development` | `OWNER_VALUE_REQUIRED` | `recovery.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Rollback | `rollback.avuhz.development` | `OWNER_VALUE_REQUIRED` | `rollback.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Platform-owner approval | `approval-owner.platform.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.platform.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Security-owner approval | `approval-owner.security.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.security.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Data/migration-owner approval | `approval-owner.data-migration.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.data-migration.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Deployment-owner approval | `approval-owner.deployment.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.deployment.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+
+The tenant bridge remains exactly `TrustedExecutionContext.tenant_id -> avuhz.tenant_id`. Runtime identities receive tenant-scoped grants only and must never own authoritative tables or receive `BYPASSRLS`, universal tenant access, or migration authority. The outbox worker may claim and publish only tenant-bound committed outbox intents. The migration identity is separate from command, worker, and CI identities; schema/DDL authority cannot be exercised through an application runtime identity. CI identity and simulated approval never imply migration, deployment, or human authority.
+
+Development and staging identities, audiences, targets, policies, secret namespaces, and approvals must resolve independently; no cross-environment reuse is allowed. Production has no logical or provider references, remains `UNCONFIGURED`, and has no connection, mutation, migration, deployment, or change authority.
+
 ## Engineering orchestration boundary
 
 Codex, Claude, and other engineering agents are equivalent untrusted engineering workloads. They may inspect authorized repositories, create bounded branches/patches, run local or CI checks, prepare evidence, draft pull-request/change summaries, and propose remediation. They may not supply trusted human identity, approve or merge their own work, weaken tests/policy, access production secrets, select or alter a production registry target, apply a production migration, deploy, attest success without evidence, or create client/platform deployment authority.

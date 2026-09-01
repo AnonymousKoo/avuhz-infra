@@ -18,7 +18,7 @@ Run `./scripts/check-baseline.sh` before staging or committing. A failed check b
 
 ## External systems
 
-This baseline is unconnected. It contains local-only PostgreSQL/Supabase development configuration and a disposable current-tree migration baseline, but no owner-approved remote project selection, n8n credential, provider integration, production secret, or deployment configuration.
+This baseline is unconnected. Owner-approved non-secret development/staging project selections are recorded only in the canonical environment registry in `docs/architecture.md`; registration grants no connection or mutation authority. The repository contains no n8n credential, provider integration, production secret, or deployment configuration, and the current-tree migration baseline remains local/disposable only.
 
 ## Production secrets and provider configuration
 

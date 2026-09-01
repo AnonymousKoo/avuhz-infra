@@ -39,6 +39,18 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertIn("Codex, Claude, and other engineering agents", ARCHITECTURE)
         self.assertIn("This boundary introduces no Phase 6", ARCHITECTURE)
 
+    def test_owner_approved_project_selection_is_exact_and_non_authorizing(self):
+        for value in (
+            "pwlhruwutoitnieactol", "https://pwlhruwutoitnieactol.supabase.co",
+            "gnuqaefotwgkwurjpyik", "https://gnuqaefotwgkwurjpyik.supabase.co",
+            "TrustedExecutionContext.tenant_id -> avuhz.tenant_id",
+            "Registration does not authorize connection, migration, deployment, or mutation",
+            "Production is unconfigured and its project does not exist",
+        ):
+            self.assertIn(value, ARCHITECTURE)
+        self.assertIn("registration grants no connection or mutation authority", SECURITY)
+        self.assertIn("no remote mutation is authorized", STATE)
+
     def test_ci_secrets_change_policy_and_evidence_gates_are_defined(self):
         for heading in (
             "## Production secrets and provider configuration",

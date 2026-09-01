@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Local-only CI artifact/evidence pipeline and autonomous engineering dry-run harness complete against the frozen Phase 5 service/worker baseline; connected platform production-readiness implementation remains blocked on owner configuration.
+`CURRENT_PHASE`: Owner-approved non-secret development/staging AUTH/DATA project selections recorded in the canonical environment registry; the baseline remains unconnected and production remains unconfigured.
 
-`CURRENT_HEAD`: `HEAD` (`feat: add local engineering evidence dry run`)
+`CURRENT_HEAD`: `HEAD` (`docs: record owner-approved environment registry`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Fixed-command local build/test/contract/migration/security/package pipeline producing immutable, schema-valid, exact-source and exact-artifact evidence plus a fail-closed, explicitly non-authoritative readiness simulation.
+`LAST_GREEN_MILESTONE`: Canonical development/staging environment project selection registry recorded without credentials, connection, remote mutation, or production configuration.
 
 `COMPLETED`:
 
@@ -44,7 +44,7 @@
 - Full runtime, architecture/separation, cross-repository, Sekinfra boundary/producer, contract, schema, static migration, disposable PostgreSQL replay, atomicity, RLS, Semgrep, credential, forbidden-path, compilation, and diff checks are green. Optional psycopg adapter tests remain skipped because no local driver is installed; no dependency or remote access was attempted.
 - Active Avuhz runtime/contract references to Sekinfra/OIA remain zero. Phase 5 is frozen; later work must preserve this baseline and may not infer real deployment or production authority.
 - Avuhz platform production is explicitly separate from client-system deployment. The minimum API/worker/data/auth/identity/secrets/migration/observability/backup/CI/CD/environment/rollback architecture and owner-authorized registry are defined in canonical architecture/security documentation.
-- Codex/Claude remain untrusted engineering workloads: they may build, test, scan, and draft evidence but cannot approve, merge, select production targets, access production secrets, migrate, deploy, or establish success. A nine-step autonomous local/staging dry-run is defined but has not been implemented or executed.
+- Codex/Claude remain untrusted engineering workloads: they may build, test, scan, and draft evidence but cannot approve, merge, select production targets, access production secrets, migrate, deploy, or establish success. The local build/test/evidence portion of the dry run is implemented; connected staging, deployment, verification, and rollback steps remain unimplemented.
 - The local service is a real buildable wheel/console artifact with a framework-neutral WSGI application, loopback-only memory composition, one governed command route, nine allowlisted read-only query types, explicit `engagement:read` access, fixed non-human trusted identity, request limits, and sanitized error handling.
 - `GET /health/startup`, `/health/live`, and `/health/ready` are bounded and non-sensitive. Readiness checks required local data/identity dependencies, returns `503` on unavailable/exceptional probes, and never returns connection details or stack traces.
 - The local outbox worker consumes only existing committed outbox intents, requires tenant-bound `INTERNAL_SERVICE` context plus `event:publish_internal`, and cannot commit domain collections. The fake sink is bounded, local, and idempotent; no provider integration or remote delivery exists.
@@ -55,20 +55,21 @@
 - Evidence validation fails closed for missing, expired, source-stale, artifact-stale, command-catalog-stale, internally inconsistent, or secret-bearing records. The review gate binds every required step digest.
 - The autonomous dry run requires an explicit simulated reviewer decision. Automation cannot establish human approval, deployment authority, production readiness, or production truth; all production/deployment/mutation flags are permanently false. No deploy path or provider integration exists.
 - Platform production remains `NOT_READY`: the locally packaged service/worker artifact is not a certified production deployable and there is still no production AUTH/DATA registry, trusted issuer integration, production outbox identity/provider sink, secret manager/service identities, GitHub workflows/branch/environment protections, protected CI provenance/SBOM publication, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
-- The existing PostgreSQL migration and Supabase configuration remain local/disposable only. No remote project was selected, contacted, changed, or certified.
+- Development project `pwlhruwutoitnieactol` and staging project `gnuqaefotwgkwurjpyik` are owner-approved non-secret AUTH/DATA selections with the exact `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` bridge. They were not contacted, changed, migrated, or certified.
+- Production is unconfigured, its project does not exist, and no remote mutation is authorized. The current PostgreSQL migration baseline remains local/disposable only.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The local engineering evidence and autonomous dry-run milestone is complete.
+`IN_PROGRESS`: None. The environment registry documentation milestone is complete.
 
-`NEXT_TASK`: Obtain the owner-approved AUTH/DATA/environment registry values required for the isolated development/staging implementation boundary. Do not connect to or mutate any target until those exact values and current authorization are supplied.
+`NEXT_TASK`: Define the remaining owner-approved development/staging identity, issuer/audience, RLS, secret-manager, observability, backup/recovery, runtime, artifact-registry, network, and approval-owner references required before connected implementation. Do not connect to or mutate either registered project without separate explicit authorization.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the local engineering evidence milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the environment registry documentation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

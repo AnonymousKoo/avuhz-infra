@@ -59,7 +59,7 @@ No environment may share mutable AUTH/DATA projects, service credentials, secret
 
 ## Owner-authorized environment registry
 
-Every connected environment requires one owner-approved registry record outside business state and outside Git. References are opaque identifiers, never connection strings or secret values. The minimum fields are:
+Every connected environment requires one owner-approved registry record outside business state. Non-secret selection metadata may be recorded here; credentials, authenticated connection strings, and secret-bearing configuration remain outside Git. The minimum fields are:
 
 - environment ID/class and owner;
 - DATA project/database and migration-target references;
@@ -75,6 +75,22 @@ Every connected environment requires one owner-approved registry record outside 
 - application, migration, security, production-change, and emergency-approval owners.
 
 Missing, ambiguous, stale, or cross-environment registry values fail closed and block connected testing, migration, or deployment. Local Supabase link metadata is not an environment registry and is never proof of owner approval.
+
+### Registered environment selections
+
+This is the single canonical record of owner-approved, non-secret project selection. Registration does not authorize connection, migration, deployment, or mutation.
+
+| Field | Development | Staging | Production |
+|---|---|---|---|
+| Environment | `development` | `staging` | `UNCONFIGURED` |
+| Supabase project reference | `pwlhruwutoitnieactol` | `gnuqaefotwgkwurjpyik` | Project not created |
+| Supabase base URL | `https://pwlhruwutoitnieactol.supabase.co` | `https://gnuqaefotwgkwurjpyik.supabase.co` | Unconfigured |
+| AUTH project | `pwlhruwutoitnieactol` | `gnuqaefotwgkwurjpyik` | Unconfigured |
+| DATA project | `pwlhruwutoitnieactol` | `gnuqaefotwgkwurjpyik` | Unconfigured |
+| Tenant bridge | `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` | `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` | Unconfigured |
+| Remote mutation | Not authorized | Not authorized | Not authorized |
+
+Production is unconfigured and its project does not exist. No entry contains credentials or secret material, and no entry establishes that a project was contacted, validated, migrated, or made deployment-ready.
 
 ## Engineering orchestration boundary
 

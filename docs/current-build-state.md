@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Bounded real DEVELOPMENT AUTH/DATA adapter boundaries and the first connected-validation authorization package are defined; no provider adapter is wired and hosted readiness remains fail-closed.
+`CURRENT_PHASE`: The one-use credential-free DEVELOPMENT AUTH JWKS discovery is complete and valid; no provider adapter is wired and hosted readiness remains fail-closed.
 
-`CURRENT_HEAD`: `HEAD` (`docs: define development auth data validation package`)
+`CURRENT_HEAD`: `HEAD` (`docs: record development auth discovery evidence`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: DEVELOPMENT AUTH verification and DATA persistence have explicit existing-port compositions, least-privilege credential requirements, separate bounded validation steps, fail-closed evidence/stop rules, and exact one-use owner-authorization text.
+`LAST_GREEN_MILESTONE`: One authorized credential-free, redirect-disabled GET to the exact DEVELOPMENT JWKS endpoint returned a valid public `ES256/EC/P-256` key set with no private key material; the raw response was discarded and the authorization consumed.
 
 `COMPLETED`:
 
@@ -55,7 +55,7 @@
 - Evidence validation fails closed for missing, expired, source-stale, artifact-stale, command-catalog-stale, internally inconsistent, or secret-bearing records. The review gate binds every required step digest.
 - The autonomous dry run requires an explicit simulated reviewer decision. Automation cannot establish human approval, deployment authority, production readiness, or production truth; all production/deployment/mutation flags are permanently false. No deploy path or provider integration exists.
 - Platform production remains `NOT_READY`: the locally packaged service/worker artifact is not a certified production deployable and there is still no production AUTH/DATA registry, trusted issuer integration, production outbox identity/provider sink, secret manager/service identities, GitHub workflows/branch/environment protections, protected CI provenance/SBOM publication, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
-- Development project `pwlhruwutoitnieactol` and staging project `gnuqaefotwgkwurjpyik` are owner-approved non-secret AUTH/DATA selections with the exact `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` bridge. They were not contacted, changed, migrated, or certified.
+- Development project `pwlhruwutoitnieactol` and staging project `gnuqaefotwgkwurjpyik` are owner-approved non-secret AUTH/DATA selections with the exact `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` bridge. Only the authorized DEVELOPMENT public JWKS endpoint has now been read once; DATA and staging were not contacted, and neither project was changed or migrated.
 - Production is unconfigured, its project does not exist, and no remote mutation is authorized. The current PostgreSQL migration baseline remains local/disposable only.
 - Development and staging have distinct provider-neutral command, outbox, migration, CI, issuer, audience, and tenant-RLS logical references. Runtime identities remain tenant-bound with no universal RLS bypass, and migration authority remains separate from application/runtime and CI authority.
 - The attributable environment/platform/security/data-migration/deployment owner is `github:AnonymousKoo`; owner identity binding alone is not approval for a change. Development/staging AUTH issuer URLs are owner-approved non-secret bindings.
@@ -63,32 +63,33 @@
 - Development/staging recovery is rebuild plus canonical Git migrations and approved synthetic seed after a separately authorized logical dump for risky migrations; no PITR capability is claimed. Application rollback uses an exact prior artifact, database rollback defaults to forward correction, destructive migrations are prohibited, and data-restoration rollback is unauthorized.
 - Only the command/query service may have public ingress; the worker has no public inbound endpoint; outbound access is limited to approved environment Supabase and telemetry destinations; development/staging resources and credentials remain isolated.
 - The wheel exposes `avuhz-service-development` separately from the unchanged loopback-only `avuhz-service`. DEVELOPMENT accepts only the exact approved development project, issuer, audience, tenant/RLS, workload identity, and Render `PORT` configuration.
-- DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while DATA and trusted-identity adapters are unavailable, and command/query requests fail at trusted identity resolution. No connected DATA/AUTH validation or Supabase mutation is authorized.
+- DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while DATA and trusted-identity adapters are unavailable, and command/query requests fail at trusted identity resolution. The completed JWKS discovery grants no continuing AUTH/DATA access or Supabase mutation authority.
 - The wheel packages the single canonical `contracts/schemas/v1` catalog as `avuhz_contracts` package data. An isolated install outside the repository resolves `schema_root()` from `site-packages` and loads the complete fixed catalog; repository development may continue using the same source tree directly.
 - Owner-confirmed Render evidence records successful deployment of commit `6bff57065151462fc74861c68a232454b2ef9a20`, `GET /health/live = 200`, and intentional fail-closed `GET /health/ready = 503`. Recording this evidence grants no further deployment or provider authority.
 - The provider-neutral DEVELOPMENT trusted-identity resolver maps only exact verifier-produced evidence for the approved issuer and audience into tenant-bound `TrustedExecutionContext` semantics. It accepts only the frozen caller/capability vocabulary, establishes no human authority, validates bounded UTC lifetime, and rejects invalid or malformed evidence without exposing details.
-- Deterministic identity verification exists only in focused tests. The live DEVELOPMENT composition still uses its unavailable resolver, DATA and identity readiness remain unavailable, and no Supabase/JWT/provider adapter, credential, token, secret, connection, or remote mutation exists.
+- Deterministic identity verification exists only in focused tests. The live DEVELOPMENT composition still uses its unavailable resolver, DATA and identity readiness remain unavailable, and no JWT/provider adapter, credential, token, secret, DATA connection, or remote mutation exists.
 - The local DEVELOPMENT DATA composition reuses the canonical PostgresStore, PostgresUnitOfWork, repository ports, and `avuhz_command_service` database role. It accepts only loopback disposable databases, preserves the approved DATA project reference as configuration, and keeps `avuhz_command_service_dev` distinct from `avuhz_migration_service_dev`.
 - Trusted DEVELOPMENT context is required before UnitOfWork creation, and `TrustedExecutionContext.tenant_id` remains transaction-locally bound to `avuhz.tenant_id`. Staging/wrong-audience contexts fail before connection; unauthenticated or missing-tenant contexts close the opened transaction.
 - Fresh disposable PostgreSQL replay certifies all 16 canonical tables, tenant RLS, no superuser/BYPASSRLS runtime role, bounded grants, cross-tenant denial, restart round-trip, immutable history, idempotency conflict/transition, and event/outbox atomic rollback. The hosted Render DEVELOPMENT composition remains unwired and reports DATA/identity readiness unavailable.
 - The planned real AUTH adapter implements only `DevelopmentIdentityVerifier.verify`; the existing resolver remains solely responsible for constructing `TrustedExecutionContext`. Public issuer-key discovery needs no provider credential, while token/claim validation remains blocked on an exact owner-bound tenant claim, server-owned capability policy, and separately authorized synthetic identity procedure.
 - The planned real DATA adapter injects a PostgreSQL connection factory into the existing PostgresStore/PostgresUnitOfWork and canonical repositories. Its runtime login may inherit only the canonical no-login `avuhz_command_service` grants; migration, service-role, ownership, superuser, `BYPASSRLS`, universal tenant, DDL, and provider-admin access are excluded.
 - The first connected-validation package splits one credential-free AUTH JWKS discovery GET from a later separately authorized read-only DATA catalog/RLS transaction. Both define bounded secret-free evidence and deterministic stop conditions; neither authorizes remediation, wiring, readiness, migration, mutation, or a second call.
+- DEVELOPMENT AUTH discovery evidence: endpoint class `DEVELOPMENT_AUTH_JWKS`; timestamp `2026-09-01T15:14:17.159453Z`; HTTP `200`; content type `application/json`; key count `1`; supported metadata `ES256/EC/P-256`; private key material absent; validation `PASS`; raw-response SHA-256 `c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af`. No credential, token, cookie, API key, DATA access, redirect, retry, raw-response persistence, or remote mutation occurred.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The DEVELOPMENT AUTH/DATA adapter-boundary and connected-validation package milestone is complete.
+`IN_PROGRESS`: None. The bounded DEVELOPMENT AUTH JWKS discovery milestone is complete and its one-use authorization is consumed.
 
-`NEXT_TASK`: Obtain the exact one-use owner authorization recorded in `docs/architecture.md`, then perform only the bounded credential-free DEVELOPMENT AUTH JWKS discovery validation. Do not perform DATA validation, token/user/session access, adapter wiring, Render changes, remediation, mutation, staging/production work, or Phase 6.
+`NEXT_TASK`: Owner-review the bounded JWKS evidence, bind the exact signed DEVELOPMENT tenant-claim name and server-owned subject/caller/capability policy, and define the separate synthetic-identity token-verification authorization package. Do not request or use a token, contact AUTH or DATA, wire an adapter, change Render, mutate a provider, touch staging/production, or begin Phase 6.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the DEVELOPMENT AUTH/DATA adapter-boundary and validation-package commit. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the DEVELOPMENT AUTH JWKS discovery evidence commit. The raw JWKS response was never persisted. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority.
 
-`REMOTE_AUTHORIZATION`: No Avuhz push and no current Render, Supabase, or other infrastructure mutation. Connected AUTH and DATA validation remain unauthorized until the owner supplies the exact applicable one-use text in `docs/architecture.md`; AUTH authorization never implies DATA authorization. Never force push.
+`REMOTE_AUTHORIZATION`: The one-use DEVELOPMENT AUTH JWKS read authorization was consumed at `2026-09-01T15:14:17.159453Z`. No further AUTH call, DATA access, Render change, Supabase mutation, Avuhz push, or other remote action is authorized; AUTH discovery never implies DATA authorization. Never force push.
 
 `RECOVERY_RULE`: `INSPECT -> PRESERVE -> COMPLETE -> VALIDATE -> COMMIT`. Never destroy valid interrupted work.
 

@@ -142,6 +142,22 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertIn("AUTH and DATA are separately reviewable and separately authorized", ARCHITECTURE)
         self.assertIn("DATA remains unauthorized after that call", ARCHITECTURE)
 
+    def test_one_use_development_jwks_evidence_is_bounded_and_consumed(self):
+        for value in (
+            "endpoint class `DEVELOPMENT_AUTH_JWKS`",
+            "HTTP `200`",
+            "key count `1`",
+            "supported metadata `ES256/EC/P-256`",
+            "private key material absent",
+            "validation `PASS`",
+            "c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af",
+            "one-use authorization is consumed",
+            "No further AUTH call, DATA access",
+            "hosted readiness remains fail-closed",
+        ):
+            self.assertIn(value, STATE)
+        self.assertIn("raw JWKS response was never persisted", STATE)
+
     def test_autonomous_dry_run_is_bounded_and_non_authoritative(self):
         self.assertIn("## Autonomous engineering dry-run", ARCHITECTURE)
         for step in (

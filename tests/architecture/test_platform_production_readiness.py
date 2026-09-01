@@ -65,7 +65,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "sanitized evidence bundle",
         ):
             self.assertIn(step, ARCHITECTURE)
-        self.assertIn("does not create the runner, deploy a target, contact remote infrastructure", ARCHITECTURE)
+        self.assertIn("runner cannot deploy a target, contact remote infrastructure, establish human approval", ARCHITECTURE)
 
     def test_certification_truth_matches_current_repository(self):
         self.assertIn("`PLATFORM_PRODUCTION_READINESS`: `NOT_READY`", STATE)
@@ -80,7 +80,10 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertFalse(any(ROOT.glob("Dockerfile*")))
         self.assertTrue((ROOT / "pyproject.toml").is_file())
         self.assertTrue((ROOT / "src/avuhz_service/__main__.py").is_file())
-        self.assertIn("local CI artifact/evidence pipeline and autonomous dry-run harness. — NEXT", ROADMAP)
+        self.assertTrue((ROOT / "scripts/run-engineering-dry-run.py").is_file())
+        self.assertTrue((ROOT / "contracts/schemas/v1/orchestration/engineering-dry-run-evidence.schema.json").is_file())
+        self.assertIn("local CI artifact/evidence pipeline and autonomous dry-run harness. — COMPLETE", ROADMAP)
+        self.assertIn("owner-approved AUTH/DATA/environment registry values", ROADMAP)
         self.assertIn("Phase 6", ROADMAP)
         self.assertIn("DO NOT START YET", ROADMAP)
 

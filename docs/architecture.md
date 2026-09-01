@@ -96,4 +96,4 @@ The safe readiness rehearsal is:
 8. Rehearse application rollback to the preceding exact artifact and database recovery/forward correction without rewriting immutable business history.
 9. Produce a sanitized evidence bundle and explicit pass/fail decision. Any missing evidence, failed gate, stale approval, target mismatch, or rollback failure blocks production promotion.
 
-This batch defines the rehearsal only. It does not create the runner, deploy a target, contact remote infrastructure, or establish deployment success.
+The local-only runner implements steps 1-5 and 9 for the service/worker wheel: it binds an exact source tree, runs fixed build/test/contract/migration/security checks, records bounded digest-bound evidence, and requires an explicit non-authoritative simulated decision. Steps 6-8 remain unimplemented. The runner cannot deploy a target, contact remote infrastructure, establish human approval, establish production readiness, or attest deployment success.

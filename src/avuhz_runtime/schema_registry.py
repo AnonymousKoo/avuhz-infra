@@ -66,6 +66,7 @@ SCHEMA_FILES = (
     'orchestration/idempotency-record.schema.json',
     'orchestration/lifecycle-event.schema.json',
     'orchestration/outbox-delivery.schema.json',
+    'orchestration/engineering-dry-run-evidence.schema.json',
     'read-models/engagement-summary.schema.json',
     'read-models/onboarding-readiness.schema.json',
     'read-models/implementation-brief-readiness-view.schema.json',

@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Local-only transactional outbox delivery worker with bounded leasing, retry, dead-letter behavior, and an idempotent fake sink complete; remaining platform production-readiness implementation is blocked.
+`CURRENT_PHASE`: Local-only CI artifact/evidence pipeline and autonomous engineering dry-run harness complete against the frozen Phase 5 service/worker baseline; connected platform production-readiness implementation remains blocked on owner configuration.
 
-`CURRENT_HEAD`: `HEAD` (`feat: add local transactional outbox worker`)
+`CURRENT_HEAD`: `HEAD` (`feat: add local engineering evidence dry run`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Tenant-bound local outbox delivery worker over existing committed lifecycle-event intents, with atomic leases, stable delivery idempotency, bounded exponential retry, explicit terminal dead-letter state, immutable attempt provenance, restart recovery, and a fake local sink only.
+`LAST_GREEN_MILESTONE`: Fixed-command local build/test/contract/migration/security/package pipeline producing immutable, schema-valid, exact-source and exact-artifact evidence plus a fail-closed, explicitly non-authoritative readiness simulation.
 
 `COMPLETED`:
 
@@ -50,7 +50,11 @@
 - The local outbox worker consumes only existing committed outbox intents, requires tenant-bound `INTERNAL_SERVICE` context plus `event:publish_internal`, and cannot commit domain collections. The fake sink is bounded, local, and idempotent; no provider integration or remote delivery exists.
 - Claims use lease tokens, record versions, and PostgreSQL `FOR UPDATE SKIP LOCKED`; failures retain the immutable event, schedule bounded exponential retry, or enter explicit `FAILED_TERMINAL`. Attempt history records worker provenance and timestamps without error messages, responses, credentials, or provider payloads.
 - Restart, expired-lease recovery, post-sink commit interruption, concurrent exclusion, idempotent replay, missing-event terminal handling, tenant/trusted-worker denial, schema, migration, and frozen Phase 5 compatibility tests are green. The opt-in PostgreSQL adapter test is present but skipped here because no local DSN or psycopg driver is available.
-- Platform production remains `NOT_READY`: the local service/worker are not production deployment artifacts and there is still no production AUTH/DATA registry, trusted issuer integration, production outbox identity/provider sink, secret manager/service identities, GitHub workflows/branch/environment protections, artifact provenance/SBOM pipeline, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
+- The fixed local engineering pipeline builds the unified service/worker wheel offline, runs runtime/service/worker/architecture/engineering tests, frozen Phase 5 contract validators, static/local migration checks, and the canonical security baseline, then verifies embedded package identity and exact artifact digest.
+- The canonical evidence schema records only bounded source, tool, command-catalog, check-count, digest, timestamp, artifact, dependency-inventory, review, and readiness facts. It excludes command output, environment values, provider payloads, credentials, and secrets; evidence and artifacts are written once outside Git and made read-only.
+- Evidence validation fails closed for missing, expired, source-stale, artifact-stale, command-catalog-stale, internally inconsistent, or secret-bearing records. The review gate binds every required step digest.
+- The autonomous dry run requires an explicit simulated reviewer decision. Automation cannot establish human approval, deployment authority, production readiness, or production truth; all production/deployment/mutation flags are permanently false. No deploy path or provider integration exists.
+- Platform production remains `NOT_READY`: the locally packaged service/worker artifact is not a certified production deployable and there is still no production AUTH/DATA registry, trusted issuer integration, production outbox identity/provider sink, secret manager/service identities, GitHub workflows/branch/environment protections, protected CI provenance/SBOM publication, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
 - The existing PostgreSQL migration and Supabase configuration remain local/disposable only. No remote project was selected, contacted, changed, or certified.
 
 
@@ -58,13 +62,13 @@
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The local transactional outbox worker milestone is complete.
+`IN_PROGRESS`: None. The local engineering evidence and autonomous dry-run milestone is complete.
 
-`NEXT_TASK`: Implement the local CI artifact/evidence pipeline and autonomous engineering dry-run harness against the frozen Phase 5 service/worker baseline. Keep it local-only; do not deploy, contact providers, configure production identities, or start Phase 6.
+`NEXT_TASK`: Obtain the owner-approved AUTH/DATA/environment registry values required for the isolated development/staging implementation boundary. Do not connect to or mutate any target until those exact values and current authorization are supplied.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the local transactional outbox worker milestone commit. Disposable local service/worker/PostgreSQL processes and wheel files are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the local engineering evidence milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

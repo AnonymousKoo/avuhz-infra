@@ -26,3 +26,17 @@ python3 -m avuhz_service
 The default local identity has no command capabilities and no human authority roles. A bounded comma-separated `AVUHZ_LOCAL_CAPABILITIES` value may enable only registered command capabilities or the read-only `engagement:read` capability for explicit local testing. The standalone service refuses non-loopback binding and non-LOCAL/TEST environments.
 
 Routes are `POST /v1/commands`, `POST /v1/queries`, and `GET /health/startup`, `/health/live`, or `/health/ready`. Health output is sanitized and readiness covers the configured local data and identity dependencies. This service does not contact Supabase or another remote system, publish the outbox, deploy client artifacts, or establish production readiness.
+
+## Local engineering evidence dry run
+
+The fixed local runner builds the wheel containing both service and worker modules, runs the repository's bounded test/contract/migration/security gates, and writes read-only digest-bound evidence outside the repository. The approval is explicitly simulated and creates no human, deployment, or production authority.
+
+```bash
+evidence_dir="$(mktemp -d /tmp/avuhz-engineering-dry-run.XXXXXX)"
+python3 scripts/run-engineering-dry-run.py run \
+  --output-dir "$evidence_dir" \
+  --simulated-approval APPROVE \
+  --reviewer-reference simulation.local-reviewer
+```
+
+The runner is local-only, removes configured remote DATA/AUTH/provider variables from child processes, performs no deployment, and fails closed on failed, missing, expired, or source/artifact-stale evidence.

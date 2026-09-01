@@ -14,8 +14,8 @@ Ordered milestones from the separation checkpoint:
    1. Define and certify platform architecture, security gates, environment registry, engineering-agent boundary, dry-run plan, and blockers. — COMPLETE
    2. Implement local production-shaped command/query service packaging and bounded health surfaces. — COMPLETE
    3. Implement the local transactional outbox delivery worker with a fake local sink. — COMPLETE
-   4. Implement the local CI artifact/evidence pipeline and autonomous dry-run harness. — NEXT
-   5. Obtain owner-approved AUTH/DATA/environment registry values and implement trusted identity/secrets/observability/backup integrations. — BLOCKED ON OWNER CONFIGURATION
+   4. Implement the local CI artifact/evidence pipeline and autonomous dry-run harness. — COMPLETE
+   5. Obtain owner-approved AUTH/DATA/environment registry values and implement trusted identity/secrets/observability/backup integrations. — NEXT; BLOCKED ON OWNER CONFIGURATION
    6. Certify isolated staging, restore/rollback, capacity, security, and production-change gates. — NOT STARTED
 10. Begin Phase 6 orchestration, intelligence, monitoring, incidents, remediation, managed operations, outcomes, and continuous improvement. — DO NOT START YET
 

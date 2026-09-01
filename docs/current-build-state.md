@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Canonical development/staging production-readiness logical reference model defined over the approved environment selections; unresolved owner/provider bindings fail closed, the baseline remains unconnected, and production remains unconfigured.
+`CURRENT_PHASE`: Owner, provider-choice, AUTH issuer, non-production recovery, rollback, and network policies recorded for development/staging; concrete provider resources and connected-validation authorization remain unresolved.
 
-`CURRENT_HEAD`: `HEAD` (`docs: define development staging readiness references`)
+`CURRENT_HEAD`: `HEAD` (`docs: record development staging readiness bindings`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Distinct development/staging workload identities, audiences, tenant-RLS policy references, and unresolved production-readiness reference slots defined without provider resources, secrets, connection, or authority.
+`LAST_GREEN_MILESTONE`: Owner-approved development/staging owner bindings, provider choices, AUTH issuers, rebuild recovery policy, application/database rollback policy, and bounded network policy recorded without secrets, provider contact, or remote mutation.
 
 `COMPLETED`:
 
@@ -58,20 +58,23 @@
 - Development project `pwlhruwutoitnieactol` and staging project `gnuqaefotwgkwurjpyik` are owner-approved non-secret AUTH/DATA selections with the exact `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` bridge. They were not contacted, changed, migrated, or certified.
 - Production is unconfigured, its project does not exist, and no remote mutation is authorized. The current PostgreSQL migration baseline remains local/disposable only.
 - Development and staging have distinct provider-neutral command, outbox, migration, CI, issuer, audience, and tenant-RLS logical references. Runtime identities remain tenant-bound with no universal RLS bypass, and migration authority remains separate from application/runtime and CI authority.
-- Secrets, observability, runtime target, network, recovery, rollback, and attributable platform/security/data/deployment owner slots are `OWNER_VALUE_REQUIRED`; their logical names do not create provider bindings or authority.
+- The attributable environment/platform/security/data-migration/deployment owner is `github:AnonymousKoo`; owner identity binding alone is not approval for a change. Development/staging AUTH issuer URLs are owner-approved non-secret bindings.
+- Render, Render runtime secrets plus GitHub CI/environment secrets, and Grafana Cloud via OpenTelemetry are approved provider choices. Concrete environment-scoped services, secret boundaries, telemetry destinations, and network enforcement resources remain `OWNER_VALUE_REQUIRED`.
+- Development/staging recovery is rebuild plus canonical Git migrations and approved synthetic seed after a separately authorized logical dump for risky migrations; no PITR capability is claimed. Application rollback uses an exact prior artifact, database rollback defaults to forward correction, destructive migrations are prohibited, and data-restoration rollback is unauthorized.
+- Only the command/query service may have public ingress; the worker has no public inbound endpoint; outbound access is limited to approved environment Supabase and telemetry destinations; development/staging resources and credentials remain isolated.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The development/staging production-readiness reference-model milestone is complete.
+`IN_PROGRESS`: None. The owner-approved development/staging binding and policy documentation milestone is complete.
 
-`NEXT_TASK`: Supply and approve the real provider bindings and attributable human owners for every `OWNER_VALUE_REQUIRED` development/staging reference, then separately authorize the exact first connected validation batch. Do not connect to or mutate either registered project before both conditions are satisfied.
+`NEXT_TASK`: Provide or separately authorize creation of the concrete environment-scoped Render runtime targets, Render/GitHub secret boundaries, Grafana/OpenTelemetry destinations, and network enforcement resources, then define and authorize the exact first connected validation scope. Do not contact or mutate any provider before that authorization.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the development/staging reference-model documentation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the development/staging readiness-binding documentation milestone commit. Generated evidence and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

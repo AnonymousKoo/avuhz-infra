@@ -94,30 +94,52 @@ Production is unconfigured and its project does not exist. No entry contains cre
 
 ### Development and staging production-readiness references
 
-`DEFINED_LOGICAL` means the stable provider-neutral reference and its separation semantics are defined, but it is not a provider binding or authority grant. `OWNER_VALUE_REQUIRED` means the stable reference slot is defined but its real provider resource, policy, or attributable human owner must still be supplied and approved. Both statuses fail closed for connected use until every required binding and separate connection authorization exists.
+`DEFINED_LOGICAL` means the stable provider-neutral reference and its separation semantics are defined, but it is not a provider binding or authority grant. `OWNER_APPROVED_BINDING` means an exact non-secret value has been supplied; it is not connection or change authorization. `OWNER_APPROVED_POLICY` means the policy is frozen but no execution authority is granted. `OWNER_VALUE_REQUIRED` means the stable reference slot exists but a concrete resource or binding is still missing. Every status fails closed for connected use until all required bindings and separate connection authorization exist.
 
 | Reference | Development | Status | Staging | Status |
 |---|---|---|---|---|
+| Environment owner | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` |
 | Command service identity | `avuhz_command_service_dev` | `DEFINED_LOGICAL` | `avuhz_command_service_staging` | `DEFINED_LOGICAL` |
 | Outbox worker identity | `avuhz_outbox_worker_dev` | `DEFINED_LOGICAL` | `avuhz_outbox_worker_staging` | `DEFINED_LOGICAL` |
 | Migration identity | `avuhz_migration_service_dev` | `DEFINED_LOGICAL` | `avuhz_migration_service_staging` | `DEFINED_LOGICAL` |
 | CI identity | `avuhz_ci_service_dev` | `DEFINED_LOGICAL` | `avuhz_ci_service_staging` | `DEFINED_LOGICAL` |
-| AUTH issuer reference | `auth-issuer.avuhz.development` | `OWNER_VALUE_REQUIRED` | `auth-issuer.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| AUTH issuer reference | `https://pwlhruwutoitnieactol.supabase.co/auth/v1` | `OWNER_APPROVED_BINDING` | `https://gnuqaefotwgkwurjpyik.supabase.co/auth/v1` | `OWNER_APPROVED_BINDING` |
 | Command-service audience | `audience.avuhz.command-service.development` | `DEFINED_LOGICAL` | `audience.avuhz.command-service.staging` | `DEFINED_LOGICAL` |
 | Outbox-worker audience | `audience.avuhz.outbox-worker.development` | `DEFINED_LOGICAL` | `audience.avuhz.outbox-worker.staging` | `DEFINED_LOGICAL` |
 | Migration audience | `audience.avuhz.migration.development` | `DEFINED_LOGICAL` | `audience.avuhz.migration.staging` | `DEFINED_LOGICAL` |
 | CI audience | `audience.avuhz.ci.development` | `DEFINED_LOGICAL` | `audience.avuhz.ci.staging` | `DEFINED_LOGICAL` |
 | Tenant/RLS policy | `policy.avuhz.tenant-rls.development.v1` | `DEFINED_LOGICAL` | `policy.avuhz.tenant-rls.staging.v1` | `DEFINED_LOGICAL` |
-| Secrets provider/reference boundary | `secrets.avuhz.development` | `OWNER_VALUE_REQUIRED` | `secrets.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Observability | `observability.avuhz.development` | `OWNER_VALUE_REQUIRED` | `observability.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Runtime/deployment target | `runtime-target.avuhz.development` | `OWNER_VALUE_REQUIRED` | `runtime-target.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Network boundary | `network-boundary.avuhz.development` | `OWNER_VALUE_REQUIRED` | `network-boundary.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Backup/recovery | `recovery.avuhz.development` | `OWNER_VALUE_REQUIRED` | `recovery.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Rollback | `rollback.avuhz.development` | `OWNER_VALUE_REQUIRED` | `rollback.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Platform-owner approval | `approval-owner.platform.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.platform.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Security-owner approval | `approval-owner.security.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.security.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Data/migration-owner approval | `approval-owner.data-migration.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.data-migration.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Deployment-owner approval | `approval-owner.deployment.avuhz.development` | `OWNER_VALUE_REQUIRED` | `approval-owner.deployment.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Secrets provider/reference boundary | Render runtime secrets plus GitHub CI/environment secrets; `secrets.avuhz.development` | `OWNER_VALUE_REQUIRED` | Render runtime secrets plus GitHub CI/environment secrets; `secrets.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Observability | Grafana Cloud via OpenTelemetry; `observability.avuhz.development` | `OWNER_VALUE_REQUIRED` | Grafana Cloud via OpenTelemetry; `observability.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Runtime/deployment target | Render; `runtime-target.avuhz.development` | `OWNER_VALUE_REQUIRED` | Render; `runtime-target.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Network boundary | Approved policy below; `network-boundary.avuhz.development` | `OWNER_VALUE_REQUIRED` | Approved policy below; `network-boundary.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Backup/recovery | Approved rebuild policy below; `recovery.avuhz.development` | `OWNER_APPROVED_POLICY` | Approved rebuild policy below; `recovery.avuhz.staging` | `OWNER_APPROVED_POLICY` |
+| Rollback | Approved artifact/forward-correction policy below; `rollback.avuhz.development` | `OWNER_APPROVED_POLICY` | Approved artifact/forward-correction policy below; `rollback.avuhz.staging` | `OWNER_APPROVED_POLICY` |
+| Platform-owner approval | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` |
+| Security-owner approval | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` |
+| Data/migration-owner approval | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` |
+| Deployment-owner approval | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` |
+
+The owner references identify the currently attributable owner for each approval class. They do not constitute approval of a connection, provider-resource creation, migration, deployment, or other change.
+
+#### Approved providers and unresolved resources
+
+- Render is the approved development/staging runtime provider. No Render service or deployment-target identifier is defined or claimed to exist.
+- Render runtime secrets and GitHub CI/environment secrets are the approved secret-delivery boundaries. No secret value, secret name, environment identifier, namespace identifier, or credential is recorded here.
+- Grafana Cloud via OpenTelemetry is the approved observability path. No Grafana organization, stack, destination, endpoint, authentication, or collector resource is defined or claimed to exist.
+- These provider choices do not authorize resource creation or connection. Their concrete environment-scoped resources remain `OWNER_VALUE_REQUIRED`.
+
+#### Non-production recovery policy
+
+Development and staging are rebuildable non-production environments containing synthetic/non-production data only. Git migrations are canonical. Before a risky migration, an authorized operator must create a logical dump through a separately authorized procedure. Recovery is rebuild, replay canonical migrations, and seed approved synthetic data. No point-in-time-recovery capability is claimed. This policy grants no dump, migration, restoration, or provider access authority.
+
+#### Rollback policy
+
+Application rollback uses the preceding exact application artifact. Database changes use forward correction by default. Destructive migrations are prohibited until a later separately approved policy changes that boundary. Data-restoration rollback remains unauthorized.
+
+#### Network policy
+
+Public ingress is permitted only to the command/query service. The worker has no public inbound endpoint. Outbound access is restricted to the approved environment's Supabase and telemetry destinations. Development and staging resources and credentials remain isolated. Concrete Render, Supabase, Grafana/OpenTelemetry, DNS, firewall, routing, origin, and egress enforcement bindings are not defined by this policy and remain `OWNER_VALUE_REQUIRED`; no universal runtime or tenant bypass is permitted.
 
 The tenant bridge remains exactly `TrustedExecutionContext.tenant_id -> avuhz.tenant_id`. Runtime identities receive tenant-scoped grants only and must never own authoritative tables or receive `BYPASSRLS`, universal tenant access, or migration authority. The outbox worker may claim and publish only tenant-bound committed outbox intents. The migration identity is separate from command, worker, and CI identities; schema/DDL authority cannot be exercised through an application runtime identity. CI identity and simulated approval never imply migration, deployment, or human authority.
 

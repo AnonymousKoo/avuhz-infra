@@ -57,7 +57,6 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "avuhz_outbox_worker_dev", "avuhz_outbox_worker_staging",
             "avuhz_migration_service_dev", "avuhz_migration_service_staging",
             "avuhz_ci_service_dev", "avuhz_ci_service_staging",
-            "auth-issuer.avuhz.development", "auth-issuer.avuhz.staging",
             "audience.avuhz.command-service.development", "audience.avuhz.command-service.staging",
             "audience.avuhz.outbox-worker.development", "audience.avuhz.outbox-worker.staging",
             "audience.avuhz.migration.development", "audience.avuhz.migration.staging",
@@ -69,19 +68,39 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "network-boundary.avuhz.development", "network-boundary.avuhz.staging",
             "recovery.avuhz.development", "recovery.avuhz.staging",
             "rollback.avuhz.development", "rollback.avuhz.staging",
-            "approval-owner.platform.avuhz.development", "approval-owner.platform.avuhz.staging",
-            "approval-owner.security.avuhz.development", "approval-owner.security.avuhz.staging",
-            "approval-owner.data-migration.avuhz.development", "approval-owner.data-migration.avuhz.staging",
-            "approval-owner.deployment.avuhz.development", "approval-owner.deployment.avuhz.staging",
             "DEFINED_LOGICAL", "OWNER_VALUE_REQUIRED",
             "must never own authoritative tables or receive `BYPASSRLS`",
             "migration identity is separate from command, worker, and CI identities",
             "Production has no logical or provider references",
         ):
             self.assertIn(value, ARCHITECTURE)
-        self.assertIn("| AUTH issuer reference | `auth-issuer.avuhz.development` | `OWNER_VALUE_REQUIRED`", ARCHITECTURE)
+        self.assertIn("OWNER_APPROVED_BINDING", ARCHITECTURE)
+        self.assertIn("OWNER_APPROVED_POLICY", ARCHITECTURE)
         self.assertIn("Application/runtime identities never receive table ownership", SECURITY)
-        self.assertIn("every `OWNER_VALUE_REQUIRED` development/staging reference", STATE)
+        self.assertIn("Concrete environment-scoped services", STATE)
+
+    def test_owner_bindings_provider_choices_and_nonproduction_policies_are_exact(self):
+        for value in (
+            "github:AnonymousKoo",
+            "Render runtime secrets plus GitHub CI/environment secrets",
+            "Grafana Cloud via OpenTelemetry",
+            "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+            "https://gnuqaefotwgkwurjpyik.supabase.co/auth/v1",
+            "Git migrations are canonical",
+            "Recovery is rebuild, replay canonical migrations, and seed approved synthetic data",
+            "No point-in-time-recovery capability is claimed",
+            "Application rollback uses the preceding exact application artifact",
+            "Database changes use forward correction by default",
+            "Destructive migrations are prohibited",
+            "Data-restoration rollback remains unauthorized",
+            "Public ingress is permitted only to the command/query service",
+            "worker has no public inbound endpoint",
+            "Outbound access is restricted to the approved environment's Supabase and telemetry destinations",
+            "Concrete Render, Supabase, Grafana/OpenTelemetry, DNS, firewall, routing, origin, and egress enforcement bindings",
+        ):
+            self.assertIn(value, ARCHITECTURE)
+        self.assertIn("No Render service or deployment-target identifier is defined", ARCHITECTURE)
+        self.assertIn("no remote mutation is authorized", STATE)
 
     def test_ci_secrets_change_policy_and_evidence_gates_are_defined(self):
         for heading in (

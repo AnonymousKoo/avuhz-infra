@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Phase 5 end-to-end baseline reconciled, certified, and frozen through exact DeploymentVerification truth.
+`CURRENT_PHASE`: Engineering and platform production-readiness architecture/planning certified against the frozen Phase 5 baseline; production implementation and deployment remain blocked.
 
-`CURRENT_HEAD`: `HEAD` (`chore: reconcile and freeze phase5 baseline`)
+`CURRENT_HEAD`: `HEAD` (`docs: define avuhz platform production readiness`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Complete provider-neutral Phase 5 chain freeze from exact ImplementationHandoff through DeploymentVerification, including runtime, contracts, persistence, migration replay, RLS, security, separation, and cross-repository certification.
+`LAST_GREEN_MILESTONE`: Avuhz platform production topology, environment/registry model, CI/CD and secrets controls, risk/approval policy, evidence gates, engineering-agent boundary, autonomous dry-run plan, and honest blocker certification defined without changing frozen Phase 5 semantics.
 
 `COMPLETED`:
 
@@ -43,14 +43,23 @@
 - The active command registry, migration binding guard, and D5 architecture status are reconciled to the complete D5a/D5b runtime. The provider-neutral migration remains one 16-table local baseline with complete tenant RLS and no extracted-domain tables.
 - Full runtime, architecture/separation, cross-repository, Sekinfra boundary/producer, contract, schema, static migration, disposable PostgreSQL replay, atomicity, RLS, Semgrep, credential, forbidden-path, compilation, and diff checks are green. Optional psycopg adapter tests remain skipped because no local driver is installed; no dependency or remote access was attempted.
 - Active Avuhz runtime/contract references to Sekinfra/OIA remain zero. Phase 5 is frozen; later work must preserve this baseline and may not infer real deployment or production authority.
+- Avuhz platform production is explicitly separate from client-system deployment. The minimum API/worker/data/auth/identity/secrets/migration/observability/backup/CI/CD/environment/rollback architecture and owner-authorized registry are defined in canonical architecture/security documentation.
+- Codex/Claude remain untrusted engineering workloads: they may build, test, scan, and draft evidence but cannot approve, merge, select production targets, access production secrets, migrate, deploy, or establish success. A nine-step autonomous local/staging dry-run is defined but has not been implemented or executed.
+- Platform production is `NOT_READY`: this repository has no deployable application service entrypoint/artifact, outbox worker, production AUTH/DATA registry, trusted issuer integration, secret manager/service identities, GitHub workflows/branch/environment protections, artifact provenance/SBOM pipeline, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
+- The existing PostgreSQL migration and Supabase configuration remain local/disposable only. No remote project was selected, contacted, changed, or certified.
 
-`IN_PROGRESS`: None. The Phase 5 baseline is frozen.
 
-`NEXT_TASK`: Complete the engineering and production-readiness planning/certification milestone against the frozen Phase 5 baseline. Scope it separately before implementation; do not deploy or mutate remote infrastructure.
+`PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
-`DO_NOT_START_YET`: Real deployment, rollback operation runtime, production changes, remote infrastructure mutation, Phase 6, or later roadmap work.
+`READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the Phase 5 freeze milestone commit. Disposable local PostgreSQL databases are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
+`IN_PROGRESS`: None. Production-readiness planning/certification is complete; implementation has not started.
+
+`NEXT_TASK`: Implement the first local-only platform-readiness slice: production-shaped Avuhz command/query service packaging and bounded health surfaces. Preserve Phase 5 semantics; do not connect AUTH/DATA projects, deploy, or start Phase 6.
+
+`DO_NOT_START_YET`: Remote AUTH/DATA configuration, outbox/provider deployment operations, production or client-system deployment, remote migration, production secrets, Phase 6, or later roadmap work.
+
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the production-readiness planning milestone commit. Disposable local PostgreSQL databases are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

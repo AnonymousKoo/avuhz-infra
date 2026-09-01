@@ -113,7 +113,7 @@ Production is unconfigured and its project does not exist. No entry contains cre
 | Tenant/RLS policy | `policy.avuhz.tenant-rls.development.v1` | `DEFINED_LOGICAL` | `policy.avuhz.tenant-rls.staging.v1` | `DEFINED_LOGICAL` |
 | Secrets provider/reference boundary | Render runtime secrets plus GitHub CI/environment secrets; `secrets.avuhz.development` | `OWNER_VALUE_REQUIRED` | Render runtime secrets plus GitHub CI/environment secrets; `secrets.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
 | Observability | Grafana Cloud via OpenTelemetry; `observability.avuhz.development` | `OWNER_VALUE_REQUIRED` | Grafana Cloud via OpenTelemetry; `observability.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
-| Runtime/deployment target | Render; `runtime-target.avuhz.development` | `OWNER_VALUE_REQUIRED` | Render; `runtime-target.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| Runtime/deployment target | Registered DEVELOPMENT Render service below; `runtime-target.avuhz.development` | `OWNER_APPROVED_BINDING` | Render; `runtime-target.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
 | Network boundary | Approved policy below; `network-boundary.avuhz.development` | `OWNER_VALUE_REQUIRED` | Approved policy below; `network-boundary.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
 | Backup/recovery | Approved rebuild policy below; `recovery.avuhz.development` | `OWNER_APPROVED_POLICY` | Approved rebuild policy below; `recovery.avuhz.staging` | `OWNER_APPROVED_POLICY` |
 | Rollback | Approved artifact/forward-correction policy below; `rollback.avuhz.development` | `OWNER_APPROVED_POLICY` | Approved artifact/forward-correction policy below; `rollback.avuhz.staging` | `OWNER_APPROVED_POLICY` |
@@ -122,14 +122,38 @@ Production is unconfigured and its project does not exist. No entry contains cre
 | Data/migration-owner approval | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` |
 | Deployment-owner approval | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` | `github:AnonymousKoo` | `OWNER_APPROVED_BINDING` |
 
+#### Development Render service binding and bounded health evidence
+
+This owner-confirmed record identifies the existing DEVELOPMENT command/query web service and the exact deployed source. It records observed bounded health results; it grants no provider access, DATA/AUTH connection, migration, secret, staging, production, or further deployment authority.
+
+| Field | Owner-confirmed value |
+|---|---|
+| Provider | Render |
+| Project | `Avuhz` |
+| Environment | `development` |
+| Service name | `avuhz-command-dev` |
+| Service identifier | `srv-dab9n4qd0e5s73dq37mg` |
+| Public service URL | `https://avuhz-command-dev.onrender.com` |
+| Region | Virginia (US East) |
+| Source repository | `AnonymousKoo/avuhz-infra` |
+| Source branch | `main` |
+| Deployed source commit | `6bff57065151462fc74861c68a232454b2ef9a20` |
+| Build command | `python -m pip install .` |
+| Start command | `avuhz-service-development` |
+| Health path | `/health/live` |
+| Deployment evidence | `SUCCESS` |
+| Liveness evidence | `GET /health/live` returned `200` |
+| Readiness evidence | `GET /health/ready` returned `503`, intentionally fail-closed until DATA and trusted-identity adapters exist |
+| Authority boundary | No connected DATA/AUTH validation or remote mutation is authorized |
+
 The owner references identify the currently attributable owner for each approval class. They do not constitute approval of a connection, provider-resource creation, migration, deployment, or other change.
 
 #### Approved providers and unresolved resources
 
-- Render is the approved development/staging runtime provider. No Render service or deployment-target identifier is defined or claimed to exist.
+- Render is the approved development/staging runtime provider, and the exact DEVELOPMENT command-service binding is recorded above. No Render service or deployment-target identifier is defined or claimed to exist for staging.
 - Render runtime secrets and GitHub CI/environment secrets are the approved secret-delivery boundaries. No secret value, secret name, environment identifier, namespace identifier, or credential is recorded here.
 - Grafana Cloud via OpenTelemetry is the approved observability path. No Grafana organization, stack, destination, endpoint, authentication, or collector resource is defined or claimed to exist.
-- These provider choices do not authorize resource creation or connection. Their concrete environment-scoped resources remain `OWNER_VALUE_REQUIRED`.
+- The recorded DEVELOPMENT service and provider choices grant no resource-change or connection authority. Staging runtime and all unresolved environment-scoped secret, observability, network-enforcement, DATA, and AUTH resources remain `OWNER_VALUE_REQUIRED`.
 
 #### Non-production recovery policy
 

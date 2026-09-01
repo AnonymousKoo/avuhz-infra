@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Installed-wheel schema catalog defect corrected; the existing canonical schemas are packaged as normal Python package resources and resolve without repository-relative or provider-specific paths.
+`CURRENT_PHASE`: Owner-confirmed Render DEVELOPMENT command-service binding and bounded health evidence recorded; DATA and trusted-identity adapters remain absent and readiness intentionally fails closed.
 
-`CURRENT_HEAD`: `HEAD` (`fix: package canonical schema catalog in wheel`)
+`CURRENT_HEAD`: `HEAD` (`docs: record render development service validation`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Isolated wheel installation resolves and validates every frozen schema from the installed `avuhz_contracts` package while repository development retains its canonical-tree fallback.
+`LAST_GREEN_MILESTONE`: Canonical registry records the exact owner-confirmed Render DEVELOPMENT service, deployed source commit, build/start/health configuration, successful deployment, `200` liveness, and intentional `503` readiness boundary.
 
 `COMPLETED`:
 
@@ -59,27 +59,28 @@
 - Production is unconfigured, its project does not exist, and no remote mutation is authorized. The current PostgreSQL migration baseline remains local/disposable only.
 - Development and staging have distinct provider-neutral command, outbox, migration, CI, issuer, audience, and tenant-RLS logical references. Runtime identities remain tenant-bound with no universal RLS bypass, and migration authority remains separate from application/runtime and CI authority.
 - The attributable environment/platform/security/data-migration/deployment owner is `github:AnonymousKoo`; owner identity binding alone is not approval for a change. Development/staging AUTH issuer URLs are owner-approved non-secret bindings.
-- Render, Render runtime secrets plus GitHub CI/environment secrets, and Grafana Cloud via OpenTelemetry are approved provider choices. Concrete environment-scoped services, secret boundaries, telemetry destinations, and network enforcement resources remain `OWNER_VALUE_REQUIRED`.
+- The exact DEVELOPMENT Render command-service binding is owner-confirmed in the canonical registry. Concrete environment-scoped services other than that web service, including staging runtime, secret boundaries, telemetry destinations, and network enforcement resources, remain `OWNER_VALUE_REQUIRED`.
 - Development/staging recovery is rebuild plus canonical Git migrations and approved synthetic seed after a separately authorized logical dump for risky migrations; no PITR capability is claimed. Application rollback uses an exact prior artifact, database rollback defaults to forward correction, destructive migrations are prohibited, and data-restoration rollback is unauthorized.
 - Only the command/query service may have public ingress; the worker has no public inbound endpoint; outbound access is limited to approved environment Supabase and telemetry destinations; development/staging resources and credentials remain isolated.
 - The wheel exposes `avuhz-service-development` separately from the unchanged loopback-only `avuhz-service`. DEVELOPMENT accepts only the exact approved development project, issuer, audience, tenant/RLS, workload identity, and Render `PORT` configuration.
-- DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while data/identity adapters are unavailable, and command/query requests fail at trusted identity resolution. No Supabase/Render/provider connection or mutation exists.
+- DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while DATA and trusted-identity adapters are unavailable, and command/query requests fail at trusted identity resolution. No connected DATA/AUTH validation or Supabase mutation is authorized.
 - The wheel packages the single canonical `contracts/schemas/v1` catalog as `avuhz_contracts` package data. An isolated install outside the repository resolves `schema_root()` from `site-packages` and loads the complete fixed catalog; repository development may continue using the same source tree directly.
+- Owner-confirmed Render evidence records successful deployment of commit `6bff57065151462fc74861c68a232454b2ef9a20`, `GET /health/live = 200`, and intentional fail-closed `GET /health/ready = 503`. Recording this evidence grants no further deployment or provider authority.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The installed-wheel schema catalog correction is complete.
+`IN_PROGRESS`: None. The owner-confirmed Render DEVELOPMENT binding and bounded health-evidence milestone is complete.
 
-`NEXT_TASK`: Record the exact existing Render DEVELOPMENT service binding and explicitly authorize a corrected-wheel rebuild/redeploy and bounded startup/liveness/readiness validation. Keep Supabase connectivity or mutation, secrets, migrations, staging, production, and Phase 6 outside that batch unless separately authorized.
+`NEXT_TASK`: Implement and test the DEVELOPMENT trusted-identity resolver adapter locally against the approved issuer, audience, and tenant bridge, using deterministic local fakes only. Do not connect to Supabase, authorize connected AUTH validation, implement the DATA adapter, touch staging or production, or begin Phase 6.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the installed-wheel schema catalog correction commit. Generated evidence, virtual environments, and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the Render DEVELOPMENT registry and health-evidence documentation commit. Generated evidence, virtual environments, and wheel files remain disposable local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
 
-`REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
+`REMOTE_AUTHORIZATION`: No Avuhz push and no current Render, Supabase, or other infrastructure mutation. The owner-confirmed prior Render deployment and health evidence are recorded facts, not continuing provider authority. Connected DATA/AUTH validation remains unauthorized; never force push.
 
 `RECOVERY_RULE`: `INSPECT -> PRESERVE -> COMPLETE -> VALIDATE -> COMMIT`. Never destroy valid interrupted work.
 

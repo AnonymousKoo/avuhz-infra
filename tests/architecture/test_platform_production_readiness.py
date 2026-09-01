@@ -14,7 +14,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         for phrase in (
             "Avuhz platform production boundary",
             "distinct from deploying a client-system artifact",
-            "stateless command/query API",
+            "stateless command/query API", "require `engagement:read`",
             "separate idempotent outbox worker",
             "isolated PostgreSQL DATA storage",
             "AUTH issuer",
@@ -71,14 +71,16 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertIn("`PLATFORM_PRODUCTION_READINESS`: `NOT_READY`", STATE)
         self.assertIn("`READY_FOR_PHASE6`: `NO`", STATE)
         for blocker in (
-            "no deployable application service entrypoint/artifact", "outbox worker",
-            "production AUTH/DATA registry", "GitHub workflows/branch/environment protections",
-            "observability/alerting", "backup/PITR RPO/RTO", "deployment/rollback rehearsal",
+            "outbox worker", "production AUTH/DATA registry",
+            "GitHub workflows/branch/environment protections", "observability/alerting",
+            "backup/PITR RPO/RTO", "deployment/rollback rehearsal",
         ):
             self.assertIn(blocker, STATE)
         self.assertFalse((ROOT / ".github/workflows").exists())
         self.assertFalse(any(ROOT.glob("Dockerfile*")))
-        self.assertIn("production-shaped command/query service packaging", ROADMAP)
+        self.assertTrue((ROOT / "pyproject.toml").is_file())
+        self.assertTrue((ROOT / "src/avuhz_service/__main__.py").is_file())
+        self.assertIn("transactional outbox delivery worker", ROADMAP)
         self.assertIn("Phase 6", ROADMAP)
         self.assertIn("DO NOT START YET", ROADMAP)
 

@@ -33,7 +33,7 @@ Avuhz platform production means operating Avuhz's own command/query services, wo
 
 The minimum production topology is:
 
-- a stateless command/query API that constructs `TrustedExecutionContext`, validates canonical contracts, executes commands through the existing UnitOfWork, and exposes bounded health/read surfaces;
+- a stateless command/query API that constructs `TrustedExecutionContext`, validates canonical contracts, executes commands through the existing UnitOfWork, and exposes bounded health/read surfaces; read routes derive tenant from trusted context and require `engagement:read`;
 - a separate idempotent outbox worker that publishes committed lifecycle events with retry, backoff, dead-letter handling, and no direct authority creation;
 - isolated PostgreSQL DATA storage with encrypted transport/storage, tenant RLS, bounded service grants, connection pooling, migration ownership, backups, point-in-time recovery, and restore testing;
 - an AUTH issuer that authenticates humans and workloads and maps issuer, subject, audience, tenant, environment, authentication strength, and approved role/capability facts into trusted context outside caller payloads;

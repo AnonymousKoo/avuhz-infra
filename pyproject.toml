@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "avuhz-service"
+version = "0.1.0"
+description = "Provider-neutral governed Avuhz command/query service"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "jsonschema==4.10.3",
+  "psycopg[binary]==3.3.4",
+]
+
+[project.scripts]
+avuhz-service = "avuhz_service.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.data-files]
+"avuhz/contracts/schemas/v1/commands" = ["contracts/schemas/v1/commands/*.json"]
+"avuhz/contracts/schemas/v1/common" = ["contracts/schemas/v1/common/*.json"]
+"avuhz/contracts/schemas/v1/domain" = ["contracts/schemas/v1/domain/*.json"]
+"avuhz/contracts/schemas/v1/identity" = ["contracts/schemas/v1/identity/*.json"]
+"avuhz/contracts/schemas/v1/orchestration" = ["contracts/schemas/v1/orchestration/*.json"]
+"avuhz/contracts/schemas/v1/public" = ["contracts/schemas/v1/public/*.json"]
+"avuhz/contracts/schemas/v1/read-models" = ["contracts/schemas/v1/read-models/*.json"]

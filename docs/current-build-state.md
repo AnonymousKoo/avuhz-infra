@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Engineering and platform production-readiness architecture/planning certified against the frozen Phase 5 baseline; production implementation and deployment remain blocked.
+`CURRENT_PHASE`: Local-only production-shaped Avuhz command/query service packaging and bounded health surfaces complete; remaining platform production-readiness implementation is blocked.
 
-`CURRENT_HEAD`: `HEAD` (`docs: define avuhz platform production readiness`)
+`CURRENT_HEAD`: `HEAD` (`feat: add local avuhz command query service`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: Avuhz platform production topology, environment/registry model, CI/CD and secrets controls, risk/approval policy, evidence gates, engineering-agent boundary, autonomous dry-run plan, and honest blocker certification defined without changing frozen Phase 5 semantics.
+`LAST_GREEN_MILESTONE`: Runnable local WSGI command/query service and wheel/console artifact using the existing Executor, TrustedExecutionContext, UnitOfWork, repositories, and Phase 5 read services, with bounded startup/liveness/readiness and fail-closed security behavior.
 
 `COMPLETED`:
 
@@ -45,7 +45,9 @@
 - Active Avuhz runtime/contract references to Sekinfra/OIA remain zero. Phase 5 is frozen; later work must preserve this baseline and may not infer real deployment or production authority.
 - Avuhz platform production is explicitly separate from client-system deployment. The minimum API/worker/data/auth/identity/secrets/migration/observability/backup/CI/CD/environment/rollback architecture and owner-authorized registry are defined in canonical architecture/security documentation.
 - Codex/Claude remain untrusted engineering workloads: they may build, test, scan, and draft evidence but cannot approve, merge, select production targets, access production secrets, migrate, deploy, or establish success. A nine-step autonomous local/staging dry-run is defined but has not been implemented or executed.
-- Platform production is `NOT_READY`: this repository has no deployable application service entrypoint/artifact, outbox worker, production AUTH/DATA registry, trusted issuer integration, secret manager/service identities, GitHub workflows/branch/environment protections, artifact provenance/SBOM pipeline, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
+- The local service is a real buildable wheel/console artifact with a framework-neutral WSGI application, loopback-only memory composition, one governed command route, nine allowlisted read-only query types, explicit `engagement:read` access, fixed non-human trusted identity, request limits, and sanitized error handling.
+- `GET /health/startup`, `/health/live`, and `/health/ready` are bounded and non-sensitive. Readiness checks required local data/identity dependencies, returns `503` on unavailable/exceptional probes, and never returns connection details or stack traces.
+- Platform production remains `NOT_READY`: the local service is not a production deployment artifact and there is still no outbox worker, production AUTH/DATA registry, trusted issuer integration, secret manager/service identities, GitHub workflows/branch/environment protections, artifact provenance/SBOM pipeline, observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
 - The existing PostgreSQL migration and Supabase configuration remain local/disposable only. No remote project was selected, contacted, changed, or certified.
 
 
@@ -53,13 +55,13 @@
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. Production-readiness planning/certification is complete; implementation has not started.
+`IN_PROGRESS`: None. The local command/query service packaging milestone is complete.
 
-`NEXT_TASK`: Implement the first local-only platform-readiness slice: production-shaped Avuhz command/query service packaging and bounded health surfaces. Preserve Phase 5 semantics; do not connect AUTH/DATA projects, deploy, or start Phase 6.
+`NEXT_TASK`: Implement the local-only transactional outbox delivery worker around existing `PENDING` outbox intents, with bounded leasing/retry/dead-letter behavior and a fake local sink. Do not contact providers, deploy, or start Phase 6.
 
-`DO_NOT_START_YET`: Remote AUTH/DATA configuration, outbox/provider deployment operations, production or client-system deployment, remote migration, production secrets, Phase 6, or later roadmap work.
+`DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the production-readiness planning milestone commit. Disposable local PostgreSQL databases are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the local command/query service milestone commit. Disposable local service/PostgreSQL processes and wheel files are test artifacts only. The ignored local Supabase link metadata is stale read-only inventory context and is not active migration lineage; do not contact it.
 
 `REMOTE_AUTHORIZATION`: No Avuhz push. No remote Supabase or other infrastructure mutation. Any later Sekinfra feature-branch push requires explicit current authorization and green certification; never force push.
 

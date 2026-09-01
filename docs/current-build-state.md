@@ -1,12 +1,12 @@
 # Current Build State
 
-`CURRENT_PHASE`: Local-only DEVELOPMENT DATA composition implemented and certified against disposable PostgreSQL; no real provider adapter is wired and hosted readiness remains fail-closed.
+`CURRENT_PHASE`: Bounded real DEVELOPMENT AUTH/DATA adapter boundaries and the first connected-validation authorization package are defined; no provider adapter is wired and hosted readiness remains fail-closed.
 
-`CURRENT_HEAD`: `HEAD` (`feat: add local development postgres composition`)
+`CURRENT_HEAD`: `HEAD` (`docs: define development auth data validation package`)
 
 `CURRENT_BRANCH`: `main`
 
-`LAST_GREEN_MILESTONE`: DEVELOPMENT DATA can be composed only with an injected loopback disposable-PostgreSQL connector, the existing PostgresStore/PostgresUnitOfWork, exact approved non-secret project configuration, and tenant-bound non-bypass RLS.
+`LAST_GREEN_MILESTONE`: DEVELOPMENT AUTH verification and DATA persistence have explicit existing-port compositions, least-privilege credential requirements, separate bounded validation steps, fail-closed evidence/stop rules, and exact one-use owner-authorization text.
 
 `COMPLETED`:
 
@@ -71,21 +71,24 @@
 - The local DEVELOPMENT DATA composition reuses the canonical PostgresStore, PostgresUnitOfWork, repository ports, and `avuhz_command_service` database role. It accepts only loopback disposable databases, preserves the approved DATA project reference as configuration, and keeps `avuhz_command_service_dev` distinct from `avuhz_migration_service_dev`.
 - Trusted DEVELOPMENT context is required before UnitOfWork creation, and `TrustedExecutionContext.tenant_id` remains transaction-locally bound to `avuhz.tenant_id`. Staging/wrong-audience contexts fail before connection; unauthenticated or missing-tenant contexts close the opened transaction.
 - Fresh disposable PostgreSQL replay certifies all 16 canonical tables, tenant RLS, no superuser/BYPASSRLS runtime role, bounded grants, cross-tenant denial, restart round-trip, immutable history, idempotency conflict/transition, and event/outbox atomic rollback. The hosted Render DEVELOPMENT composition remains unwired and reports DATA/identity readiness unavailable.
+- The planned real AUTH adapter implements only `DevelopmentIdentityVerifier.verify`; the existing resolver remains solely responsible for constructing `TrustedExecutionContext`. Public issuer-key discovery needs no provider credential, while token/claim validation remains blocked on an exact owner-bound tenant claim, server-owned capability policy, and separately authorized synthetic identity procedure.
+- The planned real DATA adapter injects a PostgreSQL connection factory into the existing PostgresStore/PostgresUnitOfWork and canonical repositories. Its runtime login may inherit only the canonical no-login `avuhz_command_service` grants; migration, service-role, ownership, superuser, `BYPASSRLS`, universal tenant, DDL, and provider-admin access are excluded.
+- The first connected-validation package splits one credential-free AUTH JWKS discovery GET from a later separately authorized read-only DATA catalog/RLS transaction. Both define bounded secret-free evidence and deterministic stop conditions; neither authorizes remediation, wiring, readiness, migration, mutation, or a second call.
 
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; the listed implementation, owner-configuration, staging-evidence, and recovery blockers remain.
 
 `READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
 
-`IN_PROGRESS`: None. The local-only DEVELOPMENT DATA composition milestone is complete.
+`IN_PROGRESS`: None. The DEVELOPMENT AUTH/DATA adapter-boundary and connected-validation package milestone is complete.
 
-`NEXT_TASK`: Define the bounded real DEVELOPMENT DATA/AUTH adapter and first connected-validation authorization package, including exact secret-reference inputs, least-privilege runtime and migration roles, permitted read-only checks, rollback limits, and owner approval. Do not contact or mutate Supabase, Render, or another provider until that connected scope is separately authorized.
+`NEXT_TASK`: Obtain the exact one-use owner authorization recorded in `docs/architecture.md`, then perform only the bounded credential-free DEVELOPMENT AUTH JWKS discovery validation. Do not perform DATA validation, token/user/session access, adapter wiring, Render changes, remediation, mutation, staging/production work, or Phase 6.
 
 `DO_NOT_START_YET`: Remote event/provider delivery, CI/CD, remote AUTH/DATA configuration, production or client-system deployment, remote migration, production identities/secrets, observability/backup integrations, Phase 6, or later roadmap work.
 
-`KNOWN_DIRTY/PARTIAL_WORK`: None after the local DEVELOPMENT DATA composition commit. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority; do not contact either registered project.
+`KNOWN_DIRTY/PARTIAL_WORK`: None after the DEVELOPMENT AUTH/DATA adapter-boundary and validation-package commit. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository. Local Supabase link metadata is read-only historical inventory and is not connection or migration authority.
 
-`REMOTE_AUTHORIZATION`: No Avuhz push and no current Render, Supabase, or other infrastructure mutation. The owner-confirmed prior Render deployment and health evidence are recorded facts, not continuing provider authority. Connected DATA/AUTH validation remains unauthorized; never force push.
+`REMOTE_AUTHORIZATION`: No Avuhz push and no current Render, Supabase, or other infrastructure mutation. Connected AUTH and DATA validation remain unauthorized until the owner supplies the exact applicable one-use text in `docs/architecture.md`; AUTH authorization never implies DATA authorization. Never force push.
 
 `RECOVERY_RULE`: `INSPECT -> PRESERVE -> COMPLETE -> VALIDATE -> COMMIT`. Never destroy valid interrupted work.
 

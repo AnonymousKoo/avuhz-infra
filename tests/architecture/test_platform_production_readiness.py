@@ -119,6 +119,29 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         for risk in ("`R0`", "`R1`", "`R2`", "`R3`"):
             self.assertIn(risk, SECURITY)
 
+    def test_development_auth_data_validation_package_is_bounded(self):
+        for value in (
+            "DEVELOPMENT AUTH/DATA adapter and connected-validation package",
+            "DevelopmentIdentityVerifier.verify",
+            "DevelopmentTrustedIdentityResolver",
+            "PostgresStore",
+            "PostgresUnitOfWork",
+            "TrustedExecutionContext.tenant_id` to `avuhz.tenant_id",
+            "no provider credential",
+            "service-role key is not an acceptable substitute",
+            "OWNER_VALUE_REQUIRED",
+            "AUTH discovery",
+            "DATA catalog/RLS validation",
+            "one credential-free `GET`",
+            "immediately begin a read-only transaction",
+            "I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT AUTH discovery validation",
+            "I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT DATA catalog/RLS validation",
+            "Neither authorization permits credential creation",
+        ):
+            self.assertIn(value, ARCHITECTURE)
+        self.assertIn("AUTH and DATA are separately reviewable and separately authorized", ARCHITECTURE)
+        self.assertIn("DATA remains unauthorized after that call", ARCHITECTURE)
+
     def test_autonomous_dry_run_is_bounded_and_non_authoritative(self):
         self.assertIn("## Autonomous engineering dry-run", ARCHITECTURE)
         for step in (

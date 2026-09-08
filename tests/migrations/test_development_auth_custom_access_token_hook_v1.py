@@ -255,7 +255,7 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
             "select count(*) from pg_tables "
             "where schemaname='public' and tablename like 'avuhz_%';"
             "select count(*) from pg_policies "
-            "where schemaname='public' and polname like 'avuhz_%';"
+            "where schemaname='public' and policyname like 'avuhz_%';"
             "select has_function_privilege("
             "'supabase_auth_admin',"
             "'public.avuhz_development_custom_access_token_hook_v1(jsonb)',"

@@ -44,7 +44,7 @@ jobs:
           workflow=".github/workflows/development-auth-step1-validation.yml"
 
           test "$(git hash-object "$migration")" = "9f88cff062dc94fa3ec0f5412ae7f81ecdaf168c"
-          test "$(git hash-object "$validation")" = "ce909e46f8a0fefdec0845c63886ec6249c25823"
+          test "$(git hash-object "$validation")" = "8fed11443d6d2381c4b222740b2e6f3080ea9f61"
 
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
             mapfile -t actual < <(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | sort)

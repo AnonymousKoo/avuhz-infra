@@ -69,6 +69,8 @@ jobs:
           command -v docker
           command -v jq
           command -v rg
+          sudo apt-get update
+          sudo apt-get install --yes ripgrep
           python3 -m pip install --disable-pip-version-check --no-input -e . semgrep
           python3 --version
           semgrep --version

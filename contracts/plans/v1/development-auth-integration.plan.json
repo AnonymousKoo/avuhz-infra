@@ -1,7 +1,7 @@
 {
   "plan_id": "a7100000-0000-4000-8000-000000000101",
-  "plan_version": 1,
-  "plan_digest": "sha256:97079c0a9cc171b5c6adc21b5de7cba5be6aeb6d4b8bf6f398a67129669b042f",
+  "plan_version": 2,
+  "plan_digest": "sha256:d21ee19419521652dac328eb441f8200289e8880a2928fe8a299207d40249461",
   "definition_status": "DRAFT_BLOCKED",
   "environment": "DEVELOPMENT",
   "target": {
@@ -38,10 +38,10 @@
       "ordinal": 1,
       "resource": {
         "resource_type": "migration.artifact",
-        "resource_reference": "migration.development-custom-access-token-hook.v1",
-        "binding_state": "UNRESOLVED_BLOCKER",
-        "exact_version": null,
-        "exact_digest": null
+        "resource_reference": "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql",
+        "binding_state": "BOUND",
+        "exact_version": "git.commit.13832f4117ad2d3d22b7ab54eef31999dbc69d24",
+        "exact_digest": "sha256:d436ad730291092b1d7688e7bbe87566a47a2d0be452e2ddb2e2cdcba6285b9c"
       },
       "operation": "local.migration.create-and-validate",
       "dependency_step_ids": [],
@@ -49,8 +49,8 @@
         {
           "evidence_type": "baseline.lineage.green",
           "source_step_id": null,
-          "binding_state": "UNRESOLVED_BLOCKER",
-          "exact_digest": null
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:8536127c85d6c7fa12241306fce4e539ae6ccf2f2b14c77388fa83fcec3da5e6"
         }
       ],
       "expected_postcondition": "One committed ordered local migration defines only public.avuhz_development_custom_access_token_hook_v1(jsonb) and its least-privilege ACL; it is not applied or enabled.",
@@ -74,12 +74,7 @@
         ],
         "values_stored": false
       },
-      "unresolved_bindings": [
-        "migration.filename",
-        "migration.commit",
-        "migration.digest",
-        "baseline.evidence.digest"
-      ]
+      "unresolved_bindings": []
     },
     {
       "step_id": "development.auth.step.02.apply-hook-migration",
@@ -125,8 +120,6 @@
         "values_stored": false
       },
       "unresolved_bindings": [
-        "migration.commit",
-        "migration.digest",
         "migration.identity.binding",
         "authorization.window"
       ]

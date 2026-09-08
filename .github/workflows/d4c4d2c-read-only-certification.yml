@@ -1,0 +1,141 @@
+name: D4C4D2C Read-Only Provider Certification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: d4c4d2c-read-only-provider-certification
+  cancel-in-progress: false
+
+jobs:
+  certify-development-provider-read:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+
+    env:
+      AVUHZ_PROJECT_REF: pwlhruwutoitnieactol
+      SUPABASE_PROVIDER_READ_TOKEN: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN }}
+
+    steps:
+      - name: Verify bounded DEVELOPMENT provider read path
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          if [[ -z "${SUPABASE_PROVIDER_READ_TOKEN:-}" ]]; then
+            echo "::error::Required DEVELOPMENT provider-read secret is unavailable."
+            exit 1
+          fi
+
+          project_response="$(mktemp)"
+          query_response="$(mktemp)"
+          query_payload="$(mktemp)"
+
+          trap 'rm -f "$project_response" "$query_response" "$query_payload"' EXIT
+
+          if ! project_http_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$project_response" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SUPABASE_PROVIDER_READ_TOKEN}" \
+            --header 'Accept: application/json' \
+            "https://api.supabase.com/v1/projects/${AVUHZ_PROJECT_REF}")"; then
+            echo "::error::Project metadata read failed."
+            exit 1
+          fi
+
+          if [[ "$project_http_status" != "200" ]]; then
+            echo "::error::Project metadata read returned HTTP ${project_http_status}."
+            exit 1
+          fi
+
+          python - "$project_response" "$AVUHZ_PROJECT_REF" <<'PY'
+          import json
+          import sys
+
+          path, expected_ref = sys.argv[1], sys.argv[2]
+
+          try:
+              with open(path, "r", encoding="utf-8") as handle:
+                  payload = json.load(handle)
+          except Exception:
+              print("::error::Project metadata response was not valid JSON.")
+              raise SystemExit(1)
+
+          if payload.get("ref") != expected_ref or payload.get("id") != expected_ref:
+              print("::error::Project does not match approved DEVELOPMENT project.")
+              raise SystemExit(1)
+
+          print("project_ref_verified=true")
+          print("project_metadata_read_verified=true")
+          PY
+
+          cat > "$query_payload" <<'JSON'
+          {"query":"select case when current_user = 'supabase_read_only_user' then 'AVUHZ_READ_ONLY_IDENTITY_OK' else 'AVUHZ_READ_ONLY_IDENTITY_MISMATCH' end as identity_check"}
+          JSON
+
+          if ! query_http_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --request POST \
+            --output "$query_response" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SUPABASE_PROVIDER_READ_TOKEN}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data-binary "@${query_payload}" \
+            "https://api.supabase.com/v1/projects/${AVUHZ_PROJECT_REF}/database/query/read-only")"; then
+            echo "::error::Read-only SQL endpoint failed."
+            exit 1
+          fi
+
+          if [[ "$query_http_status" != "201" ]]; then
+            echo "::error::Read-only SQL endpoint returned HTTP ${query_http_status}."
+            exit 1
+          fi
+
+          python - "$query_response" <<'PY'
+          import json
+          import sys
+
+          path = sys.argv[1]
+
+          try:
+              with open(path, "r", encoding="utf-8") as handle:
+                  payload = json.load(handle)
+          except Exception:
+              print("::error::Read-only SQL response was not valid JSON.")
+              raise SystemExit(1)
+
+          def strings(value):
+              if isinstance(value, str):
+                  yield value
+              elif isinstance(value, dict):
+                  for child in value.values():
+                      yield from strings(child)
+              elif isinstance(value, list):
+                  for child in value:
+                      yield from strings(child)
+
+          if "AVUHZ_READ_ONLY_IDENTITY_OK" not in set(strings(payload)):
+              print("::error::Read-only execution identity could not be certified.")
+              raise SystemExit(1)
+
+          print("read_only_sql_endpoint_verified=true")
+          print("read_only_execution_identity_verified=true")
+          print("database_mutation_attempted=false")
+          PY
+
+          echo "d4c4d2c_certification=passed"

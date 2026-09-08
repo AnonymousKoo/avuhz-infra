@@ -1,0 +1,42 @@
+{
+  "evidence_type": "baseline.lineage.green",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "source": {
+    "pull_request": 2,
+    "validation_run_id": 34250786353,
+    "validation_job_id": 102144395202,
+    "candidate_commit": "1918428e866261d85a76b3794033dc0b78bb46af",
+    "merged_main_commit": "13832f4117ad2d3d22b7ab54eef31999dbc69d24"
+  },
+  "artifacts": {
+    "migration": {
+      "path": "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql",
+      "git_blob": "9f88cff062dc94fa3ec0f5412ae7f81ecdaf168c",
+      "content_digest": "sha256:d436ad730291092b1d7688e7bbe87566a47a2d0be452e2ddb2e2cdcba6285b9c"
+    },
+    "validation": {
+      "path": "tests/migrations/test_development_auth_custom_access_token_hook_v1.py",
+      "git_blob": "8fed11443d6d2381c4b222740b2e6f3080ea9f61",
+      "content_digest": "sha256:437aec0c0e0c60c81a43cd9704bd098d9d638878203f4afcd8d1950814acb96b"
+    },
+    "workflow": {
+      "path": ".github/workflows/development-auth-step1-validation.yml",
+      "git_blob": "857c826f160ba2ca7464cdb35c371aeb5c8f3e65",
+      "content_digest": "sha256:29b3abf8655da60968afb501e6d207946f6daca345b2b8edf11df744fb403abb"
+    }
+  },
+  "results": {
+    "bounded_diff_verified": true,
+    "migration_blob_verified": true,
+    "validation_blob_verified": true,
+    "postgres_version": "17.11",
+    "tests_passed": 11,
+    "tests_failed": 0,
+    "postgres_validation_passed": true,
+    "baseline_gate_passed": true,
+    "provider_contact_attempted": false,
+    "remote_mutation_attempted": false
+  }
+}

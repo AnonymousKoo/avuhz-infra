@@ -52,12 +52,13 @@ Canonical artifacts:
 
 - `contracts/plans/v1/development-auth-integration.plan.json`
 - `contracts/plans/v1/development-auth-integration.progress.json`
+- `contracts/plans/v1/development-auth-step1-baseline.evidence.json`
 
 | Binding | Current value |
 |---|---|
 | Plan ID | `a7100000-0000-4000-8000-000000000101` |
-| Plan version | `1` |
-| Plan digest | `sha256:97079c0a9cc171b5c6adc21b5de7cba5be6aeb6d4b8bf6f398a67129669b042f` |
+| Plan version | `2` |
+| Plan digest | `sha256:d21ee19419521652dac328eb441f8200289e8880a2928fe8a299207d40249461` |
 | Definition status | `DRAFT_BLOCKED` |
 | Environment | `DEVELOPMENT` |
 | Provider/project | Supabase / `pwlhruwutoitnieactol` |
@@ -65,10 +66,11 @@ Canonical artifacts:
 | Issuer | `https://pwlhruwutoitnieactol.supabase.co/auth/v1` |
 | Expected audience | `audience.avuhz.command-service.development` |
 | Planned hook | `public.avuhz_development_custom_access_token_hook_v1(jsonb)` |
+| Step 1 baseline evidence | `sha256:8536127c85d6c7fa12241306fce4e539ae6ccf2f2b14c77388fa83fcec3da5e6` |
 | Approval record | Not created |
 | Execution | Not started; all step authorizations pending |
 
-This draft is not owner approval and grants no provider access or change authority.
+This draft is not owner approval and grants no provider access or change authority. The Step 1 migration artifact and its local validation evidence were prepared before plan approval; that preparation does not mark Step 1 executed in the progress record and does not authorize Step 2.
 
 ## Exact ordered sequence
 
@@ -98,4 +100,4 @@ Supabase remains an adapter. AUTH and DATA are logically separate even while DEV
 
 ## Current blockers
 
-The v1 plan is intentionally `DRAFT_BLOCKED`. No authorization window or owner approval exists. The hook migration, filename, commit, and digest do not exist. Migration/verification identity bindings, provider synthetic identity/subject, dedicated tenant UUID, server-policy digest, hook configuration reference, and ephemeral credential-delivery procedure remain unresolved. Resolving any definition binding changes the immutable plan and therefore requires a new plan version/digest before owner approval.
+The v2 plan remains intentionally `DRAFT_BLOCKED`. The Step 1 migration artifact now exists and is immutably bound to `supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql` at merge commit `13832f4117ad2d3d22b7ab54eef31999dbc69d24` with SHA-256 `d436ad730291092b1d7688e7bbe87566a47a2d0be452e2ddb2e2cdcba6285b9c`. Successful local-only CI validation and the canonical baseline gate are bound through sanitized Step 1 evidence. Nothing has been applied to Supabase, the hook function has not been remotely created, and the hook has not been enabled. No authorization window or owner approval exists. Migration/verification identity bindings, provider synthetic identity/subject, dedicated DEVELOPMENT tenant UUID, server-policy digest, hook configuration reference, and ephemeral credential-delivery procedure remain unresolved. Any further definition binding change requires a new plan version and digest before owner approval.

@@ -1,0 +1,121 @@
+name: DEVELOPMENT AUTH Step 1 CI Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql
+      - tests/migrations/test_development_auth_custom_access_token_hook_v1.py
+      - .github/workflows/development-auth-step1-validation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-step1-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-development-auth-step1:
+    if: github.event_name == 'workflow_dispatch' || (github.head_ref == 'chore/development-auth-step1-hook-migration' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-step1-postgres
+
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify bounded diff and exact Step 1 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          migration="supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql"
+          validation="tests/migrations/test_development_auth_custom_access_token_hook_v1.py"
+          workflow=".github/workflows/development-auth-step1-validation.yml"
+
+          test "$(git hash-object "$migration")" = "9f88cff062dc94fa3ec0f5412ae7f81ecdaf168c"
+          test "$(git hash-object "$validation")" = "ce909e46f8a0fefdec0845c63886ec6249c25823"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            mapfile -t actual < <(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD" | sort)
+            expected=("$workflow" "$migration" "$validation")
+            mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+
+            if ! diff -u <(printf '%s\n' "${expected_sorted[@]}") <(printf '%s\n' "${actual[@]}"); then
+              echo "::error::Step 1 PR contains an unexpected resource."
+              exit 1
+            fi
+          fi
+
+          sha256sum "$migration" "$validation" "$workflow"
+          echo "bounded_diff_verified=true"
+          echo "migration_blob_verified=true"
+          echo "validation_blob_verified=true"
+
+      - name: Install local validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v docker
+          command -v jq
+          command -v rg
+          python3 -m pip install --disable-pip-version-check --no-input -e . semgrep
+          python3 --version
+          semgrep --version
+
+      - name: Start disposable PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --detach --rm --name "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" --env POSTGRES_HOST_AUTH_METHOD=trust postgres:17
+
+          ready=false
+          for _ in $(seq 1 45); do
+            if docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" pg_isready -U postgres >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+
+          if [[ "$ready" != "true" ]]; then
+            echo "::error::Disposable PostgreSQL did not become ready."
+            docker logs "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" || true
+            exit 1
+          fi
+
+          docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" psql --version
+          echo "disposable_postgres_ready=true"
+
+      - name: Run DEVELOPMENT AUTH Step 1 PostgreSQL validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/migrations/test_development_auth_custom_access_token_hook_v1.py -v
+          echo "development_auth_step1_postgres_validation=passed"
+
+      - name: Run Avuhz baseline gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./scripts/check-baseline.sh
+          echo "avuhz_baseline_gate=passed"
+
+      - name: Remove disposable PostgreSQL
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" >/dev/null 2>&1 || true
+          echo "provider_contact_attempted=false"
+          echo "remote_mutation_attempted=false"

@@ -1,0 +1,345 @@
+name: DEVELOPMENT AUTH Plan v5 PostgreSQL Certification
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - contracts/plans/v1/development-auth-integration.plan.json
+      - contracts/plans/v1/development-auth-integration.progress.json
+      - contracts/plans/v1/development-auth-provider-preflight.evidence.json
+      - contracts/plans/v1/development-auth-step1-v5-local.evidence.json
+      - supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql
+      - supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql
+      - supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql
+      - tests/contracts/validate_bounded_authorization_plan.py
+      - tests/migrations/test_development_auth_migration_identity_v1.py
+      - tests/migrations/test_development_auth_custom_access_token_hook_v1.py
+      - tests/migrations/test_development_auth_migration_identity_seal_v1.py
+      - docs/development-auth-integration-authorization-plan.md
+      - .github/workflows/development-auth-plan-v5-certification.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-plan-v5-certification-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  certify-development-auth-plan-v5:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      AVUHZ_CERTIFIED_BASE_SHA: e60f54b6845bdaa006e52cd1f83ec1987eb9db6d
+      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-development-auth-v5-postgres
+      AVUHZ_POSTGRES_IMAGE: postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+      AVUHZ_POSTGRES_DIGEST: sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record candidate artifact identities
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          artifacts=(
+            contracts/plans/v1/development-auth-integration.plan.json
+            contracts/plans/v1/development-auth-integration.progress.json
+            contracts/plans/v1/development-auth-provider-preflight.evidence.json
+            contracts/plans/v1/development-auth-step1-v5-local.evidence.json
+            supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql
+            supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql
+            supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql
+            tests/contracts/validate_bounded_authorization_plan.py
+            tests/migrations/test_development_auth_migration_identity_v1.py
+            tests/migrations/test_development_auth_custom_access_token_hook_v1.py
+            tests/migrations/test_development_auth_migration_identity_seal_v1.py
+            docs/development-auth-integration-authorization-plan.md
+            .github/workflows/development-auth-plan-v5-certification.yml
+          )
+
+          git cat-file -e "${AVUHZ_CERTIFIED_BASE_SHA}^{commit}"
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            test "${{ github.event.pull_request.base.sha }}" = "${AVUHZ_CERTIFIED_BASE_SHA}"
+          fi
+          git merge-base --is-ancestor "${AVUHZ_CERTIFIED_BASE_SHA}" HEAD
+
+          actual_paths="${RUNNER_TEMP}/avuhz-v5-candidate-paths.txt"
+          permitted_paths="${RUNNER_TEMP}/avuhz-v5-permitted-paths.txt"
+          git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD" | sort > "$actual_paths"
+          printf '%s\n' "${artifacts[@]}" | sort > "$permitted_paths"
+          if ! diff -u "$permitted_paths" "$actual_paths"; then
+            echo "::error::Candidate file set differs from the exact DEVELOPMENT AUTH v5 scope."
+            exit 1
+          fi
+
+          git rev-parse HEAD
+          git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD"
+          for artifact in "${artifacts[@]}"; do
+            test -f "$artifact"
+            git hash-object "$artifact"
+            sha256sum "$artifact"
+          done
+          echo "candidate_artifact_identities_recorded=true"
+
+      - name: Install local validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v docker
+          command -v python3
+          python3 --version
+          command -v jq
+          git status --porcelain=v1 --untracked-files=all \
+            > "${RUNNER_TEMP}/avuhz-v5-pre-dependency-status.txt"
+          sudo apt-get update
+          sudo apt-get install --yes ripgrep
+          command -v rg
+          rg --version
+
+          constraints="${RUNNER_TEMP}/avuhz-v5-ci-constraints.txt"
+          cat > "$constraints" <<'CONSTRAINTS'
+          semgrep==1.136.0
+          setuptools==68.1.2
+          jsonschema==4.10.3
+          psycopg==3.3.4
+          psycopg-binary==3.3.4
+          boltons==21.0.0
+          bracex==3.0.1
+          click==8.1.8
+          click-option-group==0.5.9
+          defusedxml==0.7.1
+          deprecated==1.3.1
+          exceptiongroup==1.2.2
+          face==26.0.1
+          glom==22.1.0
+          googleapis-common-protos==1.75.0
+          importlib-metadata==7.1.0
+          opentelemetry-api==1.25.0
+          opentelemetry-exporter-otlp-proto-common==1.25.0
+          opentelemetry-exporter-otlp-proto-http==1.25.0
+          opentelemetry-instrumentation==0.46b0
+          opentelemetry-instrumentation-requests==0.46b0
+          opentelemetry-proto==1.25.0
+          opentelemetry-sdk==1.25.0
+          opentelemetry-semantic-conventions==0.46b0
+          opentelemetry-util-http==0.46b0
+          peewee==3.19.0
+          protobuf==4.25.9
+          rich==13.5.3
+          ruamel.yaml==0.19.1
+          tomli==2.0.2
+          wcmatch==8.5.2
+          wrapt==1.17.3
+          zipp==4.1.0
+          CONSTRAINTS
+
+          python3 -m pip install --disable-pip-version-check --no-input \
+            --constraint "$constraints" \
+            setuptools==68.1.2 \
+            jsonschema==4.10.3 \
+            'psycopg[binary]==3.3.4' \
+            semgrep==1.136.0
+          python3 -m pip check
+          python3 - <<'PY'
+          from importlib.metadata import version
+          expected = {
+              "setuptools": "68.1.2",
+              "jsonschema": "4.10.3",
+              "psycopg": "3.3.4",
+              "semgrep": "1.136.0",
+          }
+          for package, required in expected.items():
+              installed = version(package)
+              print(f"{package}=={installed}")
+              if installed != required:
+                  raise SystemExit(f"{package} version does not match the certified dependency set")
+          PY
+          test "$(semgrep --version | tail -n1)" = "1.136.0"
+          git status --porcelain=v1 --untracked-files=all \
+            > "${RUNNER_TEMP}/avuhz-v5-post-dependency-status.txt"
+          cmp --silent \
+            "${RUNNER_TEMP}/avuhz-v5-pre-dependency-status.txt" \
+            "${RUNNER_TEMP}/avuhz-v5-post-dependency-status.txt"
+
+      - name: Start disposable PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "requested_postgres_image=${AVUHZ_POSTGRES_IMAGE}"
+          docker pull "${AVUHZ_POSTGRES_IMAGE}"
+          image_id="$(docker image inspect "${AVUHZ_POSTGRES_IMAGE}" --format '{{.Id}}')"
+          repo_digests="$(docker image inspect "${AVUHZ_POSTGRES_IMAGE}" --format '{{json .RepoDigests}}')"
+          echo "postgres_image_id=${image_id}"
+          echo "postgres_repo_digests=${repo_digests}"
+          python3 - "$repo_digests" "${AVUHZ_POSTGRES_DIGEST}" <<'PY'
+          import json
+          import sys
+          repo_digests = json.loads(sys.argv[1])
+          expected = sys.argv[2]
+          if not any(item.endswith("@" + expected) for item in repo_digests):
+              raise SystemExit("resolved PostgreSQL RepoDigests do not contain the required digest")
+          PY
+          docker run --detach --rm \
+            --name "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            --env POSTGRES_HOST_AUTH_METHOD=trust \
+            "${AVUHZ_POSTGRES_IMAGE}"
+          touch "${RUNNER_TEMP}/avuhz-v5-postgres-created"
+
+          ready=false
+          for _ in $(seq 1 45); do
+            if docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" pg_isready -U postgres >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+
+          if [[ "$ready" != "true" ]]; then
+            echo "::error::Disposable PostgreSQL 17 did not become ready."
+            exit 1
+          fi
+
+          docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" psql --version
+          docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            psql -U postgres -d postgres -At -c 'select version();'
+          server_version_num="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            psql -U postgres -d postgres -At -c 'show server_version_num;')"
+          case "$server_version_num" in
+            17*) ;;
+            *) echo "::error::Disposable PostgreSQL major version is not 17."; exit 1 ;;
+          esac
+          echo "disposable_postgres_ready=true"
+
+      - name: Validate bounded authorization plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/contracts/validate_bounded_authorization_plan.py
+
+      - name: Certify migration identity bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/migration-identity-tests.txt"
+          python3 tests/migrations/test_development_auth_migration_identity_v1.py -v 2>&1 | tee "$output"
+          python3 - "$output" <<'PY'
+          from pathlib import Path
+          import re, sys
+          text = Path(sys.argv[1]).read_text()
+          method = "test_pg17_set_role_options_use_non_superuser_executor"
+          if re.search(r"skipped|skip=", text, re.IGNORECASE):
+              raise SystemExit("PostgreSQL-backed bootstrap tests were skipped")
+          start = text.find(method)
+          if start < 0:
+              raise SystemExit("non-superuser SET ROLE test result is missing")
+          end = text.find("\ntest_", start + len(method))
+          record = text[start:] if end < 0 else text[start:end]
+          if not re.search(r"\.\.\. ok(?:\n|$)", record):
+              raise SystemExit("non-superuser SET ROLE test did not complete successfully")
+          PY
+          echo "non_superuser_set_role_test=executed"
+
+      - name: Certify hook effective-role ordering
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/hook-migration-tests.txt"
+          python3 tests/migrations/test_development_auth_custom_access_token_hook_v1.py -v 2>&1 | tee "$output"
+          python3 - "$output" <<'PY'
+          from pathlib import Path
+          import re, sys
+          text = Path(sys.argv[1]).read_text()
+          method = "test_missing_migration_role_create_privilege_fails_after_effective_role_switch"
+          if re.search(r"skipped|skip=", text, re.IGNORECASE):
+              raise SystemExit("PostgreSQL-backed hook tests were skipped")
+          start = text.find(method)
+          if start < 0:
+              raise SystemExit("effective-role privilege-order test result is missing")
+          end = text.find("\ntest_", start + len(method))
+          record = text[start:] if end < 0 else text[start:end]
+          if not re.search(r"\.\.\. ok(?:\n|$)", record):
+              raise SystemExit("effective-role privilege-order test did not complete successfully")
+          PY
+          echo "effective_role_privilege_order_test=executed"
+
+      - name: Certify migration identity seal
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/migration-identity-seal-tests.txt"
+          python3 tests/migrations/test_development_auth_migration_identity_seal_v1.py -v 2>&1 | tee "$output"
+          python3 - "$output" <<'PY'
+          from pathlib import Path
+          import re, sys
+          text = Path(sys.argv[1]).read_text()
+          method = "test_exact_sealed_role_function_and_acl_state"
+          if re.search(r"skipped|skip=", text, re.IGNORECASE):
+              raise SystemExit("PostgreSQL-backed seal tests were skipped")
+          start = text.find(method)
+          if start < 0:
+              raise SystemExit("PostgreSQL-backed seal test result is missing")
+          end = text.find("\ntest_", start + len(method))
+          record = text[start:] if end < 0 else text[start:end]
+          if not re.search(r"\.\.\. ok(?:\n|$)", record):
+              raise SystemExit("PostgreSQL-backed seal test did not complete successfully")
+          PY
+          echo "migration_identity_seal_postgres_test=executed"
+
+      - name: Run Avuhz baseline gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./scripts/check-baseline.sh
+
+      - name: Check candidate diff hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD"
+          git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD"
+
+      - name: Verify final checkout integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          final_status="${RUNNER_TEMP}/avuhz-v5-final-status.txt"
+          git status --porcelain=v1 --untracked-files=all > "$final_status"
+          cmp --silent \
+            "${RUNNER_TEMP}/avuhz-v5-pre-dependency-status.txt" \
+            "$final_status"
+          test ! -s "$final_status"
+
+      - name: Remove disposable PostgreSQL
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v docker
+          containers="$(docker container ls -a --format '{{.Names}}')"
+          if [[ "$containers" == *"${AVUHZ_LOCAL_POSTGRES_CONTAINER}"* ]]; then
+            docker rm -f "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" >/dev/null
+            remaining="$(docker container ls -a \
+              --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+              --format '{{.Names}}')"
+            test -z "$remaining"
+            echo "disposable_postgres_removed=true"
+          elif [[ -f "${RUNNER_TEMP}/avuhz-v5-postgres-created" ]]; then
+            echo "disposable_postgres_already_absent=true"
+          else
+            echo "disposable_postgres_was_not_created=true"
+          fi
+          echo "provider_contact_attempted=false"
+          echo "supabase_contact_attempted=false"
+          echo "remote_mutation_attempted=false"

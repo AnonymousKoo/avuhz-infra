@@ -1,8 +1,8 @@
 {
   "progress_id": "a7100000-0000-4000-8000-000000000102",
   "plan_id": "a7100000-0000-4000-8000-000000000101",
-  "plan_version": 2,
-  "plan_digest": "sha256:d21ee19419521652dac328eb441f8200289e8880a2928fe8a299207d40249461",
+  "plan_version": 5,
+  "plan_digest": "sha256:e0f073c6e51923b97859aaf6072b6692e726c2f03adfcb4102d04b2fa4b6761f",
   "record_version": 1,
   "overall_state": "NOT_STARTED",
   "step_states": [
@@ -17,7 +17,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.02.apply-hook-migration",
+      "step_id": "development.auth.step.02.bootstrap-migration-identity",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -27,7 +27,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.03.verify-disabled-hook",
+      "step_id": "development.auth.step.03.apply-hook-migration",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -37,7 +37,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.04.create-synthetic-identity",
+      "step_id": "development.auth.step.04.seal-migration-identity",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -47,7 +47,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.05.bind-synthetic-tenant",
+      "step_id": "development.auth.step.05.verify-disabled-hook",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -57,7 +57,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.06.bind-server-capability",
+      "step_id": "development.auth.step.06.create-synthetic-identity",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -67,7 +67,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.07.enable-hook",
+      "step_id": "development.auth.step.07.bind-synthetic-tenant",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -77,7 +77,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.08.issue-ephemeral-token",
+      "step_id": "development.auth.step.08.bind-server-capability",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -87,7 +87,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.09.fetch-jwks",
+      "step_id": "development.auth.step.09.enable-hook",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -97,7 +97,7 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.10.validate-token-locally",
+      "step_id": "development.auth.step.10.issue-ephemeral-token",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -107,7 +107,27 @@
       "safe_error_code": null
     },
     {
-      "step_id": "development.auth.step.11.record-evidence-and-terminate",
+      "step_id": "development.auth.step.11.fetch-jwks",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.12.validate-token-locally",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null
+    },
+    {
+      "step_id": "development.auth.step.13.record-evidence-and-terminate",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -117,6 +137,6 @@
       "safe_error_code": null
     }
   ],
-  "updated_at": "2026-09-08T17:18:00Z",
-  "progress_digest": "sha256:7092fe1f5db03ee6f0b83e1a42ff4fea48ebe28f086555e061821a9fedb96895"
+  "updated_at": "2026-09-09T01:37:13Z",
+  "progress_digest": "sha256:ad7a6d27f22b997f974d8c0be821ac0222575408db98f0579ca5089e3b6246c3"
 }

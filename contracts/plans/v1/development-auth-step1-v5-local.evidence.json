@@ -1,0 +1,70 @@
+{
+  "evidence_type": "migration.artifacts.local-validated-v5",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "source": {
+    "base_plan_version": 2,
+    "base_plan_digest": "sha256:d21ee19419521652dac328eb441f8200289e8880a2928fe8a299207d40249461",
+    "base_head": "e60f54b6845bdaa006e52cd1f83ec1987eb9db6d",
+    "historical_step1_evidence_reference": "contracts/plans/v1/development-auth-step1-baseline.evidence.json",
+    "historical_step1_evidence_digest": "sha256:8536127c85d6c7fa12241306fce4e539ae6ccf2f2b14c77388fa83fcec3da5e6",
+    "rejected_draft_plan_version": 4,
+    "rejected_draft_plan_digest": "sha256:fd7b0760ff2939da616a2fdf8a476ac3772de39ccd5858e4d5b6e589a1384a3f",
+    "rejected_draft_evidence_digest": "sha256:d4c40d1ef7da9f96a0ed389405554cc6c86031d7a8e2e47e7b0dcd49f582280f",
+    "lineage_classification": "LOCAL_REJECTED_DRAFT_SUPERSEDED",
+    "current_plan_version": 5,
+    "provider_preflight_evidence_path": "contracts/plans/v1/development-auth-provider-preflight.evidence.json",
+    "provider_preflight_evidence_digest": "sha256:f3d315085b9de80d856f8fa16b22646679e6be4367e3c2ddf48ee954d2580732",
+    "v5_local_correction_provider_contact": false,
+    "prior_sanitized_provider_preflight_observation": "present"
+  },
+  "artifacts": {
+    "migration_identity": {
+      "path": "supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql",
+      "content_digest": "sha256:640fb4d2dbff9962f21b83b862cc455fe5e8be2ff5dd4b34bdf99cf3b0721356"
+    },
+    "hook_migration": {
+      "path": "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql",
+      "content_digest": "sha256:66d487c0858e41358c0e169199ed448ddbf264be6f8c22481d183c9559ba9035",
+      "superseded_content_digests": [
+        "sha256:d436ad730291092b1d7688e7bbe87566a47a2d0be452e2ddb2e2cdcba6285b9c",
+        "sha256:45304f737d90729e16190808f26bf38f4acc19a506f3ea1fa8558d92b598ca4c"
+      ]
+    },
+    "migration_identity_seal": {
+      "path": "supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql",
+      "content_digest": "sha256:0b8450e0b5984988a191fc81cd992ba0ef20bb805dc7d71123019244af8830b5"
+    },
+    "migration_identity_validation": {
+      "path": "tests/migrations/test_development_auth_migration_identity_v1.py",
+      "content_digest": "sha256:f9225015305e064c4712faa9e6de89af690d45dfbc2f17187dd6d43b92545281"
+    },
+    "hook_validation": {
+      "path": "tests/migrations/test_development_auth_custom_access_token_hook_v1.py",
+      "content_digest": "sha256:49b083a81dc53705aaf64e0f79ffb528ec25e1d96cea15d69c5ec098d29696a0"
+    },
+    "migration_identity_seal_validation": {
+      "path": "tests/migrations/test_development_auth_migration_identity_seal_v1.py",
+      "content_digest": "sha256:36c1a0fb8b3f6396cd7e027a0ff224b53c259943d0af7856bf2ca053d5fd236b"
+    }
+  },
+  "results": {
+    "ordered_lineage_verified": true,
+    "v5_correction_security_findings_corrected": true,
+    "provider_contact_attempted": false,
+    "remote_mutation_attempted": false,
+    "role_created_remotely": false,
+    "hook_created_remotely": false,
+    "hook_enabled": false,
+    "local_postgres_certification": "STATIC_ONLY_UNDER_CURRENT_ENVIRONMENT",
+    "migration_identity_static_tests_passed": 6,
+    "hook_migration_static_tests_passed": 6,
+    "migration_identity_seal_static_tests_passed": 4,
+    "migration_identity_tests_passed": 10,
+    "hook_migration_tests_passed": 14,
+    "migration_identity_seal_tests_passed": 11,
+    "non_superuser_set_role_regression": "included",
+    "effective_role_privilege_order_regression": "included"
+  }
+}

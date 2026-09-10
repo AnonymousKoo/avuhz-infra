@@ -35,13 +35,69 @@ This baseline is unconnected. Owner-approved non-secret development/staging proj
 
 - Work occurs on bounded feature branches through pull requests. `main` and release tags are protected from direct/force pushes and deletion.
 - Required checks include canonical schema/fixture validation, complete applicable runtime tests, PostgreSQL adapter and migration replay, RLS/tenant negatives, concurrency/idempotency/atomicity, separation tests, Semgrep/SAST, credential/path scanning, dependency review, artifact/SBOM scanning, compilation, and diff hygiene.
-- CODEOWNERS or equivalent reviewers protect runtime/authority contracts, migrations/RLS, identity/security, CI workflows, and production configuration. Authors and engineering agents cannot satisfy required approval alone.
+- CODEOWNERS or equivalent reviewers protect runtime/authority contracts, migrations/RLS, identity/security, CI workflows, and production configuration. Authors and engineering agents cannot satisfy required approval alone, except only under the narrowly scoped Solo-maintainer DEVELOPMENT bootstrap exception below.
 - CI jobs default to read-only repository permissions. Write, package, attestation, and deployment permissions are separate jobs with minimal scopes. Untrusted/fork pull requests receive no secrets.
 - Artifact builds are reproducible, versioned by exact commit, checksummed, provenance-attested, and promoted without rebuilding. Production accepts only an approved artifact digest from the protected registry.
 - Deployment environments use GitHub environment protection (or an equivalent gate), short-lived OIDC identities, concurrency locking, explicit environment selection, and attributable human approval. CI may never infer a production target from branch names or local link metadata.
 - Application deployment and migration execution are separate gated steps. A migration failure prevents application promotion; a rollback/recovery action requires its own exact plan and authority.
 
 These controls are requirements, not current repository capabilities. Until branch protections, workflows, identities, environments, and evidence retention are configured and verified, production deployment is blocked.
+
+## Solo-maintainer DEVELOPMENT bootstrap exception
+
+This exception applies only when all of the following are true:
+
+- The environment is explicitly `DEVELOPMENT`.
+- The repository is still operating in bootstrap or pre-production mode.
+- Exactly one eligible human repository maintainer exists.
+- No independent eligible human reviewer is available.
+- The repository/platform owner explicitly authorizes the exact bounded operation.
+
+If any independent eligible human reviewer becomes available, this exception automatically stops applying to future changes.
+
+For repository-local `DEVELOPMENT` work only, the sole human repository/platform owner may authorize a bounded `R0`, `R1`, or `R2` repository change to proceed without otherwise-required independent human approvals when independent review is impossible because no eligible independent human reviewer exists. This is a temporary bootstrap exception to the approval requirement only. It does not lower the risk classification; an `R2` change remains `R2`.
+
+Every use of this exception requires all of the following substitute controls:
+
+- Exact repository, environment, responsibility, and resource confirmation.
+- One bounded resource change at a time.
+- Exact expected branch and head, or immutable candidate identification.
+- A clean pre-change state or explicit preservation of existing work.
+- Focused validation and full applicable repository certification before merge.
+- Canonical baseline and security checks, including secret and forbidden-path scanning.
+- Tenant, RLS, and security tests when applicable.
+- Successful natural CI when an applicable workflow exists.
+- Exact diff and scope verification.
+- Separate explicit repository/platform-owner authorization for each mutation, commit, push, and merge.
+- No silent retry or self-repair after drift or failure.
+- Evidence in the pull request or task output that identifies use of this exception.
+
+CI success alone never constitutes merge authority.
+
+The solo-maintainer `DEVELOPMENT` bootstrap exception never authorizes any of the following:
+
+- `STAGING` or `PRODUCTION` execution.
+- Production deployment or production migration.
+- Production secret access.
+- Provider credential creation, exposure, or rotation.
+- Supabase or other provider mutation merely because repository code passed CI.
+- Remote database migration execution.
+- Destructive provider operations or break-glass access.
+- Bypassing tenant isolation or RLS.
+- Granting `BYPASSRLS`.
+- Granting table ownership to runtime or application identities.
+- Force pushing protected branches or disabling deletion protection.
+- Direct unreviewed production changes.
+- Treating AUTH and DATA projects as interchangeable.
+- An AI agent approving risk or independently granting merge authority.
+
+Any provider or remote infrastructure action still requires its own exact, separate owner authorization and provider preflight under the existing rules.
+
+Branch protection may reflect the actual number of eligible human maintainers during solo `DEVELOPMENT`, but `main` remains protected, force pushes remain prohibited, deletion remains prohibited, conversation resolution remains required, and automated certification must be required when technically available. Each branch-protection change requires its own explicit bounded authorization. Approval requirements must not be hardcoded to zero indefinitely, and protections must be strengthened when independent maintainers are added.
+
+When at least one suitable independent human reviewer becomes available, repository governance must be reassessed before the next `R1` or `R2` merge. When sufficient qualified reviewers exist, independent-review enforcement must be restored according to the normal `R0`/`R1`/`R2`/`R3` policy.
+
+Current repository controls remain requirements rather than proof of production readiness. This exception does not make `PLATFORM_PRODUCTION_READINESS=READY`; production remains blocked unless the full production evidence gate is satisfied.
 
 ## Engineering and production change policy
 

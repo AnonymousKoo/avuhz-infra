@@ -1,4 +1,4 @@
-name: DEVELOPMENT AUTH Plan v5 PostgreSQL Certification
+name: DEVELOPMENT AUTH Plan v7 PostgreSQL Certification
 
 on:
   pull_request:
@@ -9,6 +9,8 @@ on:
       - contracts/plans/v1/development-auth-integration.progress.json
       - contracts/plans/v1/development-auth-provider-preflight.evidence.json
       - contracts/plans/v1/development-auth-step1-v5-local.evidence.json
+      - contracts/plans/v1/development-auth-step1-v6-local.evidence.json
+      - contracts/plans/v1/development-auth-step1-v7-local.evidence.json
       - supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql
       - supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql
       - supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql
@@ -24,20 +26,26 @@ permissions:
   contents: read
 
 concurrency:
-  group: development-auth-plan-v5-certification-${{ github.event.pull_request.number || github.ref }}
+  group: development-auth-plan-v7-certification-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
-  certify-development-auth-plan-v5:
+  certify-development-auth-plan-v7:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
     env:
       AVUHZ_CERTIFIED_BASE_SHA: e60f54b6845bdaa006e52cd1f83ec1987eb9db6d
-      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-development-auth-v5-postgres
+      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-development-auth-v7-postgres
       AVUHZ_POSTGRES_IMAGE: postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
       AVUHZ_POSTGRES_DIGEST: sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+      AVUHZ_PLAN_DIGEST: sha256:c7dd1770ae91aa0aea570c739cfeb358890e69a3a3ff81260ab70e0c5ad94938
+      AVUHZ_PROGRESS_DIGEST: sha256:0dc83c7b72fccb4fde50baa3e37e30f4e8e14770406e0510ba67328fb2b36d52
+      AVUHZ_V7_EVIDENCE_DIGEST: sha256:75568298af56a7f02ab826118902d3e8b1f62e290e57bea93da770b7f82a6211
+      AVUHZ_BOOTSTRAP_DIGEST: sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45
+      AVUHZ_HOOK_DIGEST: sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783
+      AVUHZ_SEAL_DIGEST: sha256:aafec1973fa60e3a2b7076f36c989a373fb1115a1e9e3760781a0ef41ca9b1ad
 
     steps:
       - name: Checkout exact candidate
@@ -51,12 +59,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          command -v python3
+          python3 --version
 
           artifacts=(
             contracts/plans/v1/development-auth-integration.plan.json
             contracts/plans/v1/development-auth-integration.progress.json
             contracts/plans/v1/development-auth-provider-preflight.evidence.json
             contracts/plans/v1/development-auth-step1-v5-local.evidence.json
+            contracts/plans/v1/development-auth-step1-v6-local.evidence.json
+            contracts/plans/v1/development-auth-step1-v7-local.evidence.json
             supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql
             supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql
             supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql
@@ -74,14 +86,64 @@ jobs:
           fi
           git merge-base --is-ancestor "${AVUHZ_CERTIFIED_BASE_SHA}" HEAD
 
-          actual_paths="${RUNNER_TEMP}/avuhz-v5-candidate-paths.txt"
-          permitted_paths="${RUNNER_TEMP}/avuhz-v5-permitted-paths.txt"
+          actual_paths="${RUNNER_TEMP}/avuhz-v7-candidate-paths.txt"
+          permitted_paths="${RUNNER_TEMP}/avuhz-v7-permitted-paths.txt"
           git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD" | sort > "$actual_paths"
           printf '%s\n' "${artifacts[@]}" | sort > "$permitted_paths"
           if ! diff -u "$permitted_paths" "$actual_paths"; then
-            echo "::error::Candidate file set differs from the exact DEVELOPMENT AUTH v5 scope."
+            echo "::error::Candidate file set differs from the exact DEVELOPMENT AUTH v7 scope."
             exit 1
           fi
+
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          root = Path.cwd()
+          sys.path.insert(0, str(root / "src"))
+          from avuhz_runtime.implementation_handoff import canonical_digest
+
+          plan = json.loads(
+              (root / "contracts/plans/v1/development-auth-integration.plan.json").read_text()
+          )
+          progress = json.loads(
+              (root / "contracts/plans/v1/development-auth-integration.progress.json").read_text()
+          )
+          evidence = json.loads(
+              (
+                  root
+                  / "contracts/plans/v1/development-auth-step1-v7-local.evidence.json"
+              ).read_text()
+          )
+
+          if plan.get("plan_version") != 7:
+              raise SystemExit("candidate plan version is not 7")
+          if plan.get("plan_digest") != os.environ["AVUHZ_PLAN_DIGEST"]:
+              raise SystemExit("candidate plan digest does not match the exact v7 digest")
+          if progress.get("plan_version") != 7:
+              raise SystemExit("candidate progress plan version is not 7")
+          if progress.get("plan_digest") != os.environ["AVUHZ_PLAN_DIGEST"]:
+              raise SystemExit("candidate progress is not bound to the exact v7 plan digest")
+          if progress.get("progress_digest") != os.environ["AVUHZ_PROGRESS_DIGEST"]:
+              raise SystemExit("candidate progress digest does not match the exact v7 digest")
+          if evidence.get("evidence_type") != "migration.artifacts.local-forward-correction-v7":
+              raise SystemExit("candidate v7 local evidence type is unexpected")
+          if canonical_digest(evidence) != os.environ["AVUHZ_V7_EVIDENCE_DIGEST"]:
+              raise SystemExit("candidate v7 local evidence digest does not match")
+          print("development_auth_v7_metadata_verified=true")
+          PY
+
+          bootstrap_digest="sha256:$(sha256sum supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql | awk '{print $1}')"
+          test "$bootstrap_digest" = "${AVUHZ_BOOTSTRAP_DIGEST}"
+          echo "corrected_bootstrap_digest_verified=true"
+          hook_digest="sha256:$(sha256sum supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql | awk '{print $1}')"
+          test "$hook_digest" = "${AVUHZ_HOOK_DIGEST}"
+          echo "corrected_hook_digest_verified=true"
+          seal_digest="sha256:$(sha256sum supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql | awk '{print $1}')"
+          test "$seal_digest" = "${AVUHZ_SEAL_DIGEST}"
+          echo "corrected_seal_digest_verified=true"
 
           git rev-parse HEAD
           git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD"
@@ -101,13 +163,13 @@ jobs:
           python3 --version
           command -v jq
           git status --porcelain=v1 --untracked-files=all \
-            > "${RUNNER_TEMP}/avuhz-v5-pre-dependency-status.txt"
+            > "${RUNNER_TEMP}/avuhz-v7-pre-dependency-status.txt"
           sudo apt-get update
           sudo apt-get install --yes ripgrep
           command -v rg
           rg --version
 
-          constraints="${RUNNER_TEMP}/avuhz-v5-ci-constraints.txt"
+          constraints="${RUNNER_TEMP}/avuhz-v7-ci-constraints.txt"
           cat > "$constraints" <<'CONSTRAINTS'
           semgrep==1.136.0
           setuptools==68.1.2
@@ -167,10 +229,10 @@ jobs:
           PY
           test "$(semgrep --version | tail -n1)" = "1.136.0"
           git status --porcelain=v1 --untracked-files=all \
-            > "${RUNNER_TEMP}/avuhz-v5-post-dependency-status.txt"
+            > "${RUNNER_TEMP}/avuhz-v7-post-dependency-status.txt"
           cmp --silent \
-            "${RUNNER_TEMP}/avuhz-v5-pre-dependency-status.txt" \
-            "${RUNNER_TEMP}/avuhz-v5-post-dependency-status.txt"
+            "${RUNNER_TEMP}/avuhz-v7-pre-dependency-status.txt" \
+            "${RUNNER_TEMP}/avuhz-v7-post-dependency-status.txt"
 
       - name: Start disposable PostgreSQL 17
         shell: bash
@@ -195,7 +257,7 @@ jobs:
             --name "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
             --env POSTGRES_HOST_AUTH_METHOD=trust \
             "${AVUHZ_POSTGRES_IMAGE}"
-          touch "${RUNNER_TEMP}/avuhz-v5-postgres-created"
+          touch "${RUNNER_TEMP}/avuhz-v7-postgres-created"
 
           ready=false
           for _ in $(seq 1 45); do
@@ -264,6 +326,8 @@ jobs:
           method = "test_missing_migration_role_create_privilege_fails_after_effective_role_switch"
           if re.search(r"skipped|skip=", text, re.IGNORECASE):
               raise SystemExit("PostgreSQL-backed hook tests were skipped")
+          if "ACL arrays must be one-dimensional" in text:
+              raise SystemExit("corrected hook encountered the superseded database ACL failure")
           start = text.find(method)
           if start < 0:
               raise SystemExit("effective-role privilege-order test result is missing")
@@ -314,10 +378,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          final_status="${RUNNER_TEMP}/avuhz-v5-final-status.txt"
+          final_status="${RUNNER_TEMP}/avuhz-v7-final-status.txt"
           git status --porcelain=v1 --untracked-files=all > "$final_status"
           cmp --silent \
-            "${RUNNER_TEMP}/avuhz-v5-pre-dependency-status.txt" \
+            "${RUNNER_TEMP}/avuhz-v7-pre-dependency-status.txt" \
             "$final_status"
           test ! -s "$final_status"
 
@@ -335,7 +399,7 @@ jobs:
               --format '{{.Names}}')"
             test -z "$remaining"
             echo "disposable_postgres_removed=true"
-          elif [[ -f "${RUNNER_TEMP}/avuhz-v5-postgres-created" ]]; then
+          elif [[ -f "${RUNNER_TEMP}/avuhz-v7-postgres-created" ]]; then
             echo "disposable_postgres_already_absent=true"
           else
             echo "disposable_postgres_was_not_created=true"

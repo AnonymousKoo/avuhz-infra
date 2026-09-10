@@ -113,9 +113,7 @@ begin
   if exists (
     select 1
       from pg_database database_record
-      cross join lateral aclexplode(
-        coalesce(database_record.datacl, '{}'::aclitem[])
-      ) database_acl
+      cross join lateral aclexplode(database_record.datacl) database_acl
      where database_record.datname = current_database()
        and database_acl.grantee = migration_role_oid
   ) then

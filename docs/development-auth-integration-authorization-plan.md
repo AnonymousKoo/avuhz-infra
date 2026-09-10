@@ -53,13 +53,16 @@ Canonical artifacts:
 - `contracts/plans/v1/development-auth-integration.plan.json`
 - `contracts/plans/v1/development-auth-integration.progress.json`
 - `contracts/plans/v1/development-auth-step1-baseline.evidence.json` (historical v2 lineage)
-- `contracts/plans/v1/development-auth-step1-v5-local.evidence.json`
+- `contracts/plans/v1/development-auth-provider-preflight.evidence.json` (sanitized historical DEVELOPMENT AUTH provider observation)
+- `contracts/plans/v1/development-auth-step1-v5-local.evidence.json` (historical failed-v5 candidate lineage)
+- `contracts/plans/v1/development-auth-step1-v6-local.evidence.json` (rejected pre-commit v6 lineage)
+- `contracts/plans/v1/development-auth-step1-v7-local.evidence.json` (current forward-correction evidence)
 
 | Binding | Current value |
 |---|---|
 | Plan ID | `a7100000-0000-4000-8000-000000000101` |
-| Plan version | `4` |
-| Plan digest | `sha256:fd7b0760ff2939da616a2fdf8a476ac3772de39ccd5858e4d5b6e589a1384a3f` |
+| Plan version | `7` |
+| Plan digest | `sha256:c7dd1770ae91aa0aea570c739cfeb358890e69a3a3ff81260ab70e0c5ad94938` |
 | Definition status | `DRAFT_BLOCKED` |
 | Environment | `DEVELOPMENT` |
 | Provider/project | Supabase / `pwlhruwutoitnieactol` |
@@ -67,18 +70,48 @@ Canonical artifacts:
 | Issuer | `https://pwlhruwutoitnieactol.supabase.co/auth/v1` |
 | Expected audience | `audience.avuhz.command-service.development` |
 | Planned hook | `public.avuhz_development_custom_access_token_hook_v1(jsonb)` |
-| Step 1 v5 local evidence | `(recomputed in the v5 evidence artifact)` |
+| Current v7 local evidence | `contracts/plans/v1/development-auth-step1-v7-local.evidence.json` |
+| Current v7 local evidence digest | `sha256:75568298af56a7f02ab826118902d3e8b1f62e290e57bea93da770b7f82a6211` |
+| Progress plan version | `7` |
+| Progress digest | `sha256:0dc83c7b72fccb4fde50baa3e37e30f4e8e14770406e0510ba67328fb2b36d52` |
+| Progress record_version | `1` |
 | Approval record | Not created |
 | Authorization window | Unresolved |
-| Execution | Not started; all 13 step authorizations pending |
+| Execution | Not started; all 13 step authorizations remain pending |
 
 This draft is not owner approval and grants no provider access or change authority. Local artifact certification does not mark Step 1 executed and does not authorize any provider step.
+
+## v5 PostgreSQL certification failure, rejected v6, and v7 forward correction
+
+The historical v5 candidate at commit `bf4eae2b6157e43f8f79bfabde0de2776e79f804` was exercised by GitHub Actions run `34377965523` against PostgreSQL 17.11. That certification concluded `FAILURE`. Before failing, it passed bounded authorization-plan validation, the migration-identity bootstrap PostgreSQL suite, and the dedicated NOSUPERUSER `SET ROLE` regression. It then failed during hook effective-role ordering certification.
+
+The failure occurred because a `NULL` `pg_database.datacl` was replaced with an artificial empty `aclitem[]` before `aclexplode`, producing a zero-dimensional array. PostgreSQL returned `ACL arrays must be one-dimensional`. No raw CI logs are reproduced here, and v5 was not certified.
+
+### Rejected pre-commit v6 lineage
+
+Plan v6 was a local forward-correction draft with plan digest `sha256:38ff584ad6aee636cef2c1f75ce44f528900e159754f106f7378e3de7c9b7243` and evidence digest `sha256:d39fa647a374e8e60c62227077683acd1b84a1aad7736cfc1ac98a589447102c`. It was never committed as the forward correction, never reached fresh CI, and caused no provider execution.
+
+Final local review found the same `NULL` `pg_database.datacl` / `aclexplode` defect still present in the bootstrap postcondition and in the seal preflight and postcondition. Plan v6 was therefore rejected and superseded before commit. Because plan definitions are immutable, correcting those digest-bound artifacts required advancing to plan v7 rather than rewriting v6 in place.
+
+### Current v7 correction set
+
+Plan v7 binds the current bootstrap migration at `sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45`, hook migration at `sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783`, and seal migration at `sha256:aafec1973fa60e3a2b7076f36c989a373fb1115a1e9e3760781a0ef41ca9b1ad`.
+
+The hook and bootstrap each contain one corrected direct `pg_database.datacl` inspection. The seal contains two, one in preflight and one in postcondition. Every corrected inspection passes `database_record.datacl` directly to `aclexplode`; a `NULL` ACL therefore means no explicit ACL rows for this direct-grant inspection.
+
+These corrections removed no direct database ACL security check, widened no privilege, changed no role attribute or `SET ROLE` semantic, changed no hook claim behavior or hook ACL, changed no seal mutation surface, changed no provider target or AUTH/DATA responsibility boundary, and changed no ambient PUBLIC database ACL policy.
+
+### Current PostgreSQL 17 certification truth
+
+The current v7 bootstrap, hook, and seal artifacts are each **not PostgreSQL-17 certified**, and the complete current v7 artifact set is **not PostgreSQL-17 certified**. Certification is digest-specific: the historical v5 bootstrap observation applies only to the superseded bootstrap digest `sha256:640fb4d2dbff9962f21b83b862cc455fe5e8be2ff5dd4b34bdf99cf3b0721356`, not the current bootstrap or seal. The corrected hook did not complete fresh PostgreSQL 17 certification. Fresh GitHub Actions PostgreSQL-17 certification of the exact current digests remains required.
+
+The local GitHub Actions workflow is internally aligned as `DEVELOPMENT AUTH Plan v7 PostgreSQL Certification` and is configured to certify the exact current v7 candidate with disposable PostgreSQL 17. It has not yet run against the current v7 candidate, so fresh PostgreSQL-17 certification remains pending; this documentation correction does not execute the workflow or establish CI success, provider execution, approval, or authorization.
 
 ## Exact ordered sequence
 
 | Step | Class | Exact resource/change | Allowed credential class | Required gate and postcondition |
 |---|---|---|---|---|
-| 1 | Local-only | Validate the ordered bootstrap, effective-role hook, and immediate seal artifacts | `NONE` | Fresh v5 local evidence binds all three migrations and focused tests; nothing applied or enabled |
+| 1 | Local-only | Validate the ordered bootstrap, effective-role hook, and immediate seal artifacts | `NONE` | Current v7 local evidence binds the corrected bootstrap, hook, seal, and focused tests; nothing has been applied or enabled, and the exact current set has not been PostgreSQL-17 certified |
 | 2 | Provider mutation | Bootstrap only `avuhz_migration_service_dev`, one bounded membership edge, and its temporary schema envelope | `OWNER_INTERACTIVE_SESSION` | Exact `session_user=current_user=postgres`; restricted NOLOGIN role; postgres may SET but not inherit/admin; no direct database/table/sequence/provider-schema privilege; non-grantable public USAGE/CREATE only; admin grants public USAGE to `supabase_auth_admin`; hook absent |
 | 3 | Provider mutation | Apply exactly the hardened hook migration under the dedicated effective role | `MIGRATION_IDENTITY` | Exact bootstrap and artifact evidence; `SET LOCAL ROLE avuhz_migration_service_dev`; `current_user` transition proven before exact function/ACL creation; schema ACL unchanged; hook disabled |
 | 4 | Provider mutation | Seal the migration identity immediately after hook application | `OWNER_INTERACTIVE_SESSION` | Exact step-3 application evidence and preflight; revoke migration-role public CREATE/USAGE and postgres membership only; function owner/ACL and `supabase_auth_admin` access remain |
@@ -119,12 +152,18 @@ Supabase remains an adapter. AUTH and DATA are logically separate even while DEV
 
 ## Current blockers
 
-Plan v5 remains intentionally `DRAFT_BLOCKED`. It binds:
+Plan v7 remains intentionally `DRAFT_BLOCKED`. Its active bindings are:
 
-- bootstrap migration SHA-256 `1706c13211cc64b4996c779b8b9745be7cb7670261f9a9e613f7e67a05dc8635`;
-- hook migration SHA-256 `1773c54ef1ec6706b26fa9e38f2820f073832097c8767cb3160fcfec7eb01376`; and
-- seal migration SHA-256 `0b8450e0b5984988a191fc81cd992ba0ef20bb805dc7d71123019244af8830b5`.
+- bootstrap migration SHA-256 `sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45`;
+- hook migration SHA-256 `sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783`;
+- seal migration SHA-256 `sha256:aafec1973fa60e3a2b7076f36c989a373fb1115a1e9e3760781a0ef41ca9b1ad`;
+- v7 evidence canonical digest `sha256:75568298af56a7f02ab826118902d3e8b1f62e290e57bea93da770b7f82a6211`; and
+- progress digest `sha256:0dc83c7b72fccb4fde50baa3e37e30f4e8e14770406e0510ba67328fb2b36d52`.
 
-The historical v2 evidence remains immutable lineage. The rejected, uncommitted v3 evidence is superseded and is not a current artifact. Fresh v5 evidence binds the corrected migrations and tests without provider claims.
+The historical v2 evidence remains immutable lineage. The rejected, uncommitted v3/v4 drafts are superseded and are not current artifacts. The v5 evidence at `contracts/plans/v1/development-auth-step1-v5-local.evidence.json`, canonical digest `sha256:8d73fcd2b1ae9475a213716b8cd314803c5215b6b17eaa99dcb37d0e06d8a07e`, is preserved only as historical failed-certification lineage. The v6 evidence is preserved only as rejected pre-commit lineage. Current v7 local evidence binds the forward-corrected artifacts without claiming PostgreSQL certification or provider execution.
 
-Nothing has been applied to Supabase. The migration identity binding remains unresolved until Step 2 is separately authorized, executed, and independently verified. No authorization window or approval exists. Later unresolved values include verification identity/function digest, provider synthetic identity and subject, DEVELOPMENT tenant UUID, server-policy digest, hook configuration reference, and ephemeral credential-delivery procedure. Every provider step requires a new exact authorization after its prior evidence exists; any binding change requires a new plan version and digest.
+Fresh PostgreSQL 17 certification of the exact v7 artifact set remains pending. The migration identity binding and authorization window remain unresolved, and no approval exists. The function/provider verification binding, synthetic DEVELOPMENT Auth identity, provider subject, DEVELOPMENT tenant UUID, server-policy/capability digest, hook configuration reference, and ephemeral token/JWKS evidence remain unresolved where applicable.
+
+Progress record version `1` remains `NOT_STARTED`: all 13 authorization states are `PENDING`, all execution and verification states are `NOT_STARTED`, no authorization is consumed, and no progress evidence is recorded. No Supabase migration has been applied, `avuhz_migration_service_dev` has not been created remotely, the hook has not been created or enabled, no synthetic identity has been created, and no token has been issued. No provider contact or mutation occurred during the local v6 or v7 corrections.
+
+Every provider step requires a new exact authorization after its prior evidence exists; any binding change requires a new plan version and digest. The locally aligned v7 workflow has not yet run against the current candidate, so fresh PostgreSQL-17 certification remains pending.

@@ -1,0 +1,87 @@
+{
+  "evidence_type": "migration.artifacts.local-forward-correction-v6",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "authority": {
+    "classification": "LOCAL_EVIDENCE_ONLY",
+    "grants_provider_authority": false,
+    "grants_mutation_authority": false,
+    "grants_plan_approval": false
+  },
+  "lineage": {
+    "source_plan_version": 5,
+    "source_plan_digest": "sha256:e0f073c6e51923b97859aaf6072b6692e726c2f03adfcb4102d04b2fa4b6761f",
+    "source_candidate_commit": "bf4eae2b6157e43f8f79bfabde0de2776e79f804",
+    "source_v5_local_evidence_path": "contracts/plans/v1/development-auth-step1-v5-local.evidence.json",
+    "source_v5_local_evidence_digest": "sha256:8d73fcd2b1ae9475a213716b8cd314803c5215b6b17eaa99dcb37d0e06d8a07e",
+    "source_failed_ci_run_id": 34377965523,
+    "source_ci_conclusion": "FAILED",
+    "target_plan_version": 6,
+    "target_plan_binding_state": "PENDING_LOCAL_PLAN_REVISION"
+  },
+  "failed_ci_certification": {
+    "postgresql_version": "17.11",
+    "postgresql_image_reference": "postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675",
+    "postgresql_started_successfully": true,
+    "pinned_postgresql_registry_digest_resolved": true,
+    "verified_gates": [
+      "bounded plan validation passed",
+      "migration identity bootstrap PostgreSQL suite passed",
+      "non-superuser SET ROLE regression passed"
+    ],
+    "failure_stage": "hook effective-role certification",
+    "failure_summary": "Database ACL inspection passed a zero-dimensional ACL array to aclexplode when datacl was NULL.",
+    "not_reached": [
+      "seal suite after corrected hook",
+      "baseline after complete corrected suites",
+      "diff hygiene after complete corrected suites",
+      "final checkout integrity"
+    ],
+    "raw_ci_log_payload_retained": false,
+    "provider_contact_attempted": false,
+    "supabase_mutation_attempted": false
+  },
+  "artifacts": {
+    "migration_identity": {
+      "path": "supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql",
+      "content_digest": "sha256:640fb4d2dbff9962f21b83b862cc455fe5e8be2ff5dd4b34bdf99cf3b0721356"
+    },
+    "hook_migration": {
+      "path": "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql",
+      "content_digest": "sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783",
+      "superseded_content_digests": [
+        "sha256:66d487c0858e41358c0e169199ed448ddbf264be6f8c22481d183c9559ba9035",
+        "sha256:d436ad730291092b1d7688e7bbe87566a47a2d0be452e2ddb2e2cdcba6285b9c",
+        "sha256:45304f737d90729e16190808f26bf38f4acc19a506f3ea1fa8558d92b598ca4c"
+      ]
+    },
+    "migration_identity_seal": {
+      "path": "supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql",
+      "content_digest": "sha256:0b8450e0b5984988a191fc81cd992ba0ef20bb805dc7d71123019244af8830b5"
+    },
+    "migration_identity_validation": {
+      "path": "tests/migrations/test_development_auth_migration_identity_v1.py",
+      "content_digest": "sha256:f9225015305e064c4712faa9e6de89af690d45dfbc2f17187dd6d43b92545281"
+    },
+    "hook_validation": {
+      "path": "tests/migrations/test_development_auth_custom_access_token_hook_v1.py",
+      "content_digest": "sha256:49b083a81dc53705aaf64e0f79ffb528ec25e1d96cea15d69c5ec098d29696a0"
+    },
+    "migration_identity_seal_validation": {
+      "path": "tests/migrations/test_development_auth_migration_identity_seal_v1.py",
+      "content_digest": "sha256:36c1a0fb8b3f6396cd7e027a0ff224b53c259943d0af7856bf2ca053d5fd236b"
+    }
+  },
+  "correction_state": {
+    "corrected_hook_pg17_certification": "NOT_YET_RUN",
+    "corrected_hook_effective_role_negative_result": "NOT_YET_VERIFIED",
+    "seal_suite_after_corrected_hook": "NOT_YET_RUN",
+    "complete_baseline_after_corrected_suites": "NOT_YET_RUN",
+    "final_diff_and_integrity_gates": "NOT_YET_RUN",
+    "provider_contact": false,
+    "supabase_mutation": false,
+    "hook_created_remotely": false,
+    "hook_enabled": false
+  }
+}

@@ -1,8 +1,8 @@
 {
   "progress_id": "a7100000-0000-4000-8000-000000000102",
   "plan_id": "a7100000-0000-4000-8000-000000000101",
-  "plan_version": 5,
-  "plan_digest": "sha256:e0f073c6e51923b97859aaf6072b6692e726c2f03adfcb4102d04b2fa4b6761f",
+  "plan_version": 7,
+  "plan_digest": "sha256:c7dd1770ae91aa0aea570c739cfeb358890e69a3a3ff81260ab70e0c5ad94938",
   "record_version": 1,
   "overall_state": "NOT_STARTED",
   "step_states": [
@@ -137,6 +137,6 @@
       "safe_error_code": null
     }
   ],
-  "updated_at": "2026-09-09T01:37:13Z",
-  "progress_digest": "sha256:ad7a6d27f22b997f974d8c0be821ac0222575408db98f0579ca5089e3b6246c3"
+  "updated_at": "2026-09-09T20:41:54Z",
+  "progress_digest": "sha256:0dc83c7b72fccb4fde50baa3e37e30f4e8e14770406e0510ba67328fb2b36d52"
 }

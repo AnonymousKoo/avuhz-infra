@@ -40,6 +40,10 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
         names = [path.name for path in self.paths]
         self.assertEqual(names, sorted(names))
         timestamps = []
+        authorization_markers = (
+            "remote application is unauthorized by default",
+            "remote execution is unauthorized by default",
+        )
         for path in self.paths:
             match = re.fullmatch(r"([0-9]{14})_[A-Za-z0-9][A-Za-z0-9_-]*\.sql", path.name)
             self.assertIsNotNone(match, path.name)
@@ -47,7 +51,10 @@ class ProviderNeutralMigrationTests(unittest.TestCase):
             migration = path.read_text().strip().lower()
             self.assertEqual(len(re.findall(r"(?m)^begin;$", migration)), 1, path.name)
             self.assertTrue(migration.endswith("commit;"), path.name)
-            self.assertIn("remote application is unauthorized by default", migration, path.name)
+            self.assertTrue(
+                any(marker in migration for marker in authorization_markers),
+                path.name,
+            )
         self.assertEqual(len(timestamps), len(set(timestamps)))
         self.assertIn("candidate canonical initial migration", self.initial_lower)
         self.assertIn("separate owner authorization", self.initial_lower)

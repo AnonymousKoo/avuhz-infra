@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql"
+IDENTITY_MIGRATION = ROOT / "supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql"
 CONTAINER = os.environ.get("AVUHZ_LOCAL_POSTGRES_CONTAINER")
 DATABASE = "avuhz_development_auth_hook_v1_certification"
 ATOMIC_DATABASE = "avuhz_development_auth_hook_v1_atomic_failure"
@@ -43,6 +44,9 @@ class DevelopmentAuthHookMigrationStaticTests(unittest.TestCase):
             "alter role",
             "auth.hook.custom_access_token",
             "pg-functions://",
+            "create temporary",
+            "create temp",
+            "pg_temp",
         ):
             self.assertNotIn(forbidden, self.lower)
 
@@ -68,17 +72,36 @@ class DevelopmentAuthHookMigrationStaticTests(unittest.TestCase):
 
     def test_fail_closed_preflight(self):
         required = (
+            "session_user <> 'postgres' or current_user <> 'postgres'",
             "requires the public schema",
-            "lacks public schema privileges",
+            "public schema privilege mismatch",
             "requires supabase_auth_admin",
+            "requires bootstrap-owned supabase_auth_admin schema usage",
             "already exists unexpectedly",
             "to_regprocedure('public.avuhz_development_custom_access_token_hook_v1(jsonb)')",
+            "set local role avuhz_migration_service_dev",
+            "current_user <> 'avuhz_migration_service_dev'",
+            "migration identity attributes mismatch",
+            "migration identity membership mismatch",
+            "unexpected direct database privilege",
+            "unexpected provider schema privilege",
+            "unexpected table privilege",
+            "unexpected sequence privilege",
+            "unexpected function privilege",
         )
         for phrase in required:
             self.assertIn(phrase, self.lower)
 
         self.assertLess(
-            self.lower.index("avuhz_development_auth_hook_preflight"),
+            self.lower.index("avuhz_development_auth_hook_executor_preflight"),
+            self.lower.index("set local role avuhz_migration_service_dev"),
+        )
+        self.assertLess(
+            self.lower.index("set local role avuhz_migration_service_dev"),
+            self.lower.index("avuhz_development_auth_hook_effective_role"),
+        )
+        self.assertLess(
+            self.lower.index("avuhz_development_auth_hook_effective_role"),
             self.lower.index(
                 "create function public.avuhz_development_custom_access_token_hook_v1"
             ),
@@ -115,10 +138,11 @@ class DevelopmentAuthHookMigrationStaticTests(unittest.TestCase):
             "array['anon', 'authenticated', 'service_role']",
             self.lower,
         )
-        self.assertIn(
+        self.assertNotIn(
             "grant usage on schema public to supabase_auth_admin",
             self.lower,
         )
+        self.assertNotIn("with grant option", self.lower)
         self.assertIn(
             "grant execute on function "
             "public.avuhz_development_custom_access_token_hook_v1(jsonb)\n"
@@ -158,7 +182,14 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
         return result
 
     @classmethod
-    def _psql(cls, statement, *, database=DATABASE, check=True):
+    def _psql(
+        cls,
+        statement,
+        *,
+        database=DATABASE,
+        user="postgres",
+        check=True,
+    ):
         result = cls._docker(
             "psql",
             "-q",
@@ -166,7 +197,7 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
             "ON_ERROR_STOP=1",
             "-At",
             "-U",
-            "postgres",
+            user,
             "-d",
             database,
             "-c",
@@ -180,13 +211,13 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
         )
 
     @classmethod
-    def _apply(cls, database, sql, *, check=True):
+    def _apply(cls, database, sql, *, user="postgres", check=True):
         return cls._docker(
             "psql",
             "-v",
             "ON_ERROR_STOP=1",
             "-U",
-            "postgres",
+            user,
             "-d",
             database,
             input_bytes=sql.encode(),
@@ -199,6 +230,21 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
         cls._docker("createdb", "-U", "postgres", database)
 
     @classmethod
+    def _prepare_hook_database(cls, database):
+        cls._fresh_database(database)
+        cls._psql(
+            "do $$ begin "
+            "if not exists (select 1 from pg_roles "
+            "where rolname='supabase_auth_admin') "
+            "then create role supabase_auth_admin nologin; "
+            "end if; end $$;"
+            "grant usage on schema public to supabase_auth_admin;"
+            "grant usage on schema public to avuhz_migration_service_dev;"
+            "grant create on schema public to avuhz_migration_service_dev;",
+            database=database,
+        )
+
+    @classmethod
     def setUpClass(cls):
         super().setUpClass()
         if not CONTAINER:
@@ -209,6 +255,13 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
         ):
             raise RuntimeError("invalid local container name")
 
+        for database in (DATABASE, ATOMIC_DATABASE):
+            cls._docker("dropdb", "--if-exists", "-U", "postgres", database)
+        cls._psql(
+            "drop role if exists avuhz_migration_service_dev;"
+            "drop role if exists avuhz_wrong_executor;",
+            database="postgres",
+        )
         cls._fresh_database(DATABASE)
         cls._psql(
             "do $$ begin "
@@ -217,6 +270,7 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
             "then create role supabase_auth_admin nologin; "
             "end if; end $$;"
         )
+        cls._apply(DATABASE, IDENTITY_MIGRATION.read_text())
         cls._apply(DATABASE, MIGRATION.read_text())
 
     @classmethod
@@ -230,6 +284,11 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
                     "postgres",
                     database,
                 )
+            cls._psql(
+                "drop role if exists avuhz_migration_service_dev;"
+                "drop role if exists avuhz_wrong_executor;",
+                database="postgres",
+            )
         super().tearDownClass()
 
     def _call_hook(self, event: dict, *, check=True):
@@ -264,8 +323,15 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
             "where routine_schema='public' "
             "and routine_name='avuhz_development_custom_access_token_hook_v1' "
             "and grantee in ('PUBLIC','anon','authenticated','service_role');"
+            "select pg_get_userbyid(p.proowner) from pg_proc p "
+            "join pg_namespace n on n.oid=p.pronamespace "
+            "where n.nspname='public' "
+            "and p.proname='avuhz_development_custom_access_token_hook_v1';"
         )
-        self.assertEqual(output.splitlines(), ["1", "0", "0", "1", "0"])
+        self.assertEqual(
+            output.splitlines(),
+            ["1", "0", "0", "1", "0", "avuhz_migration_service_dev"],
+        )
 
     def test_valid_provider_controlled_tenant_sets_exact_claims(self):
         _, result, _ = self._call_hook(
@@ -331,6 +397,23 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
         self.assertNotEqual(code, 0)
         self.assertIn("tenant binding is invalid", error)
 
+    def test_missing_migration_role_create_privilege_fails_after_effective_role_switch(self):
+        """Privilege checks must run as the bounded migration role, not postgres."""
+        self._prepare_hook_database(ATOMIC_DATABASE)
+        self._psql(
+            "revoke create on schema public from avuhz_migration_service_dev;",
+            database=ATOMIC_DATABASE,
+        )
+        failed = self._apply(ATOMIC_DATABASE, MIGRATION.read_text(), check=False)
+        self.assertNotEqual(failed.returncode, 0)
+        self.assertIn("public schema privilege mismatch", failed.stderr.decode())
+        _, count, _ = self._psql(
+            "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace "
+            "where n.nspname='public' and p.proname='avuhz_development_custom_access_token_hook_v1';",
+            database=ATOMIC_DATABASE,
+        )
+        self.assertEqual(count, "0")
+
     def test_replay_refuses_preexisting_function(self):
         result = self._apply(
             DATABASE,
@@ -351,16 +434,50 @@ class DevelopmentAuthHookMigrationLocalPostgresTests(unittest.TestCase):
         )
         self.assertEqual(count, "1")
 
-    def test_transaction_failure_leaves_no_partial_hook(self):
-        self._fresh_database(ATOMIC_DATABASE)
+    def test_wrong_executor_fails_before_set_role(self):
+        self._prepare_hook_database(ATOMIC_DATABASE)
         self._psql(
-            "do $$ begin "
-            "if not exists (select 1 from pg_roles "
-            "where rolname='supabase_auth_admin') "
-            "then create role supabase_auth_admin nologin; "
-            "end if; end $$;",
-            database=ATOMIC_DATABASE,
+            "create role avuhz_wrong_executor login;",
+            database="postgres",
         )
+        result = self._apply(
+            ATOMIC_DATABASE,
+            MIGRATION.read_text(),
+            user="avuhz_wrong_executor",
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            "requires the exact approved postgres executor session",
+            result.stderr.decode(),
+        )
+
+    def test_missing_bounded_membership_fails_closed(self):
+        self._prepare_hook_database(ATOMIC_DATABASE)
+        self._psql(
+            "revoke avuhz_migration_service_dev from postgres;",
+            database="postgres",
+        )
+        try:
+            result = self._apply(
+                ATOMIC_DATABASE,
+                MIGRATION.read_text(),
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(
+                "migration identity membership mismatch",
+                result.stderr.decode(),
+            )
+        finally:
+            self._psql(
+                "grant avuhz_migration_service_dev to postgres "
+                "with admin false, inherit false, set true;",
+                database="postgres",
+            )
+
+    def test_transaction_failure_leaves_no_partial_hook(self):
+        self._prepare_hook_database(ATOMIC_DATABASE)
 
         injected = MIGRATION.read_text().replace(
             "\ncommit;",

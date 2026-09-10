@@ -1,0 +1,34 @@
+{
+  "evidence_type": "provider.executor.preflight.observation",
+  "observation_only": true,
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "project_status": "ACTIVE_HEALTHY",
+  "source": {
+    "source_method": "owner-authorized-read-only-supabase-preflight",
+    "source_scope": "DEVELOPMENT_AUTH_ONLY",
+    "raw_provider_payload_retained": false,
+    "credentials_retained": false,
+    "provider_mutation_attempted": false
+  },
+  "database_observation": {
+    "session_user": "postgres",
+    "current_user": "postgres",
+    "current_database": "postgres"
+  },
+  "resource_observation": {
+    "migration_identity": "avuhz_migration_service_dev",
+    "migration_identity_exists": false,
+    "hook_function": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+    "hook_function_exists": false
+  },
+  "limitations": [
+    "sanitized operator/tool observation evidence only",
+    "not plan approval",
+    "not mutation evidence",
+    "not proof the observation remains current forever",
+    "provider preflight must re-confirm exact executor/session immediately before bootstrap, hook, and seal; mismatch is STOP"
+  ]
+}

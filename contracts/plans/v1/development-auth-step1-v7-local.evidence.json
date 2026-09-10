@@ -1,0 +1,168 @@
+{
+  "evidence_type": "migration.artifacts.local-forward-correction-v7",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "authority": {
+    "classification": "LOCAL_EVIDENCE_ONLY",
+    "grants_provider_authority": false,
+    "grants_mutation_authority": false,
+    "grants_plan_approval": false
+  },
+  "lineage": {
+    "historical_v5": {
+      "plan_version": 5,
+      "plan_digest": "sha256:e0f073c6e51923b97859aaf6072b6692e726c2f03adfcb4102d04b2fa4b6761f",
+      "candidate_commit": "bf4eae2b6157e43f8f79bfabde0de2776e79f804",
+      "failed_ci_run_id": 34377965523,
+      "ci_conclusion": "FAILURE",
+      "local_evidence_path": "contracts/plans/v1/development-auth-step1-v5-local.evidence.json",
+      "local_evidence_digest": "sha256:8d73fcd2b1ae9475a213716b8cd314803c5215b6b17eaa99dcb37d0e06d8a07e",
+      "certification_status": "FAILED"
+    },
+    "rejected_v6": {
+      "plan_version": 6,
+      "plan_digest": "sha256:38ff584ad6aee636cef2c1f75ce44f528900e159754f106f7378e3de7c9b7243",
+      "local_evidence_path": "contracts/plans/v1/development-auth-step1-v6-local.evidence.json",
+      "local_evidence_digest": "sha256:d39fa647a374e8e60c62227077683acd1b84a1aad7736cfc1ac98a589447102c",
+      "classification": "LOCAL_REJECTED_DRAFT_SUPERSEDED",
+      "committed": false,
+      "ci_executed": false,
+      "provider_execution_occurred": false
+    },
+    "provider_preflight_evidence_path": "contracts/plans/v1/development-auth-provider-preflight.evidence.json",
+    "provider_preflight_evidence_digest": "sha256:f3d315085b9de80d856f8fa16b22646679e6be4367e3c2ddf48ee954d2580732",
+    "provider_preflight_classification": "HISTORICAL_READ_ONLY_OBSERVATION_ONLY",
+    "target_plan_version": 7,
+    "target_plan_binding_state": "PENDING_LOCAL_PLAN_REVISION"
+  },
+  "historical_v5_pg17_observation": {
+    "postgresql_version": "17.11",
+    "postgresql_image_reference": "postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675",
+    "bootstrap_artifact_digest": "sha256:640fb4d2dbff9962f21b83b862cc455fe5e8be2ff5dd4b34bdf99cf3b0721356",
+    "bounded_plan_validation_passed": true,
+    "bootstrap_postgresql_suite_passed": true,
+    "non_superuser_set_role_regression_passed": true,
+    "hook_certification_failed": true,
+    "current_artifact_certification_claim": false
+  },
+  "rejected_v6_local_review": {
+    "rejection_stage": "FINAL_LOCAL_REVIEW_BEFORE_COMMIT",
+    "rejection_reason": "PostgreSQL 17 NULL database ACL inspection defect remained in the bootstrap migration and in the seal migration preflight and postcondition.",
+    "defect_expression": "coalesce(pg_database.datacl, '{}'::aclitem[])",
+    "defect_effect": "The artificial empty aclitem array is zero-dimensional and aclexplode rejects it.",
+    "affected_checks": [
+      "bootstrap direct database ACL postcondition",
+      "seal direct database ACL preflight",
+      "seal direct database ACL postcondition"
+    ],
+    "ci_executed": false,
+    "committed": false,
+    "provider_execution_occurred": false
+  },
+  "artifacts": {
+    "migration_identity": {
+      "path": "supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql",
+      "content_digest": "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45",
+      "superseded_content_digests": [
+        "sha256:640fb4d2dbff9962f21b83b862cc455fe5e8be2ff5dd4b34bdf99cf3b0721356"
+      ]
+    },
+    "hook_migration": {
+      "path": "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql",
+      "content_digest": "sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783",
+      "superseded_content_digests": [
+        "sha256:66d487c0858e41358c0e169199ed448ddbf264be6f8c22481d183c9559ba9035",
+        "sha256:d436ad730291092b1d7688e7bbe87566a47a2d0be452e2ddb2e2cdcba6285b9c",
+        "sha256:45304f737d90729e16190808f26bf38f4acc19a506f3ea1fa8558d92b598ca4c"
+      ]
+    },
+    "migration_identity_seal": {
+      "path": "supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql",
+      "content_digest": "sha256:aafec1973fa60e3a2b7076f36c989a373fb1115a1e9e3760781a0ef41ca9b1ad",
+      "superseded_content_digests": [
+        "sha256:0b8450e0b5984988a191fc81cd992ba0ef20bb805dc7d71123019244af8830b5"
+      ]
+    },
+    "migration_identity_validation": {
+      "path": "tests/migrations/test_development_auth_migration_identity_v1.py",
+      "content_digest": "sha256:f9225015305e064c4712faa9e6de89af690d45dfbc2f17187dd6d43b92545281"
+    },
+    "hook_validation": {
+      "path": "tests/migrations/test_development_auth_custom_access_token_hook_v1.py",
+      "content_digest": "sha256:49b083a81dc53705aaf64e0f79ffb528ec25e1d96cea15d69c5ec098d29696a0"
+    },
+    "migration_identity_seal_validation": {
+      "path": "tests/migrations/test_development_auth_migration_identity_seal_v1.py",
+      "content_digest": "sha256:36c1a0fb8b3f6396cd7e027a0ff224b53c259943d0af7856bf2ca053d5fd236b"
+    }
+  },
+  "corrections": {
+    "hook": {
+      "database_acl_occurrences_corrected": 1,
+      "null_datacl_passed_directly_to_aclexplode": true,
+      "direct_database_acl_check_preserved": true
+    },
+    "bootstrap": {
+      "database_acl_occurrences_corrected": 1,
+      "null_datacl_passed_directly_to_aclexplode": true,
+      "direct_database_acl_check_preserved": true
+    },
+    "seal": {
+      "database_acl_occurrences_corrected": 2,
+      "null_datacl_passed_directly_to_aclexplode": true,
+      "preflight_direct_database_acl_check_preserved": true,
+      "postcondition_direct_database_acl_check_preserved": true
+    },
+    "security_invariants": {
+      "security_check_removed": false,
+      "privilege_widened": false,
+      "migration_role_attributes_changed": false,
+      "set_role_semantics_changed": false,
+      "seal_mutation_surface_changed": false,
+      "hook_claims_behavior_changed": false,
+      "hook_acl_changed": false,
+      "provider_target_changed": false,
+      "auth_data_boundary_changed": false
+    }
+  },
+  "certification_state": {
+    "current_bootstrap_pg17_certified": false,
+    "current_hook_pg17_certified": false,
+    "current_seal_pg17_certified": false,
+    "full_current_artifact_set_pg17_certified": false,
+    "historical_v5_pg17_observation_is_digest_bound_only": true
+  },
+  "local_validation": {
+    "postgresql_tests_executed": false,
+    "migration_identity": {
+      "suite_result": "PASS_WITH_POSTGRESQL_SKIPS",
+      "static_tests_passed": 5,
+      "postgresql_tests_skipped": 5,
+      "total_tests": 10
+    },
+    "hook_migration": {
+      "suite_result": "PASS_WITH_POSTGRESQL_SKIPS",
+      "static_tests_passed": 5,
+      "postgresql_tests_skipped": 9,
+      "total_tests": 14
+    },
+    "migration_identity_seal": {
+      "suite_result": "PASS_WITH_POSTGRESQL_SKIPS",
+      "static_tests_passed": 4,
+      "postgresql_tests_skipped": 7,
+      "total_tests": 11
+    }
+  },
+  "provider_and_authorization_state": {
+    "provider_contact_attempted": false,
+    "remote_mutation_attempted": false,
+    "supabase_mutation_attempted": false,
+    "role_created_remotely": false,
+    "hook_created_remotely": false,
+    "hook_enabled": false,
+    "synthetic_identity_created": false,
+    "token_issued": false,
+    "authorization_consumed": false
+  }
+}

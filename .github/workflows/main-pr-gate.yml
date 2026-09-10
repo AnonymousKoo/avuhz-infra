@@ -1,0 +1,382 @@
+name: Main PR Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main-pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  main-pr-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: "src:."
+      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-main-pr-gate-postgres
+      AVUHZ_POSTGRES_IMAGE: postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+      AVUHZ_POSTGRES_DIGEST: sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+      AVUHZ_INTEGRATION_DATABASE: avuhz_main_pr_gate
+      AVUHZ_POSTGRES_DSN: "host=127.0.0.1 port=5432 dbname=avuhz_main_pr_gate user=postgres"
+
+    steps:
+      - name: Checkout exact pull request head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Verify clean repository-local candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "${{ github.event.pull_request.base.ref }}" = "main"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git cat-file -e "${{ github.event.pull_request.base.sha }}^{commit}"
+
+          initial_status="${RUNNER_TEMP}/avuhz-main-pr-gate-initial-status.txt"
+          git status --porcelain=v1 --untracked-files=all > "$initial_status"
+          test ! -s "$initial_status"
+
+          echo "head_sha=${{ github.event.pull_request.head.sha }}"
+          echo "base_sha=${{ github.event.pull_request.base.sha }}"
+          echo "repository_local_gate=true"
+          echo "cross_repo_suite_portable=false"
+          echo "provider_contact_attempted=false"
+          echo "supabase_contact_attempted=false"
+          echo "remote_mutation_attempted=false"
+
+      - name: Install pinned local validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          command -v git
+          command -v bash
+          command -v python3
+          command -v jq
+          command -v docker
+
+          python3 - <<'PY'
+          import sys
+          if sys.version_info < (3, 11):
+              raise SystemExit("Python 3.11 or newer is required")
+          print(sys.version.split()[0])
+          PY
+
+          sudo apt-get update
+          sudo apt-get install --yes ripgrep
+          command -v rg
+          rg --version
+
+          constraints="${RUNNER_TEMP}/avuhz-main-pr-gate-constraints.txt"
+          cat > "$constraints" <<'CONSTRAINTS'
+          semgrep==1.136.0
+          setuptools==68.1.2
+          jsonschema==4.10.3
+          psycopg==3.3.4
+          psycopg-binary==3.3.4
+          boltons==21.0.0
+          bracex==3.0.1
+          click==8.1.8
+          click-option-group==0.5.9
+          defusedxml==0.7.1
+          deprecated==1.3.1
+          exceptiongroup==1.2.2
+          face==26.0.1
+          glom==22.1.0
+          googleapis-common-protos==1.75.0
+          importlib-metadata==7.1.0
+          opentelemetry-api==1.25.0
+          opentelemetry-exporter-otlp-proto-common==1.25.0
+          opentelemetry-exporter-otlp-proto-http==1.25.0
+          opentelemetry-instrumentation==0.46b0
+          opentelemetry-instrumentation-requests==0.46b0
+          opentelemetry-proto==1.25.0
+          opentelemetry-sdk==1.25.0
+          opentelemetry-semantic-conventions==0.46b0
+          opentelemetry-util-http==0.46b0
+          peewee==3.19.0
+          protobuf==4.25.9
+          rich==13.5.3
+          ruamel.yaml==0.19.1
+          tomli==2.0.2
+          wcmatch==8.5.2
+          wrapt==1.17.3
+          zipp==4.1.0
+          CONSTRAINTS
+
+          python3 -m pip install --disable-pip-version-check --no-input \
+            --constraint "$constraints" \
+            setuptools==68.1.2 \
+            jsonschema==4.10.3 \
+            psycopg==3.3.4 \
+            psycopg-binary==3.3.4 \
+            semgrep==1.136.0
+          python3 -m pip check
+
+          python3 - <<'PY'
+          from importlib.metadata import version
+
+          expected = {
+              "setuptools": "68.1.2",
+              "jsonschema": "4.10.3",
+              "psycopg": "3.3.4",
+              "psycopg-binary": "3.3.4",
+              "semgrep": "1.136.0",
+          }
+          for package, required in expected.items():
+              installed = version(package)
+              print(f"{package}=={installed}")
+              if installed != required:
+                  raise SystemExit(f"{package} does not match the pinned version")
+          PY
+
+          command -v semgrep
+          test "$(semgrep --version | tail -n1)" = "1.136.0"
+          for tool in git bash python3 jq docker rg semgrep; do
+            command -v "$tool"
+          done
+
+      - name: Run canonical repository baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./scripts/check-baseline.sh
+
+      - name: Run portable repository unit suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests/runtime -p 'test_*.py' -v
+          python3 -m unittest discover -s tests/service -p 'test_*.py' -v
+          python3 -m unittest discover -s tests/worker -p 'test_*.py' -v
+          python3 -m unittest discover -s tests/architecture -p 'test_*.py' -v
+          python3 -m unittest discover -s tests/engineering -p 'test_*.py' -v
+          python3 -m unittest discover -s tests/security -p 'test_*.py' -v
+
+      - name: Validate runtime schema representability
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/schema/validate_runtime_schema_representability.py
+
+      - name: Record cross-repository portability gap
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f tests/cross_repo/test_sekinfra_handoff.py
+          echo "cross_repo_suite_included=false"
+          echo "cross_repo_suite_portable=false"
+
+      - name: Start stable disposable PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker pull "${AVUHZ_POSTGRES_IMAGE}"
+          repo_digests="$(docker image inspect "${AVUHZ_POSTGRES_IMAGE}" --format '{{json .RepoDigests}}')"
+          python3 - "$repo_digests" "${AVUHZ_POSTGRES_DIGEST}" <<'PY'
+          import json
+          import sys
+
+          repo_digests = json.loads(sys.argv[1])
+          expected = sys.argv[2]
+          if not any(item.endswith("@" + expected) for item in repo_digests):
+              raise SystemExit("PostgreSQL RepoDigests do not contain the required digest")
+          PY
+
+          docker run --detach --rm \
+            --name "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            --env POSTGRES_HOST_AUTH_METHOD=trust \
+            --publish 127.0.0.1:5432:5432 \
+            "${AVUHZ_POSTGRES_IMAGE}"
+          touch "${RUNNER_TEMP}/avuhz-main-pr-gate-postgres-created"
+
+          ready=false
+          consecutive_successes=0
+          stable_postmaster_start=""
+          for _ in $(seq 1 60); do
+            if postmaster_start="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+              psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+              -c 'select pg_postmaster_start_time();' 2>/dev/null)"; then
+              if [[ -n "$postmaster_start" && "$postmaster_start" == "$stable_postmaster_start" ]]; then
+                consecutive_successes=$((consecutive_successes + 1))
+              else
+                stable_postmaster_start="$postmaster_start"
+                consecutive_successes=1
+              fi
+              if (( consecutive_successes >= 3 )); then
+                ready=true
+                break
+              fi
+            else
+              consecutive_successes=0
+              stable_postmaster_start=""
+            fi
+            sleep 1
+          done
+
+          if [[ "$ready" != "true" ]]; then
+            echo "::error::Disposable PostgreSQL 17 did not reach stable readiness."
+            exit 1
+          fi
+
+          docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+            -c 'select version();'
+          server_version_num="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+            -c 'show server_version_num;')"
+          case "$server_version_num" in
+            17*) ;;
+            *) echo "::error::Disposable PostgreSQL major version is not 17."; exit 1 ;;
+          esac
+          echo "disposable_postgres_ready=true"
+
+      - name: Run PostgreSQL migration suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/avuhz-main-pr-gate-migration-tests.txt"
+          python3 -m unittest discover \
+            -s tests/migrations \
+            -p 'test_*.py' \
+            -v 2>&1 | tee "$output"
+          if grep -Eiq 'skipped=[1-9][0-9]*|[.][.][.] skipped ' "$output"; then
+            echo "::error::A PostgreSQL migration test was skipped."
+            exit 1
+          fi
+          echo "postgres_migration_tests_skipped=false"
+
+      - name: Replay provider-neutral baseline locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            dropdb --if-exists -U postgres "${AVUHZ_INTEGRATION_DATABASE}"
+          docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            createdb -U postgres "${AVUHZ_INTEGRATION_DATABASE}"
+          docker exec -i "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            psql -X -v ON_ERROR_STOP=1 -U postgres -d "${AVUHZ_INTEGRATION_DATABASE}" \
+            < supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql
+          echo "provider_neutral_baseline_replayed_locally=true"
+
+      - name: Run disposable PostgreSQL integration suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/avuhz-main-pr-gate-integration-tests.txt"
+          python3 -m unittest discover \
+            -s tests/integration \
+            -p 'test_*.py' \
+            -v 2>&1 | tee "$output"
+          if grep -Eiq 'skipped=[1-9][0-9]*|[.][.][.] skipped ' "$output"; then
+            echo "::error::A PostgreSQL integration test was skipped."
+            exit 1
+          fi
+          echo "postgres_integration_tests_skipped=false"
+
+      - name: Build repository wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel_dir="${RUNNER_TEMP}/avuhz-main-pr-gate-wheel"
+          mkdir "$wheel_dir"
+          python3 -m pip wheel . \
+            --no-deps \
+            --no-build-isolation \
+            --disable-pip-version-check \
+            -w "$wheel_dir"
+
+      - name: Verify repository wheel contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "${RUNNER_TEMP}/avuhz-main-pr-gate-wheel" <<'PY'
+          import sys
+          import tomllib
+          import zipfile
+          from pathlib import Path
+
+          root = Path.cwd()
+          wheel_dir = Path(sys.argv[1])
+          wheels = sorted(wheel_dir.glob("*.whl"))
+          if len(wheels) != 1:
+              raise SystemExit("exactly one wheel is required")
+
+          project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+          with zipfile.ZipFile(wheels[0]) as archive:
+              names = set(archive.namelist())
+              metadata_files = sorted(
+                  name for name in names if name.endswith(".dist-info/METADATA")
+              )
+              if len(metadata_files) != 1:
+                  raise SystemExit("exactly one wheel METADATA file is required")
+              metadata = {}
+              for line in archive.read(metadata_files[0]).decode().splitlines():
+                  if ":" in line:
+                      key, value = line.split(":", 1)
+                      metadata[key] = value.strip()
+
+          if metadata.get("Name") != project["name"]:
+              raise SystemExit("wheel package Name does not match pyproject.toml")
+          if metadata.get("Version") != project["version"]:
+              raise SystemExit("wheel package Version does not match pyproject.toml")
+          if not any(name.startswith("avuhz_service/") for name in names):
+              raise SystemExit("wheel does not include avuhz_service")
+          if not any(name.startswith("avuhz_worker/") for name in names):
+              raise SystemExit("wheel does not include avuhz_worker")
+          print("wheel_content_verification=passed")
+          PY
+
+      - name: Check pull request diff hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+
+      - name: Verify final checkout integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          final_status="${RUNNER_TEMP}/avuhz-main-pr-gate-final-status.txt"
+          git status --porcelain=v1 --untracked-files=all > "$final_status"
+          cmp --silent \
+            "${RUNNER_TEMP}/avuhz-main-pr-gate-initial-status.txt" \
+            "$final_status"
+          test ! -s "$final_status"
+
+      - name: Remove disposable PostgreSQL
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v docker
+          container="$(docker container ls -a \
+            --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+            --format '{{.Names}}')"
+          if [[ "$container" == "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" ]]; then
+            docker rm -f "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" >/dev/null
+            remaining="$(docker container ls -a \
+              --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+              --format '{{.Names}}')"
+            test -z "$remaining"
+            echo "disposable_postgres_removed=true"
+          elif [[ -f "${RUNNER_TEMP}/avuhz-main-pr-gate-postgres-created" ]]; then
+            echo "disposable_postgres_already_absent=true"
+          else
+            echo "disposable_postgres_was_not_created=true"
+          fi
+          echo "provider_contact_attempted=false"
+          echo "supabase_contact_attempted=false"
+          echo "remote_mutation_attempted=false"

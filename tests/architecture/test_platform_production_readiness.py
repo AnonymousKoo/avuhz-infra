@@ -212,7 +212,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "default Supabase `aud=authenticated` is rejected by Avuhz",
             "clean disposable replay passes nine PostgreSQL tests",
             "No hook migration exists",
-            "Define the bounded DEVELOPMENT AUTH integration authorization plan",
+            "exact DEVELOPMENT AUTH sequence exists only as an unapproved `DRAFT_BLOCKED` plan with no executed step",
         ):
             self.assertIn(value, STATE)
 
@@ -236,7 +236,11 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "backup/PITR RPO/RTO", "deployment/rollback rehearsal",
         ):
             self.assertIn(blocker, STATE)
-        self.assertFalse((ROOT / ".github/workflows").exists())
+        workflows = ROOT / ".github/workflows"
+        self.assertTrue(workflows.is_dir())
+        self.assertTrue((workflows / "d4c4d2c-read-only-certification.yml").is_file())
+        self.assertTrue((workflows / "development-auth-step1-validation.yml").is_file())
+        self.assertTrue((workflows / "main-pr-gate.yml").is_file())
         self.assertFalse(any(ROOT.glob("Dockerfile*")))
         self.assertTrue((ROOT / "pyproject.toml").is_file())
         self.assertTrue((ROOT / "src/avuhz_service/__main__.py").is_file())

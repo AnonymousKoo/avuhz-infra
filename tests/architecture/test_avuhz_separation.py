@@ -51,10 +51,9 @@ class AvuhzSeparationTests(unittest.TestCase):
         self.assertIn("DraftImplementationBrief", COMMANDS)
         self.assertIn("RecordQAResult", COMMANDS)
 
-    def test_public_handoff_contract_is_identical_without_circular_import(self):
+    def test_public_handoff_boundary_has_no_sekinfra_runtime_dependency(self):
         avuhz = ROOT / "contracts/schemas/v1/public/implementation-handoff.schema.json"
-        provider = Path("/home/network-p/sekinfra/consulting/contracts/public/implementation-handoff.schema.json")
-        self.assertEqual(avuhz.read_bytes(), provider.read_bytes())
+        self.assertTrue(avuhz.is_file())
         source = "\n".join(path.read_text() for path in (ROOT / "src/avuhz_runtime").glob("*.py"))
         self.assertNotIn("sekinfra_consulting", source)
 

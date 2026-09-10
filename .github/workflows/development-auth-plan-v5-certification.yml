@@ -260,16 +260,31 @@ jobs:
           touch "${RUNNER_TEMP}/avuhz-v7-postgres-created"
 
           ready=false
-          for _ in $(seq 1 45); do
-            if docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" pg_isready -U postgres >/dev/null 2>&1; then
-              ready=true
-              break
+          consecutive_successes=0
+          stable_postmaster_start=""
+          for _ in $(seq 1 60); do
+            if postmaster_start="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+              psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+              -c 'select pg_postmaster_start_time();' 2>/dev/null)"; then
+              if [[ -n "$postmaster_start" && "$postmaster_start" == "$stable_postmaster_start" ]]; then
+                consecutive_successes=$((consecutive_successes + 1))
+              else
+                stable_postmaster_start="$postmaster_start"
+                consecutive_successes=1
+              fi
+              if (( consecutive_successes >= 3 )); then
+                ready=true
+                break
+              fi
+            else
+              consecutive_successes=0
+              stable_postmaster_start=""
             fi
             sleep 1
           done
 
           if [[ "$ready" != "true" ]]; then
-            echo "::error::Disposable PostgreSQL 17 did not become ready."
+            echo "::error::Disposable PostgreSQL 17 did not reach stable readiness."
             exit 1
           fi
 

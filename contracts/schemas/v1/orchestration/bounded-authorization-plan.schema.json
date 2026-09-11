@@ -122,6 +122,443 @@
         }
       ]
     },
+    "nullableReference": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/reference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "bindingDigestPolicy": {
+      "enum": [
+        "REQUIRED",
+        "OPTIONAL",
+        "PROHIBITED"
+      ]
+    },
+    "bindingPersistencePolicy": {
+      "enum": [
+        "SANITIZED_VALUE_ALLOWED",
+        "DIGEST_ONLY",
+        "PROHIBITED"
+      ]
+    },
+    "preapprovalValue": {
+      "description": "Exact immutable non-secret value or reference fixed before approval. The exact_digest is part of the plan definition; the authorization engine separately verifies that it is the canonical digest of value and matches the declaration value class.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "exact_digest"
+      ],
+      "properties": {
+        "value": {
+          "description": "Bounded non-secret scalar constrained by the containing binding declaration's value_class.",
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "exact_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "bindingDeclaration": {
+      "description": "Provider-neutral declaration of when a binding becomes authoritative and how its provenance may be recorded. Runtime values are never carried here; an optional exact digest-bound preapproval_value may carry only a bounded non-secret value fixed before approval. Cross-step ordering, digest equality, and evidence integrity are enforced by the authorization engine.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "phase",
+        "value_class",
+        "source_step_id",
+        "evidence_type",
+        "digest_policy",
+        "persistence_policy"
+      ],
+      "properties": {
+        "binding_id": {
+          "$ref": "#/$defs/reference"
+        },
+        "phase": {
+          "enum": [
+            "PREAPPROVAL_BOUND",
+            "DERIVED_FROM_SOURCE_STEP",
+            "PRODUCED_BY_CURRENT_STEP",
+            "RESOLVED_BY_STEP_PREFLIGHT",
+            "EPHEMERAL_HANDOFF",
+            "UNRESOLVED_BLOCKER"
+          ]
+        },
+        "value_class": {
+          "enum": [
+            "STABLE_REFERENCE",
+            "UUID_IDENTIFIER",
+            "CONTENT_DIGEST",
+            "PROCEDURE_REFERENCE",
+            "CONFIGURATION_REFERENCE",
+            "EPHEMERAL_SENSITIVE"
+          ]
+        },
+        "source_step_id": {
+          "$ref": "#/$defs/nullableReference"
+        },
+        "evidence_type": {
+          "$ref": "#/$defs/nullableReference"
+        },
+        "digest_policy": {
+          "$ref": "#/$defs/bindingDigestPolicy"
+        },
+        "persistence_policy": {
+          "$ref": "#/$defs/bindingPersistencePolicy"
+        },
+        "preapproval_value": {
+          "$ref": "#/$defs/preapprovalValue"
+        }
+      },
+      "dependentSchemas": {
+        "preapproval_value": {
+          "properties": {
+            "phase": {
+              "const": "PREAPPROVAL_BOUND"
+            },
+            "value_class": {
+              "enum": [
+                "STABLE_REFERENCE",
+                "UUID_IDENTIFIER",
+                "CONTENT_DIGEST",
+                "PROCEDURE_REFERENCE",
+                "CONFIGURATION_REFERENCE"
+              ]
+            },
+            "digest_policy": {
+              "const": "REQUIRED"
+            }
+          },
+          "required": [
+            "phase",
+            "value_class",
+            "digest_policy"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "UUID_IDENTIFIER"
+              }
+            },
+            "required": [
+              "value_class",
+              "preapproval_value"
+            ]
+          },
+          "then": {
+            "properties": {
+              "preapproval_value": {
+                "properties": {
+                  "value": {
+                    "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "enum": [
+                  "STABLE_REFERENCE",
+                  "PROCEDURE_REFERENCE",
+                  "CONFIGURATION_REFERENCE"
+                ]
+              }
+            },
+            "required": [
+              "value_class",
+              "preapproval_value"
+            ]
+          },
+          "then": {
+            "properties": {
+              "preapproval_value": {
+                "properties": {
+                  "value": {
+                    "$ref": "#/$defs/reference"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "CONTENT_DIGEST"
+              }
+            },
+            "required": [
+              "value_class",
+              "preapproval_value"
+            ]
+          },
+          "then": {
+            "properties": {
+              "preapproval_value": {
+                "properties": {
+                  "value": {
+                    "$ref": "#/$defs/digest"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "PREAPPROVAL_BOUND"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "type": "null"
+              },
+              "digest_policy": {
+                "enum": [
+                  "REQUIRED",
+                  "OPTIONAL"
+                ]
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "DERIVED_FROM_SOURCE_STEP"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "digest_policy": {
+                "const": "REQUIRED"
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "PRODUCED_BY_CURRENT_STEP"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "digest_policy": {
+                "const": "REQUIRED"
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "RESOLVED_BY_STEP_PREFLIGHT"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "digest_policy": {
+                "const": "REQUIRED"
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "EPHEMERAL_HANDOFF"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "const": "EPHEMERAL_SENSITIVE"
+              },
+              "source_step_id": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "digest_policy": {
+                "const": "PROHIBITED"
+              },
+              "persistence_policy": {
+                "const": "PROHIBITED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "UNRESOLVED_BLOCKER"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "type": "null"
+              },
+              "digest_policy": {
+                "const": "PROHIBITED"
+              },
+              "persistence_policy": {
+                "const": "PROHIBITED"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "producedEvidenceDeclaration": {
+      "description": "Provider-neutral declaration of evidence a step may produce and the binding identifiers that evidence may establish. Evidence payload shape and cross-step provenance are enforced separately.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_type",
+        "established_binding_ids",
+        "digest_policy"
+      ],
+      "properties": {
+        "evidence_type": {
+          "$ref": "#/$defs/reference"
+        },
+        "established_binding_ids": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "digest_policy": {
+          "enum": [
+            "REQUIRED",
+            "OPTIONAL"
+          ]
+        }
+      }
+    },
     "authorizationWindow": {
       "type": "object",
       "additionalProperties": false,
@@ -403,6 +840,20 @@
         },
         "credential_policy": {
           "$ref": "#/$defs/credentialPolicy"
+        },
+        "binding_declarations": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/bindingDeclaration"
+          }
+        },
+        "produced_evidence": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/producedEvidenceDeclaration"
+          }
         },
         "unresolved_bindings": {
           "type": "array",

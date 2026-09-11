@@ -61,6 +61,647 @@
     }
   },
   "$defs": {
+    "reference": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z][A-Za-z0-9._:-]{2,159}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "nullableReference": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/reference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sanitizedReference": {
+      "description": "Normalized namespaced non-secret reference. JWT-shaped strings, credential labels, provider payload labels, and authenticated connection strings are structurally excluded; later enforcement also verifies the exact plan declaration.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/reference"
+        },
+        {
+          "pattern": "^[a-z][a-z0-9_-]{1,39}(?:[.:][a-z][a-z0-9_-]{1,79}){1,7}$"
+        },
+        {
+          "not": {
+            "pattern": "^eyJ[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(access[_-]?token|refresh[_-]?token|password|api[_-]?key|service[_-]?role|private[_-]?key|authorization|bearer|credential|secret|token|jwt|connection[_-]?string|provider[_-]?payload)"
+          }
+        }
+      ]
+    },
+    "bindingAssertion": {
+      "description": "Sanitized, non-authoritative progress assertion for a binding declared by the exact immutable plan. The containing step state attributes the producing or resolving step; later enforcement verifies declaration, ordering, evidence, digest, and provenance matches.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "phase",
+        "value_class",
+        "source_step_id",
+        "evidence_type",
+        "evidence_digest",
+        "digest_policy",
+        "persistence_policy",
+        "sanitized_value",
+        "value_digest",
+        "recorded_at"
+      ],
+      "properties": {
+        "binding_id": {
+          "$ref": "#/$defs/reference"
+        },
+        "phase": {
+          "enum": [
+            "PREAPPROVAL_BOUND",
+            "DERIVED_FROM_SOURCE_STEP",
+            "PRODUCED_BY_CURRENT_STEP",
+            "RESOLVED_BY_STEP_PREFLIGHT",
+            "EPHEMERAL_HANDOFF",
+            "UNRESOLVED_BLOCKER"
+          ]
+        },
+        "value_class": {
+          "enum": [
+            "STABLE_REFERENCE",
+            "UUID_IDENTIFIER",
+            "CONTENT_DIGEST",
+            "PROCEDURE_REFERENCE",
+            "CONFIGURATION_REFERENCE",
+            "EPHEMERAL_SENSITIVE"
+          ]
+        },
+        "source_step_id": {
+          "$ref": "#/$defs/nullableReference"
+        },
+        "evidence_type": {
+          "$ref": "#/$defs/nullableReference"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/nullableDigest"
+        },
+        "digest_policy": {
+          "enum": [
+            "REQUIRED",
+            "OPTIONAL",
+            "PROHIBITED"
+          ]
+        },
+        "persistence_policy": {
+          "enum": [
+            "SANITIZED_VALUE_ALLOWED",
+            "DIGEST_ONLY",
+            "PROHIBITED"
+          ]
+        },
+        "sanitized_value": {
+          "description": "Optional bounded non-secret scalar only; objects, arrays, raw provider payloads, credentials, and ephemeral material are prohibited.",
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 160
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "value_digest": {
+          "$ref": "#/$defs/nullableDigest"
+        },
+        "recorded_at": {
+          "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "PREAPPROVAL_BOUND"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "type": "null"
+              },
+              "evidence_digest": {
+                "type": "null"
+              },
+              "digest_policy": {
+                "enum": [
+                  "REQUIRED",
+                  "OPTIONAL"
+                ]
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "DERIVED_FROM_SOURCE_STEP"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_digest": {
+                "$ref": "#/$defs/digest"
+              },
+              "digest_policy": {
+                "const": "REQUIRED"
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "PRODUCED_BY_CURRENT_STEP"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_digest": {
+                "$ref": "#/$defs/digest"
+              },
+              "digest_policy": {
+                "const": "REQUIRED"
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "RESOLVED_BY_STEP_PREFLIGHT"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "not": {
+                  "const": "EPHEMERAL_SENSITIVE"
+                }
+              },
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_digest": {
+                "$ref": "#/$defs/digest"
+              },
+              "digest_policy": {
+                "const": "REQUIRED"
+              },
+              "persistence_policy": {
+                "enum": [
+                  "SANITIZED_VALUE_ALLOWED",
+                  "DIGEST_ONLY"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "EPHEMERAL_HANDOFF"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_class": {
+                "const": "EPHEMERAL_SENSITIVE"
+              },
+              "source_step_id": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_type": {
+                "$ref": "#/$defs/reference"
+              },
+              "evidence_digest": {
+                "$ref": "#/$defs/digest"
+              },
+              "digest_policy": {
+                "const": "PROHIBITED"
+              },
+              "persistence_policy": {
+                "const": "PROHIBITED"
+              },
+              "sanitized_value": {
+                "type": "null"
+              },
+              "value_digest": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "UNRESOLVED_BLOCKER"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "source_step_id": {
+                "type": "null"
+              },
+              "evidence_type": {
+                "type": "null"
+              },
+              "evidence_digest": {
+                "type": "null"
+              },
+              "digest_policy": {
+                "const": "PROHIBITED"
+              },
+              "persistence_policy": {
+                "const": "PROHIBITED"
+              },
+              "sanitized_value": {
+                "type": "null"
+              },
+              "value_digest": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "persistence_policy": {
+                "const": "SANITIZED_VALUE_ALLOWED"
+              }
+            },
+            "required": [
+              "persistence_policy"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 160
+              },
+              "digest_policy": {
+                "enum": [
+                  "REQUIRED",
+                  "OPTIONAL"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "persistence_policy": {
+                "const": "DIGEST_ONLY"
+              }
+            },
+            "required": [
+              "persistence_policy"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "type": "null"
+              },
+              "digest_policy": {
+                "enum": [
+                  "REQUIRED",
+                  "OPTIONAL"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "persistence_policy": {
+                "const": "PROHIBITED"
+              }
+            },
+            "required": [
+              "persistence_policy"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "type": "null"
+              },
+              "value_digest": {
+                "type": "null"
+              },
+              "digest_policy": {
+                "const": "PROHIBITED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "digest_policy": {
+                "const": "REQUIRED"
+              }
+            },
+            "required": [
+              "digest_policy"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_digest": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "digest_policy": {
+                "const": "PROHIBITED"
+              }
+            },
+            "required": [
+              "digest_policy"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value_digest": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "STABLE_REFERENCE"
+              }
+            },
+            "required": [
+              "value_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/sanitizedReference"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "UUID_IDENTIFIER"
+              }
+            },
+            "required": [
+              "value_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "oneOf": [
+                  {
+                    "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "CONTENT_DIGEST"
+              }
+            },
+            "required": [
+              "value_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/digest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "PROCEDURE_REFERENCE"
+              }
+            },
+            "required": [
+              "value_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/sanitizedReference"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "CONFIGURATION_REFERENCE"
+              }
+            },
+            "required": [
+              "value_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/sanitizedReference"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "value_class": {
+                "const": "EPHEMERAL_SENSITIVE"
+              }
+            },
+            "required": [
+              "value_class"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sanitized_value": {
+                "type": "null"
+              },
+              "value_digest": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
     "stepState": {
       "type": "object",
       "additionalProperties": false,
@@ -116,6 +757,15 @@
           "maxItems": 16,
           "items": {
             "$ref": "#/$defs/evidence"
+          }
+        },
+        "binding_assertions": {
+          "description": "Optional sanitized resumability assertions. Assertions record no authority and must match exact plan declarations and evidence under later enforcement.",
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/bindingAssertion"
           }
         },
         "observed_postcondition": {

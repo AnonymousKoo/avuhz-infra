@@ -1,0 +1,254 @@
+name: DEVELOPMENT AUTH Plan v8 Package Certification
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - contracts/fixtures/v1/authorization-plan.cases.json
+      - contracts/schemas/v1/orchestration/bounded-authorization-plan-progress.schema.json
+      - contracts/schemas/v1/orchestration/bounded-authorization-plan.schema.json
+      - contracts/plans/v1/development-auth-integration-v8.plan.json
+      - contracts/plans/v1/development-auth-integration-v8.progress.json
+      - scripts/check-baseline.sh
+      - src/avuhz_engineering/authorization_plan.py
+      - tests/contracts/validate_development_auth_plan_v8.py
+      - tests/engineering/test_authorization_plan.py
+      - .github/workflows/development-auth-plan-v8-certification.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-plan-v8-certification-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  certify-development-auth-plan-v8:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: "src:."
+      AVUHZ_CERTIFIED_BASE_SHA: e5c6a3e54ed9198f2f840084e2d6408308f75624
+      AVUHZ_PLAN_ID: a7100000-0000-4000-8000-000000000101
+      AVUHZ_PLAN_VERSION: "8"
+      AVUHZ_PLAN_DIGEST: sha256:f0626b57e55ab2d7c81f47a29b5fc3d1eaf8d7c3e755c08a6ce18f9447aa8b39
+      AVUHZ_PLAN_FILE_SHA256: 2a0df0c66c1c118d319f0546edd38e1031c1fcb59cbf6873820b800eda2300a9
+      AVUHZ_PROGRESS_ID: a04097ee-b9ac-4a71-bf44-f04d5b0ddc40
+      AVUHZ_PROGRESS_FILE_SHA256: fa1e12ebad4aa66adac4ed4c633e8112ae591178750c38b45286d8e461ad037c
+
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify exact v8 package scope and immutable instances
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          git cat-file -e "${AVUHZ_CERTIFIED_BASE_SHA}^{commit}"
+          git merge-base --is-ancestor "${AVUHZ_CERTIFIED_BASE_SHA}" HEAD
+
+          package_paths=(
+            contracts/fixtures/v1/authorization-plan.cases.json
+            contracts/schemas/v1/orchestration/bounded-authorization-plan-progress.schema.json
+            contracts/schemas/v1/orchestration/bounded-authorization-plan.schema.json
+            contracts/plans/v1/development-auth-integration-v8.plan.json
+            contracts/plans/v1/development-auth-integration-v8.progress.json
+            scripts/check-baseline.sh
+            src/avuhz_engineering/authorization_plan.py
+            tests/contracts/validate_development_auth_plan_v8.py
+            tests/engineering/test_authorization_plan.py
+            .github/workflows/development-auth-plan-v8-certification.yml
+          )
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            test "${{ github.event.pull_request.base.ref }}" = "main"
+            test "${{ github.event.pull_request.base.sha }}" = "${AVUHZ_CERTIFIED_BASE_SHA}"
+            actual_paths="${RUNNER_TEMP}/avuhz-v8-candidate-paths.txt"
+            permitted_paths="${RUNNER_TEMP}/avuhz-v8-permitted-paths.txt"
+            git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD" | sort > "$actual_paths"
+            printf '%s\n' "${package_paths[@]}" | sort > "$permitted_paths"
+            if ! diff -u "$permitted_paths" "$actual_paths"; then
+              echo "::error::Candidate file set differs from the exact DEVELOPMENT AUTH v8 package scope."
+              exit 1
+            fi
+          fi
+
+          for path in "${package_paths[@]}"; do
+            test -f "$path"
+          done
+
+          initial_status="${RUNNER_TEMP}/avuhz-v8-initial-status.txt"
+          git status --porcelain=v1 --untracked-files=all > "$initial_status"
+          test ! -s "$initial_status"
+
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          plan_path = Path("contracts/plans/v1/development-auth-integration-v8.plan.json")
+          progress_path = Path("contracts/plans/v1/development-auth-integration-v8.progress.json")
+          plan = json.loads(plan_path.read_text())
+          progress = json.loads(progress_path.read_text())
+
+          if hashlib.sha256(plan_path.read_bytes()).hexdigest() != os.environ["AVUHZ_PLAN_FILE_SHA256"]:
+              raise SystemExit("immutable v8 plan file SHA-256 does not match")
+          if hashlib.sha256(progress_path.read_bytes()).hexdigest() != os.environ["AVUHZ_PROGRESS_FILE_SHA256"]:
+              raise SystemExit("immutable v8 progress file SHA-256 does not match")
+          if plan.get("plan_id") != os.environ["AVUHZ_PLAN_ID"]:
+              raise SystemExit("immutable v8 plan ID does not match")
+          if str(plan.get("plan_version")) != os.environ["AVUHZ_PLAN_VERSION"]:
+              raise SystemExit("immutable v8 plan version does not match")
+          if plan.get("plan_digest") != os.environ["AVUHZ_PLAN_DIGEST"]:
+              raise SystemExit("immutable v8 plan digest does not match")
+          if plan.get("definition_status") != "READY_FOR_APPROVAL":
+              raise SystemExit("immutable v8 plan is not READY_FOR_APPROVAL")
+          if plan.get("authority_effect") != "NONE_UNTIL_SEPARATELY_APPROVED":
+              raise SystemExit("immutable v8 plan authority effect is unexpected")
+          if plan.get("target", {}).get("responsibility") != "AUTH":
+              raise SystemExit("immutable v8 plan responsibility is not AUTH")
+          if plan.get("target", {}).get("project_reference") != "pwlhruwutoitnieactol":
+              raise SystemExit("immutable v8 plan project reference does not match")
+          if progress.get("progress_id") != os.environ["AVUHZ_PROGRESS_ID"]:
+              raise SystemExit("immutable v8 progress ID does not match")
+          if progress.get("plan_id") != os.environ["AVUHZ_PLAN_ID"]:
+              raise SystemExit("immutable v8 progress plan ID does not match")
+          if str(progress.get("plan_version")) != os.environ["AVUHZ_PLAN_VERSION"]:
+              raise SystemExit("immutable v8 progress plan version does not match")
+          if progress.get("plan_digest") != os.environ["AVUHZ_PLAN_DIGEST"]:
+              raise SystemExit("immutable v8 progress plan digest does not match")
+          print("immutable_v8_plan_instance_certified=true")
+          print("immutable_v8_progress_instance_certified=true")
+          PY
+
+      - name: Install pinned local validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          command -v git
+          command -v bash
+          command -v python3
+          command -v jq
+          python3 - <<'PY'
+          import sys
+          if sys.version_info < (3, 11):
+              raise SystemExit("Python 3.11 or newer is required")
+          print(sys.version.split()[0])
+          PY
+
+          pre_dependency_status="${RUNNER_TEMP}/avuhz-v8-pre-dependency-status.txt"
+          post_dependency_status="${RUNNER_TEMP}/avuhz-v8-post-dependency-status.txt"
+          git status --porcelain=v1 --untracked-files=all > "$pre_dependency_status"
+
+          sudo apt-get update
+          sudo apt-get install --yes ripgrep
+
+          constraints="${RUNNER_TEMP}/avuhz-v8-ci-constraints.txt"
+          cat > "$constraints" <<'CONSTRAINTS'
+          semgrep==1.136.0
+          setuptools==68.1.2
+          jsonschema==4.10.3
+          boltons==21.0.0
+          bracex==3.0.1
+          click==8.1.8
+          click-option-group==0.5.9
+          defusedxml==0.7.1
+          deprecated==1.3.1
+          exceptiongroup==1.2.2
+          face==26.0.1
+          glom==22.1.0
+          googleapis-common-protos==1.75.0
+          importlib-metadata==7.1.0
+          opentelemetry-api==1.25.0
+          opentelemetry-exporter-otlp-proto-common==1.25.0
+          opentelemetry-exporter-otlp-proto-http==1.25.0
+          opentelemetry-instrumentation==0.46b0
+          opentelemetry-instrumentation-requests==0.46b0
+          opentelemetry-proto==1.25.0
+          opentelemetry-sdk==1.25.0
+          opentelemetry-semantic-conventions==0.46b0
+          opentelemetry-util-http==0.46b0
+          peewee==3.19.0
+          protobuf==4.25.9
+          rich==13.5.3
+          ruamel.yaml==0.19.1
+          tomli==2.0.2
+          wcmatch==8.5.2
+          wrapt==1.17.3
+          zipp==4.1.0
+          CONSTRAINTS
+
+          python3 -m pip install --disable-pip-version-check --no-input \
+            --constraint "$constraints" \
+            setuptools==68.1.2 \
+            jsonschema==4.10.3 \
+            semgrep==1.136.0
+          python3 -m pip check
+          test "$(semgrep --version | tail -n1)" = "1.136.0"
+          command -v rg
+          command -v semgrep
+
+          git status --porcelain=v1 --untracked-files=all > "$post_dependency_status"
+          cmp --silent "$pre_dependency_status" "$post_dependency_status"
+
+      - name: Certify DEVELOPMENT AUTH v8 plan and progress
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/contracts/validate_development_auth_plan_v8.py
+
+      - name: Run authorization-plan engineering regression matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest tests.engineering.test_authorization_plan
+          python3 - <<'PY'
+          import unittest
+          suite = unittest.defaultTestLoader.loadTestsFromName(
+              "tests.engineering.test_authorization_plan"
+          )
+          if suite.countTestCases() != 14:
+              raise SystemExit("authorization-plan engineering test count is not 14")
+          print("authorization_plan_engineering_test_count=14")
+          PY
+
+      - name: Certify legacy authorization-plan compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/contracts/validate_bounded_authorization_plan.py
+
+      - name: Run canonical repository baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./scripts/check-baseline.sh
+
+      - name: Verify final worktree integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          initial_status="${RUNNER_TEMP}/avuhz-v8-initial-status.txt"
+          final_status="${RUNNER_TEMP}/avuhz-v8-final-status.txt"
+          git status --porcelain=v1 --untracked-files=all > "$final_status"
+          test ! -s "$final_status"
+          cmp --silent "$initial_status" "$final_status"
+          echo "worktree_integrity_verified=true"
+          echo "provider_contact_attempted=false"
+          echo "supabase_contact_attempted=false"
+          echo "plan_authorization_performed=false"
+          echo "step_authorization_performed=false"
+          echo "progress_mutation_performed=false"

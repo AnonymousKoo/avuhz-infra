@@ -1,0 +1,1257 @@
+{
+  "plan_id": "a7100000-0000-4000-8000-000000000101",
+  "plan_version": 8,
+  "plan_digest": "sha256:f0626b57e55ab2d7c81f47a29b5fc3d1eaf8d7c3e755c08a6ce18f9447aa8b39",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-11T18:15:23Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-12T14:00:00Z",
+    "expires_at": "2026-09-12T16:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.step.01.local-hook-migration",
+    "development.auth.step.02.bootstrap-migration-identity",
+    "development.auth.step.03.apply-hook-migration",
+    "development.auth.step.04.seal-migration-identity",
+    "development.auth.step.05.verify-disabled-hook",
+    "development.auth.step.06.create-synthetic-identity",
+    "development.auth.step.07.bind-synthetic-tenant",
+    "development.auth.step.08.bind-server-capability",
+    "development.auth.step.09.enable-hook",
+    "development.auth.step.10.issue-ephemeral-token",
+    "development.auth.step.11.fetch-jwks",
+    "development.auth.step.12.validate-token-locally",
+    "development.auth.step.13.record-evidence-and-terminate"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.step.01.local-hook-migration",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "migration.artifact",
+        "resource_reference": "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql",
+        "binding_state": "BOUND",
+        "exact_version": "version.20260908133000",
+        "exact_digest": "sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783"
+      },
+      "operation": "local.migration.create-and-validate",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "migration.artifacts.local-forward-correction-v7",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:75568298af56a7f02ab826118902d3e8b1f62e290e57bea93da770b7f82a6211"
+        }
+      ],
+      "expected_postcondition": "Three ordered local migrations define the exact bounded DEVELOPMENT migration-role bootstrap, effective-role-enforced v1 hook function/ACL, and immediate post-hook identity seal; no artifact is applied and the hook remains disabled.",
+      "prohibited_actions": [
+        "provider.contact",
+        "migration.apply",
+        "hook.enable",
+        "extra.schema.change"
+      ],
+      "stop_conditions": [
+        "evidence.digest.mismatch",
+        "migration.lineage.mismatch",
+        "migration.identity.surface.unexpected",
+        "hook.migration.surface.unexpected",
+        "migration.identity.seal.surface.unexpected",
+        "security.validation.failed",
+        "provider.executor.preflight.mismatch"
+      ],
+      "correction_reference": "correction.local-revision-before-approval",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.migration-identity-artifact",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "migration.identity.artifact.validated",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-migration-artifact",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.migration.artifact.validated",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "migration.identity.artifact.validated",
+          "established_binding_ids": [
+            "binding.development.auth.migration-identity-artifact"
+          ],
+          "digest_policy": "REQUIRED"
+        },
+        {
+          "evidence_type": "hook.migration.artifact.validated",
+          "established_binding_ids": [
+            "binding.development.auth.hook-migration-artifact"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.02.bootstrap-migration-identity",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "database.role-and-privilege-envelope",
+        "resource_reference": "postgres.role.avuhz_migration_service_dev",
+        "binding_state": "BOUND",
+        "exact_version": "version.20260908132000",
+        "exact_digest": "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45"
+      },
+      "operation": "provider.migration.bootstrap-identity-exact",
+      "dependency_step_ids": [
+        "development.auth.step.01.local-hook-migration"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "migration.identity.artifact.validated",
+          "source_step_id": "development.auth.step.01.local-hook-migration",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        },
+        {
+          "evidence_type": "provider.executor.preflight.observed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:f3d315085b9de80d856f8fa16b22646679e6be4367e3c2ddf48ee954d2580732"
+        }
+      ],
+      "expected_postcondition": "With exact session_user=current_user=postgres, avuhz_migration_service_dev has every restricted role flag; one membership permits SET but not INHERIT/ADMIN; it has no direct database ACL, password, credential, table, sequence, AUTH, storage, or DATA privilege; only non-grantable public USAGE/CREATE; bootstrap admin grants public USAGE to supabase_auth_admin; ambient PUBLIC database privileges are unchanged; hook remains absent and disabled.",
+      "prohibited_actions": [
+        "role.login.enable",
+        "role.password.create",
+        "service-role.use",
+        "role.superuser.enable",
+        "role.bypassrls.enable",
+        "role.createdb.enable",
+        "role.createrole.enable",
+        "role.replication.enable",
+        "database.direct-privilege.grant",
+        "database.public-acl.modify",
+        "schema.grant-option.add",
+        "table.privilege.grant",
+        "sequence.privilege.grant",
+        "provider-schema.privilege.grant",
+        "data.operation",
+        "temporary-object.create",
+        "hook.create",
+        "hook.enable",
+        "role.membership.extra",
+        "privilege.widen"
+      ],
+      "stop_conditions": [
+        "executor.session.mismatch",
+        "role.already-exists-unexpectedly",
+        "role.attributes.mismatch",
+        "role.membership.mismatch",
+        "role.privileges.unexpected",
+        "set-role.boundary.unavailable",
+        "target.mismatch",
+        "outcome.ambiguous",
+        "provider.executor.preflight.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.migration-identity-artifact",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.01.local-hook-migration",
+          "evidence_type": "migration.identity.artifact.validated",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.executor-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.executor.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.migration-identity",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "migration.identity.bootstrap.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "migration.identity.bootstrap.verified",
+          "established_binding_ids": [
+            "binding.development.auth.migration-identity"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.03.apply-hook-migration",
+      "ordinal": 3,
+      "resource": {
+        "resource_type": "database.function-and-acl",
+        "resource_reference": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "binding_state": "BOUND",
+        "exact_version": "version.20260908133000",
+        "exact_digest": "sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783"
+      },
+      "operation": "provider.migration.apply-exact",
+      "dependency_step_ids": [
+        "development.auth.step.02.bootstrap-migration-identity"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "migration.identity.bootstrap.verified",
+          "source_step_id": "development.auth.step.02.bootstrap-migration-identity",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        },
+        {
+          "evidence_type": "hook.migration.artifact.validated",
+          "source_step_id": "development.auth.step.01.local-hook-migration",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "MIGRATION_IDENTITY means session_user=postgres plus the exact SET-enabled/INHERIT-disabled/ADMIN-disabled membership, SET LOCAL ROLE avuhz_migration_service_dev, and current_user=avuhz_migration_service_dev; only after that transition, the exact hardened migration creates and owns one versioned DEVELOPMENT hook function and grants its EXECUTE only to supabase_auth_admin while schema ACL and hook enablement remain unchanged.",
+      "prohibited_actions": [
+        "migration.include-all",
+        "migration.history-repair",
+        "schema.acl.modify",
+        "temporary-object.create",
+        "hook.enable",
+        "extra.schema.change"
+      ],
+      "stop_conditions": [
+        "executor.session.mismatch",
+        "migration.identity.binding.mismatch",
+        "migration.identity.membership.mismatch",
+        "migration.identity.privilege-envelope.mismatch",
+        "effective-role.mismatch",
+        "migration.digest.mismatch",
+        "remote.resource.unexpected",
+        "migration.outcome.ambiguous",
+        "provider.executor.preflight.mismatch"
+      ],
+      "correction_reference": "correction.development-hook-forward-only",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "MIGRATION_IDENTITY"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.hook-logical-resource",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.migration-identity",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": "development.auth.step.02.bootstrap-migration-identity",
+          "evidence_type": "migration.identity.bootstrap.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-migration-artifact",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.01.local-hook-migration",
+          "evidence_type": "hook.migration.artifact.validated",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-application",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.migration.application.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "hook.migration.application.verified",
+          "established_binding_ids": [
+            "binding.development.auth.hook-application"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.04.seal-migration-identity",
+      "ordinal": 4,
+      "resource": {
+        "resource_type": "database.role-membership-and-schema-privilege-seal",
+        "resource_reference": "postgres.role.avuhz_migration_service_dev.sealed",
+        "binding_state": "BOUND",
+        "exact_version": "version.20260908134000",
+        "exact_digest": "sha256:aafec1973fa60e3a2b7076f36c989a373fb1115a1e9e3760781a0ef41ca9b1ad"
+      },
+      "operation": "provider.migration.seal-identity-exact",
+      "dependency_step_ids": [
+        "development.auth.step.03.apply-hook-migration"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "hook.migration.application.verified",
+          "source_step_id": "development.auth.step.03.apply-hook-migration",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Under exact session_user=current_user=postgres, revoke only direct public-schema CREATE/USAGE from avuhz_migration_service_dev and revoke its one-way membership from postgres; the restricted NOLOGIN role and its ownership of the exact hook remain, no membership or direct database/public-schema/table/sequence privilege remains, and supabase_auth_admin retains public-schema USAGE plus function EXECUTE while the hook remains disabled.",
+      "prohibited_actions": [
+        "role.attribute.modify",
+        "role.drop",
+        "function.owner.modify",
+        "function.body.modify",
+        "function.acl.modify",
+        "supabase-auth-admin.schema-usage.revoke",
+        "supabase-auth-admin.function-execute.revoke",
+        "database.public-acl.modify",
+        "table.privilege.modify",
+        "data.operation",
+        "hook.enable",
+        "privilege.widen"
+      ],
+      "stop_conditions": [
+        "executor.session.mismatch",
+        "role.attributes.mismatch",
+        "role.membership.mismatch",
+        "role.privileges.unexpected",
+        "hook.owner.mismatch",
+        "hook.acl.mismatch",
+        "seal.outcome.ambiguous",
+        "provider.executor.preflight.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.hook-application",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.03.apply-hook-migration",
+          "evidence_type": "hook.migration.application.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.migration-identity-seal",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "migration.identity.seal.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "migration.identity.seal.verified",
+          "established_binding_ids": [
+            "binding.development.auth.migration-identity-seal"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.05.verify-disabled-hook",
+      "ordinal": 5,
+      "resource": {
+        "resource_type": "database.function-and-acl",
+        "resource_reference": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.verify-disabled-and-acl",
+      "dependency_step_ids": [
+        "development.auth.step.04.seal-migration-identity"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "migration.identity.seal.verified",
+          "source_step_id": "development.auth.step.04.seal-migration-identity",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Using the exact bounded OWNER_INTERACTIVE_SESSION for read only, verify the sealed NOLOGIN migration role has no direct database or public-schema ACL and no membership edge, the exact v1 hook body/owner/ACL match, supabase_auth_admin retains public-schema USAGE and function EXECUTE, and the hook remains disabled.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "resource.repair",
+        "role.membership.add",
+        "schema.privilege.grant",
+        "hook.enable",
+        "acl.widen",
+        "data.query"
+      ],
+      "stop_conditions": [
+        "sealed-role.mismatch",
+        "function.body.mismatch",
+        "function.owner.mismatch",
+        "acl.mismatch",
+        "hook.unexpectedly-enabled"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.hook-logical-resource",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-application",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.03.apply-hook-migration",
+          "evidence_type": "hook.migration.application.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.migration-identity-seal",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.04.seal-migration-identity",
+          "evidence_type": "migration.identity.seal.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-read-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "hook.read-session.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-deployed-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.disabled-acl.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "hook.disabled-acl.verified",
+          "established_binding_ids": [
+            "binding.development.auth.hook-deployed-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.06.create-synthetic-identity",
+      "ordinal": 6,
+      "resource": {
+        "resource_type": "auth.synthetic-identity",
+        "resource_reference": "identity.development.synthetic-avuhz",
+        "binding_state": "BOUND",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-identity.create-one",
+      "dependency_step_ids": [
+        "development.auth.step.05.verify-disabled-hook"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "hook.disabled-acl.verified",
+          "source_step_id": "development.auth.step.05.verify-disabled-hook",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Exactly one dedicated synthetic DEVELOPMENT Auth identity exists and its provider-assigned opaque subject is recorded only as a bounded local reference.",
+      "prohibited_actions": [
+        "customer.identity.create",
+        "identity.bulk-create",
+        "credential.persist",
+        "hook.enable"
+      ],
+      "stop_conditions": [
+        "identity.already-exists-unexpectedly",
+        "multiple-identities-created",
+        "subject.outcome.ambiguous"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.hook-deployed-state",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.05.verify-disabled-hook",
+          "evidence_type": "hook.disabled-acl.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.synthetic-subject",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "synthetic.identity.created",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "synthetic.identity.created",
+          "established_binding_ids": [
+            "binding.development.auth.synthetic-subject"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.07.bind-synthetic-tenant",
+      "ordinal": 7,
+      "resource": {
+        "resource_type": "auth.identity-app-metadata",
+        "resource_reference": "identity.development.synthetic-avuhz.app_metadata.avuhz_tenant_id",
+        "binding_state": "BOUND",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-metadata.bind-one-tenant",
+      "dependency_step_ids": [
+        "development.auth.step.06.create-synthetic-identity"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.identity.created",
+          "source_step_id": "development.auth.step.06.create-synthetic-identity",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Provider-controlled app_metadata contains exactly one top-level avuhz_tenant_id with the dedicated DEVELOPMENT-only canonical tenant UUID.",
+      "prohibited_actions": [
+        "user-metadata.use",
+        "multiple-tenant.bind",
+        "customer-tenant.bind",
+        "authority-claim.bind"
+      ],
+      "stop_conditions": [
+        "tenant.uuid.unresolved",
+        "metadata.shape.mismatch",
+        "identity.reference.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.synthetic-subject",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": "development.auth.step.06.create-synthetic-identity",
+          "evidence_type": "synthetic.identity.created",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.auth.synthetic-tenant",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "UUID_IDENTIFIER",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "afca531c-79fd-58e7-a54a-687879f10153",
+            "exact_digest": "sha256:e09d751794dd357aa55ebc326e824c946453255cba78c4432a6c63a72436600b"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.synthetic-tenant-metadata",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "synthetic.tenant-metadata.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "synthetic.tenant-metadata.verified",
+          "established_binding_ids": [
+            "binding.development.auth.synthetic-tenant-metadata"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.08.bind-server-capability",
+      "ordinal": 8,
+      "resource": {
+        "resource_type": "server.capability-policy-entry",
+        "resource_reference": "policy.development.synthetic-engagement-read",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "local.capability-policy.bind-exact-tuple",
+      "dependency_step_ids": [
+        "development.auth.step.07.bind-synthetic-tenant"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.tenant-metadata.verified",
+          "source_step_id": "development.auth.step.07.bind-synthetic-tenant",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The environment-scoped server allowlist binds exact issuer, audience, provider subject, tenant UUID, and HUMAN caller type to only engagement:read with empty authority roles.",
+      "prohibited_actions": [
+        "jwt-authority.trust",
+        "capability.wildcard",
+        "authority-role.add",
+        "cross-environment.bind"
+      ],
+      "stop_conditions": [
+        "subject.mismatch",
+        "tenant.mismatch",
+        "policy.scope.mismatch"
+      ],
+      "correction_reference": "correction.local-policy-revision",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.synthetic-subject",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": "development.auth.step.06.create-synthetic-identity",
+          "evidence_type": "synthetic.identity.created",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.auth.synthetic-tenant-metadata",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.07.bind-synthetic-tenant",
+          "evidence_type": "synthetic.tenant-metadata.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.server-capability-policy",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "server.capability-policy.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "established_binding_ids": [
+            "binding.development.auth.server-capability-policy"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.09.enable-hook",
+      "ordinal": 9,
+      "resource": {
+        "resource_type": "auth.hook-configuration",
+        "resource_reference": "hook.development.custom-access-token",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "provider.auth-hook.enable-exact",
+      "dependency_step_ids": [
+        "development.auth.step.08.bind-server-capability"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": "development.auth.step.08.bind-server-capability",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Only public.avuhz_development_custom_access_token_hook_v1(jsonb) is enabled for DEVELOPMENT access-token customization.",
+      "prohibited_actions": [
+        "other-hook.enable",
+        "hook-body.modify",
+        "audience.widen",
+        "authority-claim.emit"
+      ],
+      "stop_conditions": [
+        "hook-target.mismatch",
+        "multiple-hooks.enabled",
+        "enablement.outcome.ambiguous"
+      ],
+      "correction_reference": "correction.disable-exact-hook-after-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.hook-deployed-state",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.05.verify-disabled-hook",
+          "evidence_type": "hook.disabled-acl.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.server-capability-policy",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.08.bind-server-capability",
+          "evidence_type": "server.capability-policy.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-configuration-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "hook.configuration.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-enablement",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.enablement.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "hook.enablement.verified",
+          "established_binding_ids": [
+            "binding.development.auth.hook-enablement"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.10.issue-ephemeral-token",
+      "ordinal": 10,
+      "resource": {
+        "resource_type": "auth.synthetic-access-token",
+        "resource_reference": "token.development.synthetic-one-use",
+        "binding_state": "BOUND",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-token.issue-one-short-lived",
+      "dependency_step_ids": [
+        "development.auth.step.09.enable-hook"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "hook.enablement.verified",
+          "source_step_id": "development.auth.step.09.enable-hook",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "One short-lived DEVELOPMENT access token is delivered ephemerally for the dedicated synthetic identity and is not retained in any output or evidence.",
+      "prohibited_actions": [
+        "token.persist",
+        "token.print",
+        "token.log",
+        "token.reuse"
+      ],
+      "stop_conditions": [
+        "identity.reference.mismatch",
+        "token.delivery.not-ephemeral",
+        "token.outcome.ambiguous"
+      ],
+      "correction_reference": "correction.stop-and-expire-token",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SYNTHETIC_IDENTITY"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.hook-enablement",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.09.enable-hook",
+          "evidence_type": "hook.enablement.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.synthetic-subject",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": "development.auth.step.06.create-synthetic-identity",
+          "evidence_type": "synthetic.identity.created",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.auth.credential-delivery-procedure",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "PROCEDURE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "procedure.development.auth.synthetic-ephemeral-token-owner-session.v1",
+            "exact_digest": "sha256:bb73cfa2a0827c26cea668e3a677a817efa16c947f04717885cf2a845878088d"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.token-issuance-receipt",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "synthetic.token.issued-ephemerally",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "synthetic.token.issued-ephemerally",
+          "established_binding_ids": [
+            "binding.development.auth.token-issuance-receipt",
+            "binding.development.auth.ephemeral-token-handoff"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.11.fetch-jwks",
+      "ordinal": 11,
+      "resource": {
+        "resource_type": "auth.public-jwks",
+        "resource_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1/.well-known/jwks.json",
+        "binding_state": "BOUND",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.auth-jwks.read-once",
+      "dependency_step_ids": [
+        "development.auth.step.10.issue-ephemeral-token"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.token.issued-ephemerally",
+          "source_step_id": "development.auth.step.10.issue-ephemeral-token",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "One credential-free bounded JWKS response is validated and discarded after retaining only sanitized key metadata and its evidence digest.",
+      "prohibited_actions": [
+        "credential.use",
+        "redirect.follow",
+        "raw-response.persist",
+        "data.contact"
+      ],
+      "stop_conditions": [
+        "jwks.origin.mismatch",
+        "jwks.invalid",
+        "private-key-material.present"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.token-issuance-receipt",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.10.issue-ephemeral-token",
+          "evidence_type": "synthetic.token.issued-ephemerally",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.jwks-read-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "jwks.read.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.jwks-validation-material",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "jwks.public-key-set.validated",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "jwks.public-key-set.validated",
+          "established_binding_ids": [
+            "binding.development.auth.jwks-validation-material"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.12.validate-token-locally",
+      "ordinal": 12,
+      "resource": {
+        "resource_type": "auth.synthetic-access-token",
+        "resource_reference": "token.development.synthetic-one-use",
+        "binding_state": "BOUND",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "local.auth-token.validate-exact",
+      "dependency_step_ids": [
+        "development.auth.step.11.fetch-jwks"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "jwks.public-key-set.validated",
+          "source_step_id": "development.auth.step.11.fetch-jwks",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Local validation proves exact issuer, ES256 signature, DEVELOPMENT audience, one avuhz_tenant_id UUID, provider subject, HUMAN policy tuple, engagement:read only, and empty authority roles without retaining the token.",
+      "prohibited_actions": [
+        "jwt-authority.trust",
+        "token.persist",
+        "provider.call",
+        "command.mutate"
+      ],
+      "stop_conditions": [
+        "issuer.mismatch",
+        "audience.mismatch",
+        "tenant-claim.invalid",
+        "policy-tuple.mismatch"
+      ],
+      "correction_reference": "correction.stop-and-expire-token",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.ephemeral-token-handoff",
+          "phase": "EPHEMERAL_HANDOFF",
+          "value_class": "EPHEMERAL_SENSITIVE",
+          "source_step_id": "development.auth.step.10.issue-ephemeral-token",
+          "evidence_type": "synthetic.token.issued-ephemerally",
+          "digest_policy": "PROHIBITED",
+          "persistence_policy": "PROHIBITED"
+        },
+        {
+          "binding_id": "binding.development.auth.jwks-validation-material",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.11.fetch-jwks",
+          "evidence_type": "jwks.public-key-set.validated",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.synthetic-subject",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": "development.auth.step.06.create-synthetic-identity",
+          "evidence_type": "synthetic.identity.created",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.auth.synthetic-tenant-metadata",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.07.bind-synthetic-tenant",
+          "evidence_type": "synthetic.tenant-metadata.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.token-validation",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "synthetic.token-validation.passed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "synthetic.token-validation.passed",
+          "established_binding_ids": [
+            "binding.development.auth.token-validation"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.step.13.record-evidence-and-terminate",
+      "ordinal": 13,
+      "resource": {
+        "resource_type": "authorization-plan.evidence-bundle",
+        "resource_reference": "evidence.development-auth-integration.v1",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "local.evidence.record-and-terminate",
+      "dependency_step_ids": [
+        "development.auth.step.12.validate-token-locally"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "synthetic.token-validation.passed",
+          "source_step_id": "development.auth.step.12.validate-token-locally",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "A sanitized digest-bound evidence record contains no token, credential, raw provider payload, customer data, or authority claim and the plan terminates completed.",
+      "prohibited_actions": [
+        "token.persist",
+        "raw-provider-payload.persist",
+        "authorization.reuse",
+        "next-plan.start"
+      ],
+      "stop_conditions": [
+        "evidence.incomplete",
+        "evidence.sensitive",
+        "digest.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.token-validation",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.step.12.validate-token-locally",
+          "evidence_type": "synthetic.token-validation.passed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.final-evidence-bundle",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "authorization-plan.evidence-bundle.recorded",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "authorization-plan.evidence-bundle.recorded",
+          "established_binding_ids": [
+            "binding.development.auth.final-evidence-bundle"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "scope.expansion",
+    "step.skip",
+    "step.reorder",
+    "failed-mutation.retry",
+    "automatic.self-repair",
+    "data.operation",
+    "render.operation",
+    "staging.target",
+    "production.target",
+    "jwt.authority",
+    "secret.persist",
+    "raw-provider-payload.persist"
+  ],
+  "stop_conditions": [
+    "plan.binding.mismatch",
+    "authorization.expired",
+    "authorization.consumed",
+    "target.mismatch",
+    "environment.mismatch",
+    "resource.mismatch",
+    "operation.mismatch",
+    "dependency.mismatch",
+    "evidence.missing-or-stale",
+    "postcondition.mismatch",
+    "unexpected.remote-state",
+    "extra.privilege",
+    "unauthorized.migration-surface",
+    "scope.drift",
+    "outcome.irreversible-or-ambiguous"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

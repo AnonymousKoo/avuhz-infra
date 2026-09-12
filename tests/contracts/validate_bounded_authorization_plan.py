@@ -25,6 +25,9 @@ from avuhz_runtime.schema_registry import SchemaRegistry
 
 PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration.plan.json"
 PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration.progress.json"
+V8_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v8.approval.json"
+)
 HISTORICAL_STEP1_EVIDENCE_PATH = (
     ROOT / "contracts/plans/v1/development-auth-step1-baseline.evidence.json"
 )
@@ -82,6 +85,9 @@ V7_STEP1_EVIDENCE_DIGEST = (
 PLAN_DIGEST = "sha256:c7dd1770ae91aa0aea570c739cfeb358890e69a3a3ff81260ab70e0c5ad94938"
 PROGRESS_DIGEST = (
     "sha256:0dc83c7b72fccb4fde50baa3e37e30f4e8e14770406e0510ba67328fb2b36d52"
+)
+V8_APPROVAL_FILE_DIGEST = (
+    "sha256:8cde9dbbc139ce04ac1d6853c90753869360fe640cf23e1d694a20c0adbd1d5d"
 )
 IDENTITY_DIGEST = (
     "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45"
@@ -155,6 +161,7 @@ def main() -> int:
     v7_step1_evidence = json.loads(V7_STEP1_EVIDENCE_PATH.read_text())
     provider_preflight = json.loads(PROVIDER_PREFLIGHT_PATH.read_text())
     fixtures = json.loads(FIXTURE_PATH.read_text())
+    v8_approval = json.loads(V8_APPROVAL_PATH.read_text())
 
     validate_plan(plan, schemas)
     validate_progress(plan, progress, schemas)
@@ -796,9 +803,41 @@ def main() -> int:
         and progress["overall_state"] == "NOT_STARTED",
         "draft v7 progress must remain entirely unexecuted",
     )
+    approval_paths = set((ROOT / "contracts/plans/v1").glob("*approval*.json"))
     require(
-        not list((ROOT / "contracts/plans/v1").glob("*approval*.json")),
-        "owner approval record must not be fabricated",
+        approval_paths == {V8_APPROVAL_PATH},
+        "approval artifact set differs from the exact authorized v8 approval",
+    )
+    require(
+        file_digest(V8_APPROVAL_PATH) == V8_APPROVAL_FILE_DIGEST,
+        "exact authorized v8 approval file digest mismatch",
+    )
+    require(
+        v8_approval
+        == {
+            "approval_id": "64e98bff-0f2a-4b45-858c-c381189fdb90",
+            "plan_id": "a7100000-0000-4000-8000-000000000101",
+            "plan_version": 8,
+            "plan_digest":
+                "sha256:f0626b57e55ab2d7c81f47a29b5fc3d1eaf8d7c3e755c08a6ce18f9447aa8b39",
+            "owner_identity": "github:AnonymousKoo",
+            "decision": "APPROVE",
+            "environment": "DEVELOPMENT",
+            "effective_at": "2026-09-12T14:00:00Z",
+            "expires_at": "2026-09-12T16:00:00Z",
+            "approved_at": "2026-09-11T20:49:31Z",
+            "status": "ACTIVE",
+            "authority_scope": "EXACT_PLAN_ONLY",
+            "approval_digest":
+                "sha256:5c15058a08cf4ff9d343ffaf4afdcb0bc9cfbf88a4fe566e72866c99fb8e9d9b",
+        },
+        "exact authorized v8 approval identity changed",
+    )
+    require(
+        v8_approval.get("plan_version") != plan.get("plan_version")
+        and v8_approval.get("plan_digest") != plan.get("plan_digest")
+        and plan.get("definition_status") == "DRAFT_BLOCKED",
+        "exact v8 approval binds or authorizes the historical v7 plan",
     )
     require(fixtures.get("fictional_only") is True, "contract fixtures must be fictional")
     require(

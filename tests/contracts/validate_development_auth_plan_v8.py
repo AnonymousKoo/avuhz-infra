@@ -15,8 +15,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
+    AuthorizationPlanStop,
+    approval_digest,
     plan_digest,
     progress_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -35,6 +38,9 @@ V8_PLAN_PATH = (
 )
 V8_PROGRESS_PATH = (
     ROOT / "contracts/plans/v1/development-auth-integration-v8.progress.json"
+)
+V8_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v8.approval.json"
 )
 
 PLAN_SCHEMA_ID = (
@@ -57,6 +63,14 @@ EXPECTED_PLAN_FILE_SHA256 = (
     "2a0df0c66c1c118d319f0546edd38e1031c1fcb59cbf6873820b800eda2300a9"
 )
 EXPECTED_PROGRESS_ID = "a04097ee-b9ac-4a71-bf44-f04d5b0ddc40"
+EXPECTED_APPROVAL_ID = "64e98bff-0f2a-4b45-858c-c381189fdb90"
+EXPECTED_APPROVAL_DIGEST = (
+    "sha256:5c15058a08cf4ff9d343ffaf4afdcb0bc9cfbf88a4fe566e72866c99fb8e9d9b"
+)
+EXPECTED_APPROVAL_FILE_SHA256 = (
+    "8cde9dbbc139ce04ac1d6853c90753869360fe640cf23e1d694a20c0adbd1d5d"
+)
+EXPECTED_APPROVED_AT = "2026-09-11T20:49:31Z"
 EXPECTED_AUTHORIZATION_WINDOW = {
     "binding_state": "BOUND",
     "starts_at": "2026-09-12T14:00:00Z",
@@ -686,8 +700,11 @@ def main() -> int:
     try:
         require(V8_PLAN_PATH.is_file(), "immutable v8 plan file is missing")
         require(V8_PROGRESS_PATH.is_file(), "initial v8 progress file is missing")
+        require(V8_APPROVAL_PATH.is_file(), "exact v8 approval file is missing")
         actual_plan = load_json(V8_PLAN_PATH)
         actual_progress = load_json(V8_PROGRESS_PATH)
+        actual_approval = load_json(V8_APPROVAL_PATH)
+        progress_snapshot = json.loads(json.dumps(actual_progress))
 
         require(
             hashlib.sha256(V8_PLAN_PATH.read_bytes()).hexdigest()
@@ -731,6 +748,61 @@ def main() -> int:
             actual_plan.get("authorization_window")
             == EXPECTED_AUTHORIZATION_WINDOW,
             "immutable v8 authorization window changed",
+        )
+        approval_candidates = set(
+            V8_PLAN_PATH.parent.glob(
+                "development-auth-integration-v8*approval*.json"
+            )
+        )
+        require(
+            approval_candidates == {V8_APPROVAL_PATH},
+            "v8 approval artifact set differs from the exact authorized record",
+        )
+        require(
+            hashlib.sha256(V8_APPROVAL_PATH.read_bytes()).hexdigest()
+            == EXPECTED_APPROVAL_FILE_SHA256,
+            "exact v8 approval file bytes changed",
+        )
+        require(
+            actual_approval
+            == {
+                "approval_id": EXPECTED_APPROVAL_ID,
+                "plan_id": EXPECTED_PLAN_ID,
+                "plan_version": EXPECTED_PLAN_VERSION,
+                "plan_digest": EXPECTED_PLAN_DIGEST,
+                "owner_identity": "github:AnonymousKoo",
+                "decision": "APPROVE",
+                "environment": "DEVELOPMENT",
+                "effective_at": EXPECTED_AUTHORIZATION_WINDOW["starts_at"],
+                "expires_at": EXPECTED_AUTHORIZATION_WINDOW["expires_at"],
+                "approved_at": EXPECTED_APPROVED_AT,
+                "status": "ACTIVE",
+                "authority_scope": "EXACT_PLAN_ONLY",
+                "approval_digest": EXPECTED_APPROVAL_DIGEST,
+            },
+            "exact v8 approval semantics changed",
+        )
+        require(
+            actual_approval.get("approval_digest")
+            == approval_digest(actual_approval)
+            == EXPECTED_APPROVAL_DIGEST,
+            "exact v8 approval canonical digest mismatch",
+        )
+        require(
+            actual_approval.get("plan_id") == actual_plan.get("plan_id")
+            and actual_approval.get("plan_version")
+            == actual_plan.get("plan_version")
+            and actual_approval.get("plan_digest")
+            == actual_plan.get("plan_digest")
+            and actual_approval.get("owner_identity")
+            == actual_plan.get("owner_identity")
+            and actual_approval.get("environment")
+            == actual_plan.get("environment")
+            and actual_approval.get("effective_at")
+            == actual_plan.get("authorization_window", {}).get("starts_at")
+            and actual_approval.get("expires_at")
+            == actual_plan.get("authorization_window", {}).get("expires_at"),
+            "exact v8 approval is not bound to the loaded immutable plan",
         )
         actual_steps = actual_plan.get("steps", [])
         require(actual_plan.get("ordered_step_ids") == EXPECTED_STEPS,
@@ -897,13 +969,33 @@ def main() -> int:
             ),
             "initial v8 progress contains authority, execution, or runtime state",
         )
+        validate_approval(
+            actual_plan,
+            actual_approval,
+            SCHEMA_ROOT,
+            EXPECTED_AUTHORIZATION_WINDOW["starts_at"],
+        )
+        try:
+            validate_approval(
+                actual_plan,
+                actual_approval,
+                SCHEMA_ROOT,
+                EXPECTED_APPROVED_AT,
+            )
+        except AuthorizationPlanStop:
+            pass
+        else:
+            require(False, "exact v8 approval permits pre-window authority")
         require(
-            not list(
-                V8_PLAN_PATH.parent.glob(
-                    "development-auth-integration-v8*approval*.json"
-                )
-            ),
-            "a v8 approval record exists before separate authorization",
+            actual_progress == progress_snapshot,
+            "approval certification mutated initial v8 progress",
+        )
+        require(
+            step_states
+            and step_states[0].get("authorization_state") == "PENDING"
+            and step_states[0].get("execution_state") == "NOT_STARTED"
+            and step_states[0].get("authorization_consumed") is False,
+            "exact owner approval alone authorizes or executes Step 1",
         )
 
         def property_names(value: Any) -> set[str]:
@@ -930,6 +1022,10 @@ def main() -> int:
             instance_sensitive_names.isdisjoint(property_names(actual_progress)),
             "initial v8 progress contains a prohibited secret or PII field",
         )
+        require(
+            instance_sensitive_names.isdisjoint(property_names(actual_approval)),
+            "exact v8 approval contains a prohibited secret or PII field",
+        )
 
         if registry is not None:
             plan_errors = list(
@@ -940,10 +1036,16 @@ def main() -> int:
                 Draft202012Validator(registry.expanded(PROGRESS_SCHEMA_ID))
                 .iter_errors(actual_progress)
             )
+            approval_errors = list(
+                Draft202012Validator(registry.expanded(APPROVAL_SCHEMA_ID))
+                .iter_errors(actual_approval)
+            )
             require(not plan_errors,
                     "immutable v8 plan fails its Draft 2020-12 schema")
             require(not progress_errors,
                     "initial v8 progress fails its Draft 2020-12 schema")
+            require(not approval_errors,
+                    "exact v8 approval fails its Draft 2020-12 schema")
         validate_plan(actual_plan, SCHEMA_ROOT)
         validate_progress(actual_plan, actual_progress, SCHEMA_ROOT)
     except Exception as exc:

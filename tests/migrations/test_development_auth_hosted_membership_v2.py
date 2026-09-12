@@ -196,7 +196,7 @@ class DevelopmentAuthHostedMembershipV2PostgresTests(unittest.TestCase):
         self._apply(hook)
         _, function_state, _ = self._psql(
             "select owner.rolname||'|'||function.prosecdef::int||'|'||"
-            "function.provolatile||'|'||array_to_string(function.proconfig,',') "
+            "function.provolatile::text||'|'||array_to_string(function.proconfig,',') "
             "from pg_proc function "
             "join pg_roles owner on owner.oid=function.proowner "
             "where function.oid=to_regprocedure("

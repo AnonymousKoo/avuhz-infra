@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from avuhz_engineering.authorization_plan import (
     authorize_step,
     initial_progress,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -36,9 +37,10 @@ EXPECTED_PROGRESS_ID = "68bed069-a537-4a93-b528-8473fa852b81"
 EXPECTED_APPROVAL_ID = "5521ee03-6fbc-4be9-a3b3-9605587cad47"
 EXPECTED_PLAN_DIGEST = "sha256:7beaa95d02ee414091d85e1212b2646359850912e08ed8ce6ed450f2afe3a95f"
 EXPECTED_APPROVAL_DIGEST = "sha256:2ae369d35cd0cb78a4d72e551821a0a1e1762158f2284e431f97940bef0dc2bc"
-EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:77ce7ee6cac40be03aedd5b616b778ec6b9ac28edd38240223eda441f1ac1c4a"
+EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:525cc64fb6c5f4de002ea8afae5f6ad2be061ba2609e04824fd1007408a1ce18"
 EXPECTED_FAILURE_DIGEST = "sha256:ac1cb15f824cb588465af4c390c3f93b2be41bb83698ea5e839e81cf0574b68f"
 AUTHORIZED_AT = "2026-09-12T16:55:56Z"
+OUTCOME_AT = "2026-09-12T17:13:15Z"
 EXPECTED_AUTHORIZATION_WINDOW = {
     "binding_state": "BOUND",
     "starts_at": "2026-09-12T16:45:00Z",
@@ -57,6 +59,11 @@ EXPECTED_STEPS = [
     "development.auth.v9.step.04.seal-migration-identity-v2",
     "development.auth.v9.step.05.verify-disabled-hook",
 ]
+EXPECTED_STEP1_POSTCONDITION = (
+    "The three v2 migration artifacts are digest-bound and disposable PostgreSQL 17 "
+    "reproduces hosted NOSUPERUSER CREATEROLE bootstrap, temporary SET, hook creation, "
+    "targeted seal, rollback, and post-seal SET ROLE denial without provider contact."
+)
 
 
 def load(path: Path) -> dict:
@@ -82,6 +89,7 @@ def main() -> None:
     validate_progress(plan, progress, SCHEMA_ROOT)
     validate_progress(plan, execution_progress, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, AUTHORIZED_AT)
+    validate_approval(plan, approval, SCHEMA_ROOT, OUTCOME_AT)
 
     assert plan["plan_id"] == EXPECTED_PLAN_ID
     assert plan["plan_version"] == 9
@@ -143,6 +151,7 @@ def main() -> None:
     assert plan["steps"][1]["resource"]["exact_digest"] == actual[BOOTSTRAP]
     assert plan["steps"][2]["resource"]["exact_digest"] == actual[HOOK]
     assert plan["steps"][3]["resource"]["exact_digest"] == actual[SEAL]
+    assert plan["steps"][0]["expected_postcondition"] == EXPECTED_STEP1_POSTCONDITION
 
     regression = REGRESSION.read_text(encoding="utf-8")
     for required in (
@@ -161,14 +170,6 @@ def main() -> None:
     assert progress["overall_state"] == "NOT_STARTED"
     assert all(
         state["authorization_state"] == "PENDING"
-        for state in progress["step_states"]
-    )
-    assert all(
-        state["execution_state"] == "NOT_STARTED"
-        for state in progress["step_states"]
-    )
-    assert all(
-        not state["authorization_consumed"]
         for state in progress["step_states"]
     )
 
@@ -209,18 +210,102 @@ def main() -> None:
         SCHEMA_ROOT,
         AUTHORIZED_AT,
     )
-    assert execution_progress == expected_authorized
-    assert execution_progress["record_version"] == 2
+    assert expected_authorized["record_version"] == 2
+    first_authorized = expected_authorized["step_states"][0]
+    assert first_authorized["authorization_state"] == "AUTHORIZED"
+    assert first_authorized["execution_state"] == "NOT_STARTED"
+    assert first_authorized["authorization_consumed"] is False
+
+    evidence = [
+        {
+            "evidence_type": "migration.identity.v2.artifact.validated",
+            "evidence_reference": "github.actions.run.34707401633.attempt.1.migration-identity-v2",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[BOOTSTRAP],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "evidence_type": "hook.migration.v2.artifact.validated",
+            "evidence_reference": "github.actions.run.34707401633.attempt.1.hook-migration-v2",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[HOOK],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "evidence_type": "migration.identity.seal.v2.artifact.validated",
+            "evidence_reference": "github.actions.run.34707401633.attempt.1.migration-identity-seal-v2",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[SEAL],
+            "recorded_at": OUTCOME_AT,
+        },
+    ]
+    binding_assertions = [
+        {
+            "binding_id": "binding.development.auth.v9.migration-identity-artifact",
+            "phase": "PRODUCED_BY_CURRENT_STEP",
+            "value_class": "CONTENT_DIGEST",
+            "source_step_id": None,
+            "evidence_type": "migration.identity.v2.artifact.validated",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[BOOTSTRAP],
+            "digest_policy": "REQUIRED",
+            "persistence_policy": "DIGEST_ONLY",
+            "sanitized_value": None,
+            "value_digest": EXPECTED_ARTIFACT_DIGESTS[BOOTSTRAP],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "binding_id": "binding.development.auth.v9.hook-migration-artifact",
+            "phase": "PRODUCED_BY_CURRENT_STEP",
+            "value_class": "CONTENT_DIGEST",
+            "source_step_id": None,
+            "evidence_type": "hook.migration.v2.artifact.validated",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[HOOK],
+            "digest_policy": "REQUIRED",
+            "persistence_policy": "DIGEST_ONLY",
+            "sanitized_value": None,
+            "value_digest": EXPECTED_ARTIFACT_DIGESTS[HOOK],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "binding_id": "binding.development.auth.v9.seal-migration-artifact",
+            "phase": "PRODUCED_BY_CURRENT_STEP",
+            "value_class": "CONTENT_DIGEST",
+            "source_step_id": None,
+            "evidence_type": "migration.identity.seal.v2.artifact.validated",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[SEAL],
+            "digest_policy": "REQUIRED",
+            "persistence_policy": "DIGEST_ONLY",
+            "sanitized_value": None,
+            "value_digest": EXPECTED_ARTIFACT_DIGESTS[SEAL],
+            "recorded_at": OUTCOME_AT,
+        },
+    ]
+    expected_outcome = record_step_outcome(
+        plan,
+        approval,
+        expected_authorized,
+        EXPECTED_STEPS[0],
+        "SUCCEEDED",
+        "PASS",
+        evidence,
+        EXPECTED_STEP1_POSTCONDITION,
+        None,
+        SCHEMA_ROOT,
+        OUTCOME_AT,
+        binding_assertions,
+    )
+    assert execution_progress == expected_outcome
+    assert execution_progress["record_version"] == 3
     assert execution_progress["overall_state"] == "IN_PROGRESS"
-    assert execution_progress["updated_at"] == AUTHORIZED_AT
+    assert execution_progress["updated_at"] == OUTCOME_AT
     assert execution_progress["progress_digest"] == EXPECTED_EXECUTION_PROGRESS_DIGEST
+
     first_state = execution_progress["step_states"][0]
-    assert first_state["authorization_state"] == "AUTHORIZED"
-    assert first_state["execution_state"] == "NOT_STARTED"
-    assert first_state["verification_state"] == "NOT_STARTED"
-    assert first_state["authorization_consumed"] is False
-    assert first_state["evidence"] == []
-    assert first_state["binding_assertions"] == []
+    assert first_state["authorization_state"] == "CONSUMED"
+    assert first_state["execution_state"] == "SUCCEEDED"
+    assert first_state["verification_state"] == "PASS"
+    assert first_state["authorization_consumed"] is True
+    assert first_state["observed_postcondition"] == EXPECTED_STEP1_POSTCONDITION
+    assert first_state["safe_error_code"] is None
+    assert first_state["evidence"] == evidence
+    assert first_state["binding_assertions"] == binding_assertions
     assert all(
         state["authorization_state"] == "PENDING"
         and state["execution_state"] == "NOT_STARTED"
@@ -233,8 +318,8 @@ def main() -> None:
 
     print(
         "DEVELOPMENT_AUTH_V9_RECOVERY_CONTRACT=PASS "
-        "(Step 1 authorized only; not executed; authorization unconsumed; "
-        "Steps 2-5 pending; hosted membership v2 artifacts bound; v8 retry prohibited)"
+        "(Step 1 consumed/succeeded/pass from GitHub Actions run 34707401633; "
+        "Steps 2-5 pending; no provider execution; v8 retry prohibited)"
     )
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the DEVELOPMENT AUTH v10 continuation plan without provider contact."""
+"""Validate the DEVELOPMENT AUTH v10 continuation and Step 1 outcome without provider contact."""
 from __future__ import annotations
 
 import hashlib
@@ -14,6 +14,7 @@ from avuhz_engineering.authorization_plan import (
     AuthorizationPlanStop,
     authorize_step,
     initial_progress,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -38,9 +39,10 @@ EXPECTED_APPROVAL_ID = "d43ce978-6127-4b57-a400-1f9a845da23c"
 EXPECTED_PLAN_DIGEST = "sha256:603027e96c8a1e071ed3f06b26555b8cc9b7d66c49e7d5b0fe54f6929fd0b857"
 EXPECTED_APPROVAL_DIGEST = "sha256:1597a8ec75f4d39647a0c4e579e1945f8d9e7b3065ef8c7a595b0ed2e07dcfc8"
 EXPECTED_PROGRESS_DIGEST = "sha256:0f3ae68182cd9990912670889dad583b5ae5b571c84df10ac5553022d3b7caaf"
-EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:4edde2626da02ffcf27f714c48fe44d24038fdf8a6e28755983aa25f8071b9b9"
+EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:aca5e217171aea39722bf06ff5c480230e42b9937485170b8428d399e103e33b"
 EXPECTED_FAILURE_DIGEST = "sha256:ac1cb15f824cb588465af4c390c3f93b2be41bb83698ea5e839e81cf0574b68f"
 AUTHORIZED_AT = "2026-09-12T21:44:22Z"
+OUTCOME_AT = "2026-09-12T22:35:29Z"
 EXPECTED_WINDOW = {
     "binding_state": "BOUND",
     "starts_at": "2026-09-12T21:25:00Z",
@@ -59,6 +61,11 @@ EXPECTED_STEPS = [
     "development.auth.v10.step.04.seal-migration-identity-v2",
     "development.auth.v10.step.05.verify-disabled-hook",
 ]
+EXPECTED_STEP1_POSTCONDITION = (
+    "The three unchanged v2 migration artifacts are digest-bound and disposable PostgreSQL 17 "
+    "re-certifies hosted NOSUPERUSER CREATEROLE bootstrap, temporary SET, hook creation, "
+    "targeted seal, rollback, and post-seal SET ROLE denial without provider contact."
+)
 
 
 def load(path: Path) -> dict:
@@ -85,6 +92,7 @@ def main() -> None:
     validate_progress(plan, progress, SCHEMA_ROOT)
     validate_progress(plan, execution_progress, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, AUTHORIZED_AT)
+    validate_approval(plan, approval, SCHEMA_ROOT, OUTCOME_AT)
 
     assert plan["plan_id"] == EXPECTED_PLAN_ID
     assert plan["plan_version"] == 10
@@ -96,6 +104,7 @@ def main() -> None:
     assert plan["ordered_step_ids"] == EXPECTED_STEPS
     assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
     assert "v9.expired-authorization.execute" in plan["prohibited_actions"]
+    assert plan["steps"][0]["expected_postcondition"] == EXPECTED_STEP1_POSTCONDITION
 
     assert approval["approval_id"] == EXPECTED_APPROVAL_ID
     assert approval["plan_id"] == EXPECTED_PLAN_ID
@@ -115,13 +124,6 @@ def main() -> None:
     assert progress == expected_progress
     assert progress["progress_digest"] == EXPECTED_PROGRESS_DIGEST
     assert progress["overall_state"] == "NOT_STARTED"
-    assert all(
-        state["authorization_state"] == "PENDING"
-        and state["execution_state"] == "NOT_STARTED"
-        and state["verification_state"] == "NOT_STARTED"
-        and state["authorization_consumed"] is False
-        for state in progress["step_states"]
-    )
 
     actual = {path: raw_digest(path) for path in EXPECTED_ARTIFACT_DIGESTS}
     assert actual == EXPECTED_ARTIFACT_DIGESTS
@@ -137,7 +139,6 @@ def main() -> None:
     assert plan["steps"][3]["resource"]["exact_digest"] == actual[SEAL]
 
     assert v9_execution["record_version"] == 4
-    assert v9_execution["overall_state"] == "IN_PROGRESS"
     assert v9_execution["step_states"][0]["authorization_state"] == "CONSUMED"
     assert v9_execution["step_states"][0]["execution_state"] == "SUCCEEDED"
     assert v9_execution["step_states"][0]["verification_state"] == "PASS"
@@ -189,18 +190,101 @@ def main() -> None:
         SCHEMA_ROOT,
         AUTHORIZED_AT,
     )
-    assert execution_progress == expected_authorized
-    assert execution_progress["record_version"] == 2
+    assert expected_authorized["record_version"] == 2
+    assert expected_authorized["step_states"][0]["authorization_state"] == "AUTHORIZED"
+
+    evidence = [
+        {
+            "evidence_type": "migration.identity.v2.artifact.recertified",
+            "evidence_reference": "github.actions.run.34723041269.attempt.1.migration-identity-v2",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[BOOTSTRAP],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "evidence_type": "hook.migration.v2.artifact.recertified",
+            "evidence_reference": "github.actions.run.34723041269.attempt.1.hook-migration-v2",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[HOOK],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "evidence_type": "migration.identity.seal.v2.artifact.recertified",
+            "evidence_reference": "github.actions.run.34723041269.attempt.1.migration-identity-seal-v2",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[SEAL],
+            "recorded_at": OUTCOME_AT,
+        },
+    ]
+    binding_assertions = [
+        {
+            "binding_id": "binding.development.auth.v10.migration-identity-artifact",
+            "phase": "PRODUCED_BY_CURRENT_STEP",
+            "value_class": "CONTENT_DIGEST",
+            "source_step_id": None,
+            "evidence_type": "migration.identity.v2.artifact.recertified",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[BOOTSTRAP],
+            "digest_policy": "REQUIRED",
+            "persistence_policy": "DIGEST_ONLY",
+            "sanitized_value": None,
+            "value_digest": EXPECTED_ARTIFACT_DIGESTS[BOOTSTRAP],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "binding_id": "binding.development.auth.v10.hook-migration-artifact",
+            "phase": "PRODUCED_BY_CURRENT_STEP",
+            "value_class": "CONTENT_DIGEST",
+            "source_step_id": None,
+            "evidence_type": "hook.migration.v2.artifact.recertified",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[HOOK],
+            "digest_policy": "REQUIRED",
+            "persistence_policy": "DIGEST_ONLY",
+            "sanitized_value": None,
+            "value_digest": EXPECTED_ARTIFACT_DIGESTS[HOOK],
+            "recorded_at": OUTCOME_AT,
+        },
+        {
+            "binding_id": "binding.development.auth.v10.seal-migration-artifact",
+            "phase": "PRODUCED_BY_CURRENT_STEP",
+            "value_class": "CONTENT_DIGEST",
+            "source_step_id": None,
+            "evidence_type": "migration.identity.seal.v2.artifact.recertified",
+            "evidence_digest": EXPECTED_ARTIFACT_DIGESTS[SEAL],
+            "digest_policy": "REQUIRED",
+            "persistence_policy": "DIGEST_ONLY",
+            "sanitized_value": None,
+            "value_digest": EXPECTED_ARTIFACT_DIGESTS[SEAL],
+            "recorded_at": OUTCOME_AT,
+        },
+    ]
+    expected_outcome = record_step_outcome(
+        plan,
+        approval,
+        expected_authorized,
+        EXPECTED_STEPS[0],
+        "SUCCEEDED",
+        "PASS",
+        evidence,
+        EXPECTED_STEP1_POSTCONDITION,
+        None,
+        SCHEMA_ROOT,
+        OUTCOME_AT,
+        binding_assertions=binding_assertions,
+    )
+
+    assert execution_progress == expected_outcome
+    assert execution_progress["record_version"] == 3
     assert execution_progress["overall_state"] == "IN_PROGRESS"
-    assert execution_progress["updated_at"] == AUTHORIZED_AT
+    assert execution_progress["updated_at"] == OUTCOME_AT
     assert execution_progress["progress_digest"] == EXPECTED_EXECUTION_PROGRESS_DIGEST
+
     first_state = execution_progress["step_states"][0]
-    assert first_state["authorization_state"] == "AUTHORIZED"
-    assert first_state["execution_state"] == "NOT_STARTED"
-    assert first_state["verification_state"] == "NOT_STARTED"
-    assert first_state["authorization_consumed"] is False
-    assert first_state["evidence"] == []
-    assert first_state["binding_assertions"] == []
+    assert first_state["authorization_state"] == "CONSUMED"
+    assert first_state["execution_state"] == "SUCCEEDED"
+    assert first_state["verification_state"] == "PASS"
+    assert first_state["authorization_consumed"] is True
+    assert first_state["evidence"] == evidence
+    assert first_state["binding_assertions"] == binding_assertions
+    assert first_state["observed_postcondition"] == EXPECTED_STEP1_POSTCONDITION
+    assert first_state["safe_error_code"] is None
+
     assert all(
         state["authorization_state"] == "PENDING"
         and state["execution_state"] == "NOT_STARTED"
@@ -213,8 +297,9 @@ def main() -> None:
 
     print(
         "DEVELOPMENT_AUTH_V10_CONTINUATION=PASS "
-        "(v9 immutable/expired; v10 Step 1 authorized only; not executed; "
-        "authorization unconsumed; Steps 2-5 pending; provider_contact_attempted=false)"
+        "(v9 immutable/expired; v10 Step 1 consumed/succeeded/pass from "
+        "GitHub Actions run 34723041269; Steps 2-5 pending; "
+        "provider_contact_attempted=false)"
     )
 
 

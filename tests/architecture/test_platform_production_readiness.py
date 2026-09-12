@@ -153,8 +153,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "private key material absent",
             "validation `PASS`",
             "c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af",
-            "one-use DEVELOPMENT AUTH JWKS read authorization was consumed",
-            "No further AUTH call",
+            "The completed JWKS discovery grants no continuing AUTH/DATA access",
             "live hosted DEVELOPMENT composition still uses its unavailable real-provider resolver",
         ):
             self.assertIn(value, STATE)
@@ -216,7 +215,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "has not been remotely created or enabled",
             "DEVELOPMENT AUTH v9 Step 1 is canonically `CONSUMED / SUCCEEDED / PASS`",
             "Step 2 is canonically `AUTHORIZED / NOT_STARTED / unconsumed`",
-            "approval window has expired",
+            "owner approval/window that authorized v9 has expired",
         ):
             self.assertIn(value, STATE)
 

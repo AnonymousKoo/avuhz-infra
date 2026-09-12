@@ -3,12 +3,12 @@
   "plan_id": "a7100000-0000-4000-8000-000000000101",
   "plan_version": 8,
   "plan_digest": "sha256:f0626b57e55ab2d7c81f47a29b5fc3d1eaf8d7c3e755c08a6ce18f9447aa8b39",
-  "record_version": 1,
-  "overall_state": "NOT_STARTED",
+  "record_version": 2,
+  "overall_state": "IN_PROGRESS",
   "step_states": [
     {
       "step_id": "development.auth.step.01.local-hook-migration",
-      "authorization_state": "PENDING",
+      "authorization_state": "AUTHORIZED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -150,6 +150,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-11T18:27:04Z",
-  "progress_digest": "sha256:37ed6648268f3609dd770a05df353c447f62f1ee604d71be1bfd2e66ad897b9c"
+  "updated_at": "2026-09-12T14:42:59Z",
+  "progress_digest": "sha256:b3eb66e15040f78aaa620e4c8a99232da181c5b2e0feed3ac9468af2ecba9cd8"
 }

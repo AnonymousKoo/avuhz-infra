@@ -26,6 +26,7 @@ python3 tests/contracts/validate_handoff_engagement.py
 python3 tests/contracts/validate_orchestration_foundation.py
 python3 tests/contracts/validate_bounded_authorization_plan.py
 python3 tests/contracts/validate_development_auth_plan_v8.py
+python3 tests/contracts/validate_development_auth_plan_v9.py
 python3 tests/contracts/validate_read_models.py
 python3 tests/contracts/validate_slice1_acceptance.py
 python3 tests/contracts/validate_phase5d_implementation_package_architecture.py

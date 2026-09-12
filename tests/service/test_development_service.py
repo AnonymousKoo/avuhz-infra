@@ -29,8 +29,8 @@ from avuhz_service.development import (
 def environment():
     return {
         "AVUHZ_SERVICE_ENVIRONMENT": "DEVELOPMENT",
-        "AVUHZ_DATA_PROJECT_REF": "pwlhruwutoitnieactol",
-        "AVUHZ_DATA_PROJECT_URL": "https://pwlhruwutoitnieactol.supabase.co",
+        "AVUHZ_DATA_PROJECT_REF": "gnuqaefotwgkwurjpyik",
+        "AVUHZ_DATA_PROJECT_URL": "https://gnuqaefotwgkwurjpyik.supabase.co",
         "AVUHZ_AUTH_PROJECT_REF": "pwlhruwutoitnieactol",
         "AVUHZ_AUTH_ISSUER": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
         "AVUHZ_SERVICE_AUDIENCE": "audience.avuhz.command-service.development",

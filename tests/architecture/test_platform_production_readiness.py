@@ -49,7 +49,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         ):
             self.assertIn(value, ARCHITECTURE)
         self.assertIn("registration grants no connection or mutation authority", SECURITY)
-        self.assertIn("no remote mutation is authorized", STATE)
+        self.assertIn("No provider mutation is currently authorized", STATE)
 
     def test_environment_reference_model_is_distinct_tenant_bound_and_fail_closed(self):
         for value in (
@@ -77,7 +77,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertIn("OWNER_APPROVED_BINDING", ARCHITECTURE)
         self.assertIn("OWNER_APPROVED_POLICY", ARCHITECTURE)
         self.assertIn("Application/runtime identities never receive table ownership", SECURITY)
-        self.assertIn("Concrete environment-scoped services", STATE)
+        self.assertIn("environment-scoped secret boundaries", STATE)
 
     def test_owner_bindings_provider_choices_and_nonproduction_policies_are_exact(self):
         for value in (
@@ -85,7 +85,9 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "Render runtime secrets plus GitHub CI/environment secrets",
             "Grafana Cloud via OpenTelemetry",
             "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
-            "https://gnuqaefotwgkwurjpyik.supabase.co/auth/v1",
+            "issuer.avuhz.staging",
+            "data-project.avuhz.staging",
+            "No staging Supabase AUTH or DATA project is currently registered",
             "Git migrations are canonical",
             "Recovery is rebuild, replay canonical migrations, and seed approved synthetic data",
             "No point-in-time-recovery capability is claimed",
@@ -100,7 +102,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         ):
             self.assertIn(value, ARCHITECTURE)
         self.assertIn("No Render service or deployment-target identifier is defined", ARCHITECTURE)
-        self.assertIn("no remote mutation is authorized", STATE)
+        self.assertIn("No provider mutation is currently authorized", STATE)
 
     def test_ci_secrets_change_policy_and_evidence_gates_are_defined(self):
         for heading in (
@@ -151,8 +153,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "private key material absent",
             "validation `PASS`",
             "c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af",
-            "one-use DEVELOPMENT AUTH JWKS read authorization was consumed",
-            "No further AUTH call, DATA access",
+            "The completed JWKS discovery grants no continuing AUTH/DATA access",
             "live hosted DEVELOPMENT composition still uses its unavailable real-provider resolver",
         ):
             self.assertIn(value, STATE)
@@ -175,7 +176,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "Provider-assigned opaque `sub`",
             "Ephemeral local injection only",
             "Supabase is an AUTH/DATA adapter; Avuhz core remains provider-neutral",
-            "not evidence of production-grade AUTH/DATA isolation",
+            "Responsibilities and physical projects are distinct in DEVELOPMENT",
             "Required by the current Supabase adapter design",
             "must emit no Avuhz capability or authority-role claims",
             "remains uncreated and disabled",
@@ -211,8 +212,10 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "disposable local PostgreSQL DEVELOPMENT DATA composition and UnitOfWork tests are green",
             "default Supabase `aud=authenticated` is rejected by Avuhz",
             "clean disposable replay passes nine PostgreSQL tests",
-            "No hook migration exists",
-            "exact DEVELOPMENT AUTH sequence exists only as an unapproved `DRAFT_BLOCKED` plan with no executed step",
+            "has not been remotely created or enabled",
+            "DEVELOPMENT AUTH v9 Step 1 is canonically `CONSUMED / SUCCEEDED / PASS`",
+            "Step 2 is canonically `AUTHORIZED / NOT_STARTED / unconsumed`",
+            "owner approval/window that authorized v9 has expired",
         ):
             self.assertIn(value, STATE)
 
@@ -232,7 +235,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         self.assertIn("`READY_FOR_PHASE6`: `NO`", STATE)
         for blocker in (
             "production outbox identity/provider sink", "production AUTH/DATA registry",
-            "GitHub workflows/branch/environment protections", "observability/alerting",
+            "complete protected CI provenance/SBOM publication", "observability/alerting",
             "backup/PITR RPO/RTO", "deployment/rollback rehearsal",
         ):
             self.assertIn(blocker, STATE)

@@ -84,15 +84,18 @@ This is the single canonical record of owner-approved, non-secret project select
 
 | Field | Development | Staging | Production |
 |---|---|---|---|
-| Environment | `development` | `staging` | `UNCONFIGURED` |
-| Supabase project reference | `pwlhruwutoitnieactol` | `gnuqaefotwgkwurjpyik` | Project not created |
-| Supabase base URL | `https://pwlhruwutoitnieactol.supabase.co` | `https://gnuqaefotwgkwurjpyik.supabase.co` | Unconfigured |
-| AUTH project | `pwlhruwutoitnieactol` | `gnuqaefotwgkwurjpyik` | Unconfigured |
-| DATA project | `pwlhruwutoitnieactol` | `gnuqaefotwgkwurjpyik` | Unconfigured |
-| Tenant bridge | `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` | `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` | Unconfigured |
+| Environment | `development` | `UNCONFIGURED` | `UNCONFIGURED` |
+| AUTH project | `pwlhruwutoitnieactol` | Unconfigured | Unconfigured |
+| AUTH base URL | `https://pwlhruwutoitnieactol.supabase.co` | Unconfigured | Unconfigured |
+| AUTH issuer | `https://pwlhruwutoitnieactol.supabase.co/auth/v1` | Unconfigured | Unconfigured |
+| DATA project | `gnuqaefotwgkwurjpyik` | Unconfigured | Unconfigured |
+| DATA base URL | `https://gnuqaefotwgkwurjpyik.supabase.co` | Unconfigured | Unconfigured |
+| Tenant bridge | `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` | Unconfigured | Unconfigured |
 | Remote mutation | Not authorized | Not authorized | Not authorized |
 
-Production is unconfigured and its project does not exist. No entry contains credentials or secret material, and no entry establishes that a project was contacted, validated, migrated, or made deployment-ready.
+The DEVELOPMENT AUTH and DATA responsibilities are now physically separated. Supabase project `gnuqaefotwgkwurjpyik`, formerly registered as staging, was owner-directed for reuse and was verified clean before reclassification: no user-created public relations/routines/enums, Auth users/identities, Storage buckets/objects, Edge Functions, or remote migration-history entries remained. This clean-state evidence permits registration only; it does not authorize applying the canonical DATA migration, creating runtime credentials, wiring the hosted service, or making readiness true.
+
+Staging is deferred and currently has no registered Supabase AUTH or DATA project. Production is unconfigured and its project does not exist. No entry contains credentials or secret material, and no entry establishes deployment readiness.
 
 ### Development and staging production-readiness references
 
@@ -105,7 +108,8 @@ Production is unconfigured and its project does not exist. No entry contains cre
 | Outbox worker identity | `avuhz_outbox_worker_dev` | `DEFINED_LOGICAL` | `avuhz_outbox_worker_staging` | `DEFINED_LOGICAL` |
 | Migration identity | `avuhz_migration_service_dev` | `DEFINED_LOGICAL` | `avuhz_migration_service_staging` | `DEFINED_LOGICAL` |
 | CI identity | `avuhz_ci_service_dev` | `DEFINED_LOGICAL` | `avuhz_ci_service_staging` | `DEFINED_LOGICAL` |
-| AUTH issuer reference | `https://pwlhruwutoitnieactol.supabase.co/auth/v1` | `OWNER_APPROVED_BINDING` | `https://gnuqaefotwgkwurjpyik.supabase.co/auth/v1` | `OWNER_APPROVED_BINDING` |
+| AUTH issuer reference | `https://pwlhruwutoitnieactol.supabase.co/auth/v1` | `OWNER_APPROVED_BINDING` | `issuer.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
+| DATA project reference | `gnuqaefotwgkwurjpyik` | `OWNER_APPROVED_BINDING` | `data-project.avuhz.staging` | `OWNER_VALUE_REQUIRED` |
 | Command-service audience | `audience.avuhz.command-service.development` | `DEFINED_LOGICAL` | `audience.avuhz.command-service.staging` | `DEFINED_LOGICAL` |
 | Outbox-worker audience | `audience.avuhz.outbox-worker.development` | `DEFINED_LOGICAL` | `audience.avuhz.outbox-worker.staging` | `DEFINED_LOGICAL` |
 | Migration audience | `audience.avuhz.migration.development` | `DEFINED_LOGICAL` | `audience.avuhz.migration.staging` | `DEFINED_LOGICAL` |
@@ -151,6 +155,7 @@ The owner references identify the currently attributable owner for each approval
 #### Approved providers and unresolved resources
 
 - Render is the approved development/staging runtime provider, and the exact DEVELOPMENT command-service binding is recorded above. No Render service or deployment-target identifier is defined or claimed to exist for staging.
+- No staging Supabase AUTH or DATA project is currently registered; staging provider bindings remain `OWNER_VALUE_REQUIRED` until a later owner-approved staging phase.
 - Render runtime secrets and GitHub CI/environment secrets are the approved secret-delivery boundaries. No secret value, secret name, environment identifier, namespace identifier, or credential is recorded here.
 - Grafana Cloud via OpenTelemetry is the approved observability path. No Grafana organization, stack, destination, endpoint, authentication, or collector resource is defined or claimed to exist.
 - The recorded DEVELOPMENT service and provider choices grant no resource-change or connection authority. Staging runtime and all unresolved environment-scoped secret, observability, network-enforcement, DATA, and AUTH resources remain `OWNER_VALUE_REQUIRED`.
@@ -173,7 +178,7 @@ Development and staging identities, audiences, targets, policies, secret namespa
 
 ### DEVELOPMENT AUTH/DATA adapter and connected-validation package
 
-This package is a frozen plan, not provider access or runtime wiring. AUTH and DATA remain separate responsibilities even though both currently select Supabase project `pwlhruwutoitnieactol`. The hosted DEVELOPMENT service stays fail-closed until each real adapter is implemented, independently validated, explicitly wired, and approved.
+This package is a frozen plan, not provider access or runtime wiring. DEVELOPMENT AUTH and DATA now use separate physical Supabase projects: AUTH is `pwlhruwutoitnieactol` and DATA is `gnuqaefotwgkwurjpyik`. The hosted DEVELOPMENT service stays fail-closed until each real adapter is implemented, independently validated, explicitly wired, and approved.
 
 | Boundary | Required composition | Fail-closed output | Explicit exclusions |
 |---|---|---|---|
@@ -205,7 +210,7 @@ The owner supplied the following one-use authorization for the completed credent
 
 DATA remains unauthorized after that call. Before the DATA call, the owner must provide the exact non-secret database endpoint reference, runtime login identity binding, and secret-manager reference without revealing a secret value, then supply this separate authorization:
 
-> I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT DATA catalog/RLS validation defined in `docs/architecture.md` against only Supabase project `pwlhruwutoitnieactol`, using the separately owner-bound runtime database endpoint, login identity, and secret-manager references: one read-only transaction, catalog/role/grant/RLS inspection only, rollback and close, bounded secret-free evidence, no business-row or AUTH-data access, no writes, no DDL, no migration, no service-role access, no grant/RLS/schema repair, no Render change, no staging/production, and stop on every documented condition. This authorization expires when that single validation completes or fails.
+> I, `github:AnonymousKoo`, authorize the bounded DEVELOPMENT DATA catalog/RLS validation defined in `docs/architecture.md` against only Supabase project `gnuqaefotwgkwurjpyik`, using the separately owner-bound runtime database endpoint, login identity, and secret-manager references: one read-only transaction, catalog/role/grant/RLS inspection only, rollback and close, bounded secret-free evidence, no business-row or AUTH-data access, no writes, no DDL, no migration, no service-role access, no grant/RLS/schema repair, no Render change, no staging/production, and stop on every documented condition. This authorization expires when that single validation completes or fails.
 
 Neither the consumed AUTH authorization nor the unapplied DATA authorization permits credential creation, provider configuration, adapter deployment/wiring, readiness changes, remediation, or a second call.
 
@@ -227,7 +232,7 @@ These owner-approved DEVELOPMENT policies are canonical and frozen. They contain
 | Synthetic subject | Provider-assigned opaque `sub` | The value remains unresolved until provider assignment and must not be invented. |
 | Synthetic token delivery | Ephemeral local injection only | A token must never enter prompts, Git, logs, documentation, fixtures, or retained evidence. |
 | Supabase boundary | Supabase is an AUTH/DATA adapter; Avuhz core remains provider-neutral | Provider claims or APIs cannot become alternate Avuhz authority or persistence paths. |
-| AUTH/DATA separation | Responsibilities remain logically distinct | Current DEVELOPMENT reuse of one physical Supabase project is not evidence of production-grade AUTH/DATA isolation. |
+| AUTH/DATA separation | Responsibilities and physical projects are distinct in DEVELOPMENT | AUTH uses `pwlhruwutoitnieactol`; DATA uses `gnuqaefotwgkwurjpyik`; neither project may substitute for the other. |
 | Custom Access Token Hook | Required by the current Supabase adapter design to emit the approved tenant claim and service audience | The hook must emit no Avuhz capability or authority-role claims and remains uncreated and disabled. |
 
 ### Local observability evidence
@@ -242,7 +247,7 @@ This is owner-confirmed local-only operational evidence, separate from the unres
 
 ### Bounded provider-change authorization plans
 
-Multi-resource provider work uses the provider-neutral immutable plan, separate owner approval, and versioned progress contracts defined in `docs/development-auth-integration-authorization-plan.md`. One approval may bind an exact ordered plan, but each resource remains independently preflighted, executed, verified, and authorization-consumed. Plans never batch mutations, infer JWT authority, self-repair drift, replay successful work, or cross environment/responsibility boundaries. The first DEVELOPMENT AUTH instance is a blocked, unapproved 11-step draft; no hook, identity, tenant, token, provider mutation, or remote authority exists.
+Multi-resource provider work uses the provider-neutral immutable plan, separate owner approval, and versioned progress contracts defined in `docs/development-auth-integration-authorization-plan.md`. One approval may bind an exact ordered plan, but each resource remains independently preflighted, executed, verified, and authorization-consumed. Plans never batch mutations, infer JWT authority, self-repair drift, replay successful work, or cross environment/responsibility boundaries. DEVELOPMENT AUTH v9 is the current correction plan: Step 1 is consumed/succeeded/PASS and Step 2 is recorded AUTHORIZED/NOT_STARTED/unconsumed, but the underlying time-bound owner approval has expired. Step 2 is therefore not executable until a fresh owner approval/window is canonically bound and a fresh provider preflight passes. No v9 Step 2 provider mutation or remote hook creation/enablement has occurred.
 
 ## Engineering orchestration boundary
 

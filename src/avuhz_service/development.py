@@ -11,8 +11,8 @@ from .server import BoundedRequestHandler, ThreadingWSGIServer
 
 DEVELOPMENT_ENVIRONMENT = "DEVELOPMENT"
 DEVELOPMENT_HOST = "0.0.0.0"
-DEVELOPMENT_DATA_PROJECT_REF = "pwlhruwutoitnieactol"
-DEVELOPMENT_DATA_PROJECT_URL = "https://pwlhruwutoitnieactol.supabase.co"
+DEVELOPMENT_DATA_PROJECT_REF = "gnuqaefotwgkwurjpyik"
+DEVELOPMENT_DATA_PROJECT_URL = "https://gnuqaefotwgkwurjpyik.supabase.co"
 DEVELOPMENT_AUTH_PROJECT_REF = "pwlhruwutoitnieactol"
 DEVELOPMENT_AUTH_ISSUER = "https://pwlhruwutoitnieactol.supabase.co/auth/v1"
 DEVELOPMENT_SERVICE_AUDIENCE = "audience.avuhz.command-service.development"

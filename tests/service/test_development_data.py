@@ -101,7 +101,7 @@ def endpoint():
 class DevelopmentDataCompositionTests(unittest.TestCase):
     def test_exact_approved_settings_and_loopback_endpoint_are_required(self):
         settings = DevelopmentDataSettings()
-        self.assertEqual(settings.data_project_ref, "pwlhruwutoitnieactol")
+        self.assertEqual(settings.data_project_ref, "gnuqaefotwgkwurjpyik")
         self.assertEqual(
             settings.tenant_bridge,
             "TrustedExecutionContext.tenant_id -> avuhz.tenant_id",
@@ -119,7 +119,7 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         for values in (
             {"host": "db.example.invalid", "port": 5432, "database": "avuhz_development_disposable_test"},
             {"host": "127.0.0.1", "port": 0, "database": "avuhz_development_disposable_test"},
-            {"host": "127.0.0.1", "port": 5432, "database": "pwlhruwutoitnieactol"},
+            {"host": "127.0.0.1", "port": 5432, "database": "gnuqaefotwgkwurjpyik"},
         ):
             with self.assertRaises(ValueError):
                 DisposableLocalPostgresEndpoint(**values)
@@ -179,7 +179,7 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertIn("rolbypassrls", statement)
         self.assertIn("relrowsecurity", statement)
         self.assertEqual(parameters, (CANONICAL_APPLICATION_DATABASE_ROLE,))
-        self.assertNotIn("pwlhruwutoitnieactol", statement)
+        self.assertNotIn("gnuqaefotwgkwurjpyik", statement)
         self.assertEqual((connection.rollbacks, connection.closed), (1, True))
         self.assertFalse(create_local_development_data_composition(
             DevelopmentDataSettings(), endpoint(), FakeLocalConnector(ready=False),
@@ -190,8 +190,8 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertNotIn("create_local_development_data_composition", source)
         settings = DevelopmentServiceSettings.from_environment({
             "AVUHZ_SERVICE_ENVIRONMENT": "DEVELOPMENT",
-            "AVUHZ_DATA_PROJECT_REF": "pwlhruwutoitnieactol",
-            "AVUHZ_DATA_PROJECT_URL": "https://pwlhruwutoitnieactol.supabase.co",
+            "AVUHZ_DATA_PROJECT_REF": "gnuqaefotwgkwurjpyik",
+            "AVUHZ_DATA_PROJECT_URL": "https://gnuqaefotwgkwurjpyik.supabase.co",
             "AVUHZ_AUTH_PROJECT_REF": "pwlhruwutoitnieactol",
             "AVUHZ_AUTH_ISSUER": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
             "AVUHZ_SERVICE_AUDIENCE": "audience.avuhz.command-service.development",

@@ -1,0 +1,15 @@
+{
+  "purpose": "LOCAL_ONLY_EXECUTION_TRIGGER",
+  "plan_id": "9144fcbc-473d-4ee0-8e04-d880f352994e",
+  "plan_version": 10,
+  "plan_digest": "sha256:603027e96c8a1e071ed3f06b26555b8cc9b7d66c49e7d5b0fe54f6929fd0b857",
+  "step_id": "development.auth.v10.step.01.local-hosted-membership-recertification",
+  "authorization_progress_record_version": 2,
+  "authorization_progress_digest": "sha256:4edde2626da02ffcf27f714c48fe44d24038fdf8a6e28755983aa25f8071b9b9",
+  "canonical_main_commit": "6ca1803bac25862989e5944a1d159b866d470901",
+  "execution_class": "LOCAL_ONLY",
+  "provider_contact_allowed": false,
+  "provider_mutation_allowed": false,
+  "merge_to_main": false,
+  "requested_at": "2026-09-12T22:31:59Z"
+}

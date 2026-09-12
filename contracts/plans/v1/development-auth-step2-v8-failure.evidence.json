@@ -1,0 +1,51 @@
+{
+  "evidence_type": "migration.identity.bootstrap.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "a7100000-0000-4000-8000-000000000101",
+  "plan_version": 8,
+  "step_id": "development.auth.step.02.bootstrap-migration-identity",
+  "attempt": 1,
+  "outcome": "FAILED_ROLLED_BACK",
+  "safe_error_code": "ROLE_MEMBERSHIP_MISMATCH",
+  "provider_observation": {
+    "project_status": "ACTIVE_HEALTHY",
+    "postgresql_version": "17.6",
+    "session_user": "postgres",
+    "current_user": "postgres",
+    "current_database": "postgres",
+    "postgres_is_superuser": false,
+    "postgres_has_createrole": true,
+    "migration_identity_exists_after_rollback": false,
+    "hook_function_exists_after_rollback": false,
+    "migration_history_entry_count_after_rollback": 0
+  },
+  "failure_observation": {
+    "provider_error_code": "P0001",
+    "sanitized_error": "Avuhz DEVELOPMENT Auth migration identity membership mismatch",
+    "failed_postcondition": "role.membership.mismatch",
+    "transaction_rolled_back": true
+  },
+  "root_cause_review": {
+    "status": "HIGH_CONFIDENCE",
+    "classification": "HOSTED_NON_SUPERUSER_CREATEROLE_AUTO_GRANT_CONFLICT",
+    "basis": [
+      "Hosted postgres is NOSUPERUSER with CREATEROLE.",
+      "PostgreSQL 17 automatically grants a role created by a non-superuser CREATEROLE user back to that creator with ADMIN TRUE, SET FALSE, INHERIT FALSE under the bootstrap superuser.",
+      "PostgreSQL 17 states that the non-superuser CREATEROLE creator cannot remove or change that automatic bootstrap-superuser grant.",
+      "The current local certification applies the bootstrap artifact as container postgres, while its separate non-superuser regression creates the target role as postgres before testing membership options; it does not reproduce non-superuser CREATEROLE role creation."
+    ],
+    "correction_required": true,
+    "retry_authorized": false
+  },
+  "security_state": {
+    "credential_retained": false,
+    "raw_provider_payload_retained": false,
+    "pii_retained": false,
+    "data_resource_touched": false,
+    "hook_created": false,
+    "hook_enabled": false
+  },
+  "recorded_at": "2026-09-12T15:41:16Z"
+}

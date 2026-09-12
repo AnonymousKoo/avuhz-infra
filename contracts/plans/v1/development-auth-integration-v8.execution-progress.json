@@ -3,8 +3,8 @@
   "plan_id": "a7100000-0000-4000-8000-000000000101",
   "plan_version": 8,
   "plan_digest": "sha256:f0626b57e55ab2d7c81f47a29b5fc3d1eaf8d7c3e755c08a6ce18f9447aa8b39",
-  "record_version": 4,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "STOPPED",
   "step_states": [
     {
       "step_id": "development.auth.step.01.local-hook-migration",
@@ -59,13 +59,20 @@
     },
     {
       "step_id": "development.auth.step.02.bootstrap-migration-identity",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "migration.identity.bootstrap.verified",
+          "evidence_reference": "provider.execution.step2.attempt1.rollback-verified",
+          "evidence_digest": "sha256:ac1cb15f824cb588465af4c390c3f93b2be41bb83698ea5e839e81cf0574b68f",
+          "recorded_at": "2026-09-12T15:41:16Z"
+        }
+      ],
+      "observed_postcondition": "Bootstrap failed closed at the exact role-membership postcondition. Transaction rollback verification confirmed the migration identity and hook are absent and no provider migration history entry remains.",
+      "safe_error_code": "ROLE_MEMBERSHIP_MISMATCH",
       "binding_assertions": [
         {
           "binding_id": "binding.development.auth.migration-identity-artifact",
@@ -97,7 +104,7 @@
     },
     {
       "step_id": "development.auth.step.03.apply-hook-migration",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -108,7 +115,7 @@
     },
     {
       "step_id": "development.auth.step.04.seal-migration-identity",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -119,7 +126,7 @@
     },
     {
       "step_id": "development.auth.step.05.verify-disabled-hook",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -130,7 +137,7 @@
     },
     {
       "step_id": "development.auth.step.06.create-synthetic-identity",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -141,7 +148,7 @@
     },
     {
       "step_id": "development.auth.step.07.bind-synthetic-tenant",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -152,7 +159,7 @@
     },
     {
       "step_id": "development.auth.step.08.bind-server-capability",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -163,7 +170,7 @@
     },
     {
       "step_id": "development.auth.step.09.enable-hook",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -174,7 +181,7 @@
     },
     {
       "step_id": "development.auth.step.10.issue-ephemeral-token",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -185,7 +192,7 @@
     },
     {
       "step_id": "development.auth.step.11.fetch-jwks",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -196,7 +203,7 @@
     },
     {
       "step_id": "development.auth.step.12.validate-token-locally",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -207,7 +214,7 @@
     },
     {
       "step_id": "development.auth.step.13.record-evidence-and-terminate",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -217,6 +224,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-12T15:03:34Z",
-  "progress_digest": "sha256:c8e7a9429a8eb366ff56f2fbeef88d1b85153db08a1b6fc9889eee427818249a"
+  "updated_at": "2026-09-12T15:41:16Z",
+  "progress_digest": "sha256:7cb5cf4e746cc2b3b451c4d272ae47fe1f865f85b6daf58bc954ef9168348548"
 }

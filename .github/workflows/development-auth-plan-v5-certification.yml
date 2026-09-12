@@ -38,6 +38,7 @@ jobs:
 
     env:
       AVUHZ_CERTIFIED_BASE_SHA: 10c55f6453eef59ff2f5561579e2ef0bd3dc7ed1
+      AVUHZ_V7_CERTIFIED_HEAD_SHA: 0977cf95d798a32e8f924e99e23cf8f068b7e59c
       AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-development-auth-v7-postgres
       AVUHZ_POSTGRES_IMAGE: postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
       AVUHZ_POSTGRES_DIGEST: sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
@@ -83,19 +84,39 @@ jobs:
           )
 
           git cat-file -e "${AVUHZ_CERTIFIED_BASE_SHA}^{commit}"
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            test "${{ github.event.pull_request.base.sha }}" = "${AVUHZ_CERTIFIED_BASE_SHA}"
-          fi
-          git merge-base --is-ancestor "${AVUHZ_CERTIFIED_BASE_SHA}" HEAD
+          git cat-file -e "${AVUHZ_V7_CERTIFIED_HEAD_SHA}^{commit}"
+          git merge-base --is-ancestor "${AVUHZ_CERTIFIED_BASE_SHA}" "${AVUHZ_V7_CERTIFIED_HEAD_SHA}"
+          git merge-base --is-ancestor "${AVUHZ_V7_CERTIFIED_HEAD_SHA}" HEAD
 
-          actual_paths="${RUNNER_TEMP}/avuhz-v7-candidate-paths.txt"
+          historical_paths="${RUNNER_TEMP}/avuhz-v7-historical-certified-paths.txt"
           permitted_paths="${RUNNER_TEMP}/avuhz-v7-permitted-paths.txt"
-          git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD" | sort > "$actual_paths"
+          git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...${AVUHZ_V7_CERTIFIED_HEAD_SHA}" | sort > "$historical_paths"
           printf '%s\n' "${artifacts[@]}" | sort > "$permitted_paths"
-          if ! diff -u "$permitted_paths" "$actual_paths"; then
-            echo "::error::Candidate file set differs from the exact DEVELOPMENT AUTH v7 scope."
+          if ! diff -u "$permitted_paths" "$historical_paths"; then
+            echo "::error::Historical certified DEVELOPMENT AUTH v7 file set differs from the exact v7 scope."
             exit 1
           fi
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            diff_base="${{ github.event.pull_request.base.sha }}"
+            git cat-file -e "${diff_base}^{commit}"
+            git merge-base --is-ancestor "$diff_base" HEAD
+            if [[ "$diff_base" == "${AVUHZ_CERTIFIED_BASE_SHA}" ]]; then
+              actual_paths="${RUNNER_TEMP}/avuhz-v7-candidate-paths.txt"
+              git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD" | sort > "$actual_paths"
+              if ! diff -u "$permitted_paths" "$actual_paths"; then
+                echo "::error::Candidate file set differs from the exact DEVELOPMENT AUTH v7 scope."
+                exit 1
+              fi
+              echo "historical_v7_compatibility_mode=false"
+            else
+              echo "historical_v7_compatibility_mode=true"
+            fi
+          else
+            diff_base="${AVUHZ_V7_CERTIFIED_HEAD_SHA}"
+            echo "historical_v7_compatibility_mode=true"
+          fi
+          echo "AVUHZ_DIFF_BASE_SHA=${diff_base}" >> "${GITHUB_ENV}"
 
           python3 - <<'PY'
           import json
@@ -148,7 +169,7 @@ jobs:
           echo "corrected_seal_digest_verified=true"
 
           git rev-parse HEAD
-          git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD"
+          git diff --name-only "${diff_base}...HEAD"
           for artifact in "${artifacts[@]}"; do
             test -f "$artifact"
             git hash-object "$artifact"
@@ -388,8 +409,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --check "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD"
-          git diff --name-only "${AVUHZ_CERTIFIED_BASE_SHA}...HEAD"
+          git diff --check "${AVUHZ_DIFF_BASE_SHA}...HEAD"
+          git diff --name-only "${AVUHZ_DIFF_BASE_SHA}...HEAD"
 
       - name: Verify final checkout integrity
         shell: bash

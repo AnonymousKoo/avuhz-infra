@@ -3,7 +3,7 @@
   "plan_id": "ef8052c7-7a22-406f-ae74-e470aa7b39a4",
   "plan_version": 9,
   "plan_digest": "sha256:7beaa95d02ee414091d85e1212b2646359850912e08ed8ce6ed450f2afe3a95f",
-  "record_version": 3,
+  "record_version": 4,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -78,14 +78,41 @@
     },
     {
       "step_id": "development.auth.v9.step.02.bootstrap-migration-identity-v2",
-      "authorization_state": "PENDING",
+      "authorization_state": "AUTHORIZED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
       "evidence": [],
       "observed_postcondition": null,
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v9.migration-identity-artifact",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.v9.step.01.local-hosted-membership-correction",
+          "evidence_type": "migration.identity.v2.artifact.validated",
+          "evidence_digest": "sha256:2a9d7c4a688ffad34bb3049d0fde026b885202d4cdb3208538926af4676e1997",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:2a9d7c4a688ffad34bb3049d0fde026b885202d4cdb3208538926af4676e1997",
+          "recorded_at": "2026-09-12T17:24:46Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v9.executor-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.executor.preflight.observed",
+          "evidence_digest": "sha256:1d69f99f1fdd7ced17cb8cc0d1511d55e545ac4d9febd012d6eb5183351b8a6b",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:277701c4d836dc668106517073a662bd0a1c06b4aea93472578b116a1661d064",
+          "recorded_at": "2026-09-12T17:24:46Z"
+        }
+      ]
     },
     {
       "step_id": "development.auth.v9.step.03.apply-hook-migration-v2",
@@ -121,6 +148,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-12T17:13:15Z",
-  "progress_digest": "sha256:525cc64fb6c5f4de002ea8afae5f6ad2be061ba2609e04824fd1007408a1ce18"
+  "updated_at": "2026-09-12T17:24:46Z",
+  "progress_digest": "sha256:f597f87d4ccd8739dc9b090479bd14bd9b3b26f87ed2434b99109784ae662d9b"
 }

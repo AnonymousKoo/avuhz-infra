@@ -3,19 +3,78 @@
   "plan_id": "ef8052c7-7a22-406f-ae74-e470aa7b39a4",
   "plan_version": 9,
   "plan_digest": "sha256:7beaa95d02ee414091d85e1212b2646359850912e08ed8ce6ed450f2afe3a95f",
-  "record_version": 2,
+  "record_version": 3,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
       "step_id": "development.auth.v9.step.01.local-hosted-membership-correction",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "migration.identity.v2.artifact.validated",
+          "evidence_reference": "github.actions.run.34707401633.attempt.1.migration-identity-v2",
+          "evidence_digest": "sha256:2a9d7c4a688ffad34bb3049d0fde026b885202d4cdb3208538926af4676e1997",
+          "recorded_at": "2026-09-12T17:13:15Z"
+        },
+        {
+          "evidence_type": "hook.migration.v2.artifact.validated",
+          "evidence_reference": "github.actions.run.34707401633.attempt.1.hook-migration-v2",
+          "evidence_digest": "sha256:facb9001ec01b48e4988eb94b1a2f1c1ed6b2975a29e13092c87b09186c46e1c",
+          "recorded_at": "2026-09-12T17:13:15Z"
+        },
+        {
+          "evidence_type": "migration.identity.seal.v2.artifact.validated",
+          "evidence_reference": "github.actions.run.34707401633.attempt.1.migration-identity-seal-v2",
+          "evidence_digest": "sha256:712e06d100ab39be787a952942f5592ed2bd637abb96aaf121efc8247344b733",
+          "recorded_at": "2026-09-12T17:13:15Z"
+        }
+      ],
+      "observed_postcondition": "The three v2 migration artifacts are digest-bound and disposable PostgreSQL 17 reproduces hosted NOSUPERUSER CREATEROLE bootstrap, temporary SET, hook creation, targeted seal, rollback, and post-seal SET ROLE denial without provider contact.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v9.migration-identity-artifact",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "migration.identity.v2.artifact.validated",
+          "evidence_digest": "sha256:2a9d7c4a688ffad34bb3049d0fde026b885202d4cdb3208538926af4676e1997",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:2a9d7c4a688ffad34bb3049d0fde026b885202d4cdb3208538926af4676e1997",
+          "recorded_at": "2026-09-12T17:13:15Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v9.hook-migration-artifact",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.migration.v2.artifact.validated",
+          "evidence_digest": "sha256:facb9001ec01b48e4988eb94b1a2f1c1ed6b2975a29e13092c87b09186c46e1c",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:facb9001ec01b48e4988eb94b1a2f1c1ed6b2975a29e13092c87b09186c46e1c",
+          "recorded_at": "2026-09-12T17:13:15Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v9.seal-migration-artifact",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "migration.identity.seal.v2.artifact.validated",
+          "evidence_digest": "sha256:712e06d100ab39be787a952942f5592ed2bd637abb96aaf121efc8247344b733",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:712e06d100ab39be787a952942f5592ed2bd637abb96aaf121efc8247344b733",
+          "recorded_at": "2026-09-12T17:13:15Z"
+        }
+      ]
     },
     {
       "step_id": "development.auth.v9.step.02.bootstrap-migration-identity-v2",
@@ -62,6 +121,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-12T16:55:56Z",
-  "progress_digest": "sha256:77ce7ee6cac40be03aedd5b616b778ec6b9ac28edd38240223eda441f1ac1c4a"
+  "updated_at": "2026-09-12T17:13:15Z",
+  "progress_digest": "sha256:525cc64fb6c5f4de002ea8afae5f6ad2be061ba2609e04824fd1007408a1ce18"
 }

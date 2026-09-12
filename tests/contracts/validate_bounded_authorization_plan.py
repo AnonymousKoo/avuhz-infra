@@ -28,6 +28,9 @@ PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration.progress
 V8_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-auth-integration-v8.approval.json"
 )
+V9_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v9.approval.json"
+)
 HISTORICAL_STEP1_EVIDENCE_PATH = (
     ROOT / "contracts/plans/v1/development-auth-step1-baseline.evidence.json"
 )
@@ -88,6 +91,9 @@ PROGRESS_DIGEST = (
 )
 V8_APPROVAL_FILE_DIGEST = (
     "sha256:8cde9dbbc139ce04ac1d6853c90753869360fe640cf23e1d694a20c0adbd1d5d"
+)
+V9_APPROVAL_FILE_DIGEST = (
+    "sha256:3136b1c199fe23bec71e1ea94028ba842997d8037e768e21ff58b2da576b0345"
 )
 IDENTITY_DIGEST = (
     "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45"
@@ -805,12 +811,13 @@ def main() -> int:
     )
     approval_paths = set((ROOT / "contracts/plans/v1").glob("*approval*.json"))
     require(
-        approval_paths == {V8_APPROVAL_PATH},
-        "approval artifact set differs from the exact authorized v8 approval",
+        approval_paths == {V8_APPROVAL_PATH, V9_APPROVAL_PATH},
+        "approval artifact set differs from the exact authorized v8/v9 approvals",
     )
     require(
-        file_digest(V8_APPROVAL_PATH) == V8_APPROVAL_FILE_DIGEST,
-        "exact authorized v8 approval file digest mismatch",
+        file_digest(V8_APPROVAL_PATH) == V8_APPROVAL_FILE_DIGEST
+        and file_digest(V9_APPROVAL_PATH) == V9_APPROVAL_FILE_DIGEST,
+        "exact authorized v8/v9 approval file digest mismatch",
     )
     require(
         v8_approval

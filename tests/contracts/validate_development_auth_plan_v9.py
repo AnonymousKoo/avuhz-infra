@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the blocked DEVELOPMENT AUTH v9 hosted-membership recovery plan."""
+"""Validate the approval-ready DEVELOPMENT AUTH v9 hosted-membership recovery plan."""
 from __future__ import annotations
 
 import hashlib
@@ -10,7 +10,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import (
+    initial_progress,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
@@ -26,8 +31,15 @@ REGRESSION = ROOT / "tests/migrations/test_development_auth_hosted_membership_v2
 
 EXPECTED_PLAN_ID = "ef8052c7-7a22-406f-ae74-e470aa7b39a4"
 EXPECTED_PROGRESS_ID = "68bed069-a537-4a93-b528-8473fa852b81"
-EXPECTED_PLAN_DIGEST = "sha256:f04df644079e774946bedb6834888c4408df2338ca2ca2969f58caa8878a969a"
+EXPECTED_APPROVAL_ID = "5521ee03-6fbc-4be9-a3b3-9605587cad47"
+EXPECTED_PLAN_DIGEST = "sha256:7beaa95d02ee414091d85e1212b2646359850912e08ed8ce6ed450f2afe3a95f"
+EXPECTED_APPROVAL_DIGEST = "sha256:2ae369d35cd0cb78a4d72e551821a0a1e1762158f2284e431f97940bef0dc2bc"
 EXPECTED_FAILURE_DIGEST = "sha256:ac1cb15f824cb588465af4c390c3f93b2be41bb83698ea5e839e81cf0574b68f"
+EXPECTED_AUTHORIZATION_WINDOW = {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-12T16:45:00Z",
+    "expires_at": "2026-09-12T18:45:00Z",
+}
 EXPECTED_ARTIFACT_DIGESTS = {
     BOOTSTRAP: "sha256:2a9d7c4a688ffad34bb3049d0fde026b885202d4cdb3208538926af4676e1997",
     HOOK: "sha256:facb9001ec01b48e4988eb94b1a2f1c1ed6b2975a29e13092c87b09186c46e1c",
@@ -57,30 +69,41 @@ def raw_digest(path: Path) -> str:
 def main() -> None:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     v8_progress = load(V8_PROGRESS_PATH)
     failure = load(V8_FAILURE_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-12T16:45:00Z")
 
     assert plan["plan_id"] == EXPECTED_PLAN_ID
     assert plan["plan_version"] == 9
     assert plan["plan_digest"] == EXPECTED_PLAN_DIGEST
-    assert plan["definition_status"] == "DRAFT_BLOCKED"
+    assert plan["definition_status"] == "READY_FOR_APPROVAL"
     assert plan["environment"] == "DEVELOPMENT"
     assert plan["target"]["project_reference"] == "pwlhruwutoitnieactol"
     assert plan["target"]["responsibility"] == "AUTH"
-    assert plan["authorization_window"] == {
-        "binding_state": "UNRESOLVED_BLOCKER",
-        "starts_at": None,
-        "expires_at": None,
-    }
+    assert plan["authorization_window"] == EXPECTED_AUTHORIZATION_WINDOW
     assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
     assert plan["ordered_step_ids"] == EXPECTED_STEPS
-    assert not APPROVAL_PATH.exists()
     assert "v8.retry" in plan["prohibited_actions"]
     assert "hook.enable" in plan["prohibited_actions"]
     assert "token.issue" in plan["prohibited_actions"]
+
+    assert approval["approval_id"] == EXPECTED_APPROVAL_ID
+    assert approval["plan_id"] == EXPECTED_PLAN_ID
+    assert approval["plan_version"] == 9
+    assert approval["plan_digest"] == EXPECTED_PLAN_DIGEST
+    assert approval["owner_identity"] == "github:AnonymousKoo"
+    assert approval["decision"] == "APPROVE"
+    assert approval["environment"] == "DEVELOPMENT"
+    assert approval["effective_at"] == EXPECTED_AUTHORIZATION_WINDOW["starts_at"]
+    assert approval["expires_at"] == EXPECTED_AUTHORIZATION_WINDOW["expires_at"]
+    assert approval["approved_at"] == "2026-09-12T16:39:09Z"
+    assert approval["status"] == "ACTIVE"
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert approval["approval_digest"] == EXPECTED_APPROVAL_DIGEST
 
     assert failure["outcome"] == "FAILED_ROLLED_BACK"
     assert failure["safe_error_code"] == "ROLE_MEMBERSHIP_MISMATCH"
@@ -130,13 +153,24 @@ def main() -> None:
     assert progress == expected_progress
     assert progress["record_version"] == 1
     assert progress["overall_state"] == "NOT_STARTED"
-    assert all(state["authorization_state"] == "PENDING" for state in progress["step_states"])
-    assert all(state["execution_state"] == "NOT_STARTED" for state in progress["step_states"])
-    assert all(not state["authorization_consumed"] for state in progress["step_states"])
+    assert all(
+        state["authorization_state"] == "PENDING"
+        for state in progress["step_states"]
+    )
+    assert all(
+        state["execution_state"] == "NOT_STARTED"
+        for state in progress["step_states"]
+    )
+    assert all(
+        not state["authorization_consumed"]
+        for state in progress["step_states"]
+    )
 
     print(
         "DEVELOPMENT_AUTH_V9_RECOVERY_CONTRACT=PASS "
-        "(5 blocked steps; hosted membership v2 artifacts bound; v8 retry prohibited; zero authority)"
+        "(5 approval-ready steps; owner window exact-plan bound; "
+        "hosted membership v2 artifacts bound; v8 retry prohibited; "
+        "no step authorized)"
     )
 
 

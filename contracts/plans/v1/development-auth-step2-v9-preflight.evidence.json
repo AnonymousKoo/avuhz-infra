@@ -1,0 +1,49 @@
+{
+  "evidence_type": "provider.executor.preflight.observed",
+  "observation_only": true,
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "plan_id": "ef8052c7-7a22-406f-ae74-e470aa7b39a4",
+  "plan_version": 9,
+  "step_id": "development.auth.v9.step.02.bootstrap-migration-identity-v2",
+  "observed_at": "2026-09-12T17:24:04Z",
+  "project_status": "ACTIVE_HEALTHY",
+  "project_region": "us-east-1",
+  "postgres_engine": "17",
+  "database_version": "17.6.1.166",
+  "source": {
+    "source_method": "owner-authorized-read-only-supabase-preflight",
+    "source_scope": "DEVELOPMENT_AUTH_V9_STEP2_ONLY",
+    "raw_provider_payload_retained": false,
+    "credentials_retained": false,
+    "provider_mutation_attempted": false
+  },
+  "database_observation": {
+    "session_user": "postgres",
+    "current_user": "postgres",
+    "current_database": "postgres",
+    "server_version_num": "170006",
+    "postgres_is_superuser": false,
+    "postgres_has_createrole": true
+  },
+  "resource_observation": {
+    "public_schema_exists": true,
+    "supabase_auth_admin_exists": true,
+    "migration_identity": "avuhz_migration_service_dev",
+    "migration_identity_exists": false,
+    "hook_function": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+    "hook_function_exists": false,
+    "bootstrap_v2_migration_history_count": 0
+  },
+  "preflight_result": "PASS",
+  "limitations": [
+    "sanitized operator/tool observation evidence only",
+    "not mutation evidence",
+    "not proof the observation remains current forever",
+    "Step 2 execution must re-confirm exact executor/session and hosted role semantics immediately before mutation; mismatch is STOP"
+  ],
+  "evidence_digest": "sha256:1d69f99f1fdd7ced17cb8cc0d1511d55e545ac4d9febd012d6eb5183351b8a6b",
+  "configuration_digest": "sha256:277701c4d836dc668106517073a662bd0a1c06b4aea93472578b116a1661d064"
+}

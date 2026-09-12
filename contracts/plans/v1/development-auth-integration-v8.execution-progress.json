@@ -3,19 +3,59 @@
   "plan_id": "a7100000-0000-4000-8000-000000000101",
   "plan_version": 8,
   "plan_digest": "sha256:f0626b57e55ab2d7c81f47a29b5fc3d1eaf8d7c3e755c08a6ce18f9447aa8b39",
-  "record_version": 1,
-  "overall_state": "NOT_STARTED",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
   "step_states": [
     {
       "step_id": "development.auth.step.01.local-hook-migration",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "migration.identity.artifact.validated",
+          "evidence_reference": "github.actions.run.34667046121.attempt.2.migration-identity",
+          "evidence_digest": "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45",
+          "recorded_at": "2026-09-12T14:43:47Z"
+        },
+        {
+          "evidence_type": "hook.migration.artifact.validated",
+          "evidence_reference": "github.actions.run.34667046121.attempt.2.hook-migration",
+          "evidence_digest": "sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783",
+          "recorded_at": "2026-09-12T14:43:47Z"
+        }
+      ],
+      "observed_postcondition": "Three ordered local migrations define the exact bounded DEVELOPMENT migration-role bootstrap, effective-role-enforced v1 hook function/ACL, and immediate post-hook identity seal; no artifact is applied and the hook remains disabled.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.migration-identity-artifact",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "migration.identity.artifact.validated",
+          "evidence_digest": "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45",
+          "recorded_at": "2026-09-12T14:43:47Z"
+        },
+        {
+          "binding_id": "binding.development.auth.hook-migration-artifact",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.migration.artifact.validated",
+          "evidence_digest": "sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:234a27973d4f9468dfb59ff5002f2ae1b7523dac9bd80b26fd01fbc64c8bc783",
+          "recorded_at": "2026-09-12T14:43:47Z"
+        }
+      ]
     },
     {
       "step_id": "development.auth.step.02.bootstrap-migration-identity",
@@ -150,6 +190,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-11T18:27:04Z",
-  "progress_digest": "sha256:37ed6648268f3609dd770a05df353c447f62f1ee604d71be1bfd2e66ad897b9c"
+  "updated_at": "2026-09-12T14:43:47Z",
+  "progress_digest": "sha256:665f6cea8d402769bc1dcfaea56cdedb3d8447816b19568b0300d91f25929056"
 }

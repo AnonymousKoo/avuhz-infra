@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
     AuthorizationPlanStop,
+    authorize_step,
     initial_progress,
     validate_approval,
     validate_plan,
@@ -22,6 +23,7 @@ from avuhz_runtime.implementation_handoff import canonical_digest
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v10.plan.json"
 PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v10.progress.json"
+EXECUTION_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v10.execution-progress.json"
 APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v10.approval.json"
 V9_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v9.plan.json"
 V9_APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v9.approval.json"
@@ -36,6 +38,9 @@ EXPECTED_APPROVAL_ID = "d43ce978-6127-4b57-a400-1f9a845da23c"
 EXPECTED_PLAN_DIGEST = "sha256:603027e96c8a1e071ed3f06b26555b8cc9b7d66c49e7d5b0fe54f6929fd0b857"
 EXPECTED_APPROVAL_DIGEST = "sha256:1597a8ec75f4d39647a0c4e579e1945f8d9e7b3065ef8c7a595b0ed2e07dcfc8"
 EXPECTED_PROGRESS_DIGEST = "sha256:0f3ae68182cd9990912670889dad583b5ae5b571c84df10ac5553022d3b7caaf"
+EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:4edde2626da02ffcf27f714c48fe44d24038fdf8a6e28755983aa25f8071b9b9"
+EXPECTED_FAILURE_DIGEST = "sha256:ac1cb15f824cb588465af4c390c3f93b2be41bb83698ea5e839e81cf0574b68f"
+AUTHORIZED_AT = "2026-09-12T21:44:22Z"
 EXPECTED_WINDOW = {
     "binding_state": "BOUND",
     "starts_at": "2026-09-12T21:25:00Z",
@@ -70,6 +75,7 @@ def raw_digest(path: Path) -> str:
 def main() -> None:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    execution_progress = load(EXECUTION_PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
     v9_plan = load(V9_PLAN_PATH)
     v9_approval = load(V9_APPROVAL_PATH)
@@ -77,7 +83,8 @@ def main() -> None:
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
-    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-12T21:25:01Z")
+    validate_progress(plan, execution_progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, AUTHORIZED_AT)
 
     assert plan["plan_id"] == EXPECTED_PLAN_ID
     assert plan["plan_version"] == 10
@@ -145,10 +152,69 @@ def main() -> None:
     else:
         raise AssertionError("v9 approval must be expired before v10 becomes effective")
 
+    authorization_request = {
+        "plan_id": EXPECTED_PLAN_ID,
+        "plan_version": 10,
+        "plan_digest": EXPECTED_PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": "pwlhruwutoitnieactol",
+        "responsibility": "AUTH",
+        "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": EXPECTED_STEPS[0],
+        "resource_reference": "development.auth.v10.hosted-membership-recertification",
+        "resource_version": "version.20260912155200",
+        "resource_digest": EXPECTED_PACKAGE_DIGEST,
+        "operation": "local.migration.recertify-hosted-membership-correction",
+        "execution_class": "LOCAL_ONLY",
+        "credential_class": "NONE",
+        "required_evidence": [
+            {
+                "evidence_type": "development.auth.v8.step2.failure-reviewed",
+                "evidence_digest": EXPECTED_FAILURE_DIGEST,
+            }
+        ],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    expected_authorized = authorize_step(
+        plan,
+        approval,
+        progress,
+        authorization_request,
+        SCHEMA_ROOT,
+        AUTHORIZED_AT,
+    )
+    assert execution_progress == expected_authorized
+    assert execution_progress["record_version"] == 2
+    assert execution_progress["overall_state"] == "IN_PROGRESS"
+    assert execution_progress["updated_at"] == AUTHORIZED_AT
+    assert execution_progress["progress_digest"] == EXPECTED_EXECUTION_PROGRESS_DIGEST
+    first_state = execution_progress["step_states"][0]
+    assert first_state["authorization_state"] == "AUTHORIZED"
+    assert first_state["execution_state"] == "NOT_STARTED"
+    assert first_state["verification_state"] == "NOT_STARTED"
+    assert first_state["authorization_consumed"] is False
+    assert first_state["evidence"] == []
+    assert first_state["binding_assertions"] == []
+    assert all(
+        state["authorization_state"] == "PENDING"
+        and state["execution_state"] == "NOT_STARTED"
+        and state["verification_state"] == "NOT_STARTED"
+        and state["authorization_consumed"] is False
+        and state["evidence"] == []
+        and state["binding_assertions"] == []
+        for state in execution_progress["step_states"][1:]
+    )
+
     print(
         "DEVELOPMENT_AUTH_V10_CONTINUATION=PASS "
-        "(v9 immutable/expired; v10 approved window bound; all v10 steps pending; "
-        "provider_contact_attempted=false)"
+        "(v9 immutable/expired; v10 Step 1 authorized only; not executed; "
+        "authorization unconsumed; Steps 2-5 pending; provider_contact_attempted=false)"
     )
 
 

@@ -1,0 +1,23 @@
+{
+  "progress_id": "636742e7-6e24-4271-95ed-1836afdaf034",
+  "plan_id": "c44a55d6-42e2-4b41-be8a-a497af163811",
+  "plan_version": 16,
+  "plan_digest": "sha256:efacd425b11952e4df7424ae01770db5fcc3307de80aa1c326c0dc9ed0c58e5d",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v16.step.01.verify-disabled-hook",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-13T19:00:00Z",
+  "progress_digest": "sha256:f43e64a508eb79df0a701de28f6eda68208fccf03a5392e952367cd473cf7003"
+}

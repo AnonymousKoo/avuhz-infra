@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the exact v14 bounded-authorization validator plus v15 approval inventory compatibility."""
+"""Run the exact v14 bounded-authorization validator plus v15-v16 approval inventory compatibility."""
 from __future__ import annotations
 
 import hashlib
@@ -15,6 +15,12 @@ V15_APPROVAL_PATH = (
 )
 V15_APPROVAL_FILE_DIGEST = (
     "sha256:769afbb92b53f42db80a18ff0235d9c0171589786b16202652ef608c010ef673"
+)
+V16_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v16.approval.json"
+)
+V16_APPROVAL_FILE_DIGEST = (
+    "sha256:9c1251084937314b0dcdc9df165370d845aaec30dbf692d8264eb4b45706068b"
 )
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))
@@ -67,24 +73,32 @@ def main() -> int:
         legacy.V13_APPROVAL_PATH,
         legacy.V14_APPROVAL_PATH,
         V15_APPROVAL_PATH,
+        V16_APPROVAL_PATH,
     }
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized v8-v15 approvals"
+            "approval artifact set differs from the exact authorized v8-v16 approvals"
         )
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
+    if file_digest(V16_APPROVAL_PATH) != V16_APPROVAL_FILE_DIGEST:
+        raise SystemExit("exact authorized v16 approval file digest mismatch")
 
     # The preserved v14 validator must see its original exact v8-v14 inventory.
-    # Filter only the newly added v15 approval for that one historical glob call,
-    # then restore pathlib immediately. The full v8-v15 inventory is checked above.
+    # Filter only the newly added v15-v16 approvals for that one historical glob
+    # call, then restore pathlib immediately. The full v8-v16 inventory is checked
+    # above.
     original_glob = Path.glob
 
     def compatibility_glob(self: Path, pattern: str):
         values = original_glob(self, pattern)
         if self == approvals_root and pattern == "*approval*.json":
-            return (path for path in values if path != V15_APPROVAL_PATH)
+            return (
+                path
+                for path in values
+                if path not in {V15_APPROVAL_PATH, V16_APPROVAL_PATH}
+            )
         return values
 
     Path.glob = compatibility_glob
@@ -95,7 +109,7 @@ def main() -> int:
 
     if result != 0:
         return result
-    print("bounded authorization-plan v15 approval inventory compatibility: PASS")
+    print("bounded authorization-plan v16 approval inventory compatibility: PASS")
     return 0
 
 

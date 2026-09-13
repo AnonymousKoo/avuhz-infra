@@ -32,7 +32,7 @@ DATA_V2_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v2.approval.json"
 )
 DATA_V2_APPROVAL_FILE_DIGEST = (
-    "sha256:e23b96cc1878d097db959ab56fb100e3b3ba0e7e38dc569a0205b1ce5bc63989"
+    "sha256:625036601df6b25aa95c61d4a43b2c38d5b47f73e274698220d763676a64755c"
 )
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))

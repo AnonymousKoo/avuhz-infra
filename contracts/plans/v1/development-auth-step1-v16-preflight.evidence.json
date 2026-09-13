@@ -1,0 +1,67 @@
+{
+  "evidence_type": "hook.read-session.preflight.observed",
+  "observation_only": true,
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "plan_id": "c44a55d6-42e2-4b41-be8a-a497af163811",
+  "plan_version": 16,
+  "step_id": "development.auth.v16.step.01.verify-disabled-hook",
+  "observed_at": "2026-09-13T19:35:39Z",
+  "project_status": "ACTIVE_HEALTHY",
+  "project_region": "us-east-1",
+  "postgres_engine": "17",
+  "database_version": "17.6.1.166",
+  "source": {
+    "source_method": "owner-dashboard-screenshot-plus-read-only-supabase-catalog-preflight",
+    "source_scope": "DEVELOPMENT_AUTH_V16_STEP1_ONLY",
+    "raw_provider_payload_retained": false,
+    "credentials_retained": false,
+    "dashboard_screenshot_committed": false,
+    "provider_mutation_attempted": false
+  },
+  "database_observation": {
+    "session_user": "postgres",
+    "current_user": "postgres",
+    "current_database": "postgres",
+    "migration_identity": "avuhz_migration_service_dev",
+    "role_attributes_exact": true,
+    "bootstrap_admin_noset_membership_count": 1,
+    "total_role_membership_edges": 1,
+    "postgres_can_set_role": false,
+    "migration_role_public_acl_count": 0,
+    "provider_schema_privilege_count": 0,
+    "table_privilege_count": 0
+  },
+  "hook_observation": {
+    "hook_function": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+    "hook_function_exists": true,
+    "hook_owner": "avuhz_migration_service_dev",
+    "hook_security_invoker": true,
+    "hook_stable": true,
+    "hook_search_path_exact": true,
+    "function_body_matches_certified_v2": true,
+    "auth_admin_public_usage": true,
+    "auth_admin_can_execute": true,
+    "auth_admin_execute_acl_count": 1,
+    "public_execute_acl_count": 0,
+    "app_role_execute_acl_count": 0
+  },
+  "hosted_auth_observation": {
+    "dashboard_project_reference": "pwlhruwutoitnieactol",
+    "dashboard_project_label": "DEVELOPMENT AUTH",
+    "auth_hooks_page_entries": 0,
+    "custom_access_token_hook_configured": false,
+    "custom_access_token_hook_enabled": false
+  },
+  "preflight_result": "PASS",
+  "limitations": [
+    "sanitized operator/tool observation evidence only",
+    "dashboard screenshot is not persisted in the repository",
+    "no provider mutation or repair is authorized by this evidence",
+    "Step execution must re-confirm the exact database and hosted Auth-hook state immediately before consumption; mismatch is STOP"
+  ],
+  "evidence_digest": "sha256:f008475f6b174c54eece929b924c316f79f0be6f897e74ac45df389377c4f1d7",
+  "configuration_digest": "sha256:990910284aab8ac67043223aeed2131ceea31478290b74e1b47b673b13b84ad5"
+}

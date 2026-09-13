@@ -29,9 +29,10 @@ APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v10.appr
 V9_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v9.plan.json"
 V9_APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v9.approval.json"
 V9_EXECUTION_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v9.execution-progress.json"
-BOOTSTRAP = ROOT / "supabase/migrations/20260912155000_development_auth_migration_identity_v2.sql"
-HOOK = ROOT / "supabase/migrations/20260912155100_development_auth_custom_access_token_hook_v2.sql"
-SEAL = ROOT / "supabase/migrations/20260912155200_development_auth_migration_identity_seal_v2.sql"
+HISTORY_V2 = ROOT / "supabase/provider-artifacts/development-auth/history/v2"
+BOOTSTRAP = HISTORY_V2 / "20260912155000_development_auth_migration_identity_v2.sql"
+HOOK = HISTORY_V2 / "20260912155100_development_auth_custom_access_token_hook_v2.sql"
+SEAL = HISTORY_V2 / "20260912155200_development_auth_migration_identity_seal_v2.sql"
 
 EXPECTED_PLAN_ID = "9144fcbc-473d-4ee0-8e04-d880f352994e"
 EXPECTED_PROGRESS_ID = "ca594b27-613a-4738-8228-e0e544f0aac6"

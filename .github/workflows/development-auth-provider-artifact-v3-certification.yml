@@ -1,0 +1,244 @@
+name: DEVELOPMENT AUTH Provider Artifact v3 Certification
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'supabase/provider-artifacts/development-auth/**'
+      - 'supabase/migrations/*development_auth*'
+      - 'tests/migrations/history/development-auth/**'
+      - 'tests/migrations/test_development_auth_provider_artifact_v3.py'
+      - 'tests/migrations/test_development_auth_hosted_membership_v2.py'
+      - 'tests/migrations/test_development_auth_migration_identity_v1.py'
+      - 'tests/migrations/test_development_auth_custom_access_token_hook_v1.py'
+      - 'tests/migrations/test_development_auth_migration_identity_seal_v1.py'
+      - 'tests/contracts/validate_bounded_authorization_plan.py'
+      - 'tests/contracts/validate_bounded_authorization_plan_v14_legacy.py'
+      - 'tests/contracts/validate_development_auth_plan_v9.py'
+      - 'tests/contracts/validate_development_auth_plan_v10.py'
+      - 'tests/contracts/validate_development_auth_plan_v11.py'
+      - 'tests/contracts/validate_development_auth_plan_v12.py'
+      - 'tests/contracts/validate_development_auth_plan_v13.py'
+      - 'tests/contracts/validate_development_auth_plan_v14.py'
+      - 'scripts/check-baseline.sh'
+      - '.github/workflows/development-auth-provider-artifact-v3-certification.yml'
+      - '.github/workflows/development-auth-step1-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-provider-artifact-v3-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  certify-development-auth-provider-artifact-v3:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: 'src:.'
+      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-development-auth-v3-postgres
+      AVUHZ_POSTGRES_IMAGE: postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+      AVUHZ_POSTGRES_DIGEST: sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+
+    steps:
+      - name: Checkout exact pull request head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify exact candidate and provider-artifact boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            test "${{ github.event.pull_request.base.ref }}" = "main"
+            test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          fi
+
+          test -f supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_v3.sql
+          test -f supabase/provider-artifacts/development-auth/current/development_auth_custom_access_token_hook_v2.sql
+          test -f supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_seal_v2.sql
+          test ! -n "$(find supabase/migrations -maxdepth 1 -type f -name '*_development_auth_*.sql' -print -quit)"
+
+          expected_history=(
+            supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql
+            supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql
+            supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql
+            supabase/provider-artifacts/development-auth/history/v2/20260912155000_development_auth_migration_identity_v2.sql
+            supabase/provider-artifacts/development-auth/history/v2/20260912155100_development_auth_custom_access_token_hook_v2.sql
+            supabase/provider-artifacts/development-auth/history/v2/20260912155200_development_auth_migration_identity_seal_v2.sql
+          )
+          for artifact in "${expected_history[@]}"; do
+            test -f "$artifact"
+          done
+
+          sha256sum \
+            supabase/provider-artifacts/development-auth/current/*.sql \
+            "${expected_history[@]}"
+          echo 'provider_artifact_boundary_verified=true'
+          echo 'supabase_contact_attempted=false'
+          echo 'provider_mutation_attempted=false'
+
+      - name: Install pinned local validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          command -v git
+          command -v bash
+          command -v python3
+          command -v jq
+          command -v docker
+
+          sudo apt-get update
+          sudo apt-get install --yes ripgrep
+
+          constraints="${RUNNER_TEMP}/avuhz-development-auth-v3-constraints.txt"
+          cat > "$constraints" <<'CONSTRAINTS'
+          semgrep==1.136.0
+          setuptools==68.1.2
+          jsonschema==4.10.3
+          psycopg==3.3.4
+          psycopg-binary==3.3.4
+          boltons==21.0.0
+          bracex==3.0.1
+          click==8.1.8
+          click-option-group==0.5.9
+          defusedxml==0.7.1
+          deprecated==1.3.1
+          exceptiongroup==1.2.2
+          face==26.0.1
+          glom==22.1.0
+          googleapis-common-protos==1.75.0
+          importlib-metadata==7.1.0
+          opentelemetry-api==1.25.0
+          opentelemetry-exporter-otlp-proto-common==1.25.0
+          opentelemetry-exporter-otlp-proto-http==1.25.0
+          opentelemetry-instrumentation==0.46b0
+          opentelemetry-instrumentation-requests==0.46b0
+          opentelemetry-proto==1.25.0
+          opentelemetry-sdk==1.25.0
+          opentelemetry-semantic-conventions==0.46b0
+          opentelemetry-util-http==0.46b0
+          peewee==3.19.0
+          protobuf==4.25.9
+          rich==13.5.3
+          ruamel.yaml==0.19.1
+          tomli==2.0.2
+          wcmatch==8.5.2
+          wrapt==1.17.3
+          zipp==4.1.0
+          CONSTRAINTS
+
+          python3 -m pip install --disable-pip-version-check --no-input \
+            --constraint "$constraints" \
+            setuptools==68.1.2 \
+            jsonschema==4.10.3 \
+            psycopg==3.3.4 \
+            psycopg-binary==3.3.4 \
+            semgrep==1.136.0
+          python3 -m pip check
+          command -v rg
+          command -v semgrep
+          test "$(semgrep --version | tail -n1)" = '1.136.0'
+
+      - name: Start stable disposable PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker pull "${AVUHZ_POSTGRES_IMAGE}"
+          repo_digests="$(docker image inspect "${AVUHZ_POSTGRES_IMAGE}" --format '{{json .RepoDigests}}')"
+          python3 - "$repo_digests" "${AVUHZ_POSTGRES_DIGEST}" <<'PY'
+          import json
+          import sys
+
+          repo_digests = json.loads(sys.argv[1])
+          expected = sys.argv[2]
+          if not any(item.endswith('@' + expected) for item in repo_digests):
+              raise SystemExit('PostgreSQL RepoDigests do not contain the required digest')
+          PY
+
+          docker run --detach --rm \
+            --name "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            --env POSTGRES_HOST_AUTH_METHOD=trust \
+            "${AVUHZ_POSTGRES_IMAGE}"
+
+          ready=false
+          consecutive_successes=0
+          stable_postmaster_start=""
+          for _ in $(seq 1 60); do
+            if postmaster_start="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+              psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+              -c 'select pg_postmaster_start_time();' 2>/dev/null)"; then
+              if [[ -n "$postmaster_start" && "$postmaster_start" == "$stable_postmaster_start" ]]; then
+                consecutive_successes=$((consecutive_successes + 1))
+              else
+                stable_postmaster_start="$postmaster_start"
+                consecutive_successes=1
+              fi
+              if (( consecutive_successes >= 3 )); then
+                ready=true
+                break
+              fi
+            else
+              consecutive_successes=0
+              stable_postmaster_start=""
+            fi
+            sleep 1
+          done
+
+          if [[ "$ready" != "true" ]]; then
+            docker logs "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" || true
+            echo '::error::Disposable PostgreSQL 17 did not reach stable readiness.'
+            exit 1
+          fi
+
+          server_version_num="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+            -c 'show server_version_num;')"
+          case "$server_version_num" in
+            17*) ;;
+            *) echo '::error::Disposable PostgreSQL major version is not 17.'; exit 1 ;;
+          esac
+          echo 'disposable_postgres_ready=true'
+
+      - name: Certify v3 provider artifact package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/migrations/test_development_auth_provider_artifact_v3.py -v
+          python3 tests/migrations/test_development_auth_hosted_membership_v2.py -v
+          echo 'development_auth_provider_artifact_v3=passed'
+
+      - name: Run canonical repository baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./scripts/check-baseline.sh
+          echo 'avuhz_baseline_gate=passed'
+
+      - name: Verify final worktree integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          echo 'worktree_integrity_verified=true'
+          echo 'provider_contact_attempted=false'
+          echo 'supabase_contact_attempted=false'
+          echo 'remote_mutation_attempted=false'
+
+      - name: Remove disposable PostgreSQL
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" >/dev/null 2>&1 || true

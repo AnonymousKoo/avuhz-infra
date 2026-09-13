@@ -9,8 +9,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MIGRATION = ROOT / "supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql"
-IDENTITY_MIGRATION = ROOT / "supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql"
+MIGRATION = ROOT / "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql"
+IDENTITY_MIGRATION = ROOT / "supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql"
 CONTAINER = os.environ.get("AVUHZ_LOCAL_POSTGRES_CONTAINER")
 DATABASE = "avuhz_development_auth_hook_v1_certification"
 ATOMIC_DATABASE = "avuhz_development_auth_hook_v1_atomic_failure"

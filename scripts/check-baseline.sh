@@ -61,29 +61,77 @@ fi
 printf 'check: Semgrep local secret rules\n'
 semgrep scan --config .semgrep.yml --error --quiet .
 
-printf 'check: approved migration SQL and prohibited resource classes\n'
+printf 'check: approved migration and provider-artifact SQL\n'
 sql_candidates="$(mktemp)"
-trap 'rm -f "$tracked_candidates" "$sql_candidates"' EXIT
+provider_auth_expected="$(mktemp)"
+provider_auth_actual="$(mktemp)"
+trap 'rm -f "$tracked_candidates" "$sql_candidates" "$provider_auth_expected" "$provider_auth_actual"' EXIT
 find . -path ./.git -prune -o -path ./supabase/.temp -prune -o -type f -name '*.sql' -printf '%P\n' | sort > "$sql_candidates"
-if grep -Ev '^(supabase/migrations/[0-9]{14}_[A-Za-z0-9][A-Za-z0-9_-]*\.sql|supabase/inventory/current_public_schema\.sql)$' "$sql_candidates" | grep -q .; then
-  printf 'error: SQL is permitted only in approved Supabase migrations or the exact schema inventory artifact\n' >&2
+
+cat > "$provider_auth_expected" <<'EOF'
+supabase/provider-artifacts/development-auth/current/development_auth_custom_access_token_hook_v2.sql
+supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_seal_v2.sql
+supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_v3.sql
+supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql
+supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql
+supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql
+supabase/provider-artifacts/development-auth/history/v2/20260912155000_development_auth_migration_identity_v2.sql
+supabase/provider-artifacts/development-auth/history/v2/20260912155100_development_auth_custom_access_token_hook_v2.sql
+supabase/provider-artifacts/development-auth/history/v2/20260912155200_development_auth_migration_identity_seal_v2.sql
+EOF
+sort -o "$provider_auth_expected" "$provider_auth_expected"
+find supabase/provider-artifacts/development-auth -type f -name '*.sql' -printf '%p\n' | sort > "$provider_auth_actual"
+if ! diff -u "$provider_auth_expected" "$provider_auth_actual"; then
+  printf 'error: DEVELOPMENT AUTH provider-artifact SQL set differs from the exact allowlist\n' >&2
   exit 1
 fi
-while IFS= read -r migration; do
-  [ -z "$migration" ] && continue
-  if [[ "$migration" =~ (legacy|dump|backup|export) ]]; then
+
+if find supabase/migrations -maxdepth 1 -type f -name '*_development_auth_*.sql' -print -quit | grep -q .; then
+  printf 'error: DEVELOPMENT AUTH provider artifacts must not live in the automatic Supabase migration chain\n' >&2
+  exit 1
+fi
+
+while IFS= read -r sql_path; do
+  [ -z "$sql_path" ] && continue
+  case "$sql_path" in
+    supabase/migrations/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[A-Za-z0-9]*.sql)
+      ;;
+    supabase/inventory/current_public_schema.sql)
+      ;;
+    supabase/provider-artifacts/development-auth/current/development_auth_custom_access_token_hook_v2.sql|\
+    supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_seal_v2.sql|\
+    supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_v3.sql|\
+    supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql|\
+    supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql|\
+    supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql|\
+    supabase/provider-artifacts/development-auth/history/v2/20260912155000_development_auth_migration_identity_v2.sql|\
+    supabase/provider-artifacts/development-auth/history/v2/20260912155100_development_auth_custom_access_token_hook_v2.sql|\
+    supabase/provider-artifacts/development-auth/history/v2/20260912155200_development_auth_migration_identity_seal_v2.sql)
+      ;;
+    *)
+      printf 'error: SQL path is outside the approved migration/inventory/provider-artifact surfaces: %s\n' "$sql_path" >&2
+      exit 1
+      ;;
+  esac
+
+done < "$sql_candidates"
+
+while IFS= read -r sql_path; do
+  [ -z "$sql_path" ] && continue
+  if [[ "$sql_path" =~ (legacy|dump|backup|export) ]]; then
     printf 'error: legacy or dump-like SQL filename is prohibited\n' >&2
     exit 1
   fi
-  if awk 'BEGIN{IGNORECASE=1} /^[[:space:]]*(insert|update|delete)[[:space:]]/ { found=1 } END { exit(found ? 0 : 1) }' "$migration"; then
-    printf 'error: direct row-data DML is prohibited in approved migration baseline files\n' >&2
+  if awk 'BEGIN{IGNORECASE=1} /^[[:space:]]*(insert|update|delete)[[:space:]]/ { found=1 } END { exit(found ? 0 : 1) }' "$sql_path"; then
+    printf 'error: direct row-data DML is prohibited in approved SQL artifacts\n' >&2
     exit 1
   fi
-  if rg -n -i '^[[:space:]]*(copy|\\copy)[[:space:]]|dumped from|pg_dump' "$migration"; then
-    printf 'error: dump-like SQL content is prohibited in approved migration baseline files\n' >&2
+  if rg -n -i '^[[:space:]]*(copy|\\copy)[[:space:]]|dumped from|pg_dump' "$sql_path"; then
+    printf 'error: dump-like SQL content is prohibited in approved SQL artifacts\n' >&2
     exit 1
   fi
 done < "$sql_candidates"
+
 if find . -path ./.git -prune -o -path ./supabase/.temp -prune -o -type f \( -name 'linked-project.json' -o -name '*.env' -o -name '.env.*' \) -print -quit | grep -q .; then
   printf 'error: prohibited resource class detected\n' >&2
   exit 1

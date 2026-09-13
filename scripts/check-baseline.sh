@@ -35,6 +35,7 @@ python3 tests/contracts/validate_development_auth_plan_v14.py
 python3 tests/contracts/validate_development_auth_plan_v15.py
 python3 tests/contracts/validate_development_auth_plan_v16.py
 python3 tests/contracts/validate_development_data_plan_v1.py
+python3 tests/contracts/validate_development_data_plan_v2.py
 python3 tests/contracts/validate_read_models.py
 python3 tests/contracts/validate_slice1_acceptance.py
 python3 tests/contracts/validate_phase5d_implementation_package_architecture.py
@@ -68,7 +69,9 @@ printf 'check: approved migration and provider-artifact SQL\n'
 sql_candidates="$(mktemp)"
 provider_auth_expected="$(mktemp)"
 provider_auth_actual="$(mktemp)"
-trap 'rm -f "$tracked_candidates" "$sql_candidates" "$provider_auth_expected" "$provider_auth_actual"' EXIT
+provider_data_expected="$(mktemp)"
+provider_data_actual="$(mktemp)"
+trap 'rm -f "$tracked_candidates" "$sql_candidates" "$provider_auth_expected" "$provider_auth_actual" "$provider_data_expected" "$provider_data_actual"' EXIT
 find . -path ./.git -prune -o -path ./supabase/.temp -prune -o -type f -name '*.sql' -printf '%P\n' | sort > "$sql_candidates"
 
 cat > "$provider_auth_expected" <<'EOF'
@@ -89,8 +92,24 @@ if ! diff -u "$provider_auth_expected" "$provider_auth_actual"; then
   exit 1
 fi
 
+cat > "$provider_data_expected" <<'EOF'
+supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql
+supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql
+supabase/provider-artifacts/development-data/current/development_data_migration_role_binding_v1.sql
+EOF
+sort -o "$provider_data_expected" "$provider_data_expected"
+find supabase/provider-artifacts/development-data -type f -name '*.sql' -printf '%p\n' | sort > "$provider_data_actual"
+if ! diff -u "$provider_data_expected" "$provider_data_actual"; then
+  printf 'error: DEVELOPMENT DATA provider-artifact SQL set differs from the exact allowlist\n' >&2
+  exit 1
+fi
+
 if find supabase/migrations -maxdepth 1 -type f -name '*_development_auth_*.sql' -print -quit | grep -q .; then
   printf 'error: DEVELOPMENT AUTH provider artifacts must not live in the automatic Supabase migration chain\n' >&2
+  exit 1
+fi
+if find supabase/migrations -maxdepth 1 -type f -name '*_development_data_*.sql' -print -quit | grep -q .; then
+  printf 'error: DEVELOPMENT DATA provider artifacts must not live in the automatic Supabase migration chain\n' >&2
   exit 1
 fi
 
@@ -109,7 +128,10 @@ while IFS= read -r sql_path; do
     supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql|\
     supabase/provider-artifacts/development-auth/history/v2/20260912155000_development_auth_migration_identity_v2.sql|\
     supabase/provider-artifacts/development-auth/history/v2/20260912155100_development_auth_custom_access_token_hook_v2.sql|\
-    supabase/provider-artifacts/development-auth/history/v2/20260912155200_development_auth_migration_identity_seal_v2.sql)
+    supabase/provider-artifacts/development-auth/history/v2/20260912155200_development_auth_migration_identity_seal_v2.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_migration_role_binding_v1.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql)
       ;;
     *)
       printf 'error: SQL path is outside the approved migration/inventory/provider-artifact surfaces: %s\n' "$sql_path" >&2

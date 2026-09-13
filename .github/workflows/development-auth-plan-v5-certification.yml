@@ -14,7 +14,14 @@ on:
       - supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql
       - supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql
       - supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql
+      - supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql
+      - supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql
+      - supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql
       - tests/contracts/validate_bounded_authorization_plan.py
+      - tests/contracts/validate_bounded_authorization_plan_v14_legacy.py
+      - tests/migrations/history/development-auth/v1/development_auth_migration_identity_v1.py.snapshot
+      - tests/migrations/history/development-auth/v1/development_auth_custom_access_token_hook_v1.py.snapshot
+      - tests/migrations/history/development-auth/v1/development_auth_migration_identity_seal_v1.py.snapshot
       - tests/migrations/test_development_auth_migration_identity_v1.py
       - tests/migrations/test_development_auth_custom_access_token_hook_v1.py
       - tests/migrations/test_development_auth_migration_identity_seal_v1.py
@@ -64,6 +71,8 @@ jobs:
           command -v python3
           python3 --version
 
+          # This is the immutable historical v7 certified file set. Do not
+          # rewrite it when physical files are archived later.
           artifacts=(
             contracts/plans/v1/development-auth-integration.plan.json
             contracts/plans/v1/development-auth-integration.progress.json
@@ -78,6 +87,27 @@ jobs:
             tests/migrations/test_development_auth_migration_identity_v1.py
             tests/migrations/test_development_auth_custom_access_token_hook_v1.py
             tests/migrations/test_development_auth_migration_identity_seal_v1.py
+            tests/migrations/test_provider_neutral_rebaseline.py
+            docs/development-auth-integration-authorization-plan.md
+            .github/workflows/development-auth-plan-v5-certification.yml
+          )
+
+          # Physical compatibility sources preserve the exact historical bytes
+          # while AUTH provider artifacts no longer live in automatic migrations.
+          current_artifacts=(
+            contracts/plans/v1/development-auth-integration.plan.json
+            contracts/plans/v1/development-auth-integration.progress.json
+            contracts/plans/v1/development-auth-provider-preflight.evidence.json
+            contracts/plans/v1/development-auth-step1-v5-local.evidence.json
+            contracts/plans/v1/development-auth-step1-v6-local.evidence.json
+            contracts/plans/v1/development-auth-step1-v7-local.evidence.json
+            supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql
+            supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql
+            supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql
+            tests/contracts/validate_bounded_authorization_plan_v14_legacy.py
+            tests/migrations/history/development-auth/v1/development_auth_migration_identity_v1.py.snapshot
+            tests/migrations/history/development-auth/v1/development_auth_custom_access_token_hook_v1.py.snapshot
+            tests/migrations/history/development-auth/v1/development_auth_migration_identity_seal_v1.py.snapshot
             tests/migrations/test_provider_neutral_rebaseline.py
             docs/development-auth-integration-authorization-plan.md
             .github/workflows/development-auth-plan-v5-certification.yml
@@ -158,19 +188,19 @@ jobs:
           print("development_auth_v7_metadata_verified=true")
           PY
 
-          bootstrap_digest="sha256:$(sha256sum supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql | awk '{print $1}')"
+          bootstrap_digest="sha256:$(sha256sum supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql | awk '{print $1}')"
           test "$bootstrap_digest" = "${AVUHZ_BOOTSTRAP_DIGEST}"
           echo "corrected_bootstrap_digest_verified=true"
-          hook_digest="sha256:$(sha256sum supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql | awk '{print $1}')"
+          hook_digest="sha256:$(sha256sum supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql | awk '{print $1}')"
           test "$hook_digest" = "${AVUHZ_HOOK_DIGEST}"
           echo "corrected_hook_digest_verified=true"
-          seal_digest="sha256:$(sha256sum supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql | awk '{print $1}')"
+          seal_digest="sha256:$(sha256sum supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql | awk '{print $1}')"
           test "$seal_digest" = "${AVUHZ_SEAL_DIGEST}"
           echo "corrected_seal_digest_verified=true"
 
           git rev-parse HEAD
           git diff --name-only "${diff_base}...HEAD"
-          for artifact in "${artifacts[@]}"; do
+          for artifact in "${current_artifacts[@]}"; do
             test -f "$artifact"
             git hash-object "$artifact"
             sha256sum "$artifact"

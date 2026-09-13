@@ -1,0 +1,37 @@
+{
+  "progress_id": "636742e7-6e24-4271-95ed-1836afdaf034",
+  "plan_id": "c44a55d6-42e2-4b41-be8a-a497af163811",
+  "plan_version": 16,
+  "plan_digest": "sha256:efacd425b11952e4df7424ae01770db5fcc3307de80aa1c326c0dc9ed0c58e5d",
+  "record_version": 2,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development.auth.v16.step.01.verify-disabled-hook",
+      "authorization_state": "AUTHORIZED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v16.hook-read-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "hook.read-session.preflight.observed",
+          "evidence_digest": "sha256:f008475f6b174c54eece929b924c316f79f0be6f897e74ac45df389377c4f1d7",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:990910284aab8ac67043223aeed2131ceea31478290b74e1b47b673b13b84ad5",
+          "recorded_at": "2026-09-13T19:35:39Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-13T19:35:39Z",
+  "progress_digest": "sha256:030a65d4ecf777ca88270b3727988d813218bbe356a9b5ce9b138c6000b3b51e"
+}

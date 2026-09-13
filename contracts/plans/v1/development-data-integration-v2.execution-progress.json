@@ -3,7 +3,7 @@
   "plan_id": "a7034439-f9e7-4358-90ef-cf221dfd1d1b",
   "plan_version": 2,
   "plan_digest": "sha256:ed141409e31c0aa70944ca801047f05db574ef3e905dd85dcd2e81c0a393d695",
-  "record_version": 4,
+  "record_version": 5,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -53,12 +53,19 @@
     },
     {
       "step_id": "development.data.v2.step.02.bootstrap-migration-identity",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.migration-identity.bootstrapped",
+          "evidence_reference": "provider.execution.data-v2.step2.attempt1.verified",
+          "evidence_digest": "sha256:9c1e742d1d77d8ac63a2ea201fc39789a54f384f9caa684e24d45112ef27053c",
+          "recorded_at": "2026-09-13T23:24:38Z"
+        }
+      ],
+      "observed_postcondition": "The exact bound bootstrap artifact creates avuhz_data_migration_service_dev as a NOLOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, CREATEROLE, NOREPLICATION, NOBYPASSRLS role with only public USAGE WITH GRANT OPTION plus non-grantable CREATE and the bounded temporary postgres SET path required to run the canonical initial migration; no Avuhz application table or command-service role is created.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -73,6 +80,19 @@
           "sanitized_value": null,
           "value_digest": "sha256:e05c1a9995f1c3383e5237678f766ce9729a1e29756afbee287e882d82284d22",
           "recorded_at": "2026-09-13T23:09:56Z"
+        },
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.migration-identity.bootstrapped",
+          "evidence_digest": "sha256:9c1e742d1d77d8ac63a2ea201fc39789a54f384f9caa684e24d45112ef27053c",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:63a91b034cf50e65877b8dae4f7fe2aa86f1355e211c2f006be9268032fcf612",
+          "recorded_at": "2026-09-13T23:24:38Z"
         }
       ]
     },
@@ -121,6 +141,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-13T23:09:56Z",
-  "progress_digest": "sha256:66435959842f541ad30e983c0f3c357562979dd037787c40d40a3e4db9c91b33"
+  "updated_at": "2026-09-13T23:24:38Z",
+  "progress_digest": "sha256:a3410f72e6ade8bcd7a116412e21b2e6ea6e8f912dead2affd4e9e234e7d7148"
 }

@@ -3,7 +3,7 @@
   "plan_id": "fb56b1bd-ed95-468d-9189-4ac86616273f",
   "plan_version": 15,
   "plan_digest": "sha256:abde80fd06d42949db231c6ea61bbabd368550eda82a5c4f9ff0064393a60727",
-  "record_version": 6,
+  "record_version": 7,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -98,12 +98,19 @@
     },
     {
       "step_id": "development.auth.v15.step.03.seal-migration-identity-v2",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "migration.identity.v2.seal.verified",
+          "evidence_reference": "provider.execution.v15.step3.attempt1.verified",
+          "evidence_digest": "sha256:32ffeb323e266c113ce714a43a6daca651fcc0936c41439f4b13f65bf199c182",
+          "recorded_at": "2026-09-13T18:05:06Z"
+        }
+      ],
+      "observed_postcondition": "Only the self-granted SET edge and direct public schema privileges are removed; the unavoidable bootstrap ADMIN/NOSET/NOINHERIT edge remains, postgres cannot SET ROLE, the role still owns the hook, and the hook remains disabled.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -118,6 +125,19 @@
           "sanitized_value": null,
           "value_digest": "sha256:da5eb90c25fde4d4d0dc9367862604d77acc9724062f169524b8e714c218814d",
           "recorded_at": "2026-09-13T17:40:52Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v15.migration-identity-seal",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "migration.identity.v2.seal.verified",
+          "evidence_digest": "sha256:32ffeb323e266c113ce714a43a6daca651fcc0936c41439f4b13f65bf199c182",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:cea84fe29540d8b0c08fec99efe94f84d652b0746ddea7cef386233a43222868",
+          "recorded_at": "2026-09-13T18:05:06Z"
         }
       ]
     },
@@ -133,6 +153,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-13T17:40:52Z",
-  "progress_digest": "sha256:220e56ee7513d37605e0e267e7963873ed8c10323bc74b5a1bde5b746957a8e0"
+  "updated_at": "2026-09-13T18:05:06Z",
+  "progress_digest": "sha256:5317063acc230dc203273b6c28d65b36da5a83f7e0578f738bf44c7236a03e8e"
 }

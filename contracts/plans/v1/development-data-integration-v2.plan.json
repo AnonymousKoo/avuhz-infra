@@ -98,7 +98,7 @@
           "persistence_policy": "SANITIZED_VALUE_ALLOWED",
           "preapproval_value": {
             "value": "gitblob.ec85afe0243e154f5b4d495754bacedeaf4d6aeb",
-            "exact_digest": "sha256:49aad390ad05f277383686e292064405eb1119c0af3f80fc11fd71bf94b20e43"
+            "exact_digest": "sha256:dbba6eb2504d5e93f180325d92d834329102778fd6e3f0acef0f072282f5b67c"
           }
         },
         {
@@ -111,7 +111,7 @@
           "persistence_policy": "SANITIZED_VALUE_ALLOWED",
           "preapproval_value": {
             "value": "gitblob.978fafb64a21b8acb3572c237e08d739afd473f0",
-            "exact_digest": "sha256:a6696e68d5353132703512ccb16d7b34c78cd3daf6669ae41f558d4ba512cf5f"
+            "exact_digest": "sha256:4d34be18c94dab2c84398a5c51d1ac59596069cc3e2ac1fc36dd3bf24e733974"
           }
         },
         {
@@ -124,7 +124,7 @@
           "persistence_policy": "SANITIZED_VALUE_ALLOWED",
           "preapproval_value": {
             "value": "gitblob.1df1aa29eafbd3f4dcc6c88883183ae2bbab9d08",
-            "exact_digest": "sha256:d8560c88b0e1e0dc30281ab426bc3ab5fbff569d2fa00ba36760770bab8bc4ee"
+            "exact_digest": "sha256:516944bd27e392228948dc0f33743b58b732a3926c4b7f246ffe6aa65e2ed684"
           }
         },
         {
@@ -216,7 +216,7 @@
           "persistence_policy": "SANITIZED_VALUE_ALLOWED",
           "preapproval_value": {
             "value": "gitblob.ec85afe0243e154f5b4d495754bacedeaf4d6aeb",
-            "exact_digest": "sha256:49aad390ad05f277383686e292064405eb1119c0af3f80fc11fd71bf94b20e43"
+            "exact_digest": "sha256:dbba6eb2504d5e93f180325d92d834329102778fd6e3f0acef0f072282f5b67c"
           }
         },
         {
@@ -411,7 +411,7 @@
           "persistence_policy": "SANITIZED_VALUE_ALLOWED",
           "preapproval_value": {
             "value": "gitblob.978fafb64a21b8acb3572c237e08d739afd473f0",
-            "exact_digest": "sha256:a6696e68d5353132703512ccb16d7b34c78cd3daf6669ae41f558d4ba512cf5f"
+            "exact_digest": "sha256:4d34be18c94dab2c84398a5c51d1ac59596069cc3e2ac1fc36dd3bf24e733974"
           }
         },
         {
@@ -504,7 +504,7 @@
           "persistence_policy": "SANITIZED_VALUE_ALLOWED",
           "preapproval_value": {
             "value": "gitblob.1df1aa29eafbd3f4dcc6c88883183ae2bbab9d08",
-            "exact_digest": "sha256:d8560c88b0e1e0dc30281ab426bc3ab5fbff569d2fa00ba36760770bab8bc4ee"
+            "exact_digest": "sha256:516944bd27e392228948dc0f33743b58b732a3926c4b7f246ffe6aa65e2ed684"
           }
         },
         {
@@ -639,5 +639,5 @@
     "v1.authority.reactivated"
   ],
   "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
-  "plan_digest": "sha256:c848730282f7146b3c14867675750aba700adfb9d05c38765e540a51464a208d"
+  "plan_digest": "sha256:2215e1b9b16e09b1da927c7126eb72ee6647f261bcda68bcb54e214a2578f598"
 }

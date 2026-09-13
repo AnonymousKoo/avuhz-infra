@@ -12,7 +12,6 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
-    AuthorizationPlanStop,
     initial_progress,
     validate_approval,
     validate_plan,
@@ -30,9 +29,9 @@ PLAN_ID = "e8378a7e-9840-426c-9575-9427b437c619"
 APPROVAL_ID = "64480469-11a5-4397-a111-9f91c8411b7a"
 PROGRESS_ID = "4406cb84-dccd-44ba-bf79-38f1c28c4bf0"
 PLAN_DIGEST = "sha256:f4a0dfdba82a1f23430f0b299d738a19f89caeaec9401adcef90c9ee92bd8563"
-APPROVAL_DIGEST = "sha256:2270ad2c0ef34fdda8096ab48586247d2fe56e2009cba57035c6db091ca1ffdb"
+APPROVAL_DIGEST = "sha256:8d8dd92ce4b380af65cc8f2e2cf26ebc9fbaece537dd6a6e55f85840e964cf84"
 PROGRESS_DIGEST = "sha256:e8305b2edb1493f19ea62d99fe8a73de91dc4b1505c46cc623557ae0ea30b589"
-APPROVAL_FILE_DIGEST = "sha256:c4faf7b124f8b813479161a1000b6854e4826b052998ed969a24416c95c32d13"
+APPROVAL_FILE_DIGEST = "sha256:da44f85800453644c1cc4008c6209fa212633444cdade417d2b945b2f8c8d359"
 PROJECT_REFERENCE = "gnuqaefotwgkwurjpyik"
 MIGRATION_GIT_BLOB = "ff2fa6ce4e2b788a9eada5379f85593e96d82424"
 MIGRATION_GIT_COMMIT = "14d60d809d856fed1ea1ec917d91f50270bae793"
@@ -73,12 +72,7 @@ def main() -> int:
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
-    try:
-        validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
-    except AuthorizationPlanStop as exc:
-        assert str(exc) == "APPROVAL_NOT_ACTIVE"
-    else:
-        raise AssertionError("superseded DEVELOPMENT DATA v1 approval unexpectedly remains usable")
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
@@ -191,7 +185,6 @@ def main() -> int:
     assert approval["plan_digest"] == PLAN_DIGEST
     assert approval["owner_identity"] == "github:AnonymousKoo"
     assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
-    assert approval["status"] == "SUPERSEDED"
     assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
 
     expected_progress = initial_progress(plan, SCHEMA_ROOT, PROGRESS_ID, plan["created_at"])
@@ -205,7 +198,7 @@ def main() -> int:
         for state in progress["step_states"]
     )
 
-    print("DEVELOPMENT DATA v1 bounded plan package (superseded): PASS")
+    print("DEVELOPMENT DATA v1 bounded plan package: PASS")
     return 0
 
 

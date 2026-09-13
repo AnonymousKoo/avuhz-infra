@@ -639,5 +639,5 @@
     "v1.authority.reactivated"
   ],
   "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
-  "plan_digest": "sha256:2215e1b9b16e09b1da927c7126eb72ee6647f261bcda68bcb54e214a2578f598"
+  "plan_digest": "sha256:c848730282f7146b3c14867675750aba700adfb9d05c38765e540a51464a208d"
 }

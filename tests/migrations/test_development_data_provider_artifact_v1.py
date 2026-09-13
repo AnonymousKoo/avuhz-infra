@@ -50,6 +50,13 @@ class DevelopmentDataProviderArtifactV1StaticTests(unittest.TestCase):
             bootstrap,
         )
         self.assertIn(f"grant create on schema public to {MIGRATION_ROLE};", bootstrap)
+        self.assertNotIn("has_sequence_privilege(", bootstrap)
+        self.assertIn("acldefault('s', sequence.relowner)", bootstrap)
+        self.assertIn("sequence_acl.grantee = migration_role_oid", bootstrap)
+        self.assertIn(
+            "sequence_acl.privilege_type in ('usage', 'select', 'update')",
+            bootstrap,
+        )
         self.assertIn(f"alter role {MIGRATION_ROLE} nocreaterole;", seal)
         self.assertIn(f"revoke usage on schema public from {MIGRATION_ROLE} cascade;", seal)
         self.assertIn(f"grant usage on schema public to {COMMAND_ROLE};", seal)

@@ -7,11 +7,14 @@ on:
     paths:
       - 'supabase/provider-artifacts/development-auth/**'
       - 'supabase/migrations/*development_auth*'
+      - 'tests/migrations/history/development-auth/**'
       - 'tests/migrations/test_development_auth_provider_artifact_v3.py'
       - 'tests/migrations/test_development_auth_hosted_membership_v2.py'
       - 'tests/migrations/test_development_auth_migration_identity_v1.py'
       - 'tests/migrations/test_development_auth_custom_access_token_hook_v1.py'
       - 'tests/migrations/test_development_auth_migration_identity_seal_v1.py'
+      - 'tests/contracts/validate_bounded_authorization_plan.py'
+      - 'tests/contracts/validate_bounded_authorization_plan_v14_legacy.py'
       - 'tests/contracts/validate_development_auth_plan_v9.py'
       - 'tests/contracts/validate_development_auth_plan_v10.py'
       - 'tests/contracts/validate_development_auth_plan_v11.py'
@@ -171,16 +174,35 @@ jobs:
             "${AVUHZ_POSTGRES_IMAGE}"
 
           ready=false
+          consecutive_successes=0
+          stable_postmaster_start=""
           for _ in $(seq 1 60); do
-            if docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            if postmaster_start="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
               psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
-              -c 'select 1;' >/dev/null 2>&1; then
-              ready=true
-              break
+              -c 'select pg_postmaster_start_time();' 2>/dev/null)"; then
+              if [[ -n "$postmaster_start" && "$postmaster_start" == "$stable_postmaster_start" ]]; then
+                consecutive_successes=$((consecutive_successes + 1))
+              else
+                stable_postmaster_start="$postmaster_start"
+                consecutive_successes=1
+              fi
+              if (( consecutive_successes >= 3 )); then
+                ready=true
+                break
+              fi
+            else
+              consecutive_successes=0
+              stable_postmaster_start=""
             fi
             sleep 1
           done
-          test "$ready" = true
+
+          if [[ "$ready" != "true" ]]; then
+            docker logs "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" || true
+            echo '::error::Disposable PostgreSQL 17 did not reach stable readiness.'
+            exit 1
+          fi
+
           server_version_num="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
             psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
             -c 'show server_version_num;')"

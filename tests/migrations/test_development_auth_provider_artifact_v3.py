@@ -261,17 +261,13 @@ class DevelopmentAuthProviderArtifactV3PostgresTests(unittest.TestCase):
         _, state, _ = self._psql(
             "select count(*) from pg_roles "
             "where rolname='avuhz_migration_service_dev';"
-            "select count(*) from pg_proc function "
+            "select (function.proacl is null)::int "
+            "from pg_proc function "
             "join pg_namespace namespace on namespace.oid=function.pronamespace "
-            "cross join lateral aclexplode("
-            "coalesce(function.proacl,acldefault('f',function.proowner))) function_acl "
             "where namespace.nspname='public' "
-            "and function.proname='provider_public_exec_fixture' "
-            "and function_acl.grantee<>0 "
-            "and function_acl.grantee<>(select oid from pg_roles where rolname=current_user) "
-            "and function_acl.privilege_type='EXECUTE';"
+            "and function.proname='provider_public_exec_fixture';"
         )
-        self.assertEqual(state.splitlines(), ["0", "0"])
+        self.assertEqual(state.splitlines(), ["0", "1"])
 
 
 if __name__ == "__main__":

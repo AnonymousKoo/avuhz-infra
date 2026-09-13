@@ -3,7 +3,7 @@
   "plan_id": "fb56b1bd-ed95-468d-9189-4ac86616273f",
   "plan_version": 15,
   "plan_digest": "sha256:abde80fd06d42949db231c6ea61bbabd368550eda82a5c4f9ff0064393a60727",
-  "record_version": 4,
+  "record_version": 5,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -53,12 +53,19 @@
     },
     {
       "step_id": "development.auth.v15.step.02.apply-hook-migration-v2",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "hook.migration.v2.application.verified",
+          "evidence_reference": "provider.execution.v15.step2.attempt1.verified",
+          "evidence_digest": "sha256:b79ff1c1f3e401203ce5e53ee3587b91dc063bbe27bcd97ac2badbf0c11490d6",
+          "recorded_at": "2026-09-13T16:30:39Z"
+        }
+      ],
+      "observed_postcondition": "The temporary SET edge reaches avuhz_migration_service_dev; that role creates and owns the exact hardened hook, EXECUTE is limited to supabase_auth_admin, and the hook remains disabled.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -73,6 +80,19 @@
           "sanitized_value": null,
           "value_digest": "sha256:789255aa22baaf26013bec82c18c3db561ceeb9817f84705d8a6a0da5e7db56a",
           "recorded_at": "2026-09-13T16:11:07Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v15.hook-application",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.migration.v2.application.verified",
+          "evidence_digest": "sha256:b79ff1c1f3e401203ce5e53ee3587b91dc063bbe27bcd97ac2badbf0c11490d6",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:da5eb90c25fde4d4d0dc9367862604d77acc9724062f169524b8e714c218814d",
+          "recorded_at": "2026-09-13T16:30:39Z"
         }
       ]
     },
@@ -99,6 +119,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-13T16:11:07Z",
-  "progress_digest": "sha256:87cb1e3711c59db42ad2d6b555836966d28f86b4a5484d554c9794afd7a4635b"
+  "updated_at": "2026-09-13T16:30:39Z",
+  "progress_digest": "sha256:3fa7994673ece4e152b75da50a9a93f1dde0c017cdc771136a059da18fa87bcc"
 }

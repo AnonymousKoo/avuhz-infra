@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the DEVELOPMENT AUTH v14 provider continuation without provider contact."""
+"""Validate the DEVELOPMENT AUTH v14 provider continuation and stopped Step 1 outcome."""
 from __future__ import annotations
 
 import hashlib
@@ -14,16 +14,19 @@ from avuhz_engineering.authorization_plan import (
     AuthorizationPlanStop,
     authorize_step,
     initial_progress,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
 )
+from avuhz_runtime.implementation_handoff import canonical_digest
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.plan.json"
 PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.progress.json"
 EXECUTION_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.execution-progress.json"
 APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.approval.json"
+FAILURE_EVIDENCE_PATH = ROOT / "contracts/plans/v1/development-auth-step1-v14-failure.evidence.json"
 V13_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v13.plan.json"
 V13_APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v13.approval.json"
 V13_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v13.progress.json"
@@ -37,10 +40,13 @@ EXPECTED_APPROVAL_ID = "d1840c61-40aa-4b64-b863-01e01db1e513"
 EXPECTED_PLAN_DIGEST = "sha256:b419208260f0ab79c3e441e14fff2757dc98228b757912bdd13f3a7c380ecf79"
 EXPECTED_APPROVAL_DIGEST = "sha256:4a7fc882a72d83e8f93fae933e9c1f8886e6347c10ef88942afa1966f1bc5099"
 EXPECTED_PROGRESS_DIGEST = "sha256:628fed904bb468348b40d9478d921911ab808c5948599a6d0f3ed9618410ed4b"
-EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:5cc218d5d5824a8a967bdc49d970c5b533392002dfe373069487e13809d86864"
+EXPECTED_AUTHORIZED_PROGRESS_DIGEST = "sha256:5cc218d5d5824a8a967bdc49d970c5b533392002dfe373069487e13809d86864"
+EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:c53bc65e59ee687eea25b079458ec828ef1ee7a0629347b08b8134cea7206156"
+EXPECTED_FAILURE_EVIDENCE_DIGEST = "sha256:2f6d6bb750117409649e266fc65845e50fb4aa9e863bfcf4d62585abfd38e0b4"
 EXPECTED_PREFLIGHT_EVIDENCE_DIGEST = "sha256:5e4e507040dae188f90a0db30b3f9e15654762ec6e76ea24cd3593623033a8da"
 EXPECTED_PREFLIGHT_CONFIGURATION_DIGEST = "sha256:fd7c811b8cc1f5c2c490a0a30fd25ab474a06c03df7bd3b084e6774e8f7ac2f7"
 AUTHORIZED_AT = "2026-09-13T12:17:10Z"
+OUTCOME_AT = "2026-09-13T12:41:55Z"
 EXPECTED_WINDOW = {
     "binding_state": "BOUND",
     "starts_at": "2026-09-13T12:00:00Z",
@@ -75,6 +81,7 @@ def main() -> None:
     progress = load(PROGRESS_PATH)
     execution_progress = load(EXECUTION_PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
+    failure_evidence = load(FAILURE_EVIDENCE_PATH)
     v13_plan = load(V13_PLAN_PATH)
     v13_approval = load(V13_APPROVAL_PATH)
     v13_progress = load(V13_PROGRESS_PATH)
@@ -84,6 +91,7 @@ def main() -> None:
     validate_progress(plan, execution_progress, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, EXPECTED_WINDOW["starts_at"])
     validate_approval(plan, approval, SCHEMA_ROOT, AUTHORIZED_AT)
+    validate_approval(plan, approval, SCHEMA_ROOT, OUTCOME_AT)
 
     assert plan["plan_id"] == EXPECTED_PLAN_ID
     assert plan["plan_version"] == 14
@@ -227,21 +235,127 @@ def main() -> None:
         AUTHORIZED_AT,
         trusted_preflight_assertions=[preflight_assertion],
     )
-    assert execution_progress == expected_authorized
-    assert execution_progress["record_version"] == 2
-    assert execution_progress["overall_state"] == "IN_PROGRESS"
-    assert execution_progress["updated_at"] == AUTHORIZED_AT
+    assert expected_authorized["record_version"] == 2
+    assert expected_authorized["overall_state"] == "IN_PROGRESS"
+    assert expected_authorized["updated_at"] == AUTHORIZED_AT
+    assert expected_authorized["progress_digest"] == EXPECTED_AUTHORIZED_PROGRESS_DIGEST
+    assert expected_authorized["step_states"][0]["authorization_state"] == "AUTHORIZED"
+    assert expected_authorized["step_states"][0]["authorization_consumed"] is False
+    assert expected_authorized["step_states"][0]["binding_assertions"] == [preflight_assertion]
+
+    expected_failure_evidence = {
+        "evidence_type": "migration.identity.v2.bootstrap.verified",
+        "environment": "DEVELOPMENT",
+        "responsibility": "AUTH",
+        "project_reference": "pwlhruwutoitnieactol",
+        "plan_id": EXPECTED_PLAN_ID,
+        "plan_version": 14,
+        "step_id": EXPECTED_STEPS[0],
+        "attempt": 1,
+        "outcome": "FAILED_ROLLED_BACK",
+        "safe_error_code": "FUNCTION_PRIVILEGE_MISMATCH",
+        "provider_observation": {
+            "project_status": "ACTIVE_HEALTHY",
+            "postgresql_version": "17.6.1.166",
+            "postgres_engine": "17",
+            "session_user": "postgres",
+            "current_user": "postgres",
+            "current_database": "postgres",
+            "postgres_is_superuser": False,
+            "postgres_has_createrole": True,
+            "migration_identity_exists_after_rollback": False,
+            "hook_function_exists_after_rollback": False,
+            "migration_history_entry_count_after_rollback": 0,
+        },
+        "failure_observation": {
+            "provider_error_code": "P0001",
+            "sanitized_error": (
+                "Avuhz DEVELOPMENT Auth migration identity v2 has unexpected function privilege"
+            ),
+            "failed_postcondition": "function.privilege.unexpected",
+            "transaction_rolled_back": True,
+        },
+        "root_cause_review": {
+            "status": "HIGH_CONFIDENCE",
+            "classification": "EFFECTIVE_PUBLIC_EXECUTE_FALSE_POSITIVE",
+            "basis": [
+                (
+                    "The v2 bootstrap postcondition uses has_function_privilege for "
+                    "avuhz_migration_service_dev across public, auth, and storage functions."
+                ),
+                (
+                    "The hosted DEVELOPMENT AUTH baseline exposes EXECUTE on at least "
+                    "20 auth/storage functions through PostgreSQL PUBLIC."
+                ),
+                (
+                    "PUBLIC privileges are effective for every role, so "
+                    "has_function_privilege can report EXECUTE even when the migration "
+                    "role has no direct function ACL grant."
+                ),
+                (
+                    "Rollback verification confirmed the migration identity and hook are "
+                    "absent and no matching provider migration history entry remains."
+                ),
+            ],
+            "correction_required": True,
+            "retry_authorized": False,
+        },
+        "security_state": {
+            "credential_retained": False,
+            "raw_provider_payload_retained": False,
+            "pii_retained": False,
+            "data_resource_touched": False,
+            "hook_created": False,
+            "hook_enabled": False,
+            "provider_mutation_committed": False,
+        },
+        "recorded_at": OUTCOME_AT,
+    }
+    assert failure_evidence == expected_failure_evidence
+    assert canonical_digest(failure_evidence) == EXPECTED_FAILURE_EVIDENCE_DIGEST
+
+    outcome_evidence = [{
+        "evidence_type": "migration.identity.v2.bootstrap.verified",
+        "evidence_reference": "provider.execution.v14.step1.attempt1.rollback-verified",
+        "evidence_digest": EXPECTED_FAILURE_EVIDENCE_DIGEST,
+        "recorded_at": OUTCOME_AT,
+    }]
+    observed_postcondition = (
+        "Bootstrap failed closed at the function-privilege postcondition. "
+        "Transaction rollback verification confirmed the migration identity and hook "
+        "are absent and no provider migration history entry remains."
+    )
+    expected_stopped = record_step_outcome(
+        plan,
+        approval,
+        expected_authorized,
+        EXPECTED_STEPS[0],
+        "FAILED",
+        "FAIL",
+        outcome_evidence,
+        observed_postcondition,
+        "FUNCTION_PRIVILEGE_MISMATCH",
+        SCHEMA_ROOT,
+        OUTCOME_AT,
+    )
+
+    assert execution_progress == expected_stopped
+    assert execution_progress["record_version"] == 3
+    assert execution_progress["overall_state"] == "STOPPED"
+    assert execution_progress["updated_at"] == OUTCOME_AT
     assert execution_progress["progress_digest"] == EXPECTED_EXECUTION_PROGRESS_DIGEST
 
     first_state = execution_progress["step_states"][0]
-    assert first_state["authorization_state"] == "AUTHORIZED"
-    assert first_state["execution_state"] == "NOT_STARTED"
-    assert first_state["verification_state"] == "NOT_STARTED"
-    assert first_state["authorization_consumed"] is False
-    assert first_state["evidence"] == []
+    assert first_state["authorization_state"] == "CONSUMED"
+    assert first_state["execution_state"] == "FAILED"
+    assert first_state["verification_state"] == "FAIL"
+    assert first_state["authorization_consumed"] is True
+    assert first_state["evidence"] == outcome_evidence
+    assert first_state["observed_postcondition"] == observed_postcondition
+    assert first_state["safe_error_code"] == "FUNCTION_PRIVILEGE_MISMATCH"
     assert first_state["binding_assertions"] == [preflight_assertion]
     assert all(
-        state["authorization_state"] == "PENDING"
+        state["authorization_state"] == "BLOCKED"
         and state["execution_state"] == "NOT_STARTED"
         and state["verification_state"] == "NOT_STARTED"
         and state["authorization_consumed"] is False
@@ -252,10 +366,12 @@ def main() -> None:
 
     print(
         "DEVELOPMENT_AUTH_V14_CONTINUATION=PASS "
-        "(v13 expired pristine with all steps pending/unexecuted/unconsumed; "
-        "v14 Step 1 authorized only from fresh read-only provider preflight; "
-        "Step 1 unexecuted/unconsumed; Steps 2-4 pending; "
-        "provider_mutation_attempted=false)"
+        "(v13 expired pristine; v14 Step 1 authorization reconstructed from fresh "
+        "read-only preflight; provider Step 1 attempted once and failed closed on "
+        "effective PUBLIC EXECUTE privilege detection; transaction rollback verified "
+        "no migration identity, hook, or history entry; v14 STOPPED; Steps 2-4 BLOCKED; "
+        "retry_authorized=false; provider_mutation_attempted=true; "
+        "provider_mutation_committed=false)"
     )
 
 

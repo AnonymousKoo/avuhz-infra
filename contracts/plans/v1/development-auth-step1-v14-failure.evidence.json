@@ -1,0 +1,53 @@
+{
+  "evidence_type": "migration.identity.v2.bootstrap.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "b78514b1-9fd6-4487-8da3-77d4598ef846",
+  "plan_version": 14,
+  "step_id": "development.auth.v14.step.01.bootstrap-migration-identity-v2",
+  "attempt": 1,
+  "outcome": "FAILED_ROLLED_BACK",
+  "safe_error_code": "FUNCTION_PRIVILEGE_MISMATCH",
+  "provider_observation": {
+    "project_status": "ACTIVE_HEALTHY",
+    "postgresql_version": "17.6.1.166",
+    "postgres_engine": "17",
+    "session_user": "postgres",
+    "current_user": "postgres",
+    "current_database": "postgres",
+    "postgres_is_superuser": false,
+    "postgres_has_createrole": true,
+    "migration_identity_exists_after_rollback": false,
+    "hook_function_exists_after_rollback": false,
+    "migration_history_entry_count_after_rollback": 0
+  },
+  "failure_observation": {
+    "provider_error_code": "P0001",
+    "sanitized_error": "Avuhz DEVELOPMENT Auth migration identity v2 has unexpected function privilege",
+    "failed_postcondition": "function.privilege.unexpected",
+    "transaction_rolled_back": true
+  },
+  "root_cause_review": {
+    "status": "HIGH_CONFIDENCE",
+    "classification": "EFFECTIVE_PUBLIC_EXECUTE_FALSE_POSITIVE",
+    "basis": [
+      "The v2 bootstrap postcondition uses has_function_privilege for avuhz_migration_service_dev across public, auth, and storage functions.",
+      "The hosted DEVELOPMENT AUTH baseline exposes EXECUTE on at least 20 auth/storage functions through PostgreSQL PUBLIC.",
+      "PUBLIC privileges are effective for every role, so has_function_privilege can report EXECUTE even when the migration role has no direct function ACL grant.",
+      "Rollback verification confirmed the migration identity and hook are absent and no matching provider migration history entry remains."
+    ],
+    "correction_required": true,
+    "retry_authorized": false
+  },
+  "security_state": {
+    "credential_retained": false,
+    "raw_provider_payload_retained": false,
+    "pii_retained": false,
+    "data_resource_touched": false,
+    "hook_created": false,
+    "hook_enabled": false,
+    "provider_mutation_committed": false
+  },
+  "recorded_at": "2026-09-13T12:41:55Z"
+}

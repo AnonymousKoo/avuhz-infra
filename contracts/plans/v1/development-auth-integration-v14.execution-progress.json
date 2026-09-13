@@ -3,18 +3,25 @@
   "plan_id": "b78514b1-9fd6-4487-8da3-77d4598ef846",
   "plan_version": 14,
   "plan_digest": "sha256:b419208260f0ab79c3e441e14fff2757dc98228b757912bdd13f3a7c380ecf79",
-  "record_version": 2,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 3,
+  "overall_state": "STOPPED",
   "step_states": [
     {
       "step_id": "development.auth.v14.step.01.bootstrap-migration-identity-v2",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "migration.identity.v2.bootstrap.verified",
+          "evidence_reference": "provider.execution.v14.step1.attempt1.rollback-verified",
+          "evidence_digest": "sha256:2f6d6bb750117409649e266fc65845e50fb4aa9e863bfcf4d62585abfd38e0b4",
+          "recorded_at": "2026-09-13T12:41:55Z"
+        }
+      ],
+      "observed_postcondition": "Bootstrap failed closed at the function-privilege postcondition. Transaction rollback verification confirmed the migration identity and hook are absent and no provider migration history entry remains.",
+      "safe_error_code": "FUNCTION_PRIVILEGE_MISMATCH",
       "binding_assertions": [
         {
           "binding_id": "binding.development.auth.v14.executor-preflight",
@@ -33,7 +40,7 @@
     },
     {
       "step_id": "development.auth.v14.step.02.apply-hook-migration-v2",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -44,7 +51,7 @@
     },
     {
       "step_id": "development.auth.v14.step.03.seal-migration-identity-v2",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -55,7 +62,7 @@
     },
     {
       "step_id": "development.auth.v14.step.04.verify-disabled-hook",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -65,6 +72,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-13T12:17:10Z",
-  "progress_digest": "sha256:5cc218d5d5824a8a967bdc49d970c5b533392002dfe373069487e13809d86864"
+  "updated_at": "2026-09-13T12:41:55Z",
+  "progress_digest": "sha256:c53bc65e59ee687eea25b079458ec828ef1ee7a0629347b08b8134cea7206156"
 }

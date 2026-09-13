@@ -1,0 +1,136 @@
+{
+  "plan_id": "c44a55d6-42e2-4b41-be8a-a497af163811",
+  "plan_version": 16,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-13T19:00:00Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-13T19:15:00Z",
+    "expires_at": "2026-09-13T22:15:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v16.step.01.verify-disabled-hook"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v16.step.01.verify-disabled-hook",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "database.function-and-acl",
+        "resource_reference": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.verify-hosted-v2-disabled-and-acl",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "migration.identity.v2.seal.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:32ffeb323e266c113ce714a43a6daca651fcc0936c41439f4b13f65bf199c182"
+        }
+      ],
+      "expected_postcondition": "Read-only verification proves only the bootstrap ADMIN/NOSET/NOINHERIT edge remains, postgres cannot SET ROLE, the migration role has no direct public or DATA authority, the hook owner/body/ACL match, and the hook is disabled.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "resource.repair",
+        "hook.enable",
+        "data.query"
+      ],
+      "stop_conditions": [
+        "sealed-role.mismatch",
+        "runtime-set-role.available",
+        "function.body.mismatch",
+        "acl.mismatch",
+        "hook.unexpectedly-enabled"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v16.v15-sealed-state",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:32ffeb323e266c113ce714a43a6daca651fcc0936c41439f4b13f65bf199c182",
+            "exact_digest": "sha256:a9d687ae037ce577cee464b261f93d883d1d93da421cfa17c921a37411e16d91"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v16.hook-read-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "hook.read-session.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v16.hook-deployed-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.v2.disabled-acl.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "hook.v2.disabled-acl.verified",
+          "established_binding_ids": [
+            "binding.development.auth.v16.hook-deployed-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "provider.mutation",
+    "resource.repair",
+    "data.operation",
+    "production.target",
+    "staging.target",
+    "hook.enable",
+    "synthetic-identity.operation",
+    "token.issue",
+    "v15.expired-authorization.execute",
+    "v15.step4.execute"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "authorization.unbound",
+    "security.validation.failed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:efacd425b11952e4df7424ae01770db5fcc3307de80aa1c326c0dc9ed0c58e5d"
+}

@@ -47,7 +47,7 @@
           "exact_digest": "sha256:7ee54f4e817cefe62f40bf31d8b8321591db901b08991ddae5a64881bdfa75ee"
         }
       ],
-      "expected_postcondition": "Read-only verification proves the exact DEVELOPMENT DATA project has zero Avuhz application relations, routines, types, policies, and applied project migrations; neither avuhz_command_service nor avuhz_data_migration_service_dev exists; and the hosted postgres owner session is NOSUPERUSER with CREATEROLE and public USAGE/CREATE. Any broader hosted owner privileges are recorded as bootstrap-only authority and are prohibited from executing the Avuhz schema migration directly. The canonical DEVELOPMENT DATA v1 approval artifact remains unchanged historical evidence; execution under v2 is explicitly prohibited.",
+      "expected_postcondition": "Read-only verification proves exact DEVELOPMENT DATA has zero Avuhz relations, routines, types, policies, and applied migrations; neither command-service nor migration role exists; postgres is NOSUPERUSER with CREATEROLE and public USAGE/CREATE. Broader hosted owner authority is bootstrap-only and prohibited from schema migration. Canonical DATA v1 approval remains unchanged historical evidence; v1 execution is prohibited under v2.",
       "prohibited_actions": [
         "provider.mutation",
         "auth.operation",
@@ -561,7 +561,7 @@
           "exact_digest": null
         }
       ],
-      "expected_postcondition": "Read-only verification proves exactly 16 Avuhz tables, RLS enabled on all 16, exactly one avuhz_command_service_tenant_isolation policy per table, no Avuhz table grants to PUBLIC, anon, authenticated, or service_role, only the bounded avuhz_command_service privileges expected by the canonical migration, a sealed avuhz_data_migration_service_dev with no direct public privileges or SET path, the expected non-SET PostgreSQL-17 creator-membership edges only, and no Supabase security-advisor finding for the deployed Avuhz surface.",
+      "expected_postcondition": "Read-only verification proves exactly 16 Avuhz tables, RLS on all 16, one tenant-isolation policy per table, no Avuhz table grants to PUBLIC, anon, authenticated, or service_role, only canonical command-service privileges, a sealed migration role with no direct public privileges or SET path, only expected PostgreSQL-17 non-SET creator edges, and no Supabase Security Advisor finding for the Avuhz surface.",
       "prohibited_actions": [
         "provider.mutation",
         "auth.operation",
@@ -642,5 +642,5 @@
     "v1.execution.attempted"
   ],
   "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
-  "plan_digest": "sha256:58ba33e53909f46093e7a858643522cb81b1cc7826ab489e79494a7515ab19b7"
+  "plan_digest": "sha256:066f6cc97adbe4cdc0be03dd880726f506a454064c6b249605455c7a5eac0d36"
 }

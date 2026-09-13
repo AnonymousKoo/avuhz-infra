@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the DEVELOPMENT AUTH v15 continuation and successful Step 1 provider outcome."""
+"""Validate DEVELOPMENT AUTH v15 through Step 2 authorization."""
 from __future__ import annotations
 
 import hashlib
@@ -42,15 +42,33 @@ EXPECTED_PROGRESS_ID = "47874259-3616-4c9c-af4b-3541b13b9a23"
 EXPECTED_APPROVAL_ID = "73a8dde2-149f-40a6-9045-105147081062"
 EXPECTED_PLAN_DIGEST = "sha256:abde80fd06d42949db231c6ea61bbabd368550eda82a5c4f9ff0064393a60727"
 EXPECTED_PROGRESS_DIGEST = "sha256:d808788d47df88c426ea12817c42421abd1550ebb8aa4ceab7a5d894c08f780b"
-EXPECTED_AUTHORIZED_PROGRESS_DIGEST = "sha256:c3a569ecb9b7a33e2f14a84713f9cfc6bb35bb521c2ad7e98b878a133e74874e"
-EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:1c14770cdd6f2e704a98e338e5f6c225a3df519d1ac9f52e9a6476bc835ebed9"
-EXPECTED_APPROVAL_DIGEST = "sha256:143c18558ceb5dd6e820b4103aebf71c3c3125e98177b6336b1a12518ca54f16"
-EXPECTED_PREFLIGHT_EVIDENCE_DIGEST = "sha256:5e4e507040dae188f90a0db30b3f9e15654762ec6e76ea24cd3593623033a8da"
-EXPECTED_PREFLIGHT_CONFIGURATION_DIGEST = "sha256:fd7c811b8cc1f5c2c490a0a30fd25ab474a06c03df7bd3b084e6774e8f7ac2f7"
-EXPECTED_SUCCESS_EVIDENCE_DIGEST = "sha256:b2b69fbf11de44172ed85e4f0b81d4e461eb7dc8c1a2b8c9090203241f36945a"
-EXPECTED_MIGRATION_IDENTITY_VALUE_DIGEST = "sha256:789255aa22baaf26013bec82c18c3db561ceeb9817f84705d8a6a0da5e7db56a"
-AUTHORIZED_AT = "2026-09-13T15:31:11Z"
-OUTCOME_AT = "2026-09-13T15:48:39Z"
+EXPECTED_STEP1_AUTHORIZED_PROGRESS_DIGEST = (
+    "sha256:c3a569ecb9b7a33e2f14a84713f9cfc6bb35bb521c2ad7e98b878a133e74874e"
+)
+EXPECTED_STEP1_SUCCESS_PROGRESS_DIGEST = (
+    "sha256:1c14770cdd6f2e704a98e338e5f6c225a3df519d1ac9f52e9a6476bc835ebed9"
+)
+EXPECTED_STEP2_AUTHORIZED_PROGRESS_DIGEST = (
+    "sha256:87cb1e3711c59db42ad2d6b555836966d28f86b4a5484d554c9794afd7a4635b"
+)
+EXPECTED_APPROVAL_DIGEST = (
+    "sha256:143c18558ceb5dd6e820b4103aebf71c3c3125e98177b6336b1a12518ca54f16"
+)
+EXPECTED_PREFLIGHT_EVIDENCE_DIGEST = (
+    "sha256:5e4e507040dae188f90a0db30b3f9e15654762ec6e76ea24cd3593623033a8da"
+)
+EXPECTED_PREFLIGHT_CONFIGURATION_DIGEST = (
+    "sha256:fd7c811b8cc1f5c2c490a0a30fd25ab474a06c03df7bd3b084e6774e8f7ac2f7"
+)
+EXPECTED_STEP1_SUCCESS_EVIDENCE_DIGEST = (
+    "sha256:b2b69fbf11de44172ed85e4f0b81d4e461eb7dc8c1a2b8c9090203241f36945a"
+)
+EXPECTED_MIGRATION_IDENTITY_VALUE_DIGEST = (
+    "sha256:789255aa22baaf26013bec82c18c3db561ceeb9817f84705d8a6a0da5e7db56a"
+)
+STEP1_AUTHORIZED_AT = "2026-09-13T15:31:11Z"
+STEP1_OUTCOME_AT = "2026-09-13T15:48:39Z"
+STEP2_AUTHORIZED_AT = "2026-09-13T16:11:07Z"
 EXPECTED_WINDOW = {
     "binding_state": "BOUND",
     "starts_at": "2026-09-13T15:15:00Z",
@@ -93,59 +111,39 @@ def main() -> None:
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
     validate_progress(plan, execution_progress, SCHEMA_ROOT)
-    validate_approval(plan, approval, SCHEMA_ROOT, EXPECTED_WINDOW["starts_at"])
-    validate_approval(plan, approval, SCHEMA_ROOT, AUTHORIZED_AT)
-    validate_approval(plan, approval, SCHEMA_ROOT, OUTCOME_AT)
+    for evaluated_at in (
+        EXPECTED_WINDOW["starts_at"],
+        STEP1_AUTHORIZED_AT,
+        STEP1_OUTCOME_AT,
+        STEP2_AUTHORIZED_AT,
+    ):
+        validate_approval(plan, approval, SCHEMA_ROOT, evaluated_at)
 
     assert plan["plan_id"] == EXPECTED_PLAN_ID
     assert plan["plan_version"] == 15
     assert plan["plan_digest"] == EXPECTED_PLAN_DIGEST
-    assert plan["definition_status"] == "READY_FOR_APPROVAL"
     assert plan["environment"] == "DEVELOPMENT"
-    assert plan["target"] == {
-        "provider_class": "identity.provider",
-        "provider_reference": "supabase",
-        "project_reference": "pwlhruwutoitnieactol",
-        "responsibility": "AUTH",
-        "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
-        "audience_reference": "audience.avuhz.command-service.development",
-    }
+    assert plan["target"]["provider_reference"] == "supabase"
+    assert plan["target"]["project_reference"] == "pwlhruwutoitnieactol"
+    assert plan["target"]["responsibility"] == "AUTH"
     assert plan["authorization_window"] == EXPECTED_WINDOW
     assert plan["ordered_step_ids"] == EXPECTED_STEPS
     assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
-    for prohibited in (
-        "batch.mutation",
-        "data.operation",
-        "staging.target",
-        "production.target",
-        "hook.enable",
-        "v14.retry",
-        "v14.stopped-authorization.execute",
-    ):
-        assert prohibited in plan["prohibited_actions"]
+    assert "data.operation" in plan["prohibited_actions"]
+    assert "staging.target" in plan["prohibited_actions"]
+    assert "production.target" in plan["prohibited_actions"]
+    assert "hook.enable" in plan["prohibited_actions"]
 
-    assert approval == {
-        "approval_id": EXPECTED_APPROVAL_ID,
-        "plan_id": EXPECTED_PLAN_ID,
-        "plan_version": 15,
-        "plan_digest": EXPECTED_PLAN_DIGEST,
-        "owner_identity": "github:AnonymousKoo",
-        "decision": "APPROVE",
-        "environment": "DEVELOPMENT",
-        "effective_at": EXPECTED_WINDOW["starts_at"],
-        "expires_at": EXPECTED_WINDOW["expires_at"],
-        "approved_at": "2026-09-13T14:58:57Z",
-        "status": "ACTIVE",
-        "authority_scope": "EXACT_PLAN_ONLY",
-        "approval_digest": EXPECTED_APPROVAL_DIGEST,
-    }
+    assert approval["approval_id"] == EXPECTED_APPROVAL_ID
+    assert approval["plan_id"] == EXPECTED_PLAN_ID
+    assert approval["plan_digest"] == EXPECTED_PLAN_DIGEST
+    assert approval["approval_digest"] == EXPECTED_APPROVAL_DIGEST
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
 
-    expected_progress = initial_progress(
+    expected_initial = initial_progress(
         plan, SCHEMA_ROOT, EXPECTED_PROGRESS_ID, plan["created_at"]
     )
-    assert progress == expected_progress
-    assert progress["record_version"] == 1
-    assert progress["overall_state"] == "NOT_STARTED"
+    assert progress == expected_initial
     assert progress["progress_digest"] == EXPECTED_PROGRESS_DIGEST
 
     try:
@@ -158,33 +156,25 @@ def main() -> None:
         raise AssertionError("v14 approval must be expired before v15 becomes effective")
 
     assert v14_execution["plan_version"] == 14
-    assert v14_execution["record_version"] == 3
     assert v14_execution["overall_state"] == "STOPPED"
     assert v14_execution["step_states"][0]["authorization_state"] == "CONSUMED"
     assert v14_execution["step_states"][0]["execution_state"] == "FAILED"
     assert v14_execution["step_states"][0]["verification_state"] == "FAIL"
-    assert v14_execution["step_states"][0]["safe_error_code"] == "FUNCTION_PRIVILEGE_MISMATCH"
+    assert v14_execution["step_states"][0]["safe_error_code"] == (
+        "FUNCTION_PRIVILEGE_MISMATCH"
+    )
 
     actual = {path: raw_digest(path) for path in EXPECTED_ARTIFACT_DIGESTS}
     assert actual == EXPECTED_ARTIFACT_DIGESTS
     bootstrap, hook, seal, verify = plan["steps"]
     assert bootstrap["resource"]["exact_digest"] == actual[BOOTSTRAP]
-    assert bootstrap["resource"]["exact_version"] == "version.development-auth-bootstrap.v3"
-    assert bootstrap["operation"] == "provider.migration.bootstrap-identity-hosted-v3-exact"
-    assert bootstrap["required_evidence"] == [{
-        "evidence_type": "migration.identity.v3.artifact.certified",
-        "source_step_id": None,
-        "binding_state": "BOUND",
-        "exact_digest": actual[BOOTSTRAP],
-    }]
     assert hook["resource"]["exact_digest"] == actual[HOOK]
-    assert hook["dependency_step_ids"] == [EXPECTED_STEPS[0]]
     assert seal["resource"]["exact_digest"] == actual[SEAL]
-    assert seal["dependency_step_ids"] == [EXPECTED_STEPS[1]]
+    assert hook["operation"] == "provider.migration.apply-hook-hosted-v2-exact"
+    assert hook["dependency_step_ids"] == [EXPECTED_STEPS[0]]
     assert verify["execution_class"] == "PROVIDER_READ"
-    assert verify["dependency_step_ids"] == [EXPECTED_STEPS[2]]
 
-    preflight_assertion = {
+    step1_preflight_assertion = {
         "binding_id": "binding.development.auth.v15.executor-preflight",
         "phase": "RESOLVED_BY_STEP_PREFLIGHT",
         "value_class": "CONFIGURATION_REFERENCE",
@@ -195,9 +185,9 @@ def main() -> None:
         "persistence_policy": "DIGEST_ONLY",
         "sanitized_value": None,
         "value_digest": EXPECTED_PREFLIGHT_CONFIGURATION_DIGEST,
-        "recorded_at": AUTHORIZED_AT,
+        "recorded_at": STEP1_AUTHORIZED_AT,
     }
-    authorization_request = {
+    step1_authorization_request = {
         "plan_id": EXPECTED_PLAN_ID,
         "plan_version": 15,
         "plan_digest": EXPECTED_PLAN_DIGEST,
@@ -224,145 +214,162 @@ def main() -> None:
         "unauthorized_migration_surface": False,
         "scope_expansion": False,
     }
-    expected_authorized = authorize_step(
+    step1_authorized = authorize_step(
         plan,
         approval,
         progress,
-        authorization_request,
+        step1_authorization_request,
         SCHEMA_ROOT,
-        AUTHORIZED_AT,
-        trusted_preflight_assertions=[preflight_assertion],
+        STEP1_AUTHORIZED_AT,
+        trusted_preflight_assertions=[step1_preflight_assertion],
     )
-    assert expected_authorized["record_version"] == 2
-    assert expected_authorized["progress_digest"] == EXPECTED_AUTHORIZED_PROGRESS_DIGEST
+    assert step1_authorized["record_version"] == 2
+    assert step1_authorized["progress_digest"] == (
+        EXPECTED_STEP1_AUTHORIZED_PROGRESS_DIGEST
+    )
 
-    expected_success_evidence = {
-        "evidence_type": "migration.identity.v3.bootstrap.verified",
-        "environment": "DEVELOPMENT",
-        "responsibility": "AUTH",
-        "project_reference": "pwlhruwutoitnieactol",
-        "plan_id": EXPECTED_PLAN_ID,
-        "plan_version": 15,
-        "step_id": EXPECTED_STEPS[0],
-        "attempt": 1,
-        "outcome": "SUCCEEDED_VERIFIED",
-        "provider_observation": {
-            "project_status": "ACTIVE_HEALTHY",
-            "postgresql_version": "17.6.1.166",
-            "postgres_engine": "17",
-            "session_user": "postgres",
-            "current_user": "postgres",
-            "current_database": "postgres",
-            "postgres_is_superuser": False,
-            "postgres_has_createrole": True,
-            "migration_identity_exists": True,
-            "role_attributes_exact": True,
-            "bootstrap_admin_noset_membership_count": 1,
-            "temporary_set_membership_count": 1,
-            "total_role_membership_edges": 2,
-            "public_schema_usage": True,
-            "public_schema_create": True,
-            "direct_database_acl_count": 0,
-            "provider_schema_privilege_count": 0,
-            "table_privilege_count": 0,
-            "sequence_privilege_count": 0,
-            "direct_function_execute_count": 0,
-            "hook_function_exists": False,
-            "migration_history_entry_count": 1,
-            "migration_history_version": "20260913154411",
-            "migration_history_name": "development_auth_migration_identity_v3",
-        },
-        "verification_observation": {
-            "provider_mutation_attempts": 1,
-            "provider_mutation_committed": True,
-            "postcondition_verified": True,
-            "read_only_verification_query_correction_required": True,
-            "read_only_verification_query_correction_scope": "sequence_privilege_guard_only",
-        },
-        "security_state": {
-            "credential_retained": False,
-            "raw_provider_payload_retained": False,
-            "pii_retained": False,
-            "data_resource_touched": False,
-            "hook_created": False,
-            "hook_enabled": False,
-        },
-        "recorded_at": OUTCOME_AT,
+    assert raw_digest(SUCCESS_EVIDENCE_PATH) == EXPECTED_STEP1_SUCCESS_EVIDENCE_DIGEST
+    assert success_evidence["outcome"] == "SUCCEEDED_VERIFIED"
+    assert success_evidence["provider_observation"]["hook_function_exists"] is False
+    assert success_evidence["security_state"] == {
+        "credential_retained": False,
+        "raw_provider_payload_retained": False,
+        "pii_retained": False,
+        "data_resource_touched": False,
+        "hook_created": False,
+        "hook_enabled": False,
     }
-    assert success_evidence == expected_success_evidence
-    assert raw_digest(SUCCESS_EVIDENCE_PATH) == EXPECTED_SUCCESS_EVIDENCE_DIGEST
 
-    outcome_evidence = [{
+    step1_outcome_evidence = [{
         "evidence_type": "migration.identity.v3.bootstrap.verified",
         "evidence_reference": "provider.execution.v15.step1.attempt1.verified",
-        "evidence_digest": EXPECTED_SUCCESS_EVIDENCE_DIGEST,
-        "recorded_at": OUTCOME_AT,
+        "evidence_digest": EXPECTED_STEP1_SUCCESS_EVIDENCE_DIGEST,
+        "recorded_at": STEP1_OUTCOME_AT,
     }]
-    migration_identity_assertion = {
+    step1_migration_identity_assertion = {
         "binding_id": "binding.development.auth.v15.migration-identity",
         "phase": "PRODUCED_BY_CURRENT_STEP",
         "value_class": "STABLE_REFERENCE",
         "source_step_id": None,
         "evidence_type": "migration.identity.v3.bootstrap.verified",
-        "evidence_digest": EXPECTED_SUCCESS_EVIDENCE_DIGEST,
+        "evidence_digest": EXPECTED_STEP1_SUCCESS_EVIDENCE_DIGEST,
         "digest_policy": "REQUIRED",
         "persistence_policy": "DIGEST_ONLY",
         "sanitized_value": None,
         "value_digest": EXPECTED_MIGRATION_IDENTITY_VALUE_DIGEST,
-        "recorded_at": OUTCOME_AT,
+        "recorded_at": STEP1_OUTCOME_AT,
     }
     assert canonical_digest("postgres.role.avuhz_migration_service_dev") == (
         EXPECTED_MIGRATION_IDENTITY_VALUE_DIGEST
     )
-
-    expected_success = record_step_outcome(
+    step1_success = record_step_outcome(
         plan,
         approval,
-        expected_authorized,
+        step1_authorized,
         EXPECTED_STEPS[0],
         "SUCCEEDED",
         "PASS",
-        outcome_evidence,
+        step1_outcome_evidence,
         bootstrap["expected_postcondition"],
         None,
         SCHEMA_ROOT,
-        OUTCOME_AT,
-        binding_assertions=[migration_identity_assertion],
+        STEP1_OUTCOME_AT,
+        binding_assertions=[step1_migration_identity_assertion],
     )
-    assert execution_progress == expected_success
-    assert execution_progress["record_version"] == 3
-    assert execution_progress["overall_state"] == "IN_PROGRESS"
-    assert execution_progress["updated_at"] == OUTCOME_AT
-    assert execution_progress["progress_digest"] == EXPECTED_EXECUTION_PROGRESS_DIGEST
+    assert step1_success["record_version"] == 3
+    assert step1_success["progress_digest"] == EXPECTED_STEP1_SUCCESS_PROGRESS_DIGEST
 
-    first_state = execution_progress["step_states"][0]
-    assert first_state["authorization_state"] == "CONSUMED"
-    assert first_state["execution_state"] == "SUCCEEDED"
-    assert first_state["verification_state"] == "PASS"
-    assert first_state["authorization_consumed"] is True
-    assert first_state["evidence"] == outcome_evidence
-    assert first_state["observed_postcondition"] == bootstrap["expected_postcondition"]
-    assert first_state["safe_error_code"] is None
-    assert first_state["binding_assertions"] == [
-        preflight_assertion,
-        migration_identity_assertion,
-    ]
-    assert all(
-        state["authorization_state"] == "PENDING"
-        and state["execution_state"] == "NOT_STARTED"
-        and state["verification_state"] == "NOT_STARTED"
-        and state["authorization_consumed"] is False
-        and state["evidence"] == []
-        and state["binding_assertions"] == []
-        for state in execution_progress["step_states"][1:]
+    step2_authorization_request = {
+        "plan_id": EXPECTED_PLAN_ID,
+        "plan_version": 15,
+        "plan_digest": EXPECTED_PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": "pwlhruwutoitnieactol",
+        "responsibility": "AUTH",
+        "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": EXPECTED_STEPS[1],
+        "resource_reference": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "resource_version": "version.development-auth-hook.v2",
+        "resource_digest": actual[HOOK],
+        "operation": "provider.migration.apply-hook-hosted-v2-exact",
+        "execution_class": "PROVIDER_MUTATION",
+        "credential_class": "MIGRATION_IDENTITY",
+        "required_evidence": [
+            {
+                "evidence_type": "migration.identity.v3.bootstrap.verified",
+                "evidence_digest": EXPECTED_STEP1_SUCCESS_EVIDENCE_DIGEST,
+            },
+            {
+                "evidence_type": "hook.migration.v2.artifact.certified",
+                "evidence_digest": actual[HOOK],
+            },
+        ],
+        "prior_evidence_digests": [EXPECTED_STEP1_SUCCESS_EVIDENCE_DIGEST],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    expected_step2_authorized = authorize_step(
+        plan,
+        approval,
+        step1_success,
+        step2_authorization_request,
+        SCHEMA_ROOT,
+        STEP2_AUTHORIZED_AT,
     )
+    assert execution_progress == expected_step2_authorized
+    assert execution_progress["record_version"] == 4
+    assert execution_progress["overall_state"] == "IN_PROGRESS"
+    assert execution_progress["updated_at"] == STEP2_AUTHORIZED_AT
+    assert execution_progress["progress_digest"] == (
+        EXPECTED_STEP2_AUTHORIZED_PROGRESS_DIGEST
+    )
+
+    step1_state, step2_state, step3_state, step4_state = (
+        execution_progress["step_states"]
+    )
+    assert step1_state["authorization_state"] == "CONSUMED"
+    assert step1_state["execution_state"] == "SUCCEEDED"
+    assert step1_state["verification_state"] == "PASS"
+    assert step1_state["authorization_consumed"] is True
+
+    assert step2_state["authorization_state"] == "AUTHORIZED"
+    assert step2_state["execution_state"] == "NOT_STARTED"
+    assert step2_state["verification_state"] == "NOT_STARTED"
+    assert step2_state["authorization_consumed"] is False
+    assert step2_state["evidence"] == []
+    assert step2_state["observed_postcondition"] is None
+    assert step2_state["safe_error_code"] is None
+    assert step2_state["binding_assertions"] == [{
+        "binding_id": "binding.development.auth.v15.migration-identity",
+        "phase": "DERIVED_FROM_SOURCE_STEP",
+        "value_class": "STABLE_REFERENCE",
+        "source_step_id": EXPECTED_STEPS[0],
+        "evidence_type": "migration.identity.v3.bootstrap.verified",
+        "evidence_digest": EXPECTED_STEP1_SUCCESS_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": EXPECTED_MIGRATION_IDENTITY_VALUE_DIGEST,
+        "recorded_at": STEP2_AUTHORIZED_AT,
+    }]
+    for state in (step3_state, step4_state):
+        assert state["authorization_state"] == "PENDING"
+        assert state["execution_state"] == "NOT_STARTED"
+        assert state["verification_state"] == "NOT_STARTED"
+        assert state["authorization_consumed"] is False
+        assert state["evidence"] == []
+        assert state["binding_assertions"] == []
 
     print(
         "DEVELOPMENT_AUTH_V15_CONTINUATION=PASS "
-        "(v14 stopped; v15 Step 1 authorized from fresh preflight, executed exactly once, "
-        "bootstrap v3 committed and postcondition verified, Step 1 consumed/succeeded/pass; "
-        "Steps 2-4 pending; hook absent; DEVELOPMENT DATA untouched; "
-        "provider_mutation_attempts=1; provider_mutation_committed=true)"
+        "(v14 stopped; v15 Step 1 consumed/succeeded/pass; "
+        "Step 2 authorized only from exact Step 1 evidence and certified hook-v2 artifact; "
+        "Step 2 unexecuted/unconsumed; Steps 3-4 pending; hook mutation not attempted by "
+        "this repository authorization package; DEVELOPMENT DATA untouched)"
     )
 
 

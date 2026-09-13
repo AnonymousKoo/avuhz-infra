@@ -9,7 +9,7 @@
   "effective_at": "2026-09-13T20:35:00Z",
   "expires_at": "2026-09-13T23:35:00Z",
   "approved_at": "2026-09-13T20:27:06Z",
-  "status": "ACTIVE",
+  "status": "SUPERSEDED",
   "authority_scope": "EXACT_PLAN_ONLY",
-  "approval_digest": "sha256:8d8dd92ce4b380af65cc8f2e2cf26ebc9fbaece537dd6a6e55f85840e964cf84"
+  "approval_digest": "sha256:2270ad2c0ef34fdda8096ab48586247d2fe56e2009cba57035c6db091ca1ffdb"
 }

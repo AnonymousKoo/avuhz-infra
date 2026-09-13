@@ -43,6 +43,9 @@ V12_APPROVAL_PATH = (
 V13_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-auth-integration-v13.approval.json"
 )
+V14_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v14.approval.json"
+)
 HISTORICAL_STEP1_EVIDENCE_PATH = (
     ROOT / "contracts/plans/v1/development-auth-step1-baseline.evidence.json"
 )
@@ -118,6 +121,9 @@ V12_APPROVAL_FILE_DIGEST = (
 )
 V13_APPROVAL_FILE_DIGEST = (
     "sha256:660712b72c1e5990bad5b88b9a89da9fff360edd035a4c5105af80f48aa7db13"
+)
+V14_APPROVAL_FILE_DIGEST = (
+    "sha256:77814c8029e26b7cfdfe094f5125139dd2db0470f819df20d25beb49f100d37e"
 )
 IDENTITY_DIGEST = (
     "sha256:b2af6edacb283afc5a5ad7d1c1ebdc5fdbd572bddd1cb115459caa6344acda45"
@@ -843,8 +849,9 @@ def main() -> int:
             V11_APPROVAL_PATH,
             V12_APPROVAL_PATH,
             V13_APPROVAL_PATH,
+            V14_APPROVAL_PATH,
         },
-        "approval artifact set differs from the exact authorized v8/v9/v10/v11/v12/v13 approvals",
+        "approval artifact set differs from the exact authorized v8/v9/v10/v11/v12/v13/v14 approvals",
     )
     require(
         file_digest(V8_APPROVAL_PATH) == V8_APPROVAL_FILE_DIGEST
@@ -852,8 +859,9 @@ def main() -> int:
         and file_digest(V10_APPROVAL_PATH) == V10_APPROVAL_FILE_DIGEST
         and file_digest(V11_APPROVAL_PATH) == V11_APPROVAL_FILE_DIGEST
         and file_digest(V12_APPROVAL_PATH) == V12_APPROVAL_FILE_DIGEST
-        and file_digest(V13_APPROVAL_PATH) == V13_APPROVAL_FILE_DIGEST,
-        "exact authorized v8/v9/v10/v11/v12/v13 approval file digest mismatch",
+        and file_digest(V13_APPROVAL_PATH) == V13_APPROVAL_FILE_DIGEST
+        and file_digest(V14_APPROVAL_PATH) == V14_APPROVAL_FILE_DIGEST,
+        "exact authorized v8/v9/v10/v11/v12/v13/v14 approval file digest mismatch",
     )
     require(
         v8_approval

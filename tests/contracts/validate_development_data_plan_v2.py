@@ -32,17 +32,17 @@ SEAL_PATH = ROOT / "supabase/provider-artifacts/development-data/current/develop
 PLAN_ID = "a7034439-f9e7-4358-90ef-cf221dfd1d1b"
 APPROVAL_ID = "d77cc375-f92b-4168-9404-07fe79399ba7"
 PROGRESS_ID = "c81b4126-1e73-4b0f-98b8-afee13d262b7"
-PLAN_DIGEST = "sha256:066f6cc97adbe4cdc0be03dd880726f506a454064c6b249605455c7a5eac0d36"
-APPROVAL_DIGEST = "sha256:d0378f644153d69d25df5de22843f4719a6689c6ac8fb19272bb1b798d761c90"
-PROGRESS_DIGEST = "sha256:f878207a4812e0ce53c0e7eda417b2d6fa55453c1809f1fb846cacc1966736d8"
-APPROVAL_FILE_DIGEST = "sha256:625036601df6b25aa95c61d4a43b2c38d5b47f73e274698220d763676a64755c"
-PACKAGE_IDENTITY_DIGEST = "sha256:7ee54f4e817cefe62f40bf31d8b8321591db901b08991ddae5a64881bdfa75ee"
+PLAN_DIGEST = "sha256:ed141409e31c0aa70944ca801047f05db574ef3e905dd85dcd2e81c0a393d695"
+APPROVAL_DIGEST = "sha256:57ffdb400ce505681a1dc3b576eab8e623cefafb6b8313db25b505094a5205f2"
+PROGRESS_DIGEST = "sha256:74f50899c7284835f8777653228171a7dea802c2ec02ecb8e0e02faf95717e40"
+APPROVAL_FILE_DIGEST = "sha256:e0de76806b98dcb7cf837a562e4eeb198112e81a4318b432b1143bf510cf11ee"
+PACKAGE_IDENTITY_DIGEST = "sha256:ab86caddb7da33e174d14684d00af97941482b35a6cc5fa5cf172865de93bef8"
 PROJECT_REFERENCE = "gnuqaefotwgkwurjpyik"
 WINDOW_START = "2026-09-13T21:00:00Z"
 WINDOW_END = "2026-09-14T01:00:00Z"
 MIGRATION_GIT_BLOB = "ff2fa6ce4e2b788a9eada5379f85593e96d82424"
 MIGRATION_GIT_COMMIT = "14d60d809d856fed1ea1ec917d91f50270bae793"
-BOOTSTRAP_GIT_BLOB = "68a830b37d6389333506bdfeccf97f57c0d31219"
+BOOTSTRAP_GIT_BLOB = "d8a728cbd8e6630ffb39f8489c749cce75aad6f3"
 ROLE_BINDING_GIT_BLOB = "978fafb64a21b8acb3572c237e08d739afd473f0"
 SEAL_GIT_BLOB = "65952c5900a6b73f8f413fe21f3c124c2f3e182e"
 V1_PLAN_DIGEST = "sha256:f4a0dfdba82a1f23430f0b299d738a19f89caeaec9401adcef90c9ee92bd8563"
@@ -183,6 +183,9 @@ def main() -> int:
         assert marker in bootstrap_sql
     assert "grant usage on schema public to avuhz_data_migration_service_dev with grant option" in bootstrap_sql
     assert "grant create on schema public to avuhz_data_migration_service_dev" in bootstrap_sql
+    assert "has_sequence_privilege(" not in bootstrap_sql
+    assert "acldefault('s', sequence.relowner)" in bootstrap_sql
+    assert "sequence_acl.grantee = migration_role_oid" in bootstrap_sql
     assert "set local role avuhz_data_migration_service_dev" in bootstrap_sql
 
     role_binding_sql = ROLE_BINDING_PATH.read_text(encoding="utf-8")

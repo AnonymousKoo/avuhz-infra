@@ -3,9 +3,9 @@
 -- DEVELOPMENT DATA project after a fresh empty-baseline preflight.
 -- The broad hosted postgres owner is used only to bootstrap a non-login migration role.
 -- The migration role receives the minimum temporary authority required by the existing
--- canonical initial migration: CREATEROLE plus USAGE/CREATE on public. It receives no
--- reusable credential, database privilege, row-data privilege, provider-schema privilege,
--- superuser authority, CREATEDB, replication, or BYPASSRLS.
+-- canonical initial migration: CREATEROLE, USAGE WITH GRANT OPTION on public, and CREATE
+-- on public. It receives no reusable credential, database privilege, row-data privilege,
+-- provider-schema privilege, superuser authority, CREATEDB, replication, or BYPASSRLS.
 
 begin;
 
@@ -82,7 +82,7 @@ end
 $avuhz_development_data_migration_identity_v1_database_acl$;
 
 revoke all privileges on schema public from avuhz_data_migration_service_dev;
-grant usage on schema public to avuhz_data_migration_service_dev;
+grant usage on schema public to avuhz_data_migration_service_dev with grant option;
 grant create on schema public to avuhz_data_migration_service_dev;
 
 do $avuhz_development_data_migration_identity_v1_postcondition$
@@ -160,15 +160,27 @@ begin
        cross join lateral aclexplode(coalesce(namespace.nspacl, '{}'::aclitem[])) schema_acl
         where namespace.nspname = 'public'
           and schema_acl.grantee = migration_role_oid
-          and schema_acl.privilege_type in ('USAGE', 'CREATE')
+          and schema_acl.privilege_type = 'USAGE'
+          and schema_acl.is_grantable
+     ) <> 1
+     or (
+       select count(*) from pg_namespace namespace
+       cross join lateral aclexplode(coalesce(namespace.nspacl, '{}'::aclitem[])) schema_acl
+        where namespace.nspname = 'public'
+          and schema_acl.grantee = migration_role_oid
+          and schema_acl.privilege_type = 'CREATE'
           and not schema_acl.is_grantable
-     ) <> 2
+     ) <> 1
      or exists (
        select 1 from pg_namespace namespace
        cross join lateral aclexplode(coalesce(namespace.nspacl, '{}'::aclitem[])) schema_acl
         where namespace.nspname = 'public'
           and schema_acl.grantee = migration_role_oid
-          and (schema_acl.privilege_type not in ('USAGE', 'CREATE') or schema_acl.is_grantable)
+          and (
+            schema_acl.privilege_type not in ('USAGE', 'CREATE')
+            or (schema_acl.privilege_type = 'USAGE' and not schema_acl.is_grantable)
+            or (schema_acl.privilege_type = 'CREATE' and schema_acl.is_grantable)
+          )
      ) then
     raise exception 'Avuhz DEVELOPMENT DATA migration identity public schema privilege mismatch';
   end if;

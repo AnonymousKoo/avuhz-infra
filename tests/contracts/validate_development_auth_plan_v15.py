@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
     AuthorizationPlanStop,
+    authorize_step,
     initial_progress,
     validate_approval,
     validate_plan,
@@ -21,6 +22,7 @@ from avuhz_engineering.authorization_plan import (
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.plan.json"
 PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.progress.json"
+EXECUTION_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.execution-progress.json"
 APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.approval.json"
 V14_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.plan.json"
 V14_APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.approval.json"
@@ -37,7 +39,11 @@ EXPECTED_PROGRESS_ID = "47874259-3616-4c9c-af4b-3541b13b9a23"
 EXPECTED_APPROVAL_ID = "73a8dde2-149f-40a6-9045-105147081062"
 EXPECTED_PLAN_DIGEST = "sha256:abde80fd06d42949db231c6ea61bbabd368550eda82a5c4f9ff0064393a60727"
 EXPECTED_PROGRESS_DIGEST = "sha256:d808788d47df88c426ea12817c42421abd1550ebb8aa4ceab7a5d894c08f780b"
+EXPECTED_EXECUTION_PROGRESS_DIGEST = "sha256:c3a569ecb9b7a33e2f14a84713f9cfc6bb35bb521c2ad7e98b878a133e74874e"
 EXPECTED_APPROVAL_DIGEST = "sha256:143c18558ceb5dd6e820b4103aebf71c3c3125e98177b6336b1a12518ca54f16"
+EXPECTED_PREFLIGHT_EVIDENCE_DIGEST = "sha256:5e4e507040dae188f90a0db30b3f9e15654762ec6e76ea24cd3593623033a8da"
+EXPECTED_PREFLIGHT_CONFIGURATION_DIGEST = "sha256:fd7c811b8cc1f5c2c490a0a30fd25ab474a06c03df7bd3b084e6774e8f7ac2f7"
+AUTHORIZED_AT = "2026-09-13T15:31:11Z"
 EXPECTED_WINDOW = {
     "binding_state": "BOUND",
     "starts_at": "2026-09-13T15:15:00Z",
@@ -70,6 +76,7 @@ def raw_digest(path: Path) -> str:
 def main() -> None:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    execution_progress = load(EXECUTION_PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
     v14_plan = load(V14_PLAN_PATH)
     v14_approval = load(V14_APPROVAL_PATH)
@@ -77,7 +84,9 @@ def main() -> None:
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_progress(plan, execution_progress, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, EXPECTED_WINDOW["starts_at"])
+    validate_approval(plan, approval, SCHEMA_ROOT, AUTHORIZED_AT)
 
     assert plan["plan_id"] == EXPECTED_PLAN_ID
     assert plan["plan_version"] == 15
@@ -207,10 +216,85 @@ def main() -> None:
     assert "provider.mutation" in verify["prohibited_actions"]
     assert "data.query" in verify["prohibited_actions"]
 
+    preflight_assertion = {
+        "binding_id": "binding.development.auth.v15.executor-preflight",
+        "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+        "value_class": "CONFIGURATION_REFERENCE",
+        "source_step_id": None,
+        "evidence_type": "provider.executor.preflight.observed",
+        "evidence_digest": EXPECTED_PREFLIGHT_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": EXPECTED_PREFLIGHT_CONFIGURATION_DIGEST,
+        "recorded_at": AUTHORIZED_AT,
+    }
+    authorization_request = {
+        "plan_id": EXPECTED_PLAN_ID,
+        "plan_version": 15,
+        "plan_digest": EXPECTED_PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": "pwlhruwutoitnieactol",
+        "responsibility": "AUTH",
+        "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": EXPECTED_STEPS[0],
+        "resource_reference": "postgres.role.avuhz_migration_service_dev",
+        "resource_version": "version.development-auth-bootstrap.v3",
+        "resource_digest": actual[BOOTSTRAP],
+        "operation": "provider.migration.bootstrap-identity-hosted-v3-exact",
+        "execution_class": "PROVIDER_MUTATION",
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "required_evidence": [
+            {
+                "evidence_type": "migration.identity.v3.artifact.certified",
+                "evidence_digest": actual[BOOTSTRAP],
+            }
+        ],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    expected_authorized = authorize_step(
+        plan,
+        approval,
+        progress,
+        authorization_request,
+        SCHEMA_ROOT,
+        AUTHORIZED_AT,
+        trusted_preflight_assertions=[preflight_assertion],
+    )
+    assert execution_progress == expected_authorized
+    assert execution_progress["record_version"] == 2
+    assert execution_progress["overall_state"] == "IN_PROGRESS"
+    assert execution_progress["updated_at"] == AUTHORIZED_AT
+    assert execution_progress["progress_digest"] == EXPECTED_EXECUTION_PROGRESS_DIGEST
+
+    first_state = execution_progress["step_states"][0]
+    assert first_state["authorization_state"] == "AUTHORIZED"
+    assert first_state["execution_state"] == "NOT_STARTED"
+    assert first_state["verification_state"] == "NOT_STARTED"
+    assert first_state["authorization_consumed"] is False
+    assert first_state["evidence"] == []
+    assert first_state["binding_assertions"] == [preflight_assertion]
+    assert all(
+        state["authorization_state"] == "PENDING"
+        and state["execution_state"] == "NOT_STARTED"
+        and state["verification_state"] == "NOT_STARTED"
+        and state["authorization_consumed"] is False
+        and state["evidence"] == []
+        and state["binding_assertions"] == []
+        for state in execution_progress["step_states"][1:]
+    )
+
     print(
         "DEVELOPMENT_AUTH_V15_CONTINUATION=PASS "
         "(v14 stopped/consumed/rolled-back; canonical bootstrap v3 plus unchanged hook/seal v2 "
-        "bound to fresh v15 exact-plan approval; all v15 steps pending/unexecuted/unconsumed; "
+        "bound to fresh v15 exact-plan approval; v15 Step 1 authorized only from fresh read-only "
+        "provider preflight; Step 1 unexecuted/unconsumed; Steps 2-4 pending; "
         "provider_mutation_attempted=false)"
     )
 

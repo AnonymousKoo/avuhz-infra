@@ -1,0 +1,45 @@
+{
+  "progress_id": "4406cb84-dccd-44ba-bf79-38f1c28c4bf0",
+  "plan_id": "e8378a7e-9840-426c-9575-9427b437c619",
+  "plan_version": 1,
+  "plan_digest": "sha256:f4a0dfdba82a1f23430f0b299d738a19f89caeaec9401adcef90c9ee92bd8563",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.data.v1.step.01.verify-empty-baseline",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.data.v1.step.02.apply-initial-migration",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.data.v1.step.03.verify-tenant-isolation",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-13T20:27:06Z",
+  "progress_digest": "sha256:e8305b2edb1493f19ea62d99fe8a73de91dc4b1505c46cc623557ae0ea30b589"
+}

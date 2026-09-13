@@ -34,6 +34,7 @@ python3 tests/contracts/validate_development_auth_plan_v13.py
 python3 tests/contracts/validate_development_auth_plan_v14.py
 python3 tests/contracts/validate_development_auth_plan_v15.py
 python3 tests/contracts/validate_development_auth_plan_v16.py
+python3 tests/contracts/validate_development_data_plan_v1.py
 python3 tests/contracts/validate_read_models.py
 python3 tests/contracts/validate_slice1_acceptance.py
 python3 tests/contracts/validate_phase5d_implementation_package_architecture.py
@@ -115,7 +116,6 @@ while IFS= read -r sql_path; do
       exit 1
       ;;
   esac
-
 done < "$sql_candidates"
 
 while IFS= read -r sql_path; do

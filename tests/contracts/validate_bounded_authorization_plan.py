@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the exact v14 bounded-authorization validator plus v15-v16 approval inventory compatibility."""
+"""Run the exact v14 bounded-authorization validator plus later approval inventory compatibility."""
 from __future__ import annotations
 
 import hashlib
@@ -21,6 +21,12 @@ V16_APPROVAL_PATH = (
 )
 V16_APPROVAL_FILE_DIGEST = (
     "sha256:9c1251084937314b0dcdc9df165370d845aaec30dbf692d8264eb4b45706068b"
+)
+DATA_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
+)
+DATA_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:da44f85800453644c1cc4008c6209fa212633444cdade417d2b945b2f8c8d359"
 )
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))
@@ -74,21 +80,23 @@ def main() -> int:
         legacy.V14_APPROVAL_PATH,
         V15_APPROVAL_PATH,
         V16_APPROVAL_PATH,
+        DATA_V1_APPROVAL_PATH,
     }
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized v8-v16 approvals"
+            "approval artifact set differs from the exact authorized AUTH v8-v16 plus DATA v1 approvals"
         )
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
     if file_digest(V16_APPROVAL_PATH) != V16_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v16 approval file digest mismatch")
+    if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
+        raise SystemExit("exact authorized DEVELOPMENT DATA v1 approval file digest mismatch")
 
     # The preserved v14 validator must see its original exact v8-v14 inventory.
-    # Filter only the newly added v15-v16 approvals for that one historical glob
-    # call, then restore pathlib immediately. The full v8-v16 inventory is checked
-    # above.
+    # Filter only later approvals for that one historical glob call, then restore
+    # pathlib immediately. The full current approval inventory is checked above.
     original_glob = Path.glob
 
     def compatibility_glob(self: Path, pattern: str):
@@ -97,7 +105,7 @@ def main() -> int:
             return (
                 path
                 for path in values
-                if path not in {V15_APPROVAL_PATH, V16_APPROVAL_PATH}
+                if path not in {V15_APPROVAL_PATH, V16_APPROVAL_PATH, DATA_V1_APPROVAL_PATH}
             )
         return values
 
@@ -109,7 +117,7 @@ def main() -> int:
 
     if result != 0:
         return result
-    print("bounded authorization-plan v16 approval inventory compatibility: PASS")
+    print("bounded authorization-plan approval inventory compatibility: PASS")
     return 0
 
 

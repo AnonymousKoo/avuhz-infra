@@ -9,9 +9,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-BOOTSTRAP = ROOT / "supabase/migrations/20260912155000_development_auth_migration_identity_v2.sql"
-HOOK = ROOT / "supabase/migrations/20260912155100_development_auth_custom_access_token_hook_v2.sql"
-SEAL = ROOT / "supabase/migrations/20260912155200_development_auth_migration_identity_seal_v2.sql"
+HISTORY_V1 = ROOT / "supabase/provider-artifacts/development-auth/history/v1"
+HISTORY_V2 = ROOT / "supabase/provider-artifacts/development-auth/history/v2"
+BOOTSTRAP = HISTORY_V2 / "20260912155000_development_auth_migration_identity_v2.sql"
+HOOK = HISTORY_V2 / "20260912155100_development_auth_custom_access_token_hook_v2.sql"
+SEAL = HISTORY_V2 / "20260912155200_development_auth_migration_identity_seal_v2.sql"
 CONTAINER = os.environ.get("AVUHZ_LOCAL_POSTGRES_CONTAINER")
 DATABASE = "avuhz_development_auth_hosted_membership_v2"
 EXECUTOR = "avuhz_hosted_postgres_sim"
@@ -61,7 +63,7 @@ class DevelopmentAuthHostedMembershipV2StaticTests(unittest.TestCase):
             "20260908133000_development_auth_custom_access_token_hook_v1.sql",
             "20260908134000_development_auth_migration_identity_seal_v1.sql",
         ):
-            self.assertTrue((ROOT / "supabase/migrations" / name).exists())
+            self.assertTrue((HISTORY_V1 / name).exists())
 
 
 @unittest.skipUnless(

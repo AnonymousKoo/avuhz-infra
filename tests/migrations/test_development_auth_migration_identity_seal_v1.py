@@ -11,15 +11,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BOOTSTRAP_MIGRATION = (
     ROOT
-    / "supabase/migrations/20260908132000_development_auth_migration_identity_v1.sql"
+    / "supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql"
 )
 HOOK_MIGRATION = (
     ROOT
-    / "supabase/migrations/20260908133000_development_auth_custom_access_token_hook_v1.sql"
+    / "supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql"
 )
 MIGRATION = (
     ROOT
-    / "supabase/migrations/20260908134000_development_auth_migration_identity_seal_v1.sql"
+    / "supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql"
 )
 CONTAINER = os.environ.get("AVUHZ_LOCAL_POSTGRES_CONTAINER")
 DATABASE = "avuhz_development_auth_migration_identity_seal_v1_certification"

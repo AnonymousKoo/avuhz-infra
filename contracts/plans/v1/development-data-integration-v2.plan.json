@@ -1,1 +1,646 @@
-{"plan_id":"a7034439-f9e7-4358-90ef-cf221dfd1d1b","plan_version":2,"definition_status":"READY_FOR_APPROVAL","environment":"DEVELOPMENT","target":{"provider_class":"data.provider","provider_reference":"supabase","project_reference":"gnuqaefotwgkwurjpyik","responsibility":"DATA","issuer_reference":null,"audience_reference":null},"owner_identity":"github:AnonymousKoo","created_at":"2026-09-13T20:56:00Z","authorization_window":{"binding_state":"BOUND","starts_at":"2026-09-13T21:00:00Z","expires_at":"2026-09-14T01:00:00Z"},"ordered_step_ids":["development.data.v2.step.01.verify-empty-bootstrap-boundary","development.data.v2.step.02.bootstrap-migration-identity","development.data.v2.step.03.verify-migration-identity","development.data.v2.step.04.apply-initial-migration","development.data.v2.step.05.seal-migration-identity","development.data.v2.step.06.verify-tenant-isolation"],"steps":[{"step_id":"development.data.v2.step.01.verify-empty-bootstrap-boundary","ordinal":1,"resource":{"resource_type":"database.schema-baseline","resource_reference":"supabase:gnuqaefotwgkwurjpyik:public:avuhz-empty-bootstrap-boundary","binding_state":"BOUND","exact_version":"empty-bootstrap-boundary.v2","exact_digest":null},"operation":"provider.resource.verify-empty-avuhz-bootstrap-boundary","dependency_step_ids":[],"required_evidence":[{"evidence_type":"repository.data-v2.artifact-package.verified","source_step_id":null,"binding_state":"BOUND","exact_digest":"sha256:351b904f47b03b25ada0e26657ffb7a51f176288c962cca1b3663bda51dbbb18"}],"expected_postcondition":"Read-only verification proves the exact DEVELOPMENT DATA project has zero Avuhz application relations, routines, types, policies, and applied project migrations; neither avuhz_command_service nor avuhz_data_migration_service_dev exists; and the hosted postgres owner session is NOSUPERUSER with CREATEROLE and public USAGE/CREATE. Any broader hosted owner privileges are recorded as bootstrap-only authority and are prohibited from executing the Avuhz schema migration directly.","prohibited_actions":["provider.mutation","auth.operation","data-row.operation","migration.execute","resource.repair","owner-direct-schema-migration"],"stop_conditions":["project.mismatch","avuhz-state.present","migration-history.present","command-service-role.present","migration-role.present","bootstrap-authority.missing"],"correction_reference":"correction.stop-for-owner-review","execution_class":"PROVIDER_READ","credential_policy":{"permitted":true,"allowed_classes":["OWNER_INTERACTIVE_SESSION"],"values_stored":false},"unresolved_bindings":[],"binding_declarations":[{"binding_id":"binding.development.data.v2.migration-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.ff2fa6ce4e2b788a9eada5379f85593e96d82424","exact_digest":"sha256:2ee89c16fe7826e8a80f87713258b9bfa69e53525eeadfb2898e5264fdc63f22"}},{"binding_id":"binding.development.data.v2.bootstrap-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.68a830b37d6389333506bdfeccf97f57c0d31219","exact_digest":"sha256:1a522f894f146c6677cac54b59488655a30ce28ffbda8613997ad0af01be7c40"}},{"binding_id":"binding.development.data.v2.role-binding-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.978fafb64a21b8acb3572c237e08d739afd473f0","exact_digest":"sha256:4d34be18c94dab2c84398a5c51d1ac59596069cc3e2ac1fc36dd3bf24e733974"}},{"binding_id":"binding.development.data.v2.seal-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.65952c5900a6b73f8f413fe21f3c124c2f3e182e","exact_digest":"sha256:0b1bcfc2c5fee3d88f5c203267c2f55aada1a0bfcb37743cf1ad9aaf4fcb0e2b"}},{"binding_id":"binding.development.data.v2.empty-bootstrap-preflight","phase":"RESOLVED_BY_STEP_PREFLIGHT","value_class":"CONFIGURATION_REFERENCE","source_step_id":null,"evidence_type":"data.empty-bootstrap.preflight.observed","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"},{"binding_id":"binding.development.data.v2.empty-baseline-state","phase":"PRODUCED_BY_CURRENT_STEP","value_class":"CONTENT_DIGEST","source_step_id":null,"evidence_type":"data.empty-baseline.verified","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"}],"produced_evidence":[{"evidence_type":"data.empty-baseline.verified","established_binding_ids":["binding.development.data.v2.empty-baseline-state"],"digest_policy":"REQUIRED"}]},{"step_id":"development.data.v2.step.02.bootstrap-migration-identity","ordinal":2,"resource":{"resource_type":"database.role-bootstrap","resource_reference":"supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql","binding_state":"BOUND","exact_version":"gitblob.68a830b37d6389333506bdfeccf97f57c0d31219","exact_digest":null},"operation":"provider.resource.bootstrap-data-migration-identity","dependency_step_ids":["development.data.v2.step.01.verify-empty-bootstrap-boundary"],"required_evidence":[{"evidence_type":"data.empty-baseline.verified","source_step_id":"development.data.v2.step.01.verify-empty-bootstrap-boundary","binding_state":"DERIVED_FROM_SOURCE_STEP","exact_digest":null}],"expected_postcondition":"The exact bound bootstrap artifact creates avuhz_data_migration_service_dev as a NOLOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, CREATEROLE, NOREPLICATION, NOBYPASSRLS role with only public USAGE WITH GRANT OPTION plus non-grantable CREATE and the bounded temporary postgres SET path required to run the canonical initial migration; no Avuhz application table or command-service role is created.","prohibited_actions":["batch.mutation","auth.operation","row-data.mutation","schema-migration.execute","unbound-artifact.execute","vertical.infrastructure"],"stop_conditions":["project.mismatch","bootstrap-git-blob.mismatch","empty-baseline.evidence-missing","provider.execution.failed","role-envelope.mismatch","schema-delegation.mismatch","avuhz-schema-state.present"],"correction_reference":"correction.stop-for-owner-review","execution_class":"PROVIDER_MUTATION","credential_policy":{"permitted":true,"allowed_classes":["OWNER_INTERACTIVE_SESSION"],"values_stored":false},"unresolved_bindings":[],"binding_declarations":[{"binding_id":"binding.development.data.v2.bootstrap-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.68a830b37d6389333506bdfeccf97f57c0d31219","exact_digest":"sha256:1a522f894f146c6677cac54b59488655a30ce28ffbda8613997ad0af01be7c40"}},{"binding_id":"binding.development.data.v2.empty-baseline-state","phase":"DERIVED_FROM_SOURCE_STEP","value_class":"CONTENT_DIGEST","source_step_id":"development.data.v2.step.01.verify-empty-bootstrap-boundary","evidence_type":"data.empty-baseline.verified","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"},{"binding_id":"binding.development.data.v2.migration-identity-state","phase":"PRODUCED_BY_CURRENT_STEP","value_class":"CONTENT_DIGEST","source_step_id":null,"evidence_type":"data.migration-identity.bootstrapped","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"}],"produced_evidence":[{"evidence_type":"data.migration-identity.bootstrapped","established_binding_ids":["binding.development.data.v2.migration-identity-state"],"digest_policy":"REQUIRED"}]},{"step_id":"development.data.v2.step.03.verify-migration-identity","ordinal":3,"resource":{"resource_type":"database.role-boundary","resource_reference":"supabase:gnuqaefotwgkwurjpyik:role:avuhz_data_migration_service_dev","binding_state":"BOUND","exact_version":"migration-identity.v1","exact_digest":null},"operation":"provider.resource.verify-data-migration-identity","dependency_step_ids":["development.data.v2.step.02.bootstrap-migration-identity"],"required_evidence":[{"evidence_type":"data.migration-identity.bootstrapped","source_step_id":"development.data.v2.step.02.bootstrap-migration-identity","binding_state":"DERIVED_FROM_SOURCE_STEP","exact_digest":null}],"expected_postcondition":"Read-only verification proves avuhz_data_migration_service_dev remains NOLOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, CREATEROLE, NOREPLICATION, NOBYPASSRLS; has no direct database, table, sequence, function, auth, or storage privileges; has exactly public USAGE WITH GRANT OPTION plus non-grantable CREATE and only the bounded temporary SET membership envelope; avuhz_command_service is still absent; and Avuhz schema state remains empty.","prohibited_actions":["provider.mutation","auth.operation","data-row.operation","migration.execute","resource.repair"],"stop_conditions":["project.mismatch","migration-role.missing","role-envelope.mismatch","acl.mismatch","schema-delegation.mismatch","command-service-role.present","avuhz-state.present"],"correction_reference":"correction.stop-for-owner-review","execution_class":"PROVIDER_READ","credential_policy":{"permitted":true,"allowed_classes":["OWNER_INTERACTIVE_SESSION"],"values_stored":false},"unresolved_bindings":[],"binding_declarations":[{"binding_id":"binding.development.data.v2.migration-identity-state","phase":"DERIVED_FROM_SOURCE_STEP","value_class":"CONTENT_DIGEST","source_step_id":"development.data.v2.step.02.bootstrap-migration-identity","evidence_type":"data.migration-identity.bootstrapped","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"},{"binding_id":"binding.development.data.v2.migration-identity-preflight","phase":"RESOLVED_BY_STEP_PREFLIGHT","value_class":"CONFIGURATION_REFERENCE","source_step_id":null,"evidence_type":"data.migration-identity.preflight.observed","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"},{"binding_id":"binding.development.data.v2.migration-identity-verified","phase":"PRODUCED_BY_CURRENT_STEP","value_class":"CONTENT_DIGEST","source_step_id":null,"evidence_type":"data.migration-identity.verified","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"}],"produced_evidence":[{"evidence_type":"data.migration-identity.verified","established_binding_ids":["binding.development.data.v2.migration-identity-verified"],"digest_policy":"REQUIRED"}]},{"step_id":"development.data.v2.step.04.apply-initial-migration","ordinal":4,"resource":{"resource_type":"database.migration","resource_reference":"supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql","binding_state":"BOUND","exact_version":"gitblob.ff2fa6ce4e2b788a9eada5379f85593e96d82424","exact_digest":null},"operation":"provider.resource.apply-bound-role-scoped-initial-migration","dependency_step_ids":["development.data.v2.step.03.verify-migration-identity"],"required_evidence":[{"evidence_type":"data.migration-identity.verified","source_step_id":"development.data.v2.step.03.verify-migration-identity","binding_state":"DERIVED_FROM_SOURCE_STEP","exact_digest":null}],"expected_postcondition":"The exact canonical initial migration is applied once to DEVELOPMENT DATA with the exact bound role-binding fragment inserted immediately after its leading BEGIN, so the schema DDL executes with current_user avuhz_data_migration_service_dev and atomically creates the shared 16-table Avuhz schema, avuhz_command_service role, tenant RLS policies, and least-privilege grants without row-data DML or AUTH changes.","prohibited_actions":["batch.mutation","auth.operation","row-data.mutation","owner-direct-schema-migration","unbound-migration.execute","unbound-role-binding.execute","migration.history.repair","vertical.infrastructure"],"stop_conditions":["project.mismatch","migration-git-blob.mismatch","role-binding-git-blob.mismatch","migration-identity.evidence-missing","effective-role.mismatch","provider.execution.failed","partial-state.observed"],"correction_reference":"correction.stop-for-owner-review","execution_class":"PROVIDER_MUTATION","credential_policy":{"permitted":true,"allowed_classes":["OWNER_INTERACTIVE_SESSION"],"values_stored":false},"unresolved_bindings":[],"binding_declarations":[{"binding_id":"binding.development.data.v2.migration-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.ff2fa6ce4e2b788a9eada5379f85593e96d82424","exact_digest":"sha256:2ee89c16fe7826e8a80f87713258b9bfa69e53525eeadfb2898e5264fdc63f22"}},{"binding_id":"binding.development.data.v2.role-binding-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.978fafb64a21b8acb3572c237e08d739afd473f0","exact_digest":"sha256:4d34be18c94dab2c84398a5c51d1ac59596069cc3e2ac1fc36dd3bf24e733974"}},{"binding_id":"binding.development.data.v2.migration-identity-verified","phase":"DERIVED_FROM_SOURCE_STEP","value_class":"CONTENT_DIGEST","source_step_id":"development.data.v2.step.03.verify-migration-identity","evidence_type":"data.migration-identity.verified","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"},{"binding_id":"binding.development.data.v2.initial-migration-state","phase":"PRODUCED_BY_CURRENT_STEP","value_class":"CONTENT_DIGEST","source_step_id":null,"evidence_type":"data.initial-migration.applied","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"}],"produced_evidence":[{"evidence_type":"data.initial-migration.applied","established_binding_ids":["binding.development.data.v2.initial-migration-state"],"digest_policy":"REQUIRED"}]},{"step_id":"development.data.v2.step.05.seal-migration-identity","ordinal":5,"resource":{"resource_type":"database.role-seal","resource_reference":"supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql","binding_state":"BOUND","exact_version":"gitblob.65952c5900a6b73f8f413fe21f3c124c2f3e182e","exact_digest":null},"operation":"provider.resource.seal-data-migration-identity","dependency_step_ids":["development.data.v2.step.04.apply-initial-migration"],"required_evidence":[{"evidence_type":"data.initial-migration.applied","source_step_id":"development.data.v2.step.04.apply-initial-migration","binding_state":"DERIVED_FROM_SOURCE_STEP","exact_digest":null}],"expected_postcondition":"The exact bound seal artifact preserves avuhz_command_service public USAGE through an owner grant, removes the migration identity's temporary CREATEROLE, public USAGE/CREATE delegation, and explicit postgres SET edge, and proves only the bounded PostgreSQL-17 ADMIN/NOSET/NOINHERIT creator edges remain; postgres and the sealed migration identity cannot SET ROLE through those residual edges, while the deployed 16-table RLS surface remains intact.","prohibited_actions":["batch.mutation","auth.operation","row-data.mutation","schema-repair","unbound-artifact.execute","vertical.infrastructure"],"stop_conditions":["project.mismatch","seal-git-blob.mismatch","initial-migration.evidence-missing","provider.execution.failed","sealed-role.mismatch","runtime-set-role.available","schema-delegation.mismatch","tenant-isolation.mismatch"],"correction_reference":"correction.stop-for-owner-review","execution_class":"PROVIDER_MUTATION","credential_policy":{"permitted":true,"allowed_classes":["OWNER_INTERACTIVE_SESSION"],"values_stored":false},"unresolved_bindings":[],"binding_declarations":[{"binding_id":"binding.development.data.v2.seal-git-blob","phase":"PREAPPROVAL_BOUND","value_class":"STABLE_REFERENCE","source_step_id":null,"evidence_type":null,"digest_policy":"REQUIRED","persistence_policy":"SANITIZED_VALUE_ALLOWED","preapproval_value":{"value":"gitblob.65952c5900a6b73f8f413fe21f3c124c2f3e182e","exact_digest":"sha256:0b1bcfc2c5fee3d88f5c203267c2f55aada1a0bfcb37743cf1ad9aaf4fcb0e2b"}},{"binding_id":"binding.development.data.v2.initial-migration-state","phase":"DERIVED_FROM_SOURCE_STEP","value_class":"CONTENT_DIGEST","source_step_id":"development.data.v2.step.04.apply-initial-migration","evidence_type":"data.initial-migration.applied","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"},{"binding_id":"binding.development.data.v2.migration-identity-sealed","phase":"PRODUCED_BY_CURRENT_STEP","value_class":"CONTENT_DIGEST","source_step_id":null,"evidence_type":"data.migration-identity.sealed","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"}],"produced_evidence":[{"evidence_type":"data.migration-identity.sealed","established_binding_ids":["binding.development.data.v2.migration-identity-sealed"],"digest_policy":"REQUIRED"}]},{"step_id":"development.data.v2.step.06.verify-tenant-isolation","ordinal":6,"resource":{"resource_type":"database.tenant-isolation","resource_reference":"supabase:gnuqaefotwgkwurjpyik:public:avuhz-shared-core","binding_state":"BOUND","exact_version":"tenant-isolation.v2","exact_digest":null},"operation":"provider.resource.verify-tenant-isolation-and-sealed-identity","dependency_step_ids":["development.data.v2.step.05.seal-migration-identity"],"required_evidence":[{"evidence_type":"data.migration-identity.sealed","source_step_id":"development.data.v2.step.05.seal-migration-identity","binding_state":"DERIVED_FROM_SOURCE_STEP","exact_digest":null}],"expected_postcondition":"Read-only verification proves exactly 16 Avuhz tables, RLS enabled on all 16, exactly one avuhz_command_service_tenant_isolation policy per table, no Avuhz table grants to PUBLIC, anon, authenticated, or service_role, only the bounded avuhz_command_service privileges expected by the canonical migration, a sealed avuhz_data_migration_service_dev with no direct public privileges or SET path, the expected non-SET PostgreSQL-17 creator-membership edges only, and no Supabase security-advisor finding for the deployed Avuhz surface.","prohibited_actions":["provider.mutation","auth.operation","resource.repair","vertical.infrastructure","tenant-test-data.persist"],"stop_conditions":["table-count.mismatch","rls.mismatch","tenant-policy.mismatch","acl.mismatch","command-service-role.mismatch","sealed-role.mismatch","security-advisor.finding"],"correction_reference":"correction.stop-for-owner-review","execution_class":"PROVIDER_READ","credential_policy":{"permitted":true,"allowed_classes":["OWNER_INTERACTIVE_SESSION"],"values_stored":false},"unresolved_bindings":[],"binding_declarations":[{"binding_id":"binding.development.data.v2.migration-identity-sealed","phase":"DERIVED_FROM_SOURCE_STEP","value_class":"CONTENT_DIGEST","source_step_id":"development.data.v2.step.05.seal-migration-identity","evidence_type":"data.migration-identity.sealed","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"},{"binding_id":"binding.development.data.v2.tenant-isolation-state","phase":"PRODUCED_BY_CURRENT_STEP","value_class":"CONTENT_DIGEST","source_step_id":null,"evidence_type":"data.tenant-isolation.verified","digest_policy":"REQUIRED","persistence_policy":"DIGEST_ONLY"}],"produced_evidence":[{"evidence_type":"data.tenant-isolation.verified","established_binding_ids":["binding.development.data.v2.tenant-isolation-state"],"digest_policy":"REQUIRED"}]}],"prohibited_actions":["batch.mutation","auth.operation","production.target","staging.target","vertical.infrastructure","credential.persistence","migration.history.repair","unbound-migration.execute","development.data.v1.execute","owner-direct-schema-migration"],"stop_conditions":["scope.drift","target.drift","evidence.missing","outcome.ambiguous","authorization.unbound","security.validation.failed","artifact-git-blob.mismatch","v1.authority.reactivated"],"authority_effect":"NONE_UNTIL_SEPARATELY_APPROVED","plan_digest":"sha256:0b83f0b5c302b431c1114a1cda45337b5485d7387ba75e8218de92e0de5ed380"}
+{
+  "plan_id": "a7034439-f9e7-4358-90ef-cf221dfd1d1b",
+  "plan_version": 2,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "data.provider",
+    "provider_reference": "supabase",
+    "project_reference": "gnuqaefotwgkwurjpyik",
+    "responsibility": "DATA",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-13T20:56:00Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-13T21:00:00Z",
+    "expires_at": "2026-09-14T01:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.data.v2.step.01.verify-empty-bootstrap-boundary",
+    "development.data.v2.step.02.bootstrap-migration-identity",
+    "development.data.v2.step.03.verify-migration-identity",
+    "development.data.v2.step.04.apply-initial-migration",
+    "development.data.v2.step.05.seal-migration-identity",
+    "development.data.v2.step.06.verify-tenant-isolation"
+  ],
+  "steps": [
+    {
+      "step_id": "development.data.v2.step.01.verify-empty-bootstrap-boundary",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "database.schema-baseline",
+        "resource_reference": "supabase:gnuqaefotwgkwurjpyik:public:avuhz-empty-bootstrap-boundary",
+        "binding_state": "BOUND",
+        "exact_version": "empty-bootstrap-boundary.v2",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.verify-empty-avuhz-bootstrap-boundary",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "repository.data-v2.artifact-package.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:7ee54f4e817cefe62f40bf31d8b8321591db901b08991ddae5a64881bdfa75ee"
+        }
+      ],
+      "expected_postcondition": "Read-only verification proves the exact DEVELOPMENT DATA project has zero Avuhz application relations, routines, types, policies, and applied project migrations; neither avuhz_command_service nor avuhz_data_migration_service_dev exists; and the hosted postgres owner session is NOSUPERUSER with CREATEROLE and public USAGE/CREATE. Any broader hosted owner privileges are recorded as bootstrap-only authority and are prohibited from executing the Avuhz schema migration directly. The canonical DEVELOPMENT DATA v1 approval artifact remains unchanged historical evidence; execution under v2 is explicitly prohibited.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "auth.operation",
+        "data-row.operation",
+        "migration.execute",
+        "resource.repair",
+        "owner-direct-schema-migration"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "avuhz-state.present",
+        "migration-history.present",
+        "command-service-role.present",
+        "migration-role.present",
+        "bootstrap-authority.missing"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.v2.migration-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.ff2fa6ce4e2b788a9eada5379f85593e96d82424",
+            "exact_digest": "sha256:2ee89c16fe7826e8a80f87713258b9bfa69e53525eeadfb2898e5264fdc63f22"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.bootstrap-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.68a830b37d6389333506bdfeccf97f57c0d31219",
+            "exact_digest": "sha256:1a522f894f146c6677cac54b59488655a30ce28ffbda8613997ad0af01be7c40"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.role-binding-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.978fafb64a21b8acb3572c237e08d739afd473f0",
+            "exact_digest": "sha256:4d34be18c94dab2c84398a5c51d1ac59596069cc3e2ac1fc36dd3bf24e733974"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.seal-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.65952c5900a6b73f8f413fe21f3c124c2f3e182e",
+            "exact_digest": "sha256:0b1bcfc2c5fee3d88f5c203267c2f55aada1a0bfcb37743cf1ad9aaf4fcb0e2b"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.empty-bootstrap-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "data.empty-bootstrap.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.v2.empty-baseline-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.empty-baseline.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.empty-baseline.verified",
+          "established_binding_ids": [
+            "binding.development.data.v2.empty-baseline-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.data.v2.step.02.bootstrap-migration-identity",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "database.role-bootstrap",
+        "resource_reference": "supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql",
+        "binding_state": "BOUND",
+        "exact_version": "gitblob.68a830b37d6389333506bdfeccf97f57c0d31219",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.bootstrap-data-migration-identity",
+      "dependency_step_ids": [
+        "development.data.v2.step.01.verify-empty-bootstrap-boundary"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "data.empty-baseline.verified",
+          "source_step_id": "development.data.v2.step.01.verify-empty-bootstrap-boundary",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The exact bound bootstrap artifact creates avuhz_data_migration_service_dev as a NOLOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, CREATEROLE, NOREPLICATION, NOBYPASSRLS role with only public USAGE WITH GRANT OPTION plus non-grantable CREATE and the bounded temporary postgres SET path required to run the canonical initial migration; no Avuhz application table or command-service role is created.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "auth.operation",
+        "row-data.mutation",
+        "schema-migration.execute",
+        "unbound-artifact.execute",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "bootstrap-git-blob.mismatch",
+        "empty-baseline.evidence-missing",
+        "provider.execution.failed",
+        "role-envelope.mismatch",
+        "schema-delegation.mismatch",
+        "avuhz-schema-state.present"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.v2.bootstrap-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.68a830b37d6389333506bdfeccf97f57c0d31219",
+            "exact_digest": "sha256:1a522f894f146c6677cac54b59488655a30ce28ffbda8613997ad0af01be7c40"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.empty-baseline-state",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.data.v2.step.01.verify-empty-bootstrap-boundary",
+          "evidence_type": "data.empty-baseline.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.migration-identity.bootstrapped",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.migration-identity.bootstrapped",
+          "established_binding_ids": [
+            "binding.development.data.v2.migration-identity-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.data.v2.step.03.verify-migration-identity",
+      "ordinal": 3,
+      "resource": {
+        "resource_type": "database.role-boundary",
+        "resource_reference": "supabase:gnuqaefotwgkwurjpyik:role:avuhz_data_migration_service_dev",
+        "binding_state": "BOUND",
+        "exact_version": "migration-identity.v1",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.verify-data-migration-identity",
+      "dependency_step_ids": [
+        "development.data.v2.step.02.bootstrap-migration-identity"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "data.migration-identity.bootstrapped",
+          "source_step_id": "development.data.v2.step.02.bootstrap-migration-identity",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Read-only verification proves avuhz_data_migration_service_dev remains NOLOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, CREATEROLE, NOREPLICATION, NOBYPASSRLS; has no direct database, table, sequence, function, auth, or storage privileges; has exactly public USAGE WITH GRANT OPTION plus non-grantable CREATE and only the bounded temporary SET membership envelope; avuhz_command_service is still absent; and Avuhz schema state remains empty.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "auth.operation",
+        "data-row.operation",
+        "migration.execute",
+        "resource.repair"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "migration-role.missing",
+        "role-envelope.mismatch",
+        "acl.mismatch",
+        "schema-delegation.mismatch",
+        "command-service-role.present",
+        "avuhz-state.present"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-state",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.data.v2.step.02.bootstrap-migration-identity",
+          "evidence_type": "data.migration-identity.bootstrapped",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "data.migration-identity.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-verified",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.migration-identity.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.migration-identity.verified",
+          "established_binding_ids": [
+            "binding.development.data.v2.migration-identity-verified"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.data.v2.step.04.apply-initial-migration",
+      "ordinal": 4,
+      "resource": {
+        "resource_type": "database.migration",
+        "resource_reference": "supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql",
+        "binding_state": "BOUND",
+        "exact_version": "gitblob.ff2fa6ce4e2b788a9eada5379f85593e96d82424",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.apply-bound-role-scoped-initial-migration",
+      "dependency_step_ids": [
+        "development.data.v2.step.03.verify-migration-identity"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "data.migration-identity.verified",
+          "source_step_id": "development.data.v2.step.03.verify-migration-identity",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The exact canonical initial migration is applied once to DEVELOPMENT DATA with the exact bound role-binding fragment inserted immediately after its leading BEGIN, so the schema DDL executes with current_user avuhz_data_migration_service_dev and atomically creates the shared 16-table Avuhz schema, avuhz_command_service role, tenant RLS policies, and least-privilege grants without row-data DML or AUTH changes.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "auth.operation",
+        "row-data.mutation",
+        "owner-direct-schema-migration",
+        "unbound-migration.execute",
+        "unbound-role-binding.execute",
+        "migration.history.repair",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "migration-git-blob.mismatch",
+        "role-binding-git-blob.mismatch",
+        "migration-identity.evidence-missing",
+        "effective-role.mismatch",
+        "provider.execution.failed",
+        "partial-state.observed"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.v2.migration-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.ff2fa6ce4e2b788a9eada5379f85593e96d82424",
+            "exact_digest": "sha256:2ee89c16fe7826e8a80f87713258b9bfa69e53525eeadfb2898e5264fdc63f22"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.role-binding-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.978fafb64a21b8acb3572c237e08d739afd473f0",
+            "exact_digest": "sha256:4d34be18c94dab2c84398a5c51d1ac59596069cc3e2ac1fc36dd3bf24e733974"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-verified",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.data.v2.step.03.verify-migration-identity",
+          "evidence_type": "data.migration-identity.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.v2.initial-migration-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.initial-migration.applied",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.initial-migration.applied",
+          "established_binding_ids": [
+            "binding.development.data.v2.initial-migration-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.data.v2.step.05.seal-migration-identity",
+      "ordinal": 5,
+      "resource": {
+        "resource_type": "database.role-seal",
+        "resource_reference": "supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql",
+        "binding_state": "BOUND",
+        "exact_version": "gitblob.65952c5900a6b73f8f413fe21f3c124c2f3e182e",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.seal-data-migration-identity",
+      "dependency_step_ids": [
+        "development.data.v2.step.04.apply-initial-migration"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "data.initial-migration.applied",
+          "source_step_id": "development.data.v2.step.04.apply-initial-migration",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The exact bound seal artifact preserves avuhz_command_service public USAGE through an owner grant, removes the migration identity's temporary CREATEROLE, public USAGE/CREATE delegation, and explicit postgres SET edge, and proves only the bounded PostgreSQL-17 ADMIN/NOSET/NOINHERIT creator edges remain; postgres and the sealed migration identity cannot SET ROLE through those residual edges, while the deployed 16-table RLS surface remains intact.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "auth.operation",
+        "row-data.mutation",
+        "schema-repair",
+        "unbound-artifact.execute",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "seal-git-blob.mismatch",
+        "initial-migration.evidence-missing",
+        "provider.execution.failed",
+        "sealed-role.mismatch",
+        "runtime-set-role.available",
+        "schema-delegation.mismatch",
+        "tenant-isolation.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.v2.seal-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.65952c5900a6b73f8f413fe21f3c124c2f3e182e",
+            "exact_digest": "sha256:0b1bcfc2c5fee3d88f5c203267c2f55aada1a0bfcb37743cf1ad9aaf4fcb0e2b"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.v2.initial-migration-state",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.data.v2.step.04.apply-initial-migration",
+          "evidence_type": "data.initial-migration.applied",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-sealed",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.migration-identity.sealed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.migration-identity.sealed",
+          "established_binding_ids": [
+            "binding.development.data.v2.migration-identity-sealed"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.data.v2.step.06.verify-tenant-isolation",
+      "ordinal": 6,
+      "resource": {
+        "resource_type": "database.tenant-isolation",
+        "resource_reference": "supabase:gnuqaefotwgkwurjpyik:public:avuhz-shared-core",
+        "binding_state": "BOUND",
+        "exact_version": "tenant-isolation.v2",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.verify-tenant-isolation-and-sealed-identity",
+      "dependency_step_ids": [
+        "development.data.v2.step.05.seal-migration-identity"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "data.migration-identity.sealed",
+          "source_step_id": "development.data.v2.step.05.seal-migration-identity",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Read-only verification proves exactly 16 Avuhz tables, RLS enabled on all 16, exactly one avuhz_command_service_tenant_isolation policy per table, no Avuhz table grants to PUBLIC, anon, authenticated, or service_role, only the bounded avuhz_command_service privileges expected by the canonical migration, a sealed avuhz_data_migration_service_dev with no direct public privileges or SET path, the expected non-SET PostgreSQL-17 creator-membership edges only, and no Supabase security-advisor finding for the deployed Avuhz surface.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "auth.operation",
+        "resource.repair",
+        "vertical.infrastructure",
+        "tenant-test-data.persist"
+      ],
+      "stop_conditions": [
+        "table-count.mismatch",
+        "rls.mismatch",
+        "tenant-policy.mismatch",
+        "acl.mismatch",
+        "command-service-role.mismatch",
+        "sealed-role.mismatch",
+        "security-advisor.finding"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-sealed",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.data.v2.step.05.seal-migration-identity",
+          "evidence_type": "data.migration-identity.sealed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.v2.tenant-isolation-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.tenant-isolation.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.tenant-isolation.verified",
+          "established_binding_ids": [
+            "binding.development.data.v2.tenant-isolation-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "auth.operation",
+    "production.target",
+    "staging.target",
+    "vertical.infrastructure",
+    "credential.persistence",
+    "migration.history.repair",
+    "unbound-migration.execute",
+    "development.data.v1.execute",
+    "owner-direct-schema-migration"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "authorization.unbound",
+    "security.validation.failed",
+    "artifact-git-blob.mismatch",
+    "v1.execution.attempted"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:58ba33e53909f46093e7a858643522cb81b1cc7826ab489e79494a7515ab19b7"
+}

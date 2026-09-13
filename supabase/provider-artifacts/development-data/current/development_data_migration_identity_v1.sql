@@ -209,11 +209,13 @@ begin
   if exists (
     select 1 from pg_class sequence
     join pg_namespace namespace on namespace.oid = sequence.relnamespace
+    cross join lateral aclexplode(
+      coalesce(sequence.relacl, acldefault('S', sequence.relowner))
+    ) sequence_acl
      where namespace.nspname in ('public', 'auth', 'storage')
        and sequence.relkind = 'S'
-       and has_sequence_privilege(
-         'avuhz_data_migration_service_dev', sequence.oid, 'USAGE,SELECT,UPDATE'
-       )
+       and sequence_acl.grantee = migration_role_oid
+       and sequence_acl.privilege_type in ('USAGE', 'SELECT', 'UPDATE')
   ) then
     raise exception 'Avuhz DEVELOPMENT DATA migration identity has unexpected sequence privilege';
   end if;

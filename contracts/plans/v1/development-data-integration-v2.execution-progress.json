@@ -3,7 +3,7 @@
   "plan_id": "a7034439-f9e7-4358-90ef-cf221dfd1d1b",
   "plan_version": 2,
   "plan_digest": "sha256:ed141409e31c0aa70944ca801047f05db574ef3e905dd85dcd2e81c0a393d695",
-  "record_version": 3,
+  "record_version": 4,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -53,14 +53,28 @@
     },
     {
       "step_id": "development.data.v2.step.02.bootstrap-migration-identity",
-      "authorization_state": "PENDING",
+      "authorization_state": "AUTHORIZED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
       "evidence": [],
       "observed_postcondition": null,
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.data.v2.empty-baseline-state",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.data.v2.step.01.verify-empty-bootstrap-boundary",
+          "evidence_type": "data.empty-baseline.verified",
+          "evidence_digest": "sha256:ef26f125d2f2ea47d45e420e9b95c04c50a737c782768b987af694d90829d395",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:e05c1a9995f1c3383e5237678f766ce9729a1e29756afbee287e882d82284d22",
+          "recorded_at": "2026-09-13T23:09:56Z"
+        }
+      ]
     },
     {
       "step_id": "development.data.v2.step.03.verify-migration-identity",
@@ -107,6 +121,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-13T22:54:53Z",
-  "progress_digest": "sha256:7283a6e467f8267692d1833515954dce016a75b5fb48925aeaa79c074a55a616"
+  "updated_at": "2026-09-13T23:09:56Z",
+  "progress_digest": "sha256:66435959842f541ad30e983c0f3c357562979dd037787c40d40a3e4db9c91b33"
 }

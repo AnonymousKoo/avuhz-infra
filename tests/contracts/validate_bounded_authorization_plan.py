@@ -26,13 +26,13 @@ DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
 DATA_V1_APPROVAL_FILE_DIGEST = (
-    "sha256:c4faf7b124f8b813479161a1000b6854e4826b052998ed969a24416c95c32d13"
+    "sha256:da44f85800453644c1cc4008c6209fa212633444cdade417d2b945b2f8c8d359"
 )
 DATA_V2_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v2.approval.json"
 )
 DATA_V2_APPROVAL_FILE_DIGEST = (
-    "sha256:af44f05cc73b3ee11117c243bf675a7f7a87447c5bc474deedb449ea8fddb0fc"
+    "sha256:e23b96cc1878d097db959ab56fb100e3b3ba0e7e38dc569a0205b1ce5bc63989"
 )
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))
@@ -99,7 +99,7 @@ def main() -> int:
     if file_digest(V16_APPROVAL_PATH) != V16_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v16 approval file digest mismatch")
     if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
-        raise SystemExit("exact superseded DEVELOPMENT DATA v1 approval file digest mismatch")
+        raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized DEVELOPMENT DATA v2 approval file digest mismatch")
 

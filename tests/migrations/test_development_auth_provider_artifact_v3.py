@@ -178,7 +178,7 @@ class DevelopmentAuthProviderArtifactV3PostgresTests(unittest.TestCase):
             "create schema if not exists storage authorization postgres;"
         )
         self._psql(
-            "create function public.provider_public_exec_fixture() "
+            "create function public.provider_public_public_exec_fixture() "
             "returns integer language sql as 'select 1';",
             user=EXECUTOR,
         )
@@ -248,7 +248,7 @@ class DevelopmentAuthProviderArtifactV3PostgresTests(unittest.TestCase):
         self.assertEqual(bootstrap.count(marker), 1)
         injected = bootstrap.replace(
             marker,
-            "grant execute on function public.provider_public_exec_fixture() "
+            "grant execute on function public.provider_public_public_exec_fixture() "
             "to avuhz_migration_service_dev;\n\n" + marker,
         )
         result = self._apply(injected, check=False)
@@ -265,7 +265,7 @@ class DevelopmentAuthProviderArtifactV3PostgresTests(unittest.TestCase):
             "from pg_proc function "
             "join pg_namespace namespace on namespace.oid=function.pronamespace "
             "where namespace.nspname='public' "
-            "and function.proname='provider_public_exec_fixture';"
+            "and function.proname='provider_public_public_exec_fixture';"
         )
         self.assertEqual(state.splitlines(), ["0", "1"])
 

@@ -3,17 +3,24 @@
   "plan_id": "a7034439-f9e7-4358-90ef-cf221dfd1d1b",
   "plan_version": 2,
   "plan_digest": "sha256:ed141409e31c0aa70944ca801047f05db574ef3e905dd85dcd2e81c0a393d695",
-  "record_version": 2,
+  "record_version": 3,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
       "step_id": "development.data.v2.step.01.verify-empty-bootstrap-boundary",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.empty-baseline.verified",
+          "evidence_reference": "provider.execution.data-v2.step1.attempt1.verified",
+          "evidence_digest": "sha256:ef26f125d2f2ea47d45e420e9b95c04c50a737c782768b987af694d90829d395",
+          "recorded_at": "2026-09-13T22:54:53Z"
+        }
+      ],
+      "observed_postcondition": "Read-only verification proves exact DEVELOPMENT DATA has zero Avuhz relations, routines, types, policies, and applied migrations; neither command-service nor migration role exists; postgres is NOSUPERUSER with CREATEROLE and public USAGE/CREATE. Broader hosted owner authority is bootstrap-only and prohibited from schema migration. Canonical DATA v1 approval remains unchanged historical evidence; v1 execution is prohibited under v2.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -28,6 +35,19 @@
           "sanitized_value": null,
           "value_digest": "sha256:feac73ff90a562d40dbaaacdddca6ac19a21b49ec0be1a760a93fac03d93283a",
           "recorded_at": "2026-09-13T22:42:28Z"
+        },
+        {
+          "binding_id": "binding.development.data.v2.empty-baseline-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.empty-baseline.verified",
+          "evidence_digest": "sha256:ef26f125d2f2ea47d45e420e9b95c04c50a737c782768b987af694d90829d395",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:e05c1a9995f1c3383e5237678f766ce9729a1e29756afbee287e882d82284d22",
+          "recorded_at": "2026-09-13T22:54:53Z"
         }
       ]
     },
@@ -87,6 +107,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-13T22:42:28Z",
-  "progress_digest": "sha256:522948b97e7a6720561a186b5f350fba584fab0e32587d0176eb75f3b54cb8a7"
+  "updated_at": "2026-09-13T22:54:53Z",
+  "progress_digest": "sha256:7283a6e467f8267692d1833515954dce016a75b5fb48925aeaa79c074a55a616"
 }

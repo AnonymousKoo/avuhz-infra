@@ -1,0 +1,63 @@
+{
+  "evidence_type": "data.empty-baseline.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "DATA",
+  "project_reference": "gnuqaefotwgkwurjpyik",
+  "plan_id": "a7034439-f9e7-4358-90ef-cf221dfd1d1b",
+  "plan_version": 2,
+  "step_id": "development.data.v2.step.01.verify-empty-bootstrap-boundary",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "provider_observation": {
+    "project_status": "ACTIVE_HEALTHY",
+    "postgresql_version": "17.6.1.155",
+    "postgres_engine": "17",
+    "session_user": "postgres",
+    "current_user": "postgres",
+    "current_database": "postgres",
+    "avuhz_schema_count": 0,
+    "avuhz_relation_count": 0,
+    "avuhz_routine_count": 0,
+    "avuhz_type_count": 0,
+    "avuhz_trigger_count": 0,
+    "avuhz_policy_count": 0,
+    "applied_migration_count": 0,
+    "command_service_role_exists": false,
+    "migration_role_exists": false,
+    "postgres_superuser": false,
+    "postgres_createrole": true,
+    "postgres_createdb": true,
+    "postgres_replication": true,
+    "postgres_bypassrls": true,
+    "postgres_public_usage": true,
+    "postgres_public_create": true,
+    "postgres_membership_count": 9
+  },
+  "repository_observation": {
+    "canonical_main_commit": "43ece07094a06c8970bf52eba24211b4c45c38b0",
+    "v1_approval_status": "ACTIVE",
+    "v1_plan_digest": "sha256:f4a0dfdba82a1f23430f0b299d738a19f89caeaec9401adcef90c9ee92bd8563",
+    "v1_approval_digest": "sha256:8d8dd92ce4b380af65cc8f2e2cf26ebc9fbaece537dd6a6e55f85840e964cf84",
+    "v1_execution_under_v2": "PROHIBITED"
+  },
+  "verification_observation": {
+    "provider_read_only": true,
+    "provider_mutation_attempts": 0,
+    "provider_mutation_committed": false,
+    "database_state_verified": true,
+    "migration_history_verified_empty": true,
+    "repository_history_verified": true,
+    "postcondition_verified": true,
+    "baseline_state_digest": "sha256:cfe2d6236a20ee4858cc655b2684131819d9459e3a92f95e8a755de0abbfe886"
+  },
+  "security_state": {
+    "credential_retained": false,
+    "raw_provider_payload_retained": false,
+    "pii_retained": false,
+    "row_data_read": false,
+    "auth_resource_touched": false,
+    "staging_resource_touched": false,
+    "production_resource_touched": false
+  },
+  "recorded_at": "2026-09-13T22:54:53Z"
+}

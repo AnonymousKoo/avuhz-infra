@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate DEVELOPMENT AUTH v15 through Step 3 authorization."""
+"""Validate DEVELOPMENT AUTH v15 through Step 3 success persistence."""
 from __future__ import annotations
 
 import hashlib
@@ -28,6 +28,7 @@ EXECUTION_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integratio
 APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.approval.json"
 STEP1_EVIDENCE_PATH = ROOT / "contracts/plans/v1/development-auth-step1-v15-success.evidence.json"
 STEP2_EVIDENCE_PATH = ROOT / "contracts/plans/v1/development-auth-step2-v15-success.evidence.json"
+STEP3_EVIDENCE_PATH = ROOT / "contracts/plans/v1/development-auth-step3-v15-success.evidence.json"
 V14_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.plan.json"
 V14_APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.approval.json"
 V14_EXECUTION_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.execution-progress.json"
@@ -46,18 +47,23 @@ STEP1_SUCCESS_PROGRESS_DIGEST = "sha256:1c14770cdd6f2e704a98e338e5f6c225a3df519d
 STEP2_AUTH_DIGEST = "sha256:87cb1e3711c59db42ad2d6b555836966d28f86b4a5484d554c9794afd7a4635b"
 STEP2_SUCCESS_PROGRESS_DIGEST = "sha256:3fa7994673ece4e152b75da50a9a93f1dde0c017cdc771136a059da18fa87bcc"
 STEP3_AUTH_DIGEST = "sha256:220e56ee7513d37605e0e267e7963873ed8c10323bc74b5a1bde5b746957a8e0"
+STEP3_SUCCESS_PROGRESS_DIGEST = "sha256:5317063acc230dc203273b6c28d65b36da5a83f7e0578f738bf44c7236a03e8e"
+
 STEP1_EVIDENCE_DIGEST = "sha256:b2b69fbf11de44172ed85e4f0b81d4e461eb7dc8c1a2b8c9090203241f36945a"
 STEP2_EVIDENCE_DIGEST = "sha256:b79ff1c1f3e401203ce5e53ee3587b91dc063bbe27bcd97ac2badbf0c11490d6"
+STEP3_EVIDENCE_DIGEST = "sha256:32ffeb323e266c113ce714a43a6daca651fcc0936c41439f4b13f65bf199c182"
 PREFLIGHT_EVIDENCE_DIGEST = "sha256:5e4e507040dae188f90a0db30b3f9e15654762ec6e76ea24cd3593623033a8da"
 PREFLIGHT_VALUE_DIGEST = "sha256:fd7c811b8cc1f5c2c490a0a30fd25ab474a06c03df7bd3b084e6774e8f7ac2f7"
 MIGRATION_IDENTITY_VALUE_DIGEST = "sha256:789255aa22baaf26013bec82c18c3db561ceeb9817f84705d8a6a0da5e7db56a"
 HOOK_APPLICATION_VALUE_DIGEST = "sha256:da5eb90c25fde4d4d0dc9367862604d77acc9724062f169524b8e714c218814d"
+MIGRATION_IDENTITY_SEAL_VALUE_DIGEST = "sha256:cea84fe29540d8b0c08fec99efe94f84d652b0746ddea7cef386233a43222868"
 
 STEP1_AUTH_AT = "2026-09-13T15:31:11Z"
 STEP1_OUTCOME_AT = "2026-09-13T15:48:39Z"
 STEP2_AUTH_AT = "2026-09-13T16:11:07Z"
 STEP2_OUTCOME_AT = "2026-09-13T16:30:39Z"
 STEP3_AUTH_AT = "2026-09-13T17:40:52Z"
+STEP3_OUTCOME_AT = "2026-09-13T18:05:06Z"
 WINDOW_START = "2026-09-13T15:15:00Z"
 WINDOW_END = "2026-09-13T18:15:00Z"
 
@@ -112,6 +118,7 @@ def main() -> None:
     approval = load(APPROVAL_PATH)
     step1_evidence_file = load(STEP1_EVIDENCE_PATH)
     step2_evidence_file = load(STEP2_EVIDENCE_PATH)
+    step3_evidence_file = load(STEP3_EVIDENCE_PATH)
     v14_plan = load(V14_PLAN_PATH)
     v14_approval = load(V14_APPROVAL_PATH)
     v14_execution = load(V14_EXECUTION_PATH)
@@ -126,6 +133,7 @@ def main() -> None:
         STEP2_AUTH_AT,
         STEP2_OUTCOME_AT,
         STEP3_AUTH_AT,
+        STEP3_OUTCOME_AT,
     ):
         validate_approval(plan, approval, SCHEMA_ROOT, moment)
 
@@ -258,18 +266,6 @@ def main() -> None:
 
     assert raw_digest(STEP2_EVIDENCE_PATH) == STEP2_EVIDENCE_DIGEST
     assert step2_evidence_file["outcome"] == "SUCCEEDED_VERIFIED"
-    assert step2_evidence_file["provider_observation"]["hook_owner"] == (
-        "avuhz_migration_service_dev"
-    )
-    assert step2_evidence_file["provider_observation"]["auth_admin_execute_acl_count"] == 1
-    assert step2_evidence_file["provider_observation"]["public_execute_acl_count"] == 0
-    assert step2_evidence_file["provider_observation"]["app_role_execute_acl_count"] == 0
-    assert step2_evidence_file["verification_observation"]["provider_mutation_attempts"] == 1
-    assert step2_evidence_file["verification_observation"]["hook_enable_action_performed"] is False
-    assert step2_evidence_file["security_state"]["credential_retained"] is False
-    assert step2_evidence_file["security_state"]["pii_retained"] is False
-    assert step2_evidence_file["security_state"]["data_resource_touched"] is False
-
     step2_outcome_evidence = [{
         "evidence_type": "hook.migration.v2.application.verified",
         "evidence_reference": "provider.execution.v15.step2.attempt1.verified",
@@ -321,7 +317,7 @@ def main() -> None:
         STEP1_EVIDENCE_DIGEST,
         STEP2_EVIDENCE_DIGEST,
     ]
-    expected_step3_authorized = authorize_step(
+    step3_authorized = authorize_step(
         plan,
         approval,
         step2_success,
@@ -329,40 +325,87 @@ def main() -> None:
         SCHEMA_ROOT,
         STEP3_AUTH_AT,
     )
+    assert step3_authorized["progress_digest"] == STEP3_AUTH_DIGEST
 
-    assert execution == expected_step3_authorized
-    assert execution["record_version"] == 6
+    assert raw_digest(STEP3_EVIDENCE_PATH) == STEP3_EVIDENCE_DIGEST
+    assert step3_evidence_file["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step3_evidence_file["provider_observation"]["temporary_set_membership_count"] == 0
+    assert step3_evidence_file["provider_observation"]["total_role_membership_edges"] == 1
+    assert step3_evidence_file["provider_observation"]["postgres_can_set_role"] is False
+    assert step3_evidence_file["provider_observation"]["migration_role_public_acl_count"] == 0
+    assert step3_evidence_file["provider_observation"]["auth_admin_execute_acl_count"] == 1
+    assert step3_evidence_file["provider_observation"]["public_execute_acl_count"] == 0
+    assert step3_evidence_file["provider_observation"]["app_role_execute_acl_count"] == 0
+    assert step3_evidence_file["verification_observation"]["provider_mutation_attempts"] == 1
+    assert step3_evidence_file["verification_observation"]["hook_enable_action_performed"] is False
+    assert (
+        step3_evidence_file["verification_observation"][
+            "auth_hook_configuration_surface_exposed_by_connector"
+        ]
+        is False
+    )
+    assert (
+        step3_evidence_file["verification_observation"][
+            "final_service_level_disabled_verification_deferred_to_step4"
+        ]
+        is True
+    )
+    assert step3_evidence_file["security_state"]["credential_retained"] is False
+    assert step3_evidence_file["security_state"]["pii_retained"] is False
+    assert step3_evidence_file["security_state"]["data_resource_touched"] is False
+
+    step3_outcome_evidence = [{
+        "evidence_type": "migration.identity.v2.seal.verified",
+        "evidence_reference": "provider.execution.v15.step3.attempt1.verified",
+        "evidence_digest": STEP3_EVIDENCE_DIGEST,
+        "recorded_at": STEP3_OUTCOME_AT,
+    }]
+    step3_binding = {
+        "binding_id": "binding.development.auth.v15.migration-identity-seal",
+        "phase": "PRODUCED_BY_CURRENT_STEP",
+        "value_class": "CONTENT_DIGEST",
+        "source_step_id": None,
+        "evidence_type": "migration.identity.v2.seal.verified",
+        "evidence_digest": STEP3_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": MIGRATION_IDENTITY_SEAL_VALUE_DIGEST,
+        "recorded_at": STEP3_OUTCOME_AT,
+    }
+    assert canonical_digest(artifacts[SEAL]) == MIGRATION_IDENTITY_SEAL_VALUE_DIGEST
+    expected_step3_success = record_step_outcome(
+        plan,
+        approval,
+        step3_authorized,
+        STEPS[2],
+        "SUCCEEDED",
+        "PASS",
+        step3_outcome_evidence,
+        step3["expected_postcondition"],
+        None,
+        SCHEMA_ROOT,
+        STEP3_OUTCOME_AT,
+        binding_assertions=[step3_binding],
+    )
+
+    assert execution == expected_step3_success
+    assert execution["record_version"] == 7
     assert execution["overall_state"] == "IN_PROGRESS"
-    assert execution["updated_at"] == STEP3_AUTH_AT
-    assert execution["progress_digest"] == STEP3_AUTH_DIGEST
+    assert execution["updated_at"] == STEP3_OUTCOME_AT
+    assert execution["progress_digest"] == STEP3_SUCCESS_PROGRESS_DIGEST
 
     step1_state, step2_state, step3_state, step4_state = execution["step_states"]
-    for state in (step1_state, step2_state):
+    for state in (step1_state, step2_state, step3_state):
         assert state["authorization_state"] == "CONSUMED"
         assert state["execution_state"] == "SUCCEEDED"
         assert state["verification_state"] == "PASS"
         assert state["authorization_consumed"] is True
 
-    assert step3_state["authorization_state"] == "AUTHORIZED"
-    assert step3_state["execution_state"] == "NOT_STARTED"
-    assert step3_state["verification_state"] == "NOT_STARTED"
-    assert step3_state["authorization_consumed"] is False
-    assert step3_state["evidence"] == []
-    assert step3_state["observed_postcondition"] is None
     assert step3_state["safe_error_code"] is None
-    assert step3_state["binding_assertions"] == [{
-        "binding_id": "binding.development.auth.v15.hook-application",
-        "phase": "DERIVED_FROM_SOURCE_STEP",
-        "value_class": "CONTENT_DIGEST",
-        "source_step_id": STEPS[1],
-        "evidence_type": "hook.migration.v2.application.verified",
-        "evidence_digest": STEP2_EVIDENCE_DIGEST,
-        "digest_policy": "REQUIRED",
-        "persistence_policy": "DIGEST_ONLY",
-        "sanitized_value": None,
-        "value_digest": HOOK_APPLICATION_VALUE_DIGEST,
-        "recorded_at": STEP3_AUTH_AT,
-    }]
+    assert len(step3_state["evidence"]) == 1
+    assert len(step3_state["binding_assertions"]) == 2
+    assert step3_state["binding_assertions"][1] == step3_binding
 
     assert step4_state["authorization_state"] == "PENDING"
     assert step4_state["execution_state"] == "NOT_STARTED"
@@ -373,10 +416,10 @@ def main() -> None:
 
     print(
         "DEVELOPMENT_AUTH_V15_CONTINUATION=PASS "
-        "(v14 stopped; v15 Steps 1-2 consumed/succeeded/pass; "
-        "Step 3 authorized only from exact Step 2 evidence and certified seal-v2 artifact; "
-        "Step 3 unexecuted/unconsumed; Step 4 pending; hook enablement remains "
-        "unauthorized/unperformed; DEVELOPMENT DATA untouched)"
+        "(v14 stopped; v15 Steps 1-3 consumed/succeeded/pass; "
+        "Step 3 exact seal-v2 evidence persisted; Step 4 pending; "
+        "hook enablement unauthorized/unperformed; final service-level disabled-state "
+        "verification remains Step 4; DEVELOPMENT DATA untouched)"
     )
 
 

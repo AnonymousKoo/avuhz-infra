@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Validate the DEVELOPMENT AUTH v15 forward continuation over the canonical v3 provider artifact."""
+from __future__ import annotations
+
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from avuhz_engineering.authorization_plan import (
+    AuthorizationPlanStop,
+    initial_progress,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
+
+SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
+PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.plan.json"
+PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.progress.json"
+APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v15.approval.json"
+V14_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.plan.json"
+V14_APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v14.approval.json"
+V14_EXECUTION_PROGRESS_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v14.execution-progress.json"
+)
+CURRENT = ROOT / "supabase/provider-artifacts/development-auth/current"
+BOOTSTRAP = CURRENT / "development_auth_migration_identity_v3.sql"
+HOOK = CURRENT / "development_auth_custom_access_token_hook_v2.sql"
+SEAL = CURRENT / "development_auth_migration_identity_seal_v2.sql"
+
+EXPECTED_PLAN_ID = "fb56b1bd-ed95-468d-9189-4ac86616273f"
+EXPECTED_PROGRESS_ID = "47874259-3616-4c9c-af4b-3541b13b9a23"
+EXPECTED_APPROVAL_ID = "73a8dde2-149f-40a6-9045-105147081062"
+EXPECTED_PLAN_DIGEST = "sha256:abde80fd06d42949db231c6ea61bbabd368550eda82a5c4f9ff0064393a60727"
+EXPECTED_PROGRESS_DIGEST = "sha256:d808788d47df88c426ea12817c42421abd1550ebb8aa4ceab7a5d894c08f780b"
+EXPECTED_APPROVAL_DIGEST = "sha256:143c18558ceb5dd6e820b4103aebf71c3c3125e98177b6336b1a12518ca54f16"
+EXPECTED_WINDOW = {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-13T15:15:00Z",
+    "expires_at": "2026-09-13T18:15:00Z",
+}
+EXPECTED_STEPS = [
+    "development.auth.v15.step.01.bootstrap-migration-identity-v3",
+    "development.auth.v15.step.02.apply-hook-migration-v2",
+    "development.auth.v15.step.03.seal-migration-identity-v2",
+    "development.auth.v15.step.04.verify-disabled-hook",
+]
+EXPECTED_ARTIFACT_DIGESTS = {
+    BOOTSTRAP: "sha256:9925621342859155998f14d82f6971694b71e4ad53d328c33f973c7a7be3b54a",
+    HOOK: "sha256:facb9001ec01b48e4988eb94b1a2f1c1ed6b2975a29e13092c87b09186c46e1c",
+    SEAL: "sha256:712e06d100ab39be787a952942f5592ed2bd637abb96aaf121efc8247344b733",
+}
+
+
+def load(path: Path) -> dict:
+    with path.open(encoding="utf-8") as handle:
+        value = json.load(handle)
+    assert isinstance(value, dict), path
+    return value
+
+
+def raw_digest(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> None:
+    plan = load(PLAN_PATH)
+    progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
+    v14_plan = load(V14_PLAN_PATH)
+    v14_approval = load(V14_APPROVAL_PATH)
+    v14_execution = load(V14_EXECUTION_PROGRESS_PATH)
+
+    validate_plan(plan, SCHEMA_ROOT)
+    validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, EXPECTED_WINDOW["starts_at"])
+
+    assert plan["plan_id"] == EXPECTED_PLAN_ID
+    assert plan["plan_version"] == 15
+    assert plan["plan_digest"] == EXPECTED_PLAN_DIGEST
+    assert plan["definition_status"] == "READY_FOR_APPROVAL"
+    assert plan["environment"] == "DEVELOPMENT"
+    assert plan["target"] == {
+        "provider_class": "identity.provider",
+        "provider_reference": "supabase",
+        "project_reference": "pwlhruwutoitnieactol",
+        "responsibility": "AUTH",
+        "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+    }
+    assert plan["authorization_window"] == EXPECTED_WINDOW
+    assert plan["ordered_step_ids"] == EXPECTED_STEPS
+    assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+    for prohibited in (
+        "batch.mutation",
+        "data.operation",
+        "staging.target",
+        "production.target",
+        "hook.enable",
+        "v14.retry",
+        "v14.stopped-authorization.execute",
+    ):
+        assert prohibited in plan["prohibited_actions"]
+
+    assert approval == {
+        "approval_id": EXPECTED_APPROVAL_ID,
+        "plan_id": EXPECTED_PLAN_ID,
+        "plan_version": 15,
+        "plan_digest": EXPECTED_PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": EXPECTED_WINDOW["starts_at"],
+        "expires_at": EXPECTED_WINDOW["expires_at"],
+        "approved_at": "2026-09-13T14:58:57Z",
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": EXPECTED_APPROVAL_DIGEST,
+    }
+
+    expected_progress = initial_progress(
+        plan, SCHEMA_ROOT, EXPECTED_PROGRESS_ID, plan["created_at"]
+    )
+    assert progress == expected_progress
+    assert progress["record_version"] == 1
+    assert progress["overall_state"] == "NOT_STARTED"
+    assert progress["progress_digest"] == EXPECTED_PROGRESS_DIGEST
+    assert all(
+        state["authorization_state"] == "PENDING"
+        and state["execution_state"] == "NOT_STARTED"
+        and state["verification_state"] == "NOT_STARTED"
+        and state["authorization_consumed"] is False
+        and state["evidence"] == []
+        and state["binding_assertions"] == []
+        for state in progress["step_states"]
+    )
+
+    try:
+        validate_approval(
+            v14_plan, v14_approval, SCHEMA_ROOT, EXPECTED_WINDOW["starts_at"]
+        )
+    except AuthorizationPlanStop as exc:
+        assert str(exc) == "PLAN_AUTHORIZATION_EXPIRED"
+    else:
+        raise AssertionError("v14 approval must be expired before v15 becomes effective")
+
+    assert v14_execution["plan_version"] == 14
+    assert v14_execution["record_version"] == 3
+    assert v14_execution["overall_state"] == "STOPPED"
+    v14_step1 = v14_execution["step_states"][0]
+    assert v14_step1["authorization_state"] == "CONSUMED"
+    assert v14_step1["execution_state"] == "FAILED"
+    assert v14_step1["verification_state"] == "FAIL"
+    assert v14_step1["authorization_consumed"] is True
+    assert v14_step1["safe_error_code"] == "FUNCTION_PRIVILEGE_MISMATCH"
+    assert all(
+        state["authorization_state"] == "BLOCKED"
+        and state["execution_state"] == "NOT_STARTED"
+        and state["verification_state"] == "NOT_STARTED"
+        and state["authorization_consumed"] is False
+        for state in v14_execution["step_states"][1:]
+    )
+
+    actual = {path: raw_digest(path) for path in EXPECTED_ARTIFACT_DIGESTS}
+    assert actual == EXPECTED_ARTIFACT_DIGESTS
+
+    bootstrap, hook, seal, verify = plan["steps"]
+    assert bootstrap["resource"] == {
+        "resource_type": "database.role-and-privilege-envelope",
+        "resource_reference": "postgres.role.avuhz_migration_service_dev",
+        "binding_state": "BOUND",
+        "exact_version": "version.development-auth-bootstrap.v3",
+        "exact_digest": actual[BOOTSTRAP],
+    }
+    assert bootstrap["operation"] == "provider.migration.bootstrap-identity-hosted-v3-exact"
+    assert bootstrap["required_evidence"] == [{
+        "evidence_type": "migration.identity.v3.artifact.certified",
+        "source_step_id": None,
+        "binding_state": "BOUND",
+        "exact_digest": actual[BOOTSTRAP],
+    }]
+    assert bootstrap["binding_declarations"][0] == {
+        "binding_id": "binding.development.auth.v15.executor-preflight",
+        "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+        "value_class": "CONFIGURATION_REFERENCE",
+        "source_step_id": None,
+        "evidence_type": "provider.executor.preflight.observed",
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+    }
+    assert "Provider PUBLIC EXECUTE defaults are not treated as direct grants." in (
+        bootstrap["expected_postcondition"]
+    )
+
+    assert hook["resource"]["exact_digest"] == actual[HOOK]
+    assert hook["operation"] == "provider.migration.apply-hook-hosted-v2-exact"
+    assert hook["dependency_step_ids"] == [EXPECTED_STEPS[0]]
+    assert seal["resource"]["exact_digest"] == actual[SEAL]
+    assert seal["operation"] == "provider.migration.seal-identity-hosted-v2-exact"
+    assert seal["dependency_step_ids"] == [EXPECTED_STEPS[1]]
+    assert verify["execution_class"] == "PROVIDER_READ"
+    assert verify["dependency_step_ids"] == [EXPECTED_STEPS[2]]
+    assert "provider.mutation" in verify["prohibited_actions"]
+    assert "data.query" in verify["prohibited_actions"]
+
+    print(
+        "DEVELOPMENT_AUTH_V15_CONTINUATION=PASS "
+        "(v14 stopped/consumed/rolled-back; canonical bootstrap v3 plus unchanged hook/seal v2 "
+        "bound to fresh v15 exact-plan approval; all v15 steps pending/unexecuted/unconsumed; "
+        "provider_mutation_attempted=false)"
+    )
+
+
+if __name__ == "__main__":
+    main()

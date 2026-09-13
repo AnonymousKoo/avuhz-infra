@@ -1,0 +1,53 @@
+{
+  "evidence_type": "migration.identity.v3.bootstrap.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "fb56b1bd-ed95-468d-9189-4ac86616273f",
+  "plan_version": 15,
+  "step_id": "development.auth.v15.step.01.bootstrap-migration-identity-v3",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "provider_observation": {
+    "project_status": "ACTIVE_HEALTHY",
+    "postgresql_version": "17.6.1.166",
+    "postgres_engine": "17",
+    "session_user": "postgres",
+    "current_user": "postgres",
+    "current_database": "postgres",
+    "postgres_is_superuser": false,
+    "postgres_has_createrole": true,
+    "migration_identity_exists": true,
+    "role_attributes_exact": true,
+    "bootstrap_admin_noset_membership_count": 1,
+    "temporary_set_membership_count": 1,
+    "total_role_membership_edges": 2,
+    "public_schema_usage": true,
+    "public_schema_create": true,
+    "direct_database_acl_count": 0,
+    "provider_schema_privilege_count": 0,
+    "table_privilege_count": 0,
+    "sequence_privilege_count": 0,
+    "direct_function_execute_count": 0,
+    "hook_function_exists": false,
+    "migration_history_entry_count": 1,
+    "migration_history_version": "20260913154411",
+    "migration_history_name": "development_auth_migration_identity_v3"
+  },
+  "verification_observation": {
+    "provider_mutation_attempts": 1,
+    "provider_mutation_committed": true,
+    "postcondition_verified": true,
+    "read_only_verification_query_correction_required": true,
+    "read_only_verification_query_correction_scope": "sequence_privilege_guard_only"
+  },
+  "security_state": {
+    "credential_retained": false,
+    "raw_provider_payload_retained": false,
+    "pii_retained": false,
+    "data_resource_touched": false,
+    "hook_created": false,
+    "hook_enabled": false
+  },
+  "recorded_at": "2026-09-13T15:48:39Z"
+}

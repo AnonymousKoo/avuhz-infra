@@ -1,22 +1,36 @@
 -- DEVELOPMENT DATA outbox-trigger search_path repair v1.
--- Remote execution is unauthorized by default. This artifact is intentionally one-shot:
--- it requires the verified sealed DEVELOPMENT DATA state and the exact currently mutable
--- public.avuhz_guard_outbox_transition() function before changing only its search_path.
+-- Remote execution is unauthorized by default. This artifact is intentionally one-shot.
+-- The sealed migration role owns the target function and is not SET-accessible. PostgreSQL 17
+-- therefore requires the hosted NOSUPERUSER CREATEROLE postgres role, which retains ADMIN on
+-- the migration role, to create one explicit transactional SET edge to itself. The edge is
+-- used only to SET LOCAL ROLE for the single ALTER FUNCTION, then is revoked before commit.
 
 begin;
 
 do $avuhz_development_data_outbox_search_path_repair_v1_preflight$
 declare
   migration_role_oid oid;
+  postgres_role_oid oid;
+  command_role_oid oid;
   function_record record;
   function_acl_count integer;
   owner_execute_acl_count integer;
   trigger_count integer;
   function_trigger_count integer;
+  provider_edge_count integer;
+  explicit_set_edge_count integer;
+  command_admin_edge_count integer;
+  total_membership_edge_count integer;
 begin
   if session_user <> 'postgres' or current_user <> 'postgres' then
     raise exception 'Avuhz DEVELOPMENT DATA outbox search_path repair requires the exact approved postgres owner session';
   end if;
+
+  select oid into strict postgres_role_oid
+    from pg_roles
+   where rolname = 'postgres'
+     and not rolsuper
+     and rolcreaterole;
 
   select oid into strict migration_role_oid
     from pg_roles
@@ -29,9 +43,59 @@ begin
      and not rolreplication
      and not rolbypassrls;
 
-  if pg_has_role('postgres', 'avuhz_data_migration_service_dev', 'SET')
+  select oid into strict command_role_oid
+    from pg_roles
+   where rolname = 'avuhz_command_service'
+     and not rolcanlogin
+     and not rolsuper
+     and not rolinherit
+     and not rolcreatedb
+     and not rolcreaterole
+     and not rolreplication
+     and not rolbypassrls;
+
+  select count(*) into provider_edge_count
+    from pg_auth_members membership
+    join pg_roles grantor_role on grantor_role.oid = membership.grantor
+   where membership.roleid = migration_role_oid
+     and membership.member = postgres_role_oid
+     and membership.admin_option
+     and not membership.inherit_option
+     and not membership.set_option
+     and grantor_role.rolsuper
+     and grantor_role.oid <> postgres_role_oid;
+
+  select count(*) into explicit_set_edge_count
+    from pg_auth_members membership
+   where membership.roleid = migration_role_oid
+     and membership.member = postgres_role_oid
+     and membership.grantor = postgres_role_oid;
+
+  select count(*) into command_admin_edge_count
+    from pg_auth_members membership
+    join pg_roles grantor_role on grantor_role.oid = membership.grantor
+   where membership.roleid = command_role_oid
+     and membership.member = migration_role_oid
+     and membership.admin_option
+     and not membership.inherit_option
+     and not membership.set_option
+     and grantor_role.rolsuper
+     and grantor_role.oid <> migration_role_oid;
+
+  select count(*) into total_membership_edge_count
+    from pg_auth_members membership
+   where membership.roleid = migration_role_oid
+      or membership.member = migration_role_oid;
+
+  if provider_edge_count <> 1
+     or explicit_set_edge_count <> 0
+     or command_admin_edge_count <> 1
+     or total_membership_edge_count <> 2
+     or not pg_has_role('postgres', 'avuhz_data_migration_service_dev', 'MEMBER')
+     or pg_has_role('postgres', 'avuhz_data_migration_service_dev', 'USAGE')
+     or pg_has_role('postgres', 'avuhz_data_migration_service_dev', 'SET')
      or pg_has_role('avuhz_data_migration_service_dev', 'avuhz_command_service', 'SET') then
-    raise exception 'Avuhz DEVELOPMENT DATA outbox search_path repair requires the sealed migration identity';
+    raise exception 'Avuhz DEVELOPMENT DATA outbox search_path repair requires the exact sealed membership envelope';
   end if;
 
   select function.oid,
@@ -149,17 +213,34 @@ begin
 end
 $avuhz_development_data_outbox_search_path_repair_v1_preflight$;
 
+-- PostgreSQL 17 object-owner access is opened only inside this transaction and only for
+-- the exact sealed migration role. Any later failure rolls this membership change back.
+grant avuhz_data_migration_service_dev to postgres
+  with admin false, inherit false, set true
+  granted by current_user;
+
+set local role avuhz_data_migration_service_dev;
 alter function public.avuhz_guard_outbox_transition() set search_path to '';
+reset role;
+
+revoke avuhz_data_migration_service_dev from postgres granted by postgres;
 
 do $avuhz_development_data_outbox_search_path_repair_v1_postcondition$
 declare
   migration_role_oid oid;
+  postgres_role_oid oid;
+  command_role_oid oid;
   function_record record;
   function_acl_count integer;
   owner_execute_acl_count integer;
   trigger_count integer;
   function_trigger_count integer;
+  provider_edge_count integer;
+  explicit_set_edge_count integer;
+  command_admin_edge_count integer;
+  total_membership_edge_count integer;
 begin
+  select oid into strict postgres_role_oid from pg_roles where rolname = 'postgres';
   select oid into strict migration_role_oid
     from pg_roles
    where rolname = 'avuhz_data_migration_service_dev'
@@ -170,6 +251,50 @@ begin
      and not rolcreaterole
      and not rolreplication
      and not rolbypassrls;
+  select oid into strict command_role_oid from pg_roles where rolname = 'avuhz_command_service';
+
+  select count(*) into provider_edge_count
+    from pg_auth_members membership
+    join pg_roles grantor_role on grantor_role.oid = membership.grantor
+   where membership.roleid = migration_role_oid
+     and membership.member = postgres_role_oid
+     and membership.admin_option
+     and not membership.inherit_option
+     and not membership.set_option
+     and grantor_role.rolsuper
+     and grantor_role.oid <> postgres_role_oid;
+
+  select count(*) into explicit_set_edge_count
+    from pg_auth_members membership
+   where membership.roleid = migration_role_oid
+     and membership.member = postgres_role_oid
+     and membership.grantor = postgres_role_oid;
+
+  select count(*) into command_admin_edge_count
+    from pg_auth_members membership
+    join pg_roles grantor_role on grantor_role.oid = membership.grantor
+   where membership.roleid = command_role_oid
+     and membership.member = migration_role_oid
+     and membership.admin_option
+     and not membership.inherit_option
+     and not membership.set_option
+     and grantor_role.rolsuper
+     and grantor_role.oid <> migration_role_oid;
+
+  select count(*) into total_membership_edge_count
+    from pg_auth_members membership
+   where membership.roleid = migration_role_oid
+      or membership.member = migration_role_oid;
+
+  if provider_edge_count <> 1
+     or explicit_set_edge_count <> 0
+     or command_admin_edge_count <> 1
+     or total_membership_edge_count <> 2
+     or pg_has_role('postgres', 'avuhz_data_migration_service_dev', 'USAGE')
+     or pg_has_role('postgres', 'avuhz_data_migration_service_dev', 'SET')
+     or pg_has_role('avuhz_data_migration_service_dev', 'avuhz_command_service', 'SET') then
+    raise exception 'Avuhz DEVELOPMENT DATA sealed membership envelope was not restored after repair';
+  end if;
 
   select function.oid,
          function.proowner,
@@ -247,11 +372,6 @@ begin
 
   if trigger_count <> 1 or function_trigger_count <> 1 then
     raise exception 'Avuhz DEVELOPMENT DATA outbox trigger changed during repair';
-  end if;
-
-  if pg_has_role('postgres', 'avuhz_data_migration_service_dev', 'SET')
-     or pg_has_role('avuhz_data_migration_service_dev', 'avuhz_command_service', 'SET') then
-    raise exception 'Avuhz DEVELOPMENT DATA sealed migration identity changed during repair';
   end if;
 
   if (

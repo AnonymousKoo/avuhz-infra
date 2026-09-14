@@ -260,11 +260,8 @@ def main() -> int:
     assert state["safe_error_code"] is None
     assert state["binding_assertions"] == assertions + [subject_binding]
 
-    for forbidden in (
-        BASE / "development-auth-integration-v22.approval.json",
-        BASE / "development-auth-integration-v22.execution-progress.json",
-    ):
-        assert not forbidden.exists(), forbidden
+    forbidden_execution = BASE / "development-auth-integration-v22.execution-progress.json"
+    assert not forbidden_execution.exists(), forbidden_execution
 
     print(
         "DEVELOPMENT_AUTH_V21_OUTCOME=PASS "

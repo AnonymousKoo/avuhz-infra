@@ -1,0 +1,464 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v2",
+  "title": "Bounded Provider Change Authorization Plan v2",
+  "description": "Backward-compatible authorization-plan contract adding a DEVELOPMENT-only Supabase AUTH-admin ephemeral execution credential class whose material never enters plan, approval, progress, evidence, request, log, or agent-visible surfaces.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "plan_version",
+    "plan_digest",
+    "definition_status",
+    "environment",
+    "target",
+    "owner_identity",
+    "created_at",
+    "authorization_window",
+    "ordered_step_ids",
+    "steps",
+    "prohibited_actions",
+    "stop_conditions",
+    "authority_effect"
+  ],
+  "properties": {
+    "plan_id": {
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+    },
+    "plan_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "plan_digest": {
+      "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/digest"
+    },
+    "definition_status": {
+      "enum": [
+        "DRAFT_BLOCKED",
+        "READY_FOR_APPROVAL"
+      ]
+    },
+    "environment": {
+      "$ref": "urn:avuhz:schema:contracts:common:environment:v1#/$defs/environment"
+    },
+    "target": {
+      "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/target"
+    },
+    "owner_identity": {
+      "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/boundedText"
+    },
+    "created_at": {
+      "$ref": "urn:avuhz:schema:contracts:common:timestamps:v1#/$defs/utcTimestamp"
+    },
+    "authorization_window": {
+      "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/authorizationWindow"
+    },
+    "ordered_step_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/reference"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "prohibited_actions": {
+      "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/referenceList"
+    },
+    "stop_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/reference"
+      }
+    },
+    "authority_effect": {
+      "const": "NONE_UNTIL_SEPARATELY_APPROVED"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "steps": {
+            "contains": {
+              "properties": {
+                "credential_policy": {
+                  "properties": {
+                    "allowed_classes": {
+                      "contains": {
+                        "const": "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+                      }
+                    }
+                  },
+                  "required": [
+                    "allowed_classes"
+                  ]
+                }
+              },
+              "required": [
+                "credential_policy"
+              ]
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "const": "DEVELOPMENT"
+          },
+          "target": {
+            "properties": {
+              "provider_reference": {
+                "const": "supabase"
+              },
+              "responsibility": {
+                "const": "AUTH"
+              }
+            }
+          },
+          "prohibited_actions": {
+            "allOf": [
+              {"contains": {"const": "credential.persist"}},
+              {"contains": {"const": "credential.expose"}},
+              {"contains": {"const": "credential.log"}},
+              {"contains": {"const": "credential.return"}},
+              {"contains": {"const": "credential.digest"}},
+              {"contains": {"const": "credential.copy"}},
+              {"contains": {"const": "credential.create"}},
+              {"contains": {"const": "credential.rotate"}},
+              {"contains": {"const": "credential.export"}}
+            ]
+          },
+          "steps": {
+            "items": {
+              "if": {
+                "properties": {
+                  "credential_policy": {
+                    "properties": {
+                      "allowed_classes": {
+                        "contains": {
+                          "const": "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+                        }
+                      }
+                    },
+                    "required": [
+                      "allowed_classes"
+                    ]
+                  }
+                },
+                "required": [
+                  "credential_policy"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "execution_class": {
+                    "const": "PROVIDER_MUTATION"
+                  },
+                  "operation": {
+                    "pattern": "^provider\\.auth-"
+                  },
+                  "prohibited_actions": {
+                    "allOf": [
+                      {"contains": {"const": "credential.persist"}},
+                      {"contains": {"const": "credential.expose"}},
+                      {"contains": {"const": "credential.log"}},
+                      {"contains": {"const": "credential.return"}},
+                      {"contains": {"const": "credential.digest"}},
+                      {"contains": {"const": "credential.copy"}},
+                      {"contains": {"const": "credential.create"}},
+                      {"contains": {"const": "credential.rotate"}},
+                      {"contains": {"const": "credential.export"}}
+                    ]
+                  },
+                  "binding_declarations": {
+                    "contains": {
+                      "properties": {
+                        "phase": {
+                          "const": "RESOLVED_BY_STEP_PREFLIGHT"
+                        },
+                        "value_class": {
+                          "const": "CONFIGURATION_REFERENCE"
+                        },
+                        "evidence_type": {
+                          "const": "auth.admin-executor-capability.observed"
+                        },
+                        "digest_policy": {
+                          "const": "REQUIRED"
+                        },
+                        "persistence_policy": {
+                          "const": "DIGEST_ONLY"
+                        }
+                      },
+                      "required": [
+                        "phase",
+                        "value_class",
+                        "evidence_type",
+                        "digest_policy",
+                        "persistence_policy"
+                      ]
+                    },
+                    "minContains": 1,
+                    "maxContains": 1,
+                    "not": {
+                      "contains": {
+                        "properties": {
+                          "value_class": {
+                            "const": "EPHEMERAL_SENSITIVE"
+                          }
+                        },
+                        "required": [
+                          "value_class"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "binding_declarations"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "authAdminEphemeralHandling": {
+      "description": "Non-secret handling contract for the Supabase Auth-admin executor class. Credential material is resolved only inside the approved server-side executor, never represented or hashed in Avuhz control-plane records, and proof is a non-secret capability attestation.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "material_source",
+        "material_residency",
+        "control_plane_visibility",
+        "material_digest",
+        "persistence",
+        "logging",
+        "return_policy",
+        "proof_policy"
+      ],
+      "properties": {
+        "material_source": {
+          "const": "APPROVED_ENVIRONMENT_SECRET_BOUNDARY"
+        },
+        "material_residency": {
+          "const": "SERVER_EXECUTOR_MEMORY_ONLY"
+        },
+        "control_plane_visibility": {
+          "const": "CLASS_LABEL_ONLY"
+        },
+        "material_digest": {
+          "const": "PROHIBITED"
+        },
+        "persistence": {
+          "const": "PROHIBITED"
+        },
+        "logging": {
+          "const": "PROHIBITED"
+        },
+        "return_policy": {
+          "const": "PROHIBITED"
+        },
+        "proof_policy": {
+          "const": "NON_SECRET_EXECUTOR_CAPABILITY_ATTESTATION"
+        }
+      }
+    },
+    "credentialPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "permitted",
+        "allowed_classes",
+        "values_stored"
+      ],
+      "properties": {
+        "permitted": {
+          "type": "boolean"
+        },
+        "allowed_classes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "NONE",
+              "OWNER_INTERACTIVE_SESSION",
+              "MIGRATION_IDENTITY",
+              "SYNTHETIC_IDENTITY",
+              "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN",
+              "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+            ]
+          }
+        },
+        "values_stored": {
+          "const": false
+        },
+        "ephemeral_handling": {
+          "$ref": "#/$defs/authAdminEphemeralHandling"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "allowed_classes": {
+                "contains": {
+                  "const": "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+                }
+              }
+            },
+            "required": [
+              "allowed_classes"
+            ]
+          },
+          "then": {
+            "properties": {
+              "permitted": {
+                "const": true
+              },
+              "allowed_classes": {
+                "const": [
+                  "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+                ]
+              },
+              "values_stored": {
+                "const": false
+              }
+            },
+            "required": [
+              "ephemeral_handling"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "ephemeral_handling"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "ordinal",
+        "resource",
+        "operation",
+        "dependency_step_ids",
+        "required_evidence",
+        "expected_postcondition",
+        "prohibited_actions",
+        "stop_conditions",
+        "correction_reference",
+        "execution_class",
+        "credential_policy",
+        "unresolved_bindings"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/reference"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "resource": {
+          "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/resource"
+        },
+        "operation": {
+          "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/reference"
+        },
+        "dependency_step_ids": {
+          "type": "array",
+          "maxItems": 31,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/reference"
+          }
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/evidenceRequirement"
+          }
+        },
+        "expected_postcondition": {
+          "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/boundedText"
+        },
+        "prohibited_actions": {
+          "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/referenceList"
+        },
+        "stop_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/reference"
+          }
+        },
+        "correction_reference": {
+          "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/nullableReference"
+        },
+        "execution_class": {
+          "enum": [
+            "LOCAL_ONLY",
+            "PROVIDER_READ",
+            "PROVIDER_MUTATION"
+          ]
+        },
+        "credential_policy": {
+          "$ref": "#/$defs/credentialPolicy"
+        },
+        "binding_declarations": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/bindingDeclaration"
+          }
+        },
+        "produced_evidence": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/producedEvidenceDeclaration"
+          }
+        },
+        "unresolved_bindings": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/reference"
+          }
+        }
+      }
+    }
+  }
+}

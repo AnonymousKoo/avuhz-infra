@@ -1,0 +1,652 @@
+name: DEVELOPMENT AUTH v23 Tenant Metadata Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type EXECUTE_V23_TENANT_METADATA to authorize this exact bounded run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: development-auth-v23-tenant-metadata-execution
+  cancel-in-progress: false
+
+jobs:
+  execute-development-auth-v23-tenant-metadata:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+
+    env:
+      AVUHZ_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: f46b60f1-ee75-4cc7-97a9-a3ad361ce708
+      AVUHZ_PLAN_VERSION: '23'
+      AVUHZ_PLAN_DIGEST: sha256:79e2d712e4b446ad443ec299dba0ddc123b83f6b3e27926b4e31de37be342dc4
+      AVUHZ_WINDOW_START: '2026-09-14T23:15:00Z'
+      AVUHZ_WINDOW_END: '2026-09-15T02:15:00Z'
+      AVUHZ_TARGET_EMAIL: avuhz-development-synthetic@example.invalid
+      AVUHZ_TENANT_ID: 1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0
+      AVUHZ_SUBJECT_DIGEST: sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5
+      AVUHZ_TARGET_APP_METADATA_DIGEST: sha256:cd89c12abf5ed8c3dc03f4766a6d7cd9f1b8388b9e98468e9673233550a910a6
+      SUPABASE_PROVIDER_READ_TOKEN: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN }}
+      SUPABASE_AUTH_ADMIN_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_ADMIN_EPHEMERAL }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify exact v23 repository authority
+        shell: bash
+        env:
+          AVUHZ_DISPATCH_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::DEVELOPMENT AUTH v23 execution is allowed only from main."
+            exit 1
+          fi
+
+          if [[ "${AVUHZ_DISPATCH_CONFIRMATION}" != "EXECUTE_V23_TENANT_METADATA" ]]; then
+            echo "::error::Exact v23 execution confirmation was not supplied."
+            exit 1
+          fi
+
+          if [[ -z "${SUPABASE_PROVIDER_READ_TOKEN:-}" ]]; then
+            echo "::error::Required DEVELOPMENT provider-read secret is unavailable."
+            exit 1
+          fi
+
+          if [[ -z "${SUPABASE_AUTH_ADMIN_EPHEMERAL:-}" ]]; then
+            echo "::error::Required DEVELOPMENT Auth-admin ephemeral secret is unavailable."
+            exit 1
+          fi
+
+          if [[ "${SUPABASE_AUTH_ADMIN_EPHEMERAL}" != sb_secret_* ]]; then
+            echo "::error::DEVELOPMENT Auth-admin execution requires the dedicated modern Supabase secret key."
+            exit 1
+          fi
+
+          now_epoch="$(date -u +%s)"
+          window_start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          window_end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < window_start_epoch || now_epoch >= window_end_epoch )); then
+            echo "::error::DEVELOPMENT AUTH v23 authorization window is not active."
+            exit 1
+          fi
+
+          approval_path="contracts/plans/v1/development-auth-integration-v23.approval.json"
+          if [[ ! -f "${approval_path}" ]]; then
+            echo "::error::Exact v23 owner approval artifact is absent."
+            exit 1
+          fi
+
+          python3 tests/contracts/validate_development_auth_plan_v23.py
+
+          python3 - <<'PY'
+          import json
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          sys.path.insert(0, str(ROOT / "src"))
+
+          from avuhz_engineering.authorization_plan import (
+              initial_progress,
+              validate_approval,
+              validate_plan,
+              validate_progress,
+          )
+
+          schema_root = ROOT / "contracts/schemas/v1"
+          base = ROOT / "contracts/plans/v1"
+          plan = json.loads((base / "development-auth-integration-v23.plan.json").read_text(encoding="utf-8"))
+          progress = json.loads((base / "development-auth-integration-v23.progress.json").read_text(encoding="utf-8"))
+          approval = json.loads((base / "development-auth-integration-v23.approval.json").read_text(encoding="utf-8"))
+
+          now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+          validate_plan(plan, schema_root)
+          validate_progress(plan, progress, schema_root)
+          validate_approval(plan, approval, schema_root, now)
+
+          if plan["plan_id"] != "f46b60f1-ee75-4cc7-97a9-a3ad361ce708":
+              raise SystemExit("v23 plan ID mismatch")
+          if plan["plan_version"] != 23:
+              raise SystemExit("v23 plan version mismatch")
+          if plan["plan_digest"] != "sha256:79e2d712e4b446ad443ec299dba0ddc123b83f6b3e27926b4e31de37be342dc4":
+              raise SystemExit("v23 plan digest mismatch")
+          if plan["target"].get("project_reference") != "pwlhruwutoitnieactol":
+              raise SystemExit("v23 project mismatch")
+          if plan["target"].get("responsibility") != "AUTH":
+              raise SystemExit("v23 responsibility mismatch")
+          if approval.get("decision") != "APPROVE":
+              raise SystemExit("v23 approval decision mismatch")
+          if approval.get("status") != "ACTIVE":
+              raise SystemExit("v23 approval status mismatch")
+          if approval.get("authority_scope") != "EXACT_PLAN_ONLY":
+              raise SystemExit("v23 approval scope mismatch")
+
+          expected = initial_progress(plan, schema_root, progress["progress_id"], plan["created_at"])
+          if progress != expected:
+              raise SystemExit("v23 progress is not pristine")
+
+          print("immutable_v23_authority_verified=true")
+          print("v23_progress_pristine=true")
+          print("v22_authority_reused=false")
+          PY
+
+      - name: Live read-only preflight, bind, and verify tenant metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          now_epoch="$(date -u +%s)"
+          window_end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch >= window_end_epoch )); then
+            echo "::error::DEVELOPMENT AUTH v23 authorization expired before live preflight."
+            exit 1
+          fi
+
+          project_response="$(mktemp)"
+          auth_config_response="$(mktemp)"
+          before_response="$(mktemp)"
+          sql_payload="$(mktemp)"
+          sql_response="$(mktemp)"
+          baseline_state="$(mktemp)"
+          update_body="$(mktemp)"
+          update_response="$(mktemp)"
+          get_response="$(mktemp)"
+          after_response="$(mktemp)"
+
+          trap 'rm -f "$project_response" "$auth_config_response" "$before_response" "$sql_payload" "$sql_response" "$baseline_state" "$update_body" "$update_response" "$get_response" "$after_response"' EXIT
+
+          if ! project_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$project_response" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SUPABASE_PROVIDER_READ_TOKEN}" \
+            --header 'Accept: application/json' \
+            "https://api.supabase.com/v1/projects/${AVUHZ_PROJECT_REF}")"; then
+            echo "::error::DEVELOPMENT AUTH project metadata read failed."
+            exit 1
+          fi
+
+          if [[ "$project_status" != "200" ]]; then
+            echo "::error::DEVELOPMENT AUTH project metadata read did not return HTTP 200."
+            exit 1
+          fi
+
+          python3 - "$project_response" <<'PY'
+          import json
+          import os
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+          expected = os.environ["AVUHZ_PROJECT_REF"]
+          if payload.get("ref") != expected or payload.get("id") != expected:
+              raise SystemExit("DEVELOPMENT AUTH project identity mismatch")
+          print("development_auth_project_verified=true")
+          PY
+
+          if ! auth_config_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$auth_config_response" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SUPABASE_PROVIDER_READ_TOKEN}" \
+            --header 'Accept: application/json' \
+            "https://api.supabase.com/v1/projects/${AVUHZ_PROJECT_REF}/config/auth")"; then
+            echo "::error::Hosted Auth configuration read failed."
+            exit 1
+          fi
+
+          if [[ "$auth_config_status" != "200" ]]; then
+            echo "::error::Hosted Auth configuration read did not return HTTP 200."
+            exit 1
+          fi
+
+          python3 - "$auth_config_response" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+          if payload.get("hook_custom_access_token_enabled") is not False:
+              raise SystemExit("custom access-token hook is enabled; stopping before mutation")
+          if payload.get("hook_custom_access_token_uri") not in (None, ""):
+              raise SystemExit("custom access-token hook URI is configured; stopping before mutation")
+          print("hosted_auth_custom_access_token_hook_disabled=true")
+          print("hosted_auth_custom_access_token_hook_unconfigured=true")
+          PY
+
+          if ! before_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$before_response" \
+            --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users?page=1&per_page=1000")"; then
+            echo "::error::Synthetic identity preflight request failed."
+            exit 1
+          fi
+
+          if [[ "$before_status" != "200" ]]; then
+            echo "::error::Synthetic identity preflight did not return HTTP 200."
+            exit 1
+          fi
+
+          target_user_id="$(python3 - "$before_response" "$baseline_state" <<'PY'
+          import hashlib
+          import json
+          import os
+          import sys
+          import uuid
+
+          response_path, baseline_path = sys.argv[1], sys.argv[2]
+          with open(response_path, "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+          users = payload.get("users") if isinstance(payload, dict) else None
+          if not isinstance(users, list):
+              raise SystemExit("unexpected Auth-admin list-users response shape")
+          if len(users) != 1:
+              raise SystemExit("DEVELOPMENT AUTH user count mismatch; stopping before mutation")
+          matches = [user for user in users if user.get("email") == os.environ["AVUHZ_TARGET_EMAIL"]]
+          if len(matches) != 1:
+              raise SystemExit("synthetic identity match count mismatch; stopping before mutation")
+
+          user = matches[0]
+          user_id = user.get("id")
+          if not isinstance(user_id, str):
+              raise SystemExit("synthetic provider subject is unavailable")
+          try:
+              uuid.UUID(user_id)
+          except ValueError:
+              raise SystemExit("synthetic provider subject is not a UUID")
+          subject_digest = "sha256:" + hashlib.sha256(user_id.encode("utf-8")).hexdigest()
+          if subject_digest != os.environ["AVUHZ_SUBJECT_DIGEST"]:
+              raise SystemExit("synthetic provider subject digest mismatch; stopping before mutation")
+          if not (user.get("email_confirmed_at") or user.get("confirmed_at")):
+              raise SystemExit("synthetic identity is not email-confirmed; stopping before mutation")
+          if user.get("user_metadata") != {"email_verified": True}:
+              raise SystemExit("synthetic user metadata drift; stopping before mutation")
+          if user.get("app_metadata") != {"provider": "email", "providers": ["email"]}:
+              raise SystemExit("synthetic app metadata drift; stopping before mutation")
+          if user.get("is_anonymous") not in (False, None):
+              raise SystemExit("synthetic anonymous state drift; stopping before mutation")
+
+          with open(baseline_path, "w", encoding="utf-8") as handle:
+              json.dump(
+                  {
+                      "user_id": user_id,
+                      "role": user.get("role"),
+                  },
+                  handle,
+                  separators=(",", ":"),
+              )
+          print(user_id)
+          PY
+          )"
+
+          if [[ -z "${target_user_id}" ]]; then
+            echo "::error::Synthetic provider subject was unavailable for bounded mutation."
+            exit 1
+          fi
+
+          python3 - "$sql_payload" "$target_user_id" <<'PY'
+          import json
+          import sys
+
+          path, user_id = sys.argv[1], sys.argv[2]
+          query = f"""
+          with target_hook as (
+            select p.oid, p.proowner, p.prosecdef, p.provolatile, p.proconfig, p.prosrc
+              from pg_proc p
+             where p.oid = to_regprocedure('public.avuhz_development_custom_access_token_hook_v1(jsonb)')
+          ),
+          hook_acl as (
+            select
+              count(*) filter (
+                where acl.grantee = coalesce((select oid from pg_roles where rolname = 'supabase_auth_admin'), -1)
+                  and acl.privilege_type = 'EXECUTE'
+              ) as auth_admin_execute_acl_count,
+              count(*) filter (
+                where acl.grantee = 0
+                  and acl.privilege_type = 'EXECUTE'
+              ) as public_execute_acl_count,
+              count(*) filter (
+                where role_name.rolname in ('anon', 'authenticated', 'service_role')
+                  and acl.privilege_type = 'EXECUTE'
+              ) as app_role_execute_acl_count
+            from target_hook h
+            left join lateral aclexplode(h.proacl) acl on true
+            left join pg_roles role_name on role_name.oid = acl.grantee
+          )
+          select
+            current_user = 'supabase_read_only_user' as read_only_identity_ok,
+            (select count(*) from auth.sessions where user_id = '{user_id}'::uuid) as session_count,
+            (select count(*) from auth.refresh_tokens where user_id = '{user_id}'::uuid) as refresh_token_count,
+            exists(select 1 from target_hook) as hook_function_exists,
+            coalesce((select pg_get_userbyid(proowner) from target_hook), '') as hook_owner,
+            coalesce((select not prosecdef from target_hook), false) as hook_security_invoker,
+            coalesce((select provolatile = 's' from target_hook), false) as hook_stable,
+            coalesce(
+              (select proconfig = array['search_path=pg_catalog']::text[] from target_hook),
+              false
+            ) as hook_search_path_exact,
+            coalesce((select prosrc from target_hook), '') as hook_source,
+            coalesce((select auth_admin_execute_acl_count from hook_acl), 0) as auth_admin_execute_acl_count,
+            coalesce((select public_execute_acl_count from hook_acl), 0) as public_execute_acl_count,
+            coalesce((select app_role_execute_acl_count from hook_acl), 0) as app_role_execute_acl_count
+          """
+          with open(path, "w", encoding="utf-8") as handle:
+              json.dump({"query": query}, handle, separators=(",", ":"))
+          PY
+
+          if ! sql_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --request POST \
+            --output "$sql_response" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SUPABASE_PROVIDER_READ_TOKEN}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data-binary "@${sql_payload}" \
+            "https://api.supabase.com/v1/projects/${AVUHZ_PROJECT_REF}/database/query/read-only")"; then
+            echo "::error::Live read-only SQL preflight failed."
+            exit 1
+          fi
+
+          if [[ "$sql_status" != "201" ]]; then
+            echo "::error::Live read-only SQL preflight did not return HTTP 201."
+            exit 1
+          fi
+
+          python3 - "$sql_response" <<'PY'
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+
+          rows = []
+          def walk(value):
+              if isinstance(value, dict):
+                  if "read_only_identity_ok" in value:
+                      rows.append(value)
+                  for child in value.values():
+                      walk(child)
+              elif isinstance(value, list):
+                  for child in value:
+                      walk(child)
+          walk(payload)
+
+          if len(rows) != 1:
+              raise SystemExit("read-only SQL preflight response shape mismatch")
+          row = rows[0]
+
+          if row.get("read_only_identity_ok") is not True:
+              raise SystemExit("read-only SQL execution identity mismatch")
+          if int(row.get("session_count", -1)) != 0:
+              raise SystemExit("synthetic session state drift; stopping before mutation")
+          if int(row.get("refresh_token_count", -1)) != 0:
+              raise SystemExit("synthetic refresh-token state drift; stopping before mutation")
+          if row.get("hook_function_exists") is not True:
+              raise SystemExit("custom access-token hook function is absent")
+          if row.get("hook_owner") != "avuhz_migration_service_dev":
+              raise SystemExit("custom access-token hook owner drift")
+          if row.get("hook_security_invoker") is not True:
+              raise SystemExit("custom access-token hook security mode drift")
+          if row.get("hook_stable") is not True:
+              raise SystemExit("custom access-token hook volatility drift")
+          if row.get("hook_search_path_exact") is not True:
+              raise SystemExit("custom access-token hook search_path drift")
+          if int(row.get("auth_admin_execute_acl_count", -1)) != 1:
+              raise SystemExit("custom access-token hook Auth-admin ACL drift")
+          if int(row.get("public_execute_acl_count", -1)) != 0:
+              raise SystemExit("custom access-token hook PUBLIC ACL drift")
+          if int(row.get("app_role_execute_acl_count", -1)) != 0:
+              raise SystemExit("custom access-token hook app-role ACL drift")
+
+          artifact = Path(
+              "supabase/provider-artifacts/development-auth/current/"
+              "development_auth_custom_access_token_hook_v2.sql"
+          ).read_text(encoding="utf-8")
+          match = re.search(
+              r"as \$avuhz_development_custom_access_token_hook_v1\$(.*?)"
+              r"\$avuhz_development_custom_access_token_hook_v1\$;",
+              artifact,
+              re.DOTALL,
+          )
+          if match is None:
+              raise SystemExit("certified hook artifact body could not be resolved")
+          if str(row.get("hook_source", "")).strip() != match.group(1).strip():
+              raise SystemExit("custom access-token hook function body drift")
+
+          print("read_only_sql_execution_identity_verified=true")
+          print("synthetic_session_count_verified=0")
+          print("synthetic_refresh_token_count_verified=0")
+          print("hook_function_exists_verified=true")
+          print("hook_owner_verified=true")
+          print("hook_security_invoker_verified=true")
+          print("hook_stable_verified=true")
+          print("hook_search_path_verified=true")
+          print("hook_function_body_verified=true")
+          print("hook_acl_verified=true")
+          PY
+
+          echo "read_only_preflight_passed=true"
+          echo "provider_mutation_attempted=false"
+          echo "credential_material_observed_by_control_plane=false"
+
+          now_epoch="$(date -u +%s)"
+          if (( now_epoch >= window_end_epoch )); then
+            echo "::error::DEVELOPMENT AUTH v23 authorization expired before provider mutation."
+            exit 1
+          fi
+
+          python3 - "$update_body" <<'PY'
+          import hashlib
+          import json
+          import os
+          import sys
+
+          app_metadata = {
+              "provider": "email",
+              "providers": ["email"],
+              "avuhz_tenant_id": os.environ["AVUHZ_TENANT_ID"],
+          }
+          canonical = json.dumps(
+              app_metadata,
+              sort_keys=True,
+              separators=(",", ":"),
+              ensure_ascii=False,
+          ).encode("utf-8")
+          observed_digest = "sha256:" + hashlib.sha256(canonical).hexdigest()
+          if observed_digest != os.environ["AVUHZ_TARGET_APP_METADATA_DIGEST"]:
+              raise SystemExit("target app metadata digest mismatch before mutation")
+          with open(sys.argv[1], "w", encoding="utf-8") as handle:
+              json.dump({"app_metadata": app_metadata}, handle, separators=(",", ":"))
+          PY
+
+          if ! update_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$update_response" \
+            --write-out '%{http_code}' \
+            --request PUT \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data-binary "@${update_body}" \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users/${target_user_id}")"; then
+            echo "::error::Tenant-metadata update transport failed after the mutation request began; outcome is ambiguous. Do not retry."
+            exit 1
+          fi
+
+          if [[ "$update_status" != "200" ]]; then
+            echo "::error::Tenant-metadata update returned an unexpected HTTP status after the mutation request began; outcome is ambiguous. Do not retry."
+            exit 1
+          fi
+
+          python3 - "$update_response" "$baseline_state" <<'PY'
+          import json
+          import os
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              user = json.load(handle)
+          with open(sys.argv[2], "r", encoding="utf-8") as handle:
+              baseline = json.load(handle)
+
+          if not isinstance(user, dict) or user.get("id") != baseline.get("user_id"):
+              raise SystemExit("tenant-metadata update provider subject mismatch")
+          if user.get("email") != os.environ["AVUHZ_TARGET_EMAIL"]:
+              raise SystemExit("tenant-metadata update synthetic email mismatch")
+          if not (user.get("email_confirmed_at") or user.get("confirmed_at")):
+              raise SystemExit("tenant-metadata update email confirmation drift")
+          if user.get("user_metadata") != {"email_verified": True}:
+              raise SystemExit("tenant-metadata update changed user metadata")
+          if user.get("role") != baseline.get("role"):
+              raise SystemExit("tenant-metadata update changed role")
+          expected = {
+              "provider": "email",
+              "providers": ["email"],
+              "avuhz_tenant_id": os.environ["AVUHZ_TENANT_ID"],
+          }
+          if user.get("app_metadata") != expected:
+              raise SystemExit("tenant-metadata update response does not contain exact desired app metadata")
+          PY
+
+          if ! get_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$get_response" \
+            --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users/${target_user_id}")"; then
+            echo "::error::Post-mutation user readback failed; outcome is ambiguous. Do not retry."
+            exit 1
+          fi
+
+          if [[ "$get_status" != "200" ]]; then
+            echo "::error::Post-mutation user readback did not return HTTP 200; outcome is ambiguous. Do not retry."
+            exit 1
+          fi
+
+          if ! after_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$after_response" \
+            --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users?page=1&per_page=1000")"; then
+            echo "::error::Post-mutation identity-count readback failed; outcome is ambiguous. Do not retry."
+            exit 1
+          fi
+
+          if [[ "$after_status" != "200" ]]; then
+            echo "::error::Post-mutation identity-count readback did not return HTTP 200; outcome is ambiguous. Do not retry."
+            exit 1
+          fi
+
+          python3 - "$get_response" "$after_response" "$baseline_state" <<'PY'
+          import hashlib
+          import json
+          import os
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              user = json.load(handle)
+          with open(sys.argv[2], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+          with open(sys.argv[3], "r", encoding="utf-8") as handle:
+              baseline = json.load(handle)
+
+          user_id = baseline.get("user_id")
+          if not isinstance(user, dict) or user.get("id") != user_id:
+              raise SystemExit("post-mutation user readback subject mismatch")
+          if user.get("email") != os.environ["AVUHZ_TARGET_EMAIL"]:
+              raise SystemExit("post-mutation synthetic email mismatch")
+          subject_digest = "sha256:" + hashlib.sha256(user_id.encode("utf-8")).hexdigest()
+          if subject_digest != os.environ["AVUHZ_SUBJECT_DIGEST"]:
+              raise SystemExit("post-mutation provider subject digest mismatch")
+          if not (user.get("email_confirmed_at") or user.get("confirmed_at")):
+              raise SystemExit("post-mutation email confirmation drift")
+          if user.get("user_metadata") != {"email_verified": True}:
+              raise SystemExit("post-mutation user metadata drift")
+          if user.get("role") != baseline.get("role"):
+              raise SystemExit("post-mutation role drift")
+          if user.get("is_anonymous") not in (False, None):
+              raise SystemExit("post-mutation anonymous state drift")
+
+          expected = {
+              "provider": "email",
+              "providers": ["email"],
+              "avuhz_tenant_id": os.environ["AVUHZ_TENANT_ID"],
+          }
+          if user.get("app_metadata") != expected:
+              raise SystemExit("post-mutation app metadata mismatch")
+
+          users = payload.get("users") if isinstance(payload, dict) else None
+          if not isinstance(users, list) or len(users) != 1:
+              raise SystemExit("post-mutation DEVELOPMENT AUTH user count mismatch")
+          matches = [item for item in users if item.get("email") == os.environ["AVUHZ_TARGET_EMAIL"]]
+          if len(matches) != 1 or matches[0].get("id") != user_id:
+              raise SystemExit("post-mutation synthetic identity match mismatch")
+
+          print("tenant_metadata_postcondition_verified=true")
+          print("provider_subject_digest_verified=true")
+          print("identity_count_verified=1")
+          PY
+
+          echo "provider_mutation_attempts=1"
+          echo "user_metadata_changed=false"
+          echo "email_changed=false"
+          echo "role_changed=false"
+          echo "token_or_session_requested=false"
+          echo "hook_change_attempted=false"
+          echo "data_resource_touched=false"
+          echo "render_touched=false"
+          echo "credential_material_observed_by_control_plane=false"
+          echo "raw_provider_payload_retained=false"

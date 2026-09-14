@@ -19,7 +19,6 @@ DATABASE = "avuhz_development_data_outbox_search_path_repair_v1"
 EXECUTOR = "avuhz_hosted_data_postgres_sim_v1"
 MIGRATION_ROLE = "avuhz_data_migration_service_dev"
 COMMAND_ROLE = "avuhz_command_service"
-FUNCTION = "public.avuhz_guard_outbox_transition()"
 
 
 def composed_migration() -> str:
@@ -33,7 +32,7 @@ def composed_migration() -> str:
 
 
 class DevelopmentDataOutboxSearchPathRepairV1StaticTests(unittest.TestCase):
-    def test_repair_is_one_shot_and_function_configuration_only(self):
+    def test_repair_is_one_shot_and_transactionally_restores_owner_access(self):
         sql = REPAIR.read_text(encoding="utf-8").lower()
         mutation = "alter function public.avuhz_guard_outbox_transition() set search_path to '';"
 
@@ -43,11 +42,17 @@ class DevelopmentDataOutboxSearchPathRepairV1StaticTests(unittest.TestCase):
         self.assertIn("function_record.proconfig is not null", sql)
         self.assertIn("cardinality(function_record.proconfig) <> 1", sql)
         self.assertIn("search_path=\"\"", sql)
+        self.assertEqual(sql.count("\ngrant avuhz_data_migration_service_dev to postgres\n"), 1)
+        self.assertEqual(sql.count("\nset local role avuhz_data_migration_service_dev;\n"), 1)
+        self.assertEqual(sql.count("\nreset role;\n"), 1)
+        self.assertEqual(
+            sql.count("\nrevoke avuhz_data_migration_service_dev from postgres granted by postgres;\n"),
+            1,
+        )
         self.assertNotIn("create or replace function", sql)
         self.assertNotIn("alter role ", sql)
         self.assertNotIn("alter table ", sql)
         self.assertNotIn("grant usage ", sql)
-        self.assertNotIn("revoke ", sql)
 
 
 @unittest.skipUnless(
@@ -156,11 +161,14 @@ class DevelopmentDataOutboxSearchPathRepairV1PostgresTests(unittest.TestCase):
         self._apply(composed_migration())
         self._apply(self._as_hosted_executor(SEAL.read_text(encoding="utf-8")))
 
+    def _repair_sql(self):
+        return self._as_hosted_executor(REPAIR.read_text(encoding="utf-8"))
+
     def _function_fingerprint(self):
         _, value, _ = self._psql(
             "select function.oid::text || '|' || md5(function.prosrc) || '|' || "
             "function.proowner::text || '|' || function.prosecdef::int::text || '|' || "
-            "function.provolatile || '|' || function.proleakproof::int::text || '|' || "
+            "function.provolatile::text || '|' || function.proleakproof::int::text || '|' || "
             "coalesce(function.proacl::text, '<null>') "
             "from pg_proc function join pg_namespace namespace "
             "on namespace.oid=function.pronamespace "
@@ -170,7 +178,7 @@ class DevelopmentDataOutboxSearchPathRepairV1PostgresTests(unittest.TestCase):
         )
         return value
 
-    def test_repair_pins_empty_search_path_without_changing_function_or_tenant_surface(self):
+    def test_repair_pins_empty_search_path_and_restores_sealed_membership(self):
         self._run_sealed_chain()
 
         _, pre_state, _ = self._psql(
@@ -184,7 +192,7 @@ class DevelopmentDataOutboxSearchPathRepairV1PostgresTests(unittest.TestCase):
         self.assertEqual(pre_state, "1")
         before = self._function_fingerprint()
 
-        self._apply(REPAIR.read_text(encoding="utf-8"), user="postgres")
+        self._apply(self._repair_sql(), user=EXECUTOR)
 
         after = self._function_fingerprint()
         self.assertEqual(after, before)
@@ -215,27 +223,35 @@ class DevelopmentDataOutboxSearchPathRepairV1PostgresTests(unittest.TestCase):
             "join pg_namespace namespace on namespace.oid=relation.relnamespace "
             "where namespace.nspname='public' and relation.relname like 'avuhz\\_%' escape '\\' "
             "and policy.polname='avuhz_command_service_tenant_isolation';"
-            f"select pg_has_role('postgres','{MIGRATION_ROLE}','SET')::int;"
+            f"select pg_has_role('{EXECUTOR}','{MIGRATION_ROLE}','SET')::int;"
             f"select pg_has_role('{MIGRATION_ROLE}','{COMMAND_ROLE}','SET')::int;"
+            f"select count(*) from pg_auth_members membership where "
+            f"membership.roleid=(select oid from pg_roles where rolname='{MIGRATION_ROLE}') "
+            f"and membership.member=(select oid from pg_roles where rolname='{EXECUTOR}') "
+            f"and membership.grantor=(select oid from pg_roles where rolname='{EXECUTOR}');"
             "select count(*) from information_schema.role_table_grants grants "
             "where grants.table_schema='public' and grants.table_name like 'avuhz\\_%' escape '\\' "
             "and grants.grantee in ('PUBLIC','anon','authenticated','service_role');"
         )
         lines = state.splitlines()
         self.assertIn(lines[0], ('search_path=', 'search_path=""'))
-        self.assertEqual(lines[1:], ["1", "16", "16", "16", "0", "0", "0"])
+        self.assertEqual(lines[1:], ["1", "16", "16", "16", "0", "0", "0", "0"])
 
-    def test_repair_replay_fails_closed(self):
+    def test_repair_replay_fails_closed_without_reopening_set_edge(self):
         self._run_sealed_chain()
-        self._apply(REPAIR.read_text(encoding="utf-8"), user="postgres")
+        self._apply(self._repair_sql(), user=EXECUTOR)
 
-        replay = self._apply(
-            REPAIR.read_text(encoding="utf-8"),
-            user="postgres",
-            check=False,
-        )
+        replay = self._apply(self._repair_sql(), user=EXECUTOR, check=False)
         self.assertNotEqual(replay.returncode, 0)
         self.assertIn("pre-repair state mismatch", replay.stderr.decode().lower())
+
+        _, edge_count, _ = self._psql(
+            f"select count(*) from pg_auth_members membership where "
+            f"membership.roleid=(select oid from pg_roles where rolname='{MIGRATION_ROLE}') "
+            f"and membership.member=(select oid from pg_roles where rolname='{EXECUTOR}') "
+            f"and membership.grantor=(select oid from pg_roles where rolname='{EXECUTOR}');"
+        )
+        self.assertEqual(edge_count, "0")
 
 
 if __name__ == "__main__":

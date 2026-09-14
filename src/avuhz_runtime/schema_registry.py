@@ -68,6 +68,7 @@ SCHEMA_FILES = (
     'orchestration/outbox-delivery.schema.json',
     'orchestration/engineering-dry-run-evidence.schema.json',
     'orchestration/bounded-authorization-plan.schema.json',
+    'orchestration/bounded-authorization-plan-v2.schema.json',
     'orchestration/bounded-authorization-plan-approval.schema.json',
     'orchestration/bounded-authorization-plan-progress.schema.json',
     'read-models/engagement-summary.schema.json',

@@ -23,7 +23,8 @@ V19_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v19.plan
 V19_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v19.progress.json"
 V19_APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v19.approval.json"
 V16_EVIDENCE_PATH = ROOT / "contracts/plans/v1/development-auth-step1-v16-success.evidence.json"
-AUTH_PLAN_SCHEMA_PATH = ROOT / "contracts/schemas/v1/orchestration/bounded-authorization-plan.schema.json"
+AUTH_PLAN_SCHEMA_V1_PATH = ROOT / "contracts/schemas/v1/orchestration/bounded-authorization-plan.schema.json"
+AUTH_PLAN_SCHEMA_V2_PATH = ROOT / "contracts/schemas/v1/orchestration/bounded-authorization-plan-v2.schema.json"
 
 PLAN_ID = "f616853e-5395-4210-8f94-c9b56a4235a5"
 PROGRESS_ID = "2de97dca-8e7c-424b-8272-990e3f81ebac"
@@ -38,6 +39,7 @@ CREATED_AT = "2026-09-14T10:49:44Z"
 SYNTHETIC_EMAIL = "avuhz-development-synthetic@example.invalid"
 ADMIN_PROCEDURE_TEXT = "Supabase Admin createUser email-only confirmed path"
 CREDENTIAL_BINDING = "binding.development.auth.v20.server-admin-credential-class"
+NEW_CREDENTIAL_CLASS = "SUPABASE_AUTH_ADMIN_EPHEMERAL"
 
 
 def load(path: Path) -> dict:
@@ -51,6 +53,13 @@ def raw_digest(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def credential_classes(schema: dict) -> list[str]:
+    return (
+        schema["$defs"]["credentialPolicy"]["properties"]
+        ["allowed_classes"]["items"]["enum"]
+    )
+
+
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
@@ -58,7 +67,8 @@ def main() -> int:
     v19_progress = load(V19_PROGRESS_PATH)
     v19_approval = load(V19_APPROVAL_PATH)
     v16_evidence = load(V16_EVIDENCE_PATH)
-    auth_plan_schema = load(AUTH_PLAN_SCHEMA_PATH)
+    auth_plan_schema_v1 = load(AUTH_PLAN_SCHEMA_V1_PATH)
+    auth_plan_schema_v2 = load(AUTH_PLAN_SCHEMA_V2_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
@@ -86,19 +96,19 @@ def main() -> int:
     assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
     assert plan["ordered_step_ids"] == [STEP_ID]
 
-    recognized_credentials = (
-        auth_plan_schema["$defs"]["credentialPolicy"]["properties"]
-        ["allowed_classes"]["items"]["enum"]
-    )
-    assert recognized_credentials == [
+    legacy_classes = credential_classes(auth_plan_schema_v1)
+    assert legacy_classes == [
         "NONE",
         "OWNER_INTERACTIVE_SESSION",
         "MIGRATION_IDENTITY",
         "SYNTHETIC_IDENTITY",
         "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN",
     ]
-    assert "SERVER_ADMIN_CREDENTIAL" not in recognized_credentials
-    assert "SERVICE_ROLE" not in recognized_credentials
+    current_classes = credential_classes(auth_plan_schema_v2)
+    assert current_classes == legacy_classes + [NEW_CREDENTIAL_CLASS]
+    for classes in (legacy_classes, current_classes):
+        assert "SERVER_ADMIN_CREDENTIAL" not in classes
+        assert "SERVICE_ROLE" not in classes
 
     step = plan["steps"][0]
     assert step["resource"] == v19_plan["steps"][0]["resource"]
@@ -115,6 +125,7 @@ def main() -> int:
         "allowed_classes": ["NONE"],
         "values_stored": False,
     }
+    assert "ephemeral_handling" not in step["credential_policy"]
     assert step["unresolved_bindings"] == [CREDENTIAL_BINDING]
     assert SYNTHETIC_EMAIL in step["expected_postcondition"]
     assert ADMIN_PROCEDURE_TEXT in step["expected_postcondition"]
@@ -198,8 +209,9 @@ def main() -> int:
 
     print(
         "DEVELOPMENT_AUTH_V20_BLOCKED=PASS "
-        "(Admin createUser route fixed in plan digest; v16 evidence remains bound; "
-        "server-admin credential class intentionally unresolved; no approval/provider authority)"
+        "(historical v20 blocker remains immutable under authorization-plan v2; "
+        "new Auth-admin class is available only to a fresh forward-only plan; "
+        "v20 has no approval/provider authority)"
     )
     return 0
 

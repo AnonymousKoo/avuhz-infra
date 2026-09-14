@@ -37,11 +37,14 @@ SEAL_BLOB = "65952c5900a6b73f8f413fe21f3c124c2f3e182e"
 AUTHORIZED_PROGRESS = "sha256:d0693b0bd0a3973d962e5c387c8cd9830d2405b18b60f34b5430ee952a197a88"
 STEP1_SUCCESS = "sha256:ccce61683282152c55225147555d7e6a54ed33218bf02c1a01dc25f06ad5f188"
 SEALED_STATE = "sha256:1a1e1ad3aeb6f4a9c92e17b0a4b82b1c150862f3d6360aeeafee87676d94fbfb"
-SUCCESS_PROGRESS = "sha256:16dbf6794a6735f243467970baaa1babdc1274ea6cea2d66c246ad2c96d8de5a"
-STEP2_AUTHORIZED_PROGRESS = "sha256:179fc8f4f0cfe87b1df83dca643ef4c54bfbe335e0fbf7bc62d689033710a088"
+STEP1_SUCCESS_PROGRESS = "sha256:16dbf6794a6735f243467970baaa1babdc1274ea6cea2d66c246ad2c96d8de5a"
+STEP2_SUCCESS = "sha256:7274e95367bf2c4567e47a7ee48055647aca220bc14ca7a513255be2b09946b3"
+TENANT_ISOLATION_STATE = "sha256:ddb68cd3c2f85bc565cf54752290da896e5604feafc5d8056fdbcc58099f389d"
+FINAL_PROGRESS = "sha256:8564b668da612c02b111c96390e1d7fe66f5f78d88e553bb018edb5d12c23d72"
 T1A = "2026-09-14T01:43:30Z"
 T1O = "2026-09-14T02:11:34Z"
 T2A = "2026-09-14T03:13:10Z"
+T2O = "2026-09-14T03:45:26Z"
 
 
 def load(path: Path) -> dict:
@@ -93,7 +96,7 @@ def request(plan: dict) -> dict:
 
 
 class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
-    def test_exact_step1_authorization_and_success_transition(self) -> None:
+    def test_exact_step1_history_remains_valid_after_v3_completion(self) -> None:
         plan = load(PLAN_PATH)
         approval = load(APPROVAL_PATH)
         initial = load(INITIAL_PROGRESS_PATH)
@@ -103,9 +106,8 @@ class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
         validate_plan(plan, SCHEMA_ROOT)
         validate_progress(plan, initial, SCHEMA_ROOT)
         validate_progress(plan, canonical, SCHEMA_ROOT)
-        validate_approval(plan, approval, SCHEMA_ROOT, T1A)
-        validate_approval(plan, approval, SCHEMA_ROOT, T1O)
-        validate_approval(plan, approval, SCHEMA_ROOT, T2A)
+        for observed_at in (T1A, T1O, T2A, T2O):
+            validate_approval(plan, approval, SCHEMA_ROOT, observed_at)
 
         self.assertEqual(plan["target"]["project_reference"], PROJECT)
         self.assertEqual(plan["target"]["responsibility"], "DATA")
@@ -134,35 +136,30 @@ class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
         self.assertEqual(evidence["outcome"], "SUCCEEDED_VERIFIED")
         self.assertEqual(evidence["recorded_at"], T1O)
         self.assertEqual(evidence["resource_version"], f"gitblob.{SEAL_BLOB}")
-        self.assertFalse(evidence["provider_observation"]["migration_role_can_createrole"])
-        self.assertFalse(evidence["provider_observation"]["postgres_can_set_migration_role"])
-        self.assertFalse(evidence["provider_observation"]["migration_can_set_command_role"])
-        self.assertEqual(evidence["provider_observation"]["migration_membership_edge_count"], 2)
-        self.assertEqual(evidence["provider_observation"]["migration_direct_public_acl_count"], 0)
-        self.assertEqual(evidence["provider_observation"]["migration_delegated_public_acl_count"], 0)
-        self.assertEqual(evidence["provider_observation"]["explicit_postgres_set_edge_count"], 0)
-        self.assertEqual(evidence["provider_observation"]["table_count"], 16)
-        self.assertEqual(evidence["provider_observation"]["rls_enabled_count"], 16)
-        self.assertEqual(evidence["provider_observation"]["tenant_policy_count"], 16)
-        self.assertEqual(evidence["provider_observation"]["exposed_role_privileged_table_count"], 0)
-        self.assertEqual(evidence["provider_observation"]["applied_migration_count"], 1)
-        self.assertEqual(
-            evidence["verification_observation"]["security_advisor_finding_codes"],
-            ["function_search_path_mutable"],
-        )
-        self.assertFalse(evidence["verification_observation"]["security_advisor_repair_performed"])
-        self.assertTrue(
-            evidence["verification_observation"]["security_advisor_deferred_to_separate_authorization"]
-        )
-        self.assertFalse(evidence["security_state"]["credential_retained"])
-        self.assertFalse(evidence["security_state"]["raw_provider_payload_retained"])
-        self.assertFalse(evidence["security_state"]["pii_retained"])
-        self.assertFalse(evidence["security_state"]["row_data_read"])
-        self.assertFalse(evidence["security_state"]["row_data_mutated"])
-        self.assertFalse(evidence["security_state"]["auth_resource_touched"])
-        self.assertFalse(evidence["security_state"]["staging_resource_touched"])
-        self.assertFalse(evidence["security_state"]["production_resource_touched"])
-        self.assertFalse(evidence["security_state"]["search_path_repair_performed"])
+        provider = evidence["provider_observation"]
+        self.assertFalse(provider["migration_role_can_createrole"])
+        self.assertFalse(provider["postgres_can_set_migration_role"])
+        self.assertFalse(provider["migration_can_set_command_role"])
+        self.assertEqual(provider["migration_membership_edge_count"], 2)
+        self.assertEqual(provider["migration_direct_public_acl_count"], 0)
+        self.assertEqual(provider["migration_delegated_public_acl_count"], 0)
+        self.assertEqual(provider["explicit_postgres_set_edge_count"], 0)
+        self.assertEqual(provider["table_count"], 16)
+        self.assertEqual(provider["rls_enabled_count"], 16)
+        self.assertEqual(provider["tenant_policy_count"], 16)
+        self.assertEqual(provider["exposed_role_privileged_table_count"], 0)
+        self.assertEqual(provider["applied_migration_count"], 1)
+
+        security = evidence["security_state"]
+        self.assertFalse(security["credential_retained"])
+        self.assertFalse(security["raw_provider_payload_retained"])
+        self.assertFalse(security["pii_retained"])
+        self.assertFalse(security["row_data_read"])
+        self.assertFalse(security["row_data_mutated"])
+        self.assertFalse(security["auth_resource_touched"])
+        self.assertFalse(security["staging_resource_touched"])
+        self.assertFalse(security["production_resource_touched"])
+        self.assertFalse(security["search_path_repair_performed"])
 
         sealed_state = {
             "project_reference": PROJECT,
@@ -239,17 +236,22 @@ class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
 
         historical = copy.deepcopy(canonical)
         historical["record_version"] = 3
+        historical["overall_state"] = "IN_PROGRESS"
         historical["updated_at"] = T1O
-        historical["progress_digest"] = SUCCESS_PROGRESS
+        historical["progress_digest"] = STEP1_SUCCESS_PROGRESS
         historical_step2 = historical["step_states"][1]
         historical_step2["authorization_state"] = "PENDING"
+        historical_step2["execution_state"] = "NOT_STARTED"
+        historical_step2["verification_state"] = "NOT_STARTED"
+        historical_step2["authorization_consumed"] = False
+        historical_step2["evidence"] = []
+        historical_step2["observed_postcondition"] = None
+        historical_step2["safe_error_code"] = None
         historical_step2["binding_assertions"] = []
         validate_progress(plan, historical, SCHEMA_ROOT)
 
         self.assertEqual(completed, historical)
-        self.assertEqual(historical["record_version"], 3)
-        self.assertEqual(historical["overall_state"], "IN_PROGRESS")
-        self.assertEqual(historical["progress_digest"], SUCCESS_PROGRESS)
+        self.assertEqual(historical["progress_digest"], STEP1_SUCCESS_PROGRESS)
 
         step1 = canonical["step_states"][0]
         self.assertEqual(step1, historical["step_states"][0])
@@ -259,16 +261,22 @@ class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
         self.assertTrue(step1["authorization_consumed"])
         self.assertEqual(step1["evidence"][0]["evidence_digest"], STEP1_SUCCESS)
 
-        self.assertEqual(canonical["record_version"], 4)
-        self.assertEqual(canonical["progress_digest"], STEP2_AUTHORIZED_PROGRESS)
+        self.assertEqual(canonical["record_version"], 5)
+        self.assertEqual(canonical["overall_state"], "COMPLETED")
+        self.assertEqual(canonical["progress_digest"], FINAL_PROGRESS)
         step2 = canonical["step_states"][1]
-        self.assertEqual(step2["authorization_state"], "AUTHORIZED")
-        self.assertEqual(step2["execution_state"], "NOT_STARTED")
-        self.assertEqual(step2["verification_state"], "NOT_STARTED")
-        self.assertFalse(step2["authorization_consumed"])
-        self.assertEqual(step2["evidence"], [])
+        self.assertEqual(step2["authorization_state"], "CONSUMED")
+        self.assertEqual(step2["execution_state"], "SUCCEEDED")
+        self.assertEqual(step2["verification_state"], "PASS")
+        self.assertTrue(step2["authorization_consumed"])
+        self.assertEqual(step2["evidence"][0]["evidence_digest"], STEP2_SUCCESS)
         self.assertEqual(step2["binding_assertions"][0]["evidence_digest"], STEP1_SUCCESS)
         self.assertEqual(step2["binding_assertions"][0]["value_digest"], SEALED_STATE)
+        self.assertEqual(step2["binding_assertions"][1]["evidence_digest"], STEP2_SUCCESS)
+        self.assertEqual(
+            step2["binding_assertions"][1]["value_digest"],
+            TENANT_ISOLATION_STATE,
+        )
 
 
 if __name__ == "__main__":

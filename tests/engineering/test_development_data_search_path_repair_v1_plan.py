@@ -39,7 +39,9 @@ REPAIR_REFERENCE_DIGEST = "sha256:26550364f532b1eeb8017bd0d5b937bb1db2c86a74b44d
 V3_STEP1_EVIDENCE = "sha256:ccce61683282152c55225147555d7e6a54ed33218bf02c1a01dc25f06ad5f188"
 SEALED_STATE = "sha256:1a1e1ad3aeb6f4a9c92e17b0a4b82b1c150862f3d6360aeeafee87676d94fbfb"
 SEALED_STATE_REFERENCE_DIGEST = "sha256:fd93676cac2752a7b116547e69bac109b5a75b19717af73b62033803b3861cc4"
-V3_STEP2_AUTHORIZED_PROGRESS = "sha256:179fc8f4f0cfe87b1df83dca643ef4c54bfbe335e0fbf7bc62d689033710a088"
+V3_STEP2_SUCCESS = "sha256:7274e95367bf2c4567e47a7ee48055647aca220bc14ca7a513255be2b09946b3"
+V3_TENANT_ISOLATION_STATE = "sha256:ddb68cd3c2f85bc565cf54752290da896e5604feafc5d8056fdbcc58099f389d"
+V3_FINAL_PROGRESS = "sha256:8564b668da612c02b111c96390e1d7fe66f5f78d88e553bb018edb5d12c23d72"
 CREATED_AT = "2026-09-14T02:35:38Z"
 WINDOW_START = "2026-09-14T02:40:00Z"
 WINDOW_END = "2026-09-14T06:40:00Z"
@@ -61,7 +63,7 @@ def git_blob_sha(path: Path) -> str:
 
 
 class DevelopmentDataSearchPathRepairV1PlanTest(unittest.TestCase):
-    def test_exact_repair_plan_is_bound_but_not_authorized_for_execution(self) -> None:
+    def test_exact_repair_plan_and_subsequent_v3_history_remain_bound(self) -> None:
         plan = load(PLAN_PATH)
         approval = load(APPROVAL_PATH)
         progress = load(PROGRESS_PATH)
@@ -154,21 +156,30 @@ class DevelopmentDataSearchPathRepairV1PlanTest(unittest.TestCase):
             v3_evidence["verification_observation"]["security_advisor_repair_performed"]
         )
 
-        self.assertEqual(v3_execution["record_version"], 4)
-        self.assertEqual(v3_execution["progress_digest"], V3_STEP2_AUTHORIZED_PROGRESS)
+        self.assertEqual(v3_execution["record_version"], 5)
+        self.assertEqual(v3_execution["overall_state"], "COMPLETED")
+        self.assertEqual(v3_execution["progress_digest"], V3_FINAL_PROGRESS)
         self.assertEqual(v3_execution["step_states"][0]["authorization_state"], "CONSUMED")
         self.assertEqual(v3_execution["step_states"][0]["verification_state"], "PASS")
         step2 = v3_execution["step_states"][1]
-        self.assertEqual(step2["authorization_state"], "AUTHORIZED")
-        self.assertEqual(step2["execution_state"], "NOT_STARTED")
-        self.assertEqual(step2["verification_state"], "NOT_STARTED")
-        self.assertFalse(step2["authorization_consumed"])
-        self.assertEqual(step2["evidence"], [])
+        self.assertEqual(step2["authorization_state"], "CONSUMED")
+        self.assertEqual(step2["execution_state"], "SUCCEEDED")
+        self.assertEqual(step2["verification_state"], "PASS")
+        self.assertTrue(step2["authorization_consumed"])
+        self.assertEqual(step2["evidence"][0]["evidence_digest"], V3_STEP2_SUCCESS)
         self.assertEqual(
             step2["binding_assertions"][0]["evidence_digest"],
             V3_STEP1_EVIDENCE,
         )
         self.assertEqual(step2["binding_assertions"][0]["value_digest"], SEALED_STATE)
+        self.assertEqual(
+            step2["binding_assertions"][1]["evidence_digest"],
+            V3_STEP2_SUCCESS,
+        )
+        self.assertEqual(
+            step2["binding_assertions"][1]["value_digest"],
+            V3_TENANT_ISOLATION_STATE,
+        )
 
         sql = REPAIR_PATH.read_text(encoding="utf-8").lower()
         self.assertEqual(

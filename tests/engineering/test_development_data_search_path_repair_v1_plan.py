@@ -39,6 +39,7 @@ REPAIR_REFERENCE_DIGEST = "sha256:26550364f532b1eeb8017bd0d5b937bb1db2c86a74b44d
 V3_STEP1_EVIDENCE = "sha256:ccce61683282152c55225147555d7e6a54ed33218bf02c1a01dc25f06ad5f188"
 SEALED_STATE = "sha256:1a1e1ad3aeb6f4a9c92e17b0a4b82b1c150862f3d6360aeeafee87676d94fbfb"
 SEALED_STATE_REFERENCE_DIGEST = "sha256:fd93676cac2752a7b116547e69bac109b5a75b19717af73b62033803b3861cc4"
+V3_STEP2_AUTHORIZED_PROGRESS = "sha256:179fc8f4f0cfe87b1df83dca643ef4c54bfbe335e0fbf7bc62d689033710a088"
 CREATED_AT = "2026-09-14T02:35:38Z"
 WINDOW_START = "2026-09-14T02:40:00Z"
 WINDOW_END = "2026-09-14T06:40:00Z"
@@ -86,10 +87,7 @@ class DevelopmentDataSearchPathRepairV1PlanTest(unittest.TestCase):
         step = plan["steps"][0]
         self.assertEqual(step["step_id"], STEP_ID)
         self.assertEqual(step["execution_class"], "PROVIDER_MUTATION")
-        self.assertEqual(
-            step["operation"],
-            "provider.resource.repair-function-search-path",
-        )
+        self.assertEqual(step["operation"], "provider.resource.repair-function-search-path")
         self.assertEqual(step["dependency_step_ids"], [])
         self.assertEqual(step["resource"]["exact_version"], REPAIR_REFERENCE)
         self.assertIsNone(step["resource"]["exact_digest"])
@@ -105,7 +103,6 @@ class DevelopmentDataSearchPathRepairV1PlanTest(unittest.TestCase):
                 }
             ],
         )
-
         self.assertIn("persistent-role-membership", step["prohibited_actions"])
         self.assertIn("v3.step2.execute", step["prohibited_actions"])
         self.assertIn("security-advisor.finding-persists", step["stop_conditions"])
@@ -157,11 +154,21 @@ class DevelopmentDataSearchPathRepairV1PlanTest(unittest.TestCase):
             v3_evidence["verification_observation"]["security_advisor_repair_performed"]
         )
 
+        self.assertEqual(v3_execution["record_version"], 4)
+        self.assertEqual(v3_execution["progress_digest"], V3_STEP2_AUTHORIZED_PROGRESS)
         self.assertEqual(v3_execution["step_states"][0]["authorization_state"], "CONSUMED")
         self.assertEqual(v3_execution["step_states"][0]["verification_state"], "PASS")
-        self.assertEqual(v3_execution["step_states"][1]["authorization_state"], "PENDING")
-        self.assertEqual(v3_execution["step_states"][1]["execution_state"], "NOT_STARTED")
-        self.assertEqual(v3_execution["step_states"][1]["verification_state"], "NOT_STARTED")
+        step2 = v3_execution["step_states"][1]
+        self.assertEqual(step2["authorization_state"], "AUTHORIZED")
+        self.assertEqual(step2["execution_state"], "NOT_STARTED")
+        self.assertEqual(step2["verification_state"], "NOT_STARTED")
+        self.assertFalse(step2["authorization_consumed"])
+        self.assertEqual(step2["evidence"], [])
+        self.assertEqual(
+            step2["binding_assertions"][0]["evidence_digest"],
+            V3_STEP1_EVIDENCE,
+        )
+        self.assertEqual(step2["binding_assertions"][0]["value_digest"], SEALED_STATE)
 
         sql = REPAIR_PATH.read_text(encoding="utf-8").lower()
         self.assertEqual(
@@ -182,17 +189,11 @@ class DevelopmentDataSearchPathRepairV1PlanTest(unittest.TestCase):
         self.assertEqual(approval["effective_at"], WINDOW_START)
         self.assertEqual(approval["expires_at"], WINDOW_END)
 
-        expected_progress = initial_progress(
-            plan,
-            SCHEMA_ROOT,
-            PROGRESS_ID,
-            CREATED_AT,
-        )
+        expected_progress = initial_progress(plan, SCHEMA_ROOT, PROGRESS_ID, CREATED_AT)
         self.assertEqual(progress, expected_progress)
         self.assertEqual(progress["progress_digest"], INITIAL_PROGRESS_DIGEST)
         self.assertEqual(progress["record_version"], 1)
         self.assertEqual(progress["overall_state"], "NOT_STARTED")
-
         state = progress["step_states"][0]
         self.assertEqual(state["authorization_state"], "PENDING")
         self.assertEqual(state["execution_state"], "NOT_STARTED")

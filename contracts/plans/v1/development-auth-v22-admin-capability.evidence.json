@@ -1,0 +1,22 @@
+{
+  "evidence_type": "auth.admin-executor-capability.observed",
+  "observation_only": true,
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "plan_id": "9dec1b7c-198b-4590-9750-80e68106db98",
+  "plan_version": 22,
+  "step_id": "development.auth.v22.step.01.bind-synthetic-tenant-app-metadata",
+  "observed_at": "2026-09-14T20:49:42Z",
+  "source": {
+    "workflow_run_id": 34895225473,
+    "workflow_head_sha": "58437583f582d10f184f987c023b9536cc32012f",
+    "workflow_conclusion": "success",
+    "provider_mutation_attempted": false,
+    "credential_material_observed_by_control_plane": false
+  },
+  "configuration_digest": "sha256:ed3be015f92dd36839403f24ac31cded47a9521f85643a1a1cf7f1382c103d50",
+  "result": "PASS",
+  "evidence_digest": "sha256:6f0d17815581401b01bf60a296fc79381141d7747b4f13d57acd1055f17b5160"
+}

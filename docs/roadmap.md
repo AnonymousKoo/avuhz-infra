@@ -15,7 +15,7 @@ Ordered milestones from the separation checkpoint:
    2. Implement local production-shaped command/query service packaging and bounded health surfaces. — COMPLETE
    3. Implement the local transactional outbox delivery worker with a fake local sink. — COMPLETE
    4. Implement the local CI artifact/evidence pipeline and autonomous dry-run harness. — COMPLETE
-   5. Establish and certify DEVELOPMENT provider foundations. — FOUNDATION COMPLETE
+   5. Establish owner-approved AUTH/DATA/environment registry values and certify DEVELOPMENT provider foundations. — FOUNDATION COMPLETE
       - DEVELOPMENT AUTH project separation and migration identity — COMPLETE
       - Hardened custom access-token hook creation and ACL — COMPLETE
       - AUTH migration-identity seal and disabled-hook verification — COMPLETE through AUTH v16

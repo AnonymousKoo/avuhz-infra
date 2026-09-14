@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import sys
@@ -37,8 +38,10 @@ AUTHORIZED_PROGRESS = "sha256:d0693b0bd0a3973d962e5c387c8cd9830d2405b18b60f34b54
 STEP1_SUCCESS = "sha256:ccce61683282152c55225147555d7e6a54ed33218bf02c1a01dc25f06ad5f188"
 SEALED_STATE = "sha256:1a1e1ad3aeb6f4a9c92e17b0a4b82b1c150862f3d6360aeeafee87676d94fbfb"
 SUCCESS_PROGRESS = "sha256:16dbf6794a6735f243467970baaa1babdc1274ea6cea2d66c246ad2c96d8de5a"
+STEP2_AUTHORIZED_PROGRESS = "sha256:179fc8f4f0cfe87b1df83dca643ef4c54bfbe335e0fbf7bc62d689033710a088"
 T1A = "2026-09-14T01:43:30Z"
 T1O = "2026-09-14T02:11:34Z"
+T2A = "2026-09-14T03:13:10Z"
 
 
 def load(path: Path) -> dict:
@@ -102,6 +105,7 @@ class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
         validate_progress(plan, canonical, SCHEMA_ROOT)
         validate_approval(plan, approval, SCHEMA_ROOT, T1A)
         validate_approval(plan, approval, SCHEMA_ROOT, T1O)
+        validate_approval(plan, approval, SCHEMA_ROOT, T2A)
 
         self.assertEqual(plan["target"]["project_reference"], PROJECT)
         self.assertEqual(plan["target"]["responsibility"], "DATA")
@@ -146,13 +150,9 @@ class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
             evidence["verification_observation"]["security_advisor_finding_codes"],
             ["function_search_path_mutable"],
         )
-        self.assertFalse(
-            evidence["verification_observation"]["security_advisor_repair_performed"]
-        )
+        self.assertFalse(evidence["verification_observation"]["security_advisor_repair_performed"])
         self.assertTrue(
-            evidence["verification_observation"][
-                "security_advisor_deferred_to_separate_authorization"
-            ]
+            evidence["verification_observation"]["security_advisor_deferred_to_separate_authorization"]
         )
         self.assertFalse(evidence["security_state"]["credential_retained"])
         self.assertFalse(evidence["security_state"]["raw_provider_payload_retained"])
@@ -237,29 +237,38 @@ class DevelopmentDataV3Step1OutcomeTest(unittest.TestCase):
             binding_assertions=[produced_binding],
         )
 
-        self.assertEqual(completed, canonical)
-        self.assertEqual(canonical["record_version"], 3)
-        self.assertEqual(canonical["overall_state"], "IN_PROGRESS")
-        self.assertEqual(canonical["progress_digest"], SUCCESS_PROGRESS)
+        historical = copy.deepcopy(canonical)
+        historical["record_version"] = 3
+        historical["updated_at"] = T1O
+        historical["progress_digest"] = SUCCESS_PROGRESS
+        historical_step2 = historical["step_states"][1]
+        historical_step2["authorization_state"] = "PENDING"
+        historical_step2["binding_assertions"] = []
+        validate_progress(plan, historical, SCHEMA_ROOT)
+
+        self.assertEqual(completed, historical)
+        self.assertEqual(historical["record_version"], 3)
+        self.assertEqual(historical["overall_state"], "IN_PROGRESS")
+        self.assertEqual(historical["progress_digest"], SUCCESS_PROGRESS)
 
         step1 = canonical["step_states"][0]
+        self.assertEqual(step1, historical["step_states"][0])
         self.assertEqual(step1["authorization_state"], "CONSUMED")
         self.assertEqual(step1["execution_state"], "SUCCEEDED")
         self.assertEqual(step1["verification_state"], "PASS")
         self.assertTrue(step1["authorization_consumed"])
         self.assertEqual(step1["evidence"][0]["evidence_digest"], STEP1_SUCCESS)
-        self.assertEqual(
-            [item["binding_id"] for item in step1["binding_assertions"]],
-            ["binding.development.data.v3.migration-identity-sealed"],
-        )
 
+        self.assertEqual(canonical["record_version"], 4)
+        self.assertEqual(canonical["progress_digest"], STEP2_AUTHORIZED_PROGRESS)
         step2 = canonical["step_states"][1]
-        self.assertEqual(step2["authorization_state"], "PENDING")
+        self.assertEqual(step2["authorization_state"], "AUTHORIZED")
         self.assertEqual(step2["execution_state"], "NOT_STARTED")
         self.assertEqual(step2["verification_state"], "NOT_STARTED")
         self.assertFalse(step2["authorization_consumed"])
         self.assertEqual(step2["evidence"], [])
-        self.assertEqual(step2["binding_assertions"], [])
+        self.assertEqual(step2["binding_assertions"][0]["evidence_digest"], STEP1_SUCCESS)
+        self.assertEqual(step2["binding_assertions"][0]["value_digest"], SEALED_STATE)
 
 
 if __name__ == "__main__":

@@ -3,21 +3,42 @@
   "plan_id": "02640972-5a93-4286-9ce9-e0ffed45279e",
   "plan_version": 1,
   "plan_digest": "sha256:23f2ceb93120ab848ba614cf435f1a612913bc3d386eca0af67eb81563f51f47",
-  "record_version": 2,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development.data.search-path-repair.v1.step.01.repair-outbox-function-search-path",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.outbox-search-path.repaired",
+          "evidence_reference": "provider.execution.data-search-path-repair-v1.step1.attempt1.verified",
+          "evidence_digest": "sha256:287b42893e88b0e4402fe031b982e2353d41a15b9b09240904356f26283523ee",
+          "recorded_at": "2026-09-14T03:01:04Z"
+        }
+      ],
+      "observed_postcondition": "The exact bound repair artifact pins public.avuhz_guard_outbox_transition() to an empty search_path, uses only one transactional postgres-granted SET edge to the existing sealed migration owner, revokes that edge before commit, restores the sealed role-membership envelope, preserves the function body/owner/ACL/trigger and the 16-table RLS tenant-isolation surface, and post-execution verification confirms the prior function_search_path_mutable finding is absent.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.data.search-path-repair.v1.repaired-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.outbox-search-path.repaired",
+          "evidence_digest": "sha256:287b42893e88b0e4402fe031b982e2353d41a15b9b09240904356f26283523ee",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:d51cf99a1bc026c9536cf9018adba3f58fa49ec7cbabde3d38ca26132343affb",
+          "recorded_at": "2026-09-14T03:01:04Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-14T02:47:01Z",
-  "progress_digest": "sha256:69afbed782950d379be57ac1f355480bb676acd4d0e937ddcc363c432b79ac2d"
+  "updated_at": "2026-09-14T03:01:04Z",
+  "progress_digest": "sha256:1c004e001271a770d3f8caca9da33f403837eb17fc1f95eb19e11224a240e30f"
 }

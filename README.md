@@ -44,7 +44,7 @@ The runner is local-only, removes configured remote DATA/AUTH/provider variables
 
 ## Render development service preparation
 
-The DEVELOPMENT entry point is deployed to the registered Render service but remains intentionally fail-closed for dependency readiness. It reuses the existing governed command/query application and never uses the local static identity resolver. Current canonical code still injects unavailable hosted DATA and identity dependencies, so `/health/live` may return `200` while `/health/ready` remains `503` and command/query requests fail at trusted identity resolution.
+The DEVELOPMENT entry point is deployed to the registered Render service but remains intentionally fail-closed for dependency readiness. It reuses the existing governed command/query application and never uses the local static identity resolver. Current canonical code still injects unavailable hosted DATA and identity dependencies: `/health/live` may return `200`, while readiness remains `503` and command/query requests fail at trusted identity resolution.
 
 - Render build command: `python -m pip install .`
 - Render start command: `avuhz-service-development`

@@ -15,7 +15,6 @@ from avuhz_engineering.authorization_plan import (
     validate_plan,
     validate_progress,
 )
-from avuhz_runtime.implementation_handoff import canonical_digest
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v20.plan.json"
@@ -28,21 +27,16 @@ AUTH_PLAN_SCHEMA_PATH = ROOT / "contracts/schemas/v1/orchestration/bounded-autho
 
 PLAN_ID = "f616853e-5395-4210-8f94-c9b56a4235a5"
 PROGRESS_ID = "2de97dca-8e7c-424b-8272-990e3f81ebac"
-PLAN_DIGEST = "sha256:30953b8fdb7b47369441787e254869c62b66eeee9621029a2f855525e64a1581"
-PROGRESS_DIGEST = "sha256:d29b22a6c0f2a14f5aaaf838bdb146671ac4b04c5bb3f16c83ee91c66cae2edb"
+PLAN_DIGEST = "sha256:3870b6e83f4a7983e2a1fa668066790f4fd5ef77a70e4e801c081ae2459f509b"
+PROGRESS_DIGEST = "sha256:60c1818e6951a6493c08111a485ffdf3820b3ec9cc7c923b95a4ea5d3d79ec97"
 V19_PLAN_DIGEST = "sha256:4e6bb3a76b4d15b7993b2567c6743497b285bbecd03100f7ce73bbbc7a0cc72e"
 V19_PROGRESS_DIGEST = "sha256:ef3d232916d7be0d4a65e94d0bbfaa635258c937ae58bfa038fd43a4bf185fa8"
 V19_APPROVAL_DIGEST = "sha256:3e31e523d03220c8301a76430dbd3d1c7a72538b711661b187ea063c3306e6d9"
 V16_EVIDENCE_DIGEST = "sha256:0cfa1a3515e6496e9bc215de4579d5e4ff5b46f0299227b60708dc72ff2fb194"
-V16_DEPLOYED_STATE_DIGEST = "sha256:97f18e0a729762f9e9c7d72507a489aa828bbe03a138b25acfadcd72dd43a735"
-V16_DEPLOYED_STATE_VALUE_DIGEST = "sha256:2fc081713e1dd9288b6633eb484a80e157444241992588251f7f858fa06a0d9d"
 STEP_ID = "development.auth.v20.step.01.create-synthetic-identity-admin"
 CREATED_AT = "2026-09-14T10:49:44Z"
 SYNTHETIC_EMAIL = "avuhz-development-synthetic@example.invalid"
-SYNTHETIC_EMAIL_DIGEST = "sha256:deaa8eccae27d7cd9c51cebd4ba3bfc3a8d2de415a10c64af4f7c35097cd75ea"
-SYNTHETIC_EMAIL_VALUE_DIGEST = "sha256:64d37516d6c00b2d292707f6dac3feb06df3bd23679237628e741bc860ed872d"
-ADMIN_PROCEDURE = "procedure.supabase.auth.admin.create-user.email-only-confirmed"
-ADMIN_PROCEDURE_DIGEST = "sha256:a031db2804de8d98ff27261eb2bd4f730aa4f2b2587d90dd843f3c709a6e7219"
+ADMIN_PROCEDURE_TEXT = "Supabase Admin createUser email-only confirmed path"
 CREDENTIAL_BINDING = "binding.development.auth.v20.server-admin-credential-class"
 
 
@@ -110,7 +104,12 @@ def main() -> int:
     assert step["resource"] == v19_plan["steps"][0]["resource"]
     assert step["operation"] == v19_plan["steps"][0]["operation"] == "provider.auth-identity.create-one"
     assert step["execution_class"] == "PROVIDER_MUTATION"
-    assert step["required_evidence"] == v19_plan["steps"][0]["required_evidence"]
+    assert step["required_evidence"] == v19_plan["steps"][0]["required_evidence"] == [{
+        "evidence_type": "hook.v2.disabled-acl.verified",
+        "source_step_id": None,
+        "binding_state": "BOUND",
+        "exact_digest": V16_EVIDENCE_DIGEST,
+    }]
     assert step["credential_policy"] == {
         "permitted": False,
         "allowed_classes": ["NONE"],
@@ -118,7 +117,7 @@ def main() -> int:
     }
     assert step["unresolved_bindings"] == [CREDENTIAL_BINDING]
     assert SYNTHETIC_EMAIL in step["expected_postcondition"]
-    assert "Supabase Admin createUser email-only confirmed path" in step["expected_postcondition"]
+    assert ADMIN_PROCEDURE_TEXT in step["expected_postcondition"]
 
     for prohibited in (
         "credential.persist", "credential.expose", "credential.log",
@@ -133,28 +132,14 @@ def main() -> int:
     assert "v19.approval.reuse" in plan["prohibited_actions"]
     assert "provider.mutation" not in plan["prohibited_actions"]
 
-    by_id = {item["binding_id"]: item for item in step["binding_declarations"]}
-    assert by_id["binding.development.auth.v20.v16-disabled-hook-state"]["preapproval_value"] == {
-        "value": V16_DEPLOYED_STATE_DIGEST,
-        "exact_digest": V16_DEPLOYED_STATE_VALUE_DIGEST,
+    declarations = step["binding_declarations"]
+    assert all(item["phase"] != "PREAPPROVAL_BOUND" for item in declarations)
+    by_id = {item["binding_id"]: item for item in declarations}
+    assert set(by_id) == {
+        CREDENTIAL_BINDING,
+        "binding.development.auth.v20.identity-create-preflight",
+        "binding.development.auth.v20.synthetic-identity",
     }
-    procedure = by_id["binding.development.auth.v20.admin-create-procedure"]
-    assert procedure["phase"] == "PREAPPROVAL_BOUND"
-    assert procedure["value_class"] == "PROCEDURE_REFERENCE"
-    assert procedure["preapproval_value"] == {
-        "value": ADMIN_PROCEDURE,
-        "exact_digest": ADMIN_PROCEDURE_DIGEST,
-    }
-    assert canonical_digest(ADMIN_PROCEDURE) == ADMIN_PROCEDURE_DIGEST
-
-    email_binding = by_id["binding.development.auth.v20.synthetic-email"]
-    assert email_binding["preapproval_value"] == {
-        "value": SYNTHETIC_EMAIL_DIGEST,
-        "exact_digest": SYNTHETIC_EMAIL_VALUE_DIGEST,
-    }
-    assert "sha256:" + hashlib.sha256(SYNTHETIC_EMAIL.encode()).hexdigest() == SYNTHETIC_EMAIL_DIGEST
-    assert canonical_digest(SYNTHETIC_EMAIL_DIGEST) == SYNTHETIC_EMAIL_VALUE_DIGEST
-
     credential = by_id[CREDENTIAL_BINDING]
     assert credential == {
         "binding_id": CREDENTIAL_BINDING,
@@ -165,6 +150,12 @@ def main() -> int:
         "digest_policy": "PROHIBITED",
         "persistence_policy": "PROHIBITED",
     }
+    preflight = by_id["binding.development.auth.v20.identity-create-preflight"]
+    assert preflight["phase"] == "RESOLVED_BY_STEP_PREFLIGHT"
+    assert preflight["persistence_policy"] == "DIGEST_ONLY"
+    produced = by_id["binding.development.auth.v20.synthetic-identity"]
+    assert produced["phase"] == "PRODUCED_BY_CURRENT_STEP"
+    assert produced["persistence_policy"] == "DIGEST_ONLY"
 
     assert raw_digest(V16_EVIDENCE_PATH) == V16_EVIDENCE_DIGEST
     assert v16_evidence["outcome"] == "SUCCEEDED_VERIFIED"
@@ -207,8 +198,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT_AUTH_V20_BLOCKED=PASS "
-        "(forward-only Admin createUser route is exact; no password/metadata/token path; "
-        "server-admin credential class is intentionally unresolved; no approval or provider authority)"
+        "(Admin createUser route fixed in plan digest; v16 evidence remains bound; "
+        "server-admin credential class intentionally unresolved; no approval/provider authority)"
     )
     return 0
 

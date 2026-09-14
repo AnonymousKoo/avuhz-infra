@@ -3,8 +3,8 @@
   "plan_id": "f6ae6374-878e-4a84-9b33-3f5718ed01b9",
   "plan_version": 3,
   "plan_digest": "sha256:d958bb5cb4d12524ebfb3d748e025af64b8c32da6e77e17ca8559239f18e0eb8",
-  "record_version": 4,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development.data.v3.step.01.seal-migration-identity",
@@ -40,12 +40,19 @@
     },
     {
       "step_id": "development.data.v3.step.02.verify-tenant-isolation",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.tenant-isolation.verified",
+          "evidence_reference": "provider.execution.data-v3.step2.attempt1.verified",
+          "evidence_digest": "sha256:7274e95367bf2c4567e47a7ee48055647aca220bc14ca7a513255be2b09946b3",
+          "recorded_at": "2026-09-14T03:45:26Z"
+        }
+      ],
+      "observed_postcondition": "Read-only verification proves exactly 16 Avuhz tables, RLS on all 16, one tenant-isolation policy per table, no Avuhz table grants to PUBLIC, anon, authenticated, or service_role, only canonical command-service privileges, a sealed migration role with no direct public privileges or SET path, only expected PostgreSQL-17 non-SET creator edges, and no Supabase Security Advisor finding for the Avuhz surface.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -60,10 +67,23 @@
           "sanitized_value": null,
           "value_digest": "sha256:1a1e1ad3aeb6f4a9c92e17b0a4b82b1c150862f3d6360aeeafee87676d94fbfb",
           "recorded_at": "2026-09-14T03:13:10Z"
+        },
+        {
+          "binding_id": "binding.development.data.v3.tenant-isolation-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.tenant-isolation.verified",
+          "evidence_digest": "sha256:7274e95367bf2c4567e47a7ee48055647aca220bc14ca7a513255be2b09946b3",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:ddb68cd3c2f85bc565cf54752290da896e5604feafc5d8056fdbcc58099f389d",
+          "recorded_at": "2026-09-14T03:45:26Z"
         }
       ]
     }
   ],
-  "updated_at": "2026-09-14T03:13:10Z",
-  "progress_digest": "sha256:179fc8f4f0cfe87b1df83dca643ef4c54bfbe335e0fbf7bc62d689033710a088"
+  "updated_at": "2026-09-14T03:45:26Z",
+  "progress_digest": "sha256:8564b668da612c02b111c96390e1d7fe66f5f78d88e553bb018edb5d12c23d72"
 }

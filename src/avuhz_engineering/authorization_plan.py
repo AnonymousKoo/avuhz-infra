@@ -12,7 +12,7 @@ from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_runtime.schema_registry import SchemaRegistry
 
 
-PLAN_SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1"
+PLAN_SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v2"
 APPROVAL_SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan-approval:v1"
 PROGRESS_SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan-progress:v1"
 _SECRET_KEYS = frozenset({
@@ -507,7 +507,6 @@ def _source_material(
     return evidence, source_assertion
 
 
-
 def _validate_typed_progress(plan: dict, progress: dict) -> None:
     typed = _is_typed_plan(plan)
     if not typed:
@@ -591,6 +590,7 @@ def _validate_typed_progress(plan: dict, progress: dict) -> None:
             elif asserted_produced_ids:
                 raise AuthorizationPlanError("BINDING_ASSERTION_MISMATCH")
 
+
 def initial_progress(plan: dict, schema_root: Path, progress_id: str, now: str) -> dict:
     validate_plan(plan, schema_root)
     step_states = [
@@ -669,7 +669,6 @@ def _next_index(progress: dict) -> int | None:
         ):
             return index
     return None
-
 
 
 def _typed_authorization_assertions(
@@ -954,6 +953,7 @@ def _typed_outcome_assertions(
             raise AuthorizationPlanStop("BINDING_ASSERTION_MISMATCH")
         validated.append(copy.deepcopy(assertion))
     return validated
+
 
 def record_step_outcome(
     plan: dict,

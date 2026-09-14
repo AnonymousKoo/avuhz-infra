@@ -85,6 +85,8 @@ jobs:
           jsonschema==4.10.3
           psycopg==3.3.4
           psycopg-binary==3.3.4
+          PyJWT==2.14.0
+          cryptography==50.0.1
           boltons==21.0.0
           bracex==3.0.1
           click==8.1.8
@@ -121,6 +123,8 @@ jobs:
             jsonschema==4.10.3 \
             psycopg==3.3.4 \
             psycopg-binary==3.3.4 \
+            'PyJWT[crypto]==2.14.0' \
+            cryptography==50.0.1 \
             semgrep==1.136.0
           python3 -m pip check
 
@@ -132,6 +136,8 @@ jobs:
               "jsonschema": "4.10.3",
               "psycopg": "3.3.4",
               "psycopg-binary": "3.3.4",
+              "PyJWT": "2.14.0",
+              "cryptography": "50.0.1",
               "semgrep": "1.136.0",
           }
           for package, required in expected.items():

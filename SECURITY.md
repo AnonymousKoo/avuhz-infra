@@ -22,9 +22,9 @@ This baseline is unconnected. Owner-approved non-secret development/staging proj
 
 ## Production secrets and provider configuration
 
-- Secrets exist only in an approved environment-scoped secret manager and are delivered at runtime through a short-lived workload identity. GitHub variables may hold non-secret opaque references only.
+- Secrets exist only in an approved environment-scoped secret manager and are delivered at runtime through a short-lived workload identity. GitHub variables may hold non-secret opaque references only. The DEVELOPMENT-only Supabase Auth-admin bootstrap provider-secret exception below is the sole current exception and does not apply to STAGING or PRODUCTION.
 - Environments use separate secret namespaces, keys, issuers, service identities, and rotation schedules. Production secrets are never available to pull requests, forks, developer shells, lower environments, AI agents, or general-purpose automation.
-- Workloads receive least-privilege, audience-bound credentials only for their single role. Shared service-role keys, long-lived static credentials, authenticated URLs, and credential-bearing provider payloads are prohibited.
+- Workloads receive least-privilege, audience-bound credentials only for their single role. Shared service-role keys, long-lived static credentials, authenticated URLs, and credential-bearing provider payloads are prohibited except for the exact DEVELOPMENT-only Supabase Auth-admin bootstrap provider-secret exception below. That exception may not be generalized, inherited, or reused by other workloads.
 - Logs, traces, errors, evidence bundles, command/event records, and CI artifacts must redact secret values and minimize customer/business payloads. Secret scanning runs before artifact publication.
 - Rotation, revocation, break-glass access, and suspected-exposure response require attributable human authorization and audit evidence. Break-glass access is time-bound and cannot bypass tenant or authority checks.
 - Provider configuration is an allowlisted, schema-validated reference owned by the environment registry. Unknown endpoints, mutable-latest targets, and caller-selected provider credentials fail closed.
@@ -42,10 +42,30 @@ This baseline is unconnected. Owner-approved non-secret development/staging proj
 - Provider capability is proven only through a non-secret executor-capability attestation with evidence type `auth.admin-executor-capability.observed`. That assertion is `DIGEST_ONLY`; its digest represents the non-secret executor capability reference, **never** the credential material.
 - Plans using the class must explicitly prohibit `credential.persist`, `credential.expose`, `credential.log`, `credential.return`, `credential.digest`, `credential.copy`, `credential.create`, `credential.rotate`, and `credential.export` at both plan and step scope.
 - A plan using the class must not model the credential as an `EPHEMERAL_SENSITIVE` binding. The secret is outside the Avuhz control-plane model; only executor capability is modeled.
-- The class does not waive the existing prohibition on shared service-role keys or long-lived static credentials. Any concrete executor binding must independently satisfy the secret-management and workload-identity requirements in this file. If it cannot, stop; do not retrieve a key to make the plan executable.
+- The class does not itself waive the prohibition on shared service-role keys or long-lived static credentials. A concrete binding must satisfy the normal workload-identity rule unless it is covered by the exact DEVELOPMENT-only Supabase Auth-admin bootstrap provider-secret exception below. No other exception is implied.
 - The canonical baseline must scan for modern Supabase secret-key prefixes in addition to the existing credential-shaped-content and Semgrep rules. A suspected match is treated as exposure: stop and remediate without printing the value.
 - Existence of this class grants no provider authority. Secret retrieval, executor binding, plan approval, provider preflight, provider execution, outcome persistence, metadata binding, hook enablement, token issuance, DATA access, Render changes, STAGING, and PRODUCTION each remain separate authorization boundaries as applicable.
 - AUTH v20 remains immutable and `DRAFT_BLOCKED`; do not rewrite it to consume this class. A new forward-only AUTH plan (v21 or later) is required before any synthetic-identity provider attempt.
+
+## DEVELOPMENT Supabase Auth-admin bootstrap provider-secret exception
+
+This exception exists only because the hosted Supabase Auth Admin API currently requires an elevated server-side API key and does not provide a short-lived, least-privilege workload-identity credential for the required Admin operation. It is a narrow bootstrap exception, not a replacement for Avuhz workload identity and not authority to create or use a provider credential by itself.
+
+Agents must enforce every rule below before any credential is created, bound, tested, used, rotated, or revoked under this exception:
+
+- Scope is exactly environment `DEVELOPMENT`, provider `supabase`, responsibility `AUTH`, project reference `pwlhruwutoitnieactol`. DEVELOPMENT DATA project `gnuqaefotwgkwurjpyik`, STAGING, PRODUCTION, Render, n8n, vertical-specific infrastructure, and all other provider resources are outside this exception.
+- The provider credential must be a dedicated modern Supabase secret API key (`sb_secret_...`) created only for the shared Avuhz DEVELOPMENT Auth-admin bootstrap executor. The legacy JWT `service_role` key, a shared default secret, a key reused by another service, or a credential copied from another environment is prohibited.
+- The credential may be stored only in Supabase's provider-side key store and the approved `development` GitHub Environment secret boundary. It may be injected only into the approved server-side Auth-admin executor for a separately authorized bounded operation.
+- The raw credential value must never enter this repository, ChatGPT or any AI-agent context, browser-visible application code, PR text, issue text, plan/approval/progress records, evidence, logs, traces, command output, artifacts, user-visible responses, or shell history. The control plane may record only non-secret references and capability attestations.
+- GitHub repository variables are not an allowed storage location. Pull-request jobs, forks, local developer shells, n8n workflows, dashboards, vertical services, and general-purpose automation must never receive the credential.
+- Credential creation is a distinct provider mutation. GitHub Environment secret binding is a distinct secret-manager mutation. Capability certification is a distinct read-only executor action. Auth-user creation is a distinct provider mutation. Credential revocation/deletion is a distinct provider mutation. Each requires its own exact target confirmation and explicit owner authorization; none may be silently bundled into another boundary.
+- The executor may use the credential only for the exact allowlisted Supabase Auth Admin operation authorized by the current bounded plan. It must not provide arbitrary pass-through access to Supabase, PostgREST, Storage, Realtime, SQL, Management API, or the DATA project.
+- Before each use, the executor must confirm the exact environment, provider, AUTH project reference, bounded plan/version/digest, authorization window, operation, and credential class. Drift, expiry, unexpected remote state, missing capability evidence, or any request for broader privilege stops execution.
+- The executor must not log HTTP request headers, provider response bodies containing user data, secret prefixes, hashes, fingerprints, or credential-derived identifiers. PII returned by a read-only capability probe must remain ephemeral and must not be persisted as evidence.
+- The dedicated bootstrap key must be revoked or deleted immediately after the authorized bootstrap sequence completes, or immediately when the associated authorization expires, is stopped, becomes ambiguous, or is abandoned. A key created for one authorization window may not be carried forward into a later plan without fresh explicit authorization.
+- This exception does not authorize weakening RLS, granting `BYPASSRLS` to Avuhz application identities, changing database ownership, modifying Auth hook state, creating sessions/tokens, binding tenant metadata, or touching the DATA project.
+- This exception does not authorize a permanent runtime design. The future shared Avuhz Identity Admin Broker must receive its own architecture, threat model, credential lifecycle, authorization contract, implementation review, and provider authorization. It may not inherit or reuse the bootstrap key by default.
+- Any suspected exposure, unexpected consumer, secret-manager misbinding, provider-project mismatch, inability to prove dedicated-key lifecycle, or inability to revoke the key is a stop condition. State the exposure or ambiguity clearly and do not proceed until resolved.
 
 ## GitHub and CI/CD controls
 
@@ -107,7 +127,7 @@ The solo-maintainer `DEVELOPMENT` bootstrap exception never authorizes any of th
 - Treating AUTH and DATA projects as interchangeable.
 - An AI agent approving risk or independently granting merge authority.
 
-Any provider or remote infrastructure action still requires its own exact, separate owner authorization and provider preflight under the existing rules.
+Any provider or remote infrastructure action still requires its own exact, separate owner authorization and provider preflight under the existing rules. The DEVELOPMENT Supabase Auth-admin bootstrap provider-secret exception above narrows what may be separately authorized; it does not make provider credential creation part of this repository-review exception.
 
 Branch protection may reflect the actual number of eligible human maintainers during solo `DEVELOPMENT`, but `main` remains protected, force pushes remain prohibited, deletion remains prohibited, conversation resolution remains required, and automated certification must be required when technically available. Each branch-protection change requires its own explicit bounded authorization. Approval requirements must not be hardcoded to zero indefinitely, and protections must be strengthened when independent maintainers are added.
 

@@ -334,9 +334,15 @@ jobs:
           import os
           import sys
 
+          body = {"email": os.environ["AVUHZ_TARGET_EMAIL"], "email_confirm": True}
+          if set(body) != {"email", "email_confirm"}:
+              raise SystemExit("synthetic identity create request contains unexpected fields")
+          if body["email"] != os.environ["AVUHZ_TARGET_EMAIL"] or body["email_confirm"] is not True:
+              raise SystemExit("synthetic identity create request values mismatch")
           with open(sys.argv[1], "w", encoding="utf-8") as handle:
-              json.dump({"email": os.environ["AVUHZ_TARGET_EMAIL"], "email_confirm": True}, handle, separators=(",", ":"))
+              json.dump(body, handle, separators=(",", ":"))
           PY
+          echo "create_request_body_exact_verified=true"
 
           if ! create_status="$(curl \
             --silent \
@@ -385,9 +391,10 @@ jobs:
               raise SystemExit("create-user response email mismatch")
           if not (user.get("email_confirmed_at") or user.get("confirmed_at")):
               raise SystemExit("create-user response is not email-confirmed")
-          user_metadata = user.get("user_metadata")
-          if user_metadata not in (None, {}):
-              raise SystemExit("unexpected user metadata in create-user response")
+          if user.get("user_metadata") != {"email_verified": True}:
+              raise SystemExit("create-user response user metadata differs from exact Supabase-managed email default")
+          if user.get("app_metadata") != {"provider": "email", "providers": ["email"]}:
+              raise SystemExit("create-user response app metadata differs from exact Supabase-managed email defaults")
           print(user_id)
           PY
           )"
@@ -438,8 +445,10 @@ jobs:
               raise SystemExit("post-create synthetic email mismatch")
           if not (user.get("email_confirmed_at") or user.get("confirmed_at")):
               raise SystemExit("post-create synthetic identity is not email-confirmed")
-          if user.get("user_metadata") not in (None, {}):
-              raise SystemExit("post-create synthetic identity has unexpected user metadata")
+          if user.get("user_metadata") != {"email_verified": True}:
+              raise SystemExit("post-create user metadata differs from exact Supabase-managed email default")
+          if user.get("app_metadata") != {"provider": "email", "providers": ["email"]}:
+              raise SystemExit("post-create app metadata differs from exact Supabase-managed email defaults")
           PY
 
           execution_reference='github-actions://AnonymousKoo/avuhz-infra/.github/workflows/development-auth-v21-synthetic-identity-execution.yml@main#environment=development;project=pwlhruwutoitnieactol;operation=auth.admin.createUser;target=avuhz-development-synthetic@example.invalid;email_confirm=true'
@@ -466,6 +475,7 @@ jobs:
           echo "user_metadata_supplied=false"
           echo "app_metadata_supplied=false"
           echo "tenant_metadata_supplied=false"
+          echo "provider_managed_metadata_verified=true"
           echo "invitation_requested=false"
           echo "session_or_token_requested=false"
           echo "data_project_touched=false"

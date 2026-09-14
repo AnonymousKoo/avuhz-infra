@@ -144,6 +144,8 @@ Each item remains a separate bounded resource/action boundary.
 
 `REMOTE_AUTHORIZATION`: the exact repository owner approval for AUTH v19 Step 1 is persisted for the bounded `2026-09-14T09:00:00Z`–`2026-09-14T12:00:00Z` window. **No provider execution occurred in the approval-persistence task, and provider execution remains a separate explicit action boundary.**
 
+No provider mutation is currently authorized for execution by this repository-only approval-persistence task; provider execution remains a separate explicit action boundary.
+
 No DATA operation, Render change, staging action, production action, hook enablement, metadata mutation, token issuance, or hosted adapter wiring is authorized by the v19 Step 1 approval.
 
 ## Recovery rule

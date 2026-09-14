@@ -1,7 +1,7 @@
 {
   "plan_id": "f616853e-5395-4210-8f94-c9b56a4235a5",
   "plan_version": 20,
-  "plan_digest": "sha256:30953b8fdb7b47369441787e254869c62b66eeee9621029a2f855525e64a1581",
+  "plan_digest": "sha256:3870b6e83f4a7983e2a1fa668066790f4fd5ef77a70e4e801c081ae2459f509b",
   "definition_status": "DRAFT_BLOCKED",
   "environment": "DEVELOPMENT",
   "target": {
@@ -89,45 +89,6 @@
         "binding.development.auth.v20.server-admin-credential-class"
       ],
       "binding_declarations": [
-        {
-          "binding_id": "binding.development.auth.v20.v16-disabled-hook-state",
-          "phase": "PREAPPROVAL_BOUND",
-          "value_class": "CONTENT_DIGEST",
-          "source_step_id": null,
-          "evidence_type": null,
-          "digest_policy": "REQUIRED",
-          "persistence_policy": "DIGEST_ONLY",
-          "preapproval_value": {
-            "value": "sha256:97f18e0a729762f9e9c7d72507a489aa828bbe03a138b25acfadcd72dd43a735",
-            "exact_digest": "sha256:2fc081713e1dd9288b6633eb484a80e157444241992588251f7f858fa06a0d9d"
-          }
-        },
-        {
-          "binding_id": "binding.development.auth.v20.admin-create-procedure",
-          "phase": "PREAPPROVAL_BOUND",
-          "value_class": "PROCEDURE_REFERENCE",
-          "source_step_id": null,
-          "evidence_type": null,
-          "digest_policy": "REQUIRED",
-          "persistence_policy": "DIGEST_ONLY",
-          "preapproval_value": {
-            "value": "procedure.supabase.auth.admin.create-user.email-only-confirmed",
-            "exact_digest": "sha256:a031db2804de8d98ff27261eb2bd4f730aa4f2b2587d90dd843f3c709a6e7219"
-          }
-        },
-        {
-          "binding_id": "binding.development.auth.v20.synthetic-email",
-          "phase": "PREAPPROVAL_BOUND",
-          "value_class": "CONTENT_DIGEST",
-          "source_step_id": null,
-          "evidence_type": null,
-          "digest_policy": "REQUIRED",
-          "persistence_policy": "DIGEST_ONLY",
-          "preapproval_value": {
-            "value": "sha256:deaa8eccae27d7cd9c51cebd4ba3bfc3a8d2de415a10c64af4f7c35097cd75ea",
-            "exact_digest": "sha256:64d37516d6c00b2d292707f6dac3feb06df3bd23679237628e741bc860ed872d"
-          }
-        },
         {
           "binding_id": "binding.development.auth.v20.server-admin-credential-class",
           "phase": "UNRESOLVED_BLOCKER",

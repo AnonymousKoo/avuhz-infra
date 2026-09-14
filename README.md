@@ -4,11 +4,12 @@ Avuhz is a provider-neutral governed foundation and home for reusable cross-doma
 
 Canonical project controls:
 
+- [Architecture source of truth](ARCHITECTURE.md)
 - [Agent rules](AGENTS.md)
 - [Security model](SECURITY.md)
-- [Architecture source of truth](docs/architecture.md)
 - [Current build state](docs/current-build-state.md)
 - [Roadmap](docs/roadmap.md)
+- [Detailed historical architecture notes](docs/architecture.md)
 
 Run the local baseline gate with `./scripts/check-baseline.sh`.
 
@@ -43,12 +44,14 @@ The runner is local-only, removes configured remote DATA/AUTH/provider variables
 
 ## Render development service preparation
 
-The separate DEVELOPMENT entry point is prepared for an owner-authorized Render web-service resource. It reuses the existing governed command/query application but never uses the local static identity resolver. It accepts only the exact approved non-secret development project, issuer, audience, tenant/RLS, and workload-identity references; it creates no provider adapter and performs no provider connection or mutation.
+The DEVELOPMENT entry point is deployed to the registered Render service but remains intentionally fail-closed for dependency readiness. It reuses the existing governed command/query application and never uses the local static identity resolver. Current canonical code still injects unavailable hosted DATA and identity dependencies: `/health/live` may return `200`, while readiness remains `503` and command/query requests fail at trusted identity resolution.
+
+No provider connection or mutation is performed by this composition.
 
 - Render build command: `python -m pip install .`
 - Render start command: `avuhz-service-development`
 - Render health path: `/health/live`
 
-Render supplies `PORT`; the DEVELOPMENT server binds `0.0.0.0:$PORT`. Required non-secret configuration names are `AVUHZ_SERVICE_ENVIRONMENT`, `AVUHZ_DATA_PROJECT_REF`, `AVUHZ_DATA_PROJECT_URL`, `AVUHZ_AUTH_PROJECT_REF`, `AVUHZ_AUTH_ISSUER`, `AVUHZ_SERVICE_AUDIENCE`, `AVUHZ_TENANT_BRIDGE`, `AVUHZ_RLS_POLICY_REFERENCE`, and `AVUHZ_COMMAND_SERVICE_IDENTITY`. Values must match the canonical development registry in `docs/architecture.md`.
+Render supplies `PORT`; the DEVELOPMENT server binds `0.0.0.0:$PORT`. Required non-secret configuration names are `AVUHZ_SERVICE_ENVIRONMENT`, `AVUHZ_DATA_PROJECT_REF`, `AVUHZ_DATA_PROJECT_URL`, `AVUHZ_AUTH_PROJECT_REF`, `AVUHZ_AUTH_ISSUER`, `AVUHZ_SERVICE_AUDIENCE`, `AVUHZ_TENANT_BRIDGE`, `AVUHZ_RLS_POLICY_REFERENCE`, and `AVUHZ_COMMAND_SERVICE_IDENTITY`. Values must match the canonical DEVELOPMENT registry described in `ARCHITECTURE.md` and the detailed notes under `docs/architecture.md`.
 
-Startup and liveness are available for safe resource creation. Until separately implemented and authorized data and trusted-identity adapters are injected, readiness remains `503` with bounded unavailable checks and command/query requests fail at trusted identity resolution. No provider connection or mutation is performed, and this entry point supports neither staging nor production.
+AUTH v16 and DATA v3 are complete at the provider-foundation layer, but that does not automatically authorize hosted adapter wiring. The real hosted identity and DATA adapters remain separate future boundaries. No staging or production mode is supported.

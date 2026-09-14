@@ -22,8 +22,9 @@ Ordered milestones from the separation checkpoint:
       - DEVELOPMENT DATA canonical 16-table baseline — COMPLETE
       - DATA migration-identity seal, tenant-RLS verification, and search-path repair — COMPLETE through DATA v3 and the separate repair track
    6. Complete DEVELOPMENT identity validation and hosted runtime integration. — NEXT
-      - Build the forward-only v17 plan for one dedicated synthetic DEVELOPMENT Auth identity — COMPLETE; PROVIDER MUTATION NOT AUTHORIZED
-      - Create the exact v17 owner approval and authorize only Step 1 — NEXT BOUNDARY
+      - Build the forward-only v17 plan for one dedicated synthetic DEVELOPMENT Auth identity — COMPLETE; SUPERSEDED UNAPPROVED/UNEXECUTED DUE APPROVAL-TIMING CONSTRAINT
+      - Build the forward-only v18 plan with the exact unchanged synthetic-identity scope and a fresh future window — CURRENT BOUNDARY
+      - Create the exact v18 owner approval before its effective time and authorize only Step 1 — NEXT BOUNDARY
       - Execute and verify creation of exactly one synthetic DEVELOPMENT Auth identity — NOT STARTED
       - Bind provider-controlled tenant metadata — NOT STARTED
       - Bind the exact server-owned read-only allowlist tuple — NOT STARTED

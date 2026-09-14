@@ -96,6 +96,7 @@ cat > "$provider_data_expected" <<'EOF'
 supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_migration_role_binding_v1.sql
+supabase/provider-artifacts/development-data/current/development_data_outbox_search_path_repair_v1.sql
 EOF
 sort -o "$provider_data_expected" "$provider_data_expected"
 find supabase/provider-artifacts/development-data -type f -name '*.sql' -printf '%p\n' | sort > "$provider_data_actual"
@@ -131,7 +132,8 @@ while IFS= read -r sql_path; do
     supabase/provider-artifacts/development-auth/history/v2/20260912155200_development_auth_migration_identity_seal_v2.sql|\
     supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_migration_role_binding_v1.sql|\
-    supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql)
+    supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_outbox_search_path_repair_v1.sql)
       ;;
     *)
       printf 'error: SQL path is outside the approved migration/inventory/provider-artifact surfaces: %s\n' "$sql_path" >&2

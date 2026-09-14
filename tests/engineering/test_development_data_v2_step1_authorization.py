@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import sys
@@ -11,6 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
     authorize_step,
+    progress_digest,
     record_step_outcome,
     validate_approval,
     validate_plan,
@@ -314,10 +316,25 @@ class DevelopmentDataV2ExecutionAuthorizationTest(unittest.TestCase):
             binding_assertions=[step3_binding],
         )
 
-        self.assertEqual(canonical, s3)
-        self.assertEqual(canonical["record_version"], 7)
-        self.assertEqual(canonical["progress_digest"], STEP3_SUCCESS_PROGRESS)
-        state = canonical["step_states"][2]
+        step3_canonical = copy.deepcopy(canonical)
+        step4_state = step3_canonical["step_states"][3]
+        step4_state["authorization_state"] = "PENDING"
+        step4_state["execution_state"] = "NOT_STARTED"
+        step4_state["verification_state"] = "NOT_STARTED"
+        step4_state["authorization_consumed"] = False
+        step4_state["evidence"] = []
+        step4_state["observed_postcondition"] = None
+        step4_state["safe_error_code"] = None
+        step4_state["binding_assertions"] = []
+        step3_canonical["record_version"] = 7
+        step3_canonical["updated_at"] = T3O
+        step3_canonical["progress_digest"] = progress_digest(step3_canonical)
+        validate_progress(plan, step3_canonical, SCHEMA_ROOT)
+
+        self.assertEqual(step3_canonical, s3)
+        self.assertEqual(step3_canonical["record_version"], 7)
+        self.assertEqual(step3_canonical["progress_digest"], STEP3_SUCCESS_PROGRESS)
+        state = step3_canonical["step_states"][2]
         self.assertEqual(state["authorization_state"], "CONSUMED")
         self.assertEqual(state["execution_state"], "SUCCEEDED")
         self.assertEqual(state["verification_state"], "PASS")
@@ -330,7 +347,7 @@ class DevelopmentDataV2ExecutionAuthorizationTest(unittest.TestCase):
                 "binding.development.data.v2.migration-identity-verified",
             ],
         )
-        for pending in canonical["step_states"][3:]:
+        for pending in step3_canonical["step_states"][3:]:
             self.assertEqual(pending["authorization_state"], "PENDING")
             self.assertEqual(pending["execution_state"], "NOT_STARTED")
             self.assertEqual(pending["verification_state"], "NOT_STARTED")

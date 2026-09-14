@@ -1,0 +1,46 @@
+{
+  "evidence_package_type": "auth.synthetic-identity.v21.preflight.observed",
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+  "plan_version": 21,
+  "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+  "observed_at": "2026-09-14T15:50:56Z",
+  "workflow_observation": {
+    "workflow_name": "DEVELOPMENT AUTH v21 Synthetic Identity Execution",
+    "run_id": 34864827864,
+    "run_number": 3,
+    "head_sha": "6c70f6d1e457bbb21b833369a6e5bbae7eac88da",
+    "authority_verified": true,
+    "authorization_window_verified": true,
+    "admin_executor_capability_verified": true,
+    "identity_create_preflight_verified": true,
+    "development_auth_empty_before_mutation": true,
+    "provider_mutation_attempted_during_preflight": false
+  },
+  "attestations": [
+    {
+      "evidence_type": "auth.admin-executor-capability.observed",
+      "configuration_reference_digest": "sha256:a3487c9bb0850b814f2ee90911fc29077ecdd066e3b09ebc29a952b71db643a8",
+      "capability_run_id": 34861618340,
+      "capability_head_sha": "5273c5a89b0eb3b4593ddd2c53da977452469cec",
+      "capability_run_conclusion": "success"
+    },
+    {
+      "evidence_type": "auth.synthetic-identity.create-preflight.observed",
+      "configuration_reference_digest": "sha256:fd32ea9a5cc7e44c0117969b88b54682222ca640233278e3b76bc1bef19d5e9d",
+      "auth_user_count": 0,
+      "synthetic_identity_match_count": 0
+    }
+  ],
+  "security_state": {
+    "credential_material_observed_by_control_plane": false,
+    "credential_retained": false,
+    "raw_provider_payload_retained": false,
+    "pii_retained": false,
+    "data_resource_touched": false,
+    "render_touched": false
+  }
+}

@@ -3,7 +3,7 @@
   "plan_id": "a7034439-f9e7-4358-90ef-cf221dfd1d1b",
   "plan_version": 2,
   "plan_digest": "sha256:ed141409e31c0aa70944ca801047f05db574ef3e905dd85dcd2e81c0a393d695",
-  "record_version": 6,
+  "record_version": 7,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -98,12 +98,19 @@
     },
     {
       "step_id": "development.data.v2.step.03.verify-migration-identity",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.migration-identity.verified",
+          "evidence_reference": "provider.execution.data-v2.step3.attempt1.verified",
+          "evidence_digest": "sha256:4c01cf41fd7dd5cac07576cba6bddea2644f30250788ae58299e6def626e486c",
+          "recorded_at": "2026-09-14T00:00:44Z"
+        }
+      ],
+      "observed_postcondition": "Read-only verification proves avuhz_data_migration_service_dev remains NOLOGIN, NOSUPERUSER, NOINHERIT, NOCREATEDB, CREATEROLE, NOREPLICATION, NOBYPASSRLS; has no direct database, table, sequence, function, auth, or storage privileges; has exactly public USAGE WITH GRANT OPTION plus non-grantable CREATE and only the bounded temporary SET membership envelope; avuhz_command_service is still absent; and Avuhz schema state remains empty.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -131,6 +138,19 @@
           "sanitized_value": null,
           "value_digest": "sha256:e38a67a1463b7a67ec341d6de6a55bb42ab44bb93e4c18cfaff39490a7702a7f",
           "recorded_at": "2026-09-13T23:47:26Z"
+        },
+        {
+          "binding_id": "binding.development.data.v2.migration-identity-verified",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.migration-identity.verified",
+          "evidence_digest": "sha256:4c01cf41fd7dd5cac07576cba6bddea2644f30250788ae58299e6def626e486c",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:63a91b034cf50e65877b8dae4f7fe2aa86f1355e211c2f006be9268032fcf612",
+          "recorded_at": "2026-09-14T00:00:44Z"
         }
       ]
     },
@@ -168,6 +188,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-13T23:47:26Z",
-  "progress_digest": "sha256:54cf5afc8d4a64dafa253ff1269b0fa542def95e367530d4660309526314a815"
+  "updated_at": "2026-09-14T00:00:44Z",
+  "progress_digest": "sha256:70d9f86df61e58268bd60c1297cd83b04a18adc4c5044ed3723361697442afbb"
 }

@@ -1,0 +1,152 @@
+{
+  "plan_id": "02640972-5a93-4286-9ce9-e0ffed45279e",
+  "plan_version": 1,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "data.provider",
+    "provider_reference": "supabase",
+    "project_reference": "gnuqaefotwgkwurjpyik",
+    "responsibility": "DATA",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-14T02:35:38Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-14T02:40:00Z",
+    "expires_at": "2026-09-14T06:40:00Z"
+  },
+  "ordered_step_ids": [
+    "development.data.search-path-repair.v1.step.01.repair-outbox-function-search-path"
+  ],
+  "steps": [
+    {
+      "step_id": "development.data.search-path-repair.v1.step.01.repair-outbox-function-search-path",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "database.function-configuration-repair",
+        "resource_reference": "supabase/provider-artifacts/development-data/current/development_data_outbox_search_path_repair_v1.sql",
+        "binding_state": "BOUND",
+        "exact_version": "gitblob.8afb7df0276e28a681c81dac8c201a5fa5a0f22f",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.repair-function-search-path",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "data.migration-identity.sealed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:ccce61683282152c55225147555d7e6a54ed33218bf02c1a01dc25f06ad5f188"
+        }
+      ],
+      "expected_postcondition": "The exact bound repair artifact pins public.avuhz_guard_outbox_transition() to an empty search_path, uses only one transactional postgres-granted SET edge to the existing sealed migration owner, revokes that edge before commit, restores the sealed role-membership envelope, preserves the function body/owner/ACL/trigger and the 16-table RLS tenant-isolation surface, and post-execution verification confirms the prior function_search_path_mutable finding is absent.",
+      "prohibited_actions": [
+        "auth.operation",
+        "batch.mutation",
+        "function-body.rewrite",
+        "migration-history.change",
+        "persistent-role-membership",
+        "rls.change",
+        "row-data.operation",
+        "staging.target",
+        "production.target",
+        "unbound-artifact.execute",
+        "v3.step2.execute",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "artifact-git-blob.mismatch",
+        "function-prestate.mismatch",
+        "project.mismatch",
+        "provider.execution.failed",
+        "sealed-identity.evidence-missing",
+        "security-advisor.finding-persists",
+        "temporary-set-edge.not-restored",
+        "tenant-isolation.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.search-path-repair.v1.artifact-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.8afb7df0276e28a681c81dac8c201a5fa5a0f22f",
+            "exact_digest": "sha256:26550364f532b1eeb8017bd0d5b937bb1db2c86a74b44d2d4cdfdc47c27d5e95"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.search-path-repair.v1.sealed-identity-state",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:1a1e1ad3aeb6f4a9c92e17b0a4b82b1c150862f3d6360aeeafee87676d94fbfb",
+            "exact_digest": "sha256:fd93676cac2752a7b116547e69bac109b5a75b19717af73b62033803b3861cc4"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.search-path-repair.v1.repaired-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.outbox-search-path.repaired",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.outbox-search-path.repaired",
+          "established_binding_ids": [
+            "binding.development.data.search-path-repair.v1.repaired-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "auth.operation",
+    "batch.mutation",
+    "function-body.rewrite",
+    "migration-history.change",
+    "persistent-role-membership",
+    "production.target",
+    "rls.change",
+    "row-data.operation",
+    "staging.target",
+    "unbound-artifact.execute",
+    "v3.step2.execute",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:23f2ceb93120ab848ba614cf435f1a612913bc3d386eca0af67eb81563f51f47"
+}

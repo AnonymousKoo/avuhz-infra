@@ -1,0 +1,23 @@
+{
+  "progress_id": "a8967e0b-f465-4a56-8083-6404fc53ba80",
+  "plan_id": "9dec1b7c-198b-4590-9750-80e68106db98",
+  "plan_version": 22,
+  "plan_digest": "sha256:d45d82a3fe6ff702044b2f976178f947e2db8399da08c3f7d5f6931612ddbd9d",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v22.step.01.bind-synthetic-tenant-app-metadata",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-14T18:32:49Z",
+  "progress_digest": "sha256:a81b2a689079515720472ad0188b3cf23fb22d2b5f423e7abf538eb462c24f8d"
+}

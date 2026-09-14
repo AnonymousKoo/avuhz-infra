@@ -1,0 +1,171 @@
+{
+  "plan_id": "f616853e-5395-4210-8f94-c9b56a4235a5",
+  "plan_version": 20,
+  "plan_digest": "sha256:3870b6e83f4a7983e2a1fa668066790f4fd5ef77a70e4e801c081ae2459f509b",
+  "definition_status": "DRAFT_BLOCKED",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-14T10:49:44Z",
+  "authorization_window": {
+    "binding_state": "UNRESOLVED_BLOCKER",
+    "starts_at": null,
+    "expires_at": null
+  },
+  "ordered_step_ids": [
+    "development.auth.v20.step.01.create-synthetic-identity-admin"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v20.step.01.create-synthetic-identity-admin",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.synthetic-identity",
+        "resource_reference": "identity.development.synthetic-avuhz",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": null
+      },
+      "operation": "provider.auth-identity.create-one",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "hook.v2.disabled-acl.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:0cfa1a3515e6496e9bc215de4579d5e4ff5b46f0299227b60708dc72ff2fb194"
+        }
+      ],
+      "expected_postcondition": "Exactly one dedicated synthetic DEVELOPMENT Auth identity exists in AUTH project pwlhruwutoitnieactol, created by the Supabase Admin createUser email-only confirmed path for avuhz-development-synthetic@example.invalid; no password, metadata, invite, session, token, hook, DATA, Render, staging, or production change occurs; the opaque subject is retained only as a digest-bound reference.",
+      "prohibited_actions": [
+        "customer.identity.create",
+        "identity.bulk-create",
+        "credential.persist",
+        "credential.expose",
+        "credential.log",
+        "password.set",
+        "password-hash.set",
+        "invitation.send",
+        "user-metadata.bind",
+        "tenant-metadata.bind",
+        "app-metadata.bind",
+        "server-allowlist.bind",
+        "hook.enable",
+        "token.issue",
+        "session.issue",
+        "data.operation",
+        "render.operation",
+        "staging.target",
+        "production.target"
+      ],
+      "stop_conditions": [
+        "admin-credential-class.unrecognized",
+        "credential.exposure.risk",
+        "identity.already-exists-unexpectedly",
+        "multiple-identities-created",
+        "subject.outcome.ambiguous",
+        "hook.state.drift",
+        "target.mismatch",
+        "provider.preflight.failed",
+        "scope.drift"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "binding.development.auth.v20.server-admin-credential-class"
+      ],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v20.server-admin-credential-class",
+          "phase": "UNRESOLVED_BLOCKER",
+          "value_class": "EPHEMERAL_SENSITIVE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "PROHIBITED",
+          "persistence_policy": "PROHIBITED"
+        },
+        {
+          "binding_id": "binding.development.auth.v20.identity-create-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.create-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v20.synthetic-identity",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.created",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.synthetic-identity.created",
+          "established_binding_ids": [
+            "binding.development.auth.v20.synthetic-identity"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "customer.identity.create",
+    "identity.bulk-create",
+    "credential.persist",
+    "credential.expose",
+    "credential.log",
+    "password.set",
+    "password-hash.set",
+    "invitation.send",
+    "user-metadata.bind",
+    "tenant-metadata.bind",
+    "app-metadata.bind",
+    "server-allowlist.bind",
+    "hook.enable",
+    "token.issue",
+    "session.issue",
+    "data.operation",
+    "render.operation",
+    "staging.target",
+    "production.target",
+    "v17.approval.backdate",
+    "v17.plan.execute",
+    "v18.approval.backdate",
+    "v18.plan.execute",
+    "v19.plan.execute",
+    "v19.approval.reuse"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "authorization.unbound",
+    "security.validation.failed",
+    "credential-class.unresolved",
+    "v16.state.mismatch",
+    "v19.state.mismatch"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

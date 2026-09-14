@@ -25,8 +25,11 @@ Ordered milestones from the separation checkpoint:
       - Build the forward-only v17 plan for one dedicated synthetic DEVELOPMENT Auth identity — COMPLETE; SUPERSEDED UNAPPROVED/UNEXECUTED DUE APPROVAL-TIMING CONSTRAINT
       - Build the forward-only v18 plan with the exact unchanged synthetic-identity scope — COMPLETE; SUPERSEDED UNAPPROVED/UNEXECUTED AFTER THE OWNER APPROVAL ARRIVED 12 SECONDS AFTER ITS EFFECTIVE START
       - Build the forward-only v19 plan with the exact unchanged synthetic-identity scope and a 60-minute-plus approval safety buffer — COMPLETE
-      - Create the exact v19 owner approval before its `2026-09-14T09:00:00Z` effective time — COMPLETE; PROVIDER EXECUTION NOT ATTEMPTED
-      - Execute and verify creation of exactly one synthetic DEVELOPMENT Auth identity during the bounded v19 window under a separate provider-execution authorization — NEXT BOUNDARY
+      - Create the exact v19 owner approval before its `2026-09-14T09:00:00Z` effective time — COMPLETE
+      - Attempt the v19 owner-interactive execution path without weakening credential controls — STOPPED BEFORE MUTATION; the Supabase dashboard create-user form requires a password, which is outside v19's no-credential-persistence intent. No synthetic identity was created and v19 progress remains unconsumed.
+      - Define forward-only AUTH v20 for the supported Supabase Admin `createUser` email-only confirmed route — COMPLETE AS `DRAFT_BLOCKED`; the current authorization schema has no recognized server-side Auth-admin credential class, so v20 has no authorization window, permits credential class `NONE`, and cannot be approved or executed.
+      - Separately design and certify the minimum server-side Auth-admin credential class/handling rule without retrieving, exposing, logging, or persisting any credential — NEXT BOUNDARY
+      - After the credential model is explicitly approved and implemented, create a new forward-only AUTH plan for exactly one passwordless synthetic identity — NOT STARTED
       - Bind provider-controlled tenant metadata — NOT STARTED
       - Bind the exact server-owned read-only allowlist tuple — NOT STARTED
       - Enable the exact DEVELOPMENT hook under a separate authorization — NOT STARTED

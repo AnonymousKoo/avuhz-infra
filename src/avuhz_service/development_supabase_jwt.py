@@ -19,7 +19,18 @@ class DevelopmentSupabaseEs256JwtVerifier:
     """Verify one Supabase access token with the approved DEVELOPMENT JWKS boundary."""
 
     def __init__(self, jwk_client: object | None = None):
-        client = PyJWKClient(DEVELOPMENT_AUTH_JWKS_URL) if jwk_client is None else jwk_client
+        client = (
+            PyJWKClient(
+                DEVELOPMENT_AUTH_JWKS_URL,
+                cache_keys=True,
+                max_cached_keys=8,
+                cache_jwk_set=True,
+                lifespan=300,
+                timeout=5,
+            )
+            if jwk_client is None
+            else jwk_client
+        )
         if not callable(getattr(client, "get_signing_key_from_jwt", None)):
             raise ValueError("valid JWKS client is required")
         self._jwk_client = client

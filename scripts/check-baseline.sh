@@ -36,6 +36,7 @@ python3 tests/contracts/validate_development_auth_plan_v15.py
 python3 tests/contracts/validate_development_auth_plan_v16.py
 python3 tests/contracts/validate_development_auth_plan_v17.py
 python3 tests/contracts/validate_development_auth_plan_v18.py
+python3 tests/contracts/validate_development_auth_plan_v19.py
 python3 tests/contracts/validate_development_data_plan_v1.py
 python3 tests/contracts/validate_development_data_plan_v2.py
 python3 tests/contracts/validate_read_models.py

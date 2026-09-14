@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Validate DEVELOPMENT AUTH v22 tenant metadata plan after owner approval, before execution."""
+"""Validate DEVELOPMENT AUTH v22 after capability certification, before execution."""
 from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -26,6 +27,8 @@ PROGRESS_PATH = BASE / "development-auth-integration-v22.progress.json"
 APPROVAL_PATH = BASE / "development-auth-integration-v22.approval.json"
 V21_SUCCESS_PATH = BASE / "development-auth-step1-v21-success.evidence.json"
 V16_SUCCESS_PATH = BASE / "development-auth-step1-v16-success.evidence.json"
+CAPABILITY_PATH = BASE / "development-auth-v22-admin-capability.evidence.json"
+WORKFLOW_PATH = ROOT / ".github/workflows/development-auth-v22-tenant-metadata-execution.yml"
 
 PLAN_ID = "9dec1b7c-198b-4590-9750-80e68106db98"
 PROGRESS_ID = "a8967e0b-f465-4a56-8083-6404fc53ba80"
@@ -40,6 +43,13 @@ SUBJECT_DIGEST = "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace
 TARGET_METADATA_DIGEST = "sha256:cd89c12abf5ed8c3dc03f4766a6d7cd9f1b8388b9e98468e9673233550a910a6"
 V21_SUCCESS_DIGEST = "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3a0f8c7211fffa"
 V16_SUCCESS_DIGEST = "sha256:0cfa1a3515e6496e9bc215de4579d5e4ff5b46f0299227b60708dc72ff2fb194"
+CAPABILITY_RAW_DIGEST = "sha256:8cee24d2802a06982c00ad12fb14ebd130ef8b1a6b9547989df6fb522e1ea719"
+CAPABILITY_EVIDENCE_DIGEST = "sha256:6f0d17815581401b01bf60a296fc79381141d7747b4f13d57acd1055f17b5160"
+CAPABILITY_CONFIG_DIGEST = "sha256:ed3be015f92dd36839403f24ac31cded47a9521f85643a1a1cf7f1382c103d50"
+CAPABILITY_RUN_ID = 34895225473
+CAPABILITY_HEAD_SHA = "58437583f582d10f184f987c023b9536cc32012f"
+PREFLIGHT_REFERENCE_DIGEST = "sha256:372355dfe9257db6670b0a64109933a1b738ddfb980f6d5a9a72a344f8a48184"
+EXECUTION_REFERENCE_DIGEST = "sha256:692e4cdf332ca728a392c63442153ad78e0137c1a3a65df1c40c45d565876588"
 APPROVED_AT = "2026-09-14T19:23:16Z"
 EFFECTIVE_AT = "2026-09-14T19:30:00Z"
 EXPIRES_AT = "2026-09-14T22:30:00Z"
@@ -74,6 +84,7 @@ def main() -> int:
     approval = load(APPROVAL_PATH)
     v21 = load(V21_SUCCESS_PATH)
     v16 = load(V16_SUCCESS_PATH)
+    capability_evidence = load(CAPABILITY_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
@@ -183,6 +194,32 @@ def main() -> int:
     assert produced["phase"] == "PRODUCED_BY_CURRENT_STEP"
     assert produced["evidence_type"] == "auth.synthetic-identity.tenant-metadata.bound"
 
+    assert raw_digest(CAPABILITY_PATH) == CAPABILITY_RAW_DIGEST
+    assert capability_evidence["evidence_type"] == "auth.admin-executor-capability.observed"
+    assert capability_evidence["observation_only"] is True
+    assert capability_evidence["environment"] == "DEVELOPMENT"
+    assert capability_evidence["provider_reference"] == "supabase"
+    assert capability_evidence["project_reference"] == PROJECT
+    assert capability_evidence["responsibility"] == "AUTH"
+    assert capability_evidence["plan_id"] == PLAN_ID
+    assert capability_evidence["plan_version"] == 22
+    assert capability_evidence["step_id"] == STEP_ID
+    assert capability_evidence["observed_at"] == "2026-09-14T20:49:42Z"
+    assert capability_evidence["configuration_digest"] == CAPABILITY_CONFIG_DIGEST
+    assert capability_evidence["result"] == "PASS"
+    assert capability_evidence["evidence_digest"] == CAPABILITY_EVIDENCE_DIGEST
+    capability_body = dict(capability_evidence)
+    capability_body.pop("evidence_digest")
+    assert canonical_digest(capability_body) == CAPABILITY_EVIDENCE_DIGEST
+    capability_source = capability_evidence["source"]
+    assert capability_source == {
+        "workflow_run_id": CAPABILITY_RUN_ID,
+        "workflow_head_sha": CAPABILITY_HEAD_SHA,
+        "workflow_conclusion": "success",
+        "provider_mutation_attempted": False,
+        "credential_material_observed_by_control_plane": False,
+    }
+
     expected_progress = initial_progress(
         plan, SCHEMA_ROOT, PROGRESS_ID, plan["created_at"]
     )
@@ -197,18 +234,71 @@ def main() -> int:
     assert state["evidence"] == []
     assert state["binding_assertions"] == []
 
+    workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+    required_workflow_fragments = (
+        "name: DEVELOPMENT AUTH v22 Tenant Metadata Execution",
+        "workflow_dispatch:",
+        "EXECUTE_V22_TENANT_METADATA",
+        "contents: read",
+        "actions: read",
+        "if: github.ref == 'refs/heads/main'",
+        "environment: development",
+        "AVUHZ_PROJECT_REF: pwlhruwutoitnieactol",
+        f"AVUHZ_PLAN_ID: {PLAN_ID}",
+        f"AVUHZ_PLAN_DIGEST: {PLAN_DIGEST}",
+        f"AVUHZ_APPROVAL_ID: {APPROVAL_ID}",
+        f"AVUHZ_APPROVAL_DIGEST: {APPROVAL_DIGEST}",
+        f"AVUHZ_TENANT_ID: {TENANT_ID}",
+        f"AVUHZ_SUBJECT_DIGEST: {SUBJECT_DIGEST}",
+        f"AVUHZ_TARGET_APP_METADATA_DIGEST: {TARGET_METADATA_DIGEST}",
+        f"AVUHZ_CAPABILITY_RUN_ID: '{CAPABILITY_RUN_ID}'",
+        f"AVUHZ_CAPABILITY_HEAD_SHA: {CAPABILITY_HEAD_SHA}",
+        f"AVUHZ_CAPABILITY_EVIDENCE_DIGEST: {CAPABILITY_EVIDENCE_DIGEST}",
+        f"AVUHZ_CAPABILITY_EVIDENCE_RAW_DIGEST: {CAPABILITY_RAW_DIGEST}",
+        f"AVUHZ_CAPABILITY_REFERENCE_DIGEST: {CAPABILITY_CONFIG_DIGEST}",
+        f"AVUHZ_PREFLIGHT_REFERENCE_DIGEST: {PREFLIGHT_REFERENCE_DIGEST}",
+        f"AVUHZ_EXECUTION_REFERENCE_DIGEST: {EXECUTION_REFERENCE_DIGEST}",
+        "${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_ADMIN_EPHEMERAL }}",
+        "--request PUT",
+        '"https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users/${target_user_id}"',
+        'json.dump({"app_metadata": app_metadata}, handle, separators=(",", ":"))',
+        "outcome is ambiguous. Do not retry.",
+        "provider_mutation_attempts=1",
+        "user_metadata_changed=false",
+        "email_changed=false",
+        "role_changed=false",
+        "token_or_session_requested=false",
+        "hook_change_attempted=false",
+        "data_resource_touched=false",
+        "render_touched=false",
+        "credential_material_observed_by_control_plane=false",
+        "raw_provider_payload_retained=false",
+    )
+    for fragment in required_workflow_fragments:
+        assert fragment in workflow, fragment
+
+    assert workflow.count("--request PUT") == 1
+    assert "--request POST" not in workflow
+    assert "--request PATCH" not in workflow
+    assert "--request DELETE" not in workflow
+    assert "gnuqaefotwgkwurjpyik" not in workflow
+    assert "/rest/v1" not in workflow
+    assert "/storage/v1" not in workflow
+    assert "api.render.com" not in workflow
+    assert "n8n" not in workflow.lower()
+    assert re.search(r"sb_secret_[A-Za-z0-9_-]{16,}", workflow) is None
+
     for forbidden in (
         BASE / "development-auth-integration-v22.execution-progress.json",
         BASE / "development-auth-step1-v22-preflight.evidence.json",
         BASE / "development-auth-step1-v22-success.evidence.json",
-        ROOT / ".github/workflows/development-auth-v22-tenant-metadata-execution.yml",
     ):
         assert not forbidden.exists(), forbidden
 
     print(
-        "DEVELOPMENT_AUTH_V22_APPROVAL=PASS "
-        "(exact-plan owner approval active only for 19:30Z-22:30Z; "
-        "no provider execution or executor workflow present)"
+        "DEVELOPMENT_AUTH_V22_EXECUTOR_PREPARED=PASS "
+        "(exact capability evidence and bounded executor present; plan remains pristine, "
+        "authorization unconsumed, and no v22 execution/preflight/success evidence exists)"
     )
     return 0
 

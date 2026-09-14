@@ -34,6 +34,12 @@ DATA_V2_APPROVAL_PATH = (
 DATA_V2_APPROVAL_FILE_DIGEST = (
     "sha256:e0de76806b98dcb7cf837a562e4eeb198112e81a4318b432b1143bf510cf11ee"
 )
+DATA_V3_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-data-integration-v3.approval.json"
+)
+DATA_V3_APPROVAL_FILE_DIGEST = (
+    "sha256:c8e31cdcbb9e89956797d016f005178702cac553ed6b50321f6b40fba1a84583"
+)
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))
 spec = spec_from_loader(loader.name, loader)
@@ -88,11 +94,12 @@ def main() -> int:
         V16_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
+        DATA_V3_APPROVAL_PATH,
     }
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized AUTH v8-v16 plus DATA v1-v2 approvals"
+            "approval artifact set differs from the exact authorized AUTH v8-v16 plus DATA v1-v3 approvals"
         )
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
@@ -102,6 +109,8 @@ def main() -> int:
         raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized DEVELOPMENT DATA v2 approval file digest mismatch")
+    if file_digest(DATA_V3_APPROVAL_PATH) != DATA_V3_APPROVAL_FILE_DIGEST:
+        raise SystemExit("exact authorized DEVELOPMENT DATA v3 approval file digest mismatch")
 
     # The preserved v14 validator must see its original exact v8-v14 inventory.
     # Filter only later approvals for that one historical glob call, then restore
@@ -119,6 +128,7 @@ def main() -> int:
                     V16_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
+                    DATA_V3_APPROVAL_PATH,
                 }
             )
         return values

@@ -1,0 +1,57 @@
+{
+  "progress_id": "01813bf8-cf24-48c2-aad2-af87c8aab6e6",
+  "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+  "plan_version": 21,
+  "plan_digest": "sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-identity.created",
+          "evidence_reference": "github.actions.run.34864827864.attempt.1.postverify",
+          "evidence_digest": "sha256:08f458aabbfe30ce67a2235cd4196d21ff8801d867c90b460accebf2fe09798e",
+          "recorded_at": "2026-09-14T16:19:12Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one dedicated synthetic DEVELOPMENT Auth identity exists and is email-confirmed with no session or refresh token; Avuhz supplied no password, user metadata, app metadata, tenant metadata, invite, session, or token request, but Supabase populated provider-managed email metadata, so the immutable v21 expected postcondition is not an exact match.",
+      "safe_error_code": "PROVIDER_MANAGED_METADATA_POSTCONDITION_MISMATCH",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v21.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:d299acf35c0efe30baf8db1f7ea67b8593e5a93d0321b70531f3912a5571d4de",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:a3487c9bb0850b814f2ee90911fc29077ecdd066e3b09ebc29a952b71db643a8",
+          "recorded_at": "2026-09-14T15:50:56Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v21.identity-create-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.create-preflight.observed",
+          "evidence_digest": "sha256:d299acf35c0efe30baf8db1f7ea67b8593e5a93d0321b70531f3912a5571d4de",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:fd32ea9a5cc7e44c0117969b88b54682222ca640233278e3b76bc1bef19d5e9d",
+          "recorded_at": "2026-09-14T15:50:56Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-14T16:19:12Z",
+  "progress_digest": "sha256:09b6f2478f4675f182f990924a92a89f44876e925e1f47338156072a7d0ee3d0"
+}

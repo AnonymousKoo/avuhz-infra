@@ -1,0 +1,67 @@
+{
+  "evidence_type": "auth.synthetic-identity.created",
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+  "plan_version": 21,
+  "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+  "attempt": 3,
+  "outcome": "MUTATION_SUCCEEDED_POSTCONDITION_MISMATCH",
+  "workflow_observation": {
+    "workflow_name": "DEVELOPMENT AUTH v21 Synthetic Identity Execution",
+    "run_id": 34864827864,
+    "run_number": 3,
+    "head_sha": "6c70f6d1e457bbb21b833369a6e5bbae7eac88da",
+    "create_request_body_exact_fields": [
+      "email",
+      "email_confirm"
+    ],
+    "email_confirm_requested": true,
+    "provider_create_response_accepted_by_status_guard": true,
+    "inline_verification_failure": "unexpected user metadata in create-user response",
+    "raw_provider_payload_retained": false
+  },
+  "provider_observation": {
+    "auth_user_count": 1,
+    "synthetic_identity_match_count": 1,
+    "synthetic_subject_digest": "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5",
+    "synthetic_email_confirmed": true,
+    "provider_managed_user_metadata_exact": true,
+    "provider_managed_app_metadata_exact": true,
+    "session_count": 0,
+    "refresh_token_count": 0,
+    "hook_function_exists": true,
+    "hook_owner_exact": true,
+    "hook_security_invoker": true,
+    "hook_stable": true,
+    "hook_search_path_exact": true,
+    "auth_admin_execute_acl_count": 1,
+    "public_execute_acl_count": 0
+  },
+  "verification_observation": {
+    "provider_mutation_attempts": 1,
+    "provider_mutation_committed": true,
+    "post_execution_read_only_verification": true,
+    "postcondition_verified": false,
+    "postcondition_mismatch": "Supabase populated provider-managed email metadata even though Avuhz supplied no user or app metadata.",
+    "corrected_validator_merged_commit": "85e1c4561ab462b79d98e53178161066a87ab689",
+    "mutation_retry_prohibited": true
+  },
+  "security_state": {
+    "credential_retained": false,
+    "raw_provider_payload_retained": false,
+    "raw_subject_retained": false,
+    "pii_retained": false,
+    "password_supplied": false,
+    "user_metadata_supplied": false,
+    "app_metadata_supplied": false,
+    "tenant_metadata_supplied": false,
+    "invitation_requested": false,
+    "session_or_token_requested": false,
+    "data_resource_touched": false,
+    "render_touched": false
+  },
+  "recorded_at": "2026-09-14T16:19:12Z"
+}

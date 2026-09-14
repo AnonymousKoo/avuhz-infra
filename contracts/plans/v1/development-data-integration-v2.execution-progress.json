@@ -3,7 +3,7 @@
   "plan_id": "a7034439-f9e7-4358-90ef-cf221dfd1d1b",
   "plan_version": 2,
   "plan_digest": "sha256:ed141409e31c0aa70944ca801047f05db574ef3e905dd85dcd2e81c0a393d695",
-  "record_version": 8,
+  "record_version": 9,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -156,12 +156,19 @@
     },
     {
       "step_id": "development.data.v2.step.04.apply-initial-migration",
-      "authorization_state": "AUTHORIZED",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.initial-migration.applied",
+          "evidence_reference": "provider.execution.data-v2.step4.attempt1.verified",
+          "evidence_digest": "sha256:23f5efaad368cde39ce6d8d4c58e1d3c9912d508ae4c83c994ff12c37463c0a8",
+          "recorded_at": "2026-09-14T00:56:06Z"
+        }
+      ],
+      "observed_postcondition": "The exact canonical initial migration is applied once to DEVELOPMENT DATA with the exact bound role-binding fragment inserted immediately after its leading BEGIN, so the schema DDL executes with current_user avuhz_data_migration_service_dev and atomically creates the shared 16-table Avuhz schema, avuhz_command_service role, tenant RLS policies, and least-privilege grants without row-data DML or AUTH changes.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -176,6 +183,19 @@
           "sanitized_value": null,
           "value_digest": "sha256:63a91b034cf50e65877b8dae4f7fe2aa86f1355e211c2f006be9268032fcf612",
           "recorded_at": "2026-09-14T00:19:21Z"
+        },
+        {
+          "binding_id": "binding.development.data.v2.initial-migration-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.initial-migration.applied",
+          "evidence_digest": "sha256:23f5efaad368cde39ce6d8d4c58e1d3c9912d508ae4c83c994ff12c37463c0a8",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:727e3ac7dc0f74c323d119b400166a32c187036e9fd521a8092e3afa4bbc5ba3",
+          "recorded_at": "2026-09-14T00:56:06Z"
         }
       ]
     },
@@ -202,6 +222,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-14T00:19:21Z",
-  "progress_digest": "sha256:d9c25d8d7ec112831395481672b32782e9a1537a0e983d44fc4785f078095755"
+  "updated_at": "2026-09-14T00:56:06Z",
+  "progress_digest": "sha256:68896643359b0ff274b9203651fff1f950f0b096ddb03b16e5737c6cf1f7013d"
 }

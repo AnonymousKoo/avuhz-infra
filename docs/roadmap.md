@@ -27,9 +27,10 @@ Ordered milestones from the separation checkpoint:
       - Build the forward-only v19 plan with the exact unchanged synthetic-identity scope and a 60-minute-plus approval safety buffer — COMPLETE
       - Create the exact v19 owner approval before its `2026-09-14T09:00:00Z` effective time — COMPLETE
       - Attempt the v19 owner-interactive execution path without weakening credential controls — STOPPED BEFORE MUTATION; the Supabase dashboard create-user form requires a password, which is outside v19's no-credential-persistence intent. No synthetic identity was created and v19 progress remains unconsumed.
-      - Define forward-only AUTH v20 for the supported Supabase Admin `createUser` email-only confirmed route — COMPLETE AS `DRAFT_BLOCKED`; the current authorization schema has no recognized server-side Auth-admin credential class, so v20 has no authorization window, permits credential class `NONE`, and cannot be approved or executed.
-      - Separately design and certify the minimum server-side Auth-admin credential class/handling rule without retrieving, exposing, logging, or persisting any credential — NEXT BOUNDARY
-      - After the credential model is explicitly approved and implemented, create a new forward-only AUTH plan for exactly one passwordless synthetic identity — NOT STARTED
+      - Define forward-only AUTH v20 for the supported Supabase Admin `createUser` email-only confirmed route — COMPLETE AS IMMUTABLE `DRAFT_BLOCKED`; v20 has no authorization window, permits credential class `NONE`, and cannot be approved or executed.
+      - Design and certify the minimum server-side Auth-admin execution credential class/handling rule without retrieving, exposing, hashing, logging, returning, or persisting credential material — COMPLETE through backward-compatible authorization-plan v2 and `SUPABASE_AUTH_ADMIN_EPHEMERAL`; class use is DEVELOPMENT/Supabase/AUTH/provider-mutation only and requires a digest-only non-secret executor-capability attestation.
+      - Create a new forward-only AUTH v21-or-later plan for exactly one passwordless synthetic identity using the v2 credential class while preserving v20 unchanged — NEXT BOUNDARY
+      - Separately approve and execute that future plan only after exact provider preflight proves the non-secret executor capability; credential material remains outside Avuhz control-plane surfaces — NOT STARTED
       - Bind provider-controlled tenant metadata — NOT STARTED
       - Bind the exact server-owned read-only allowlist tuple — NOT STARTED
       - Enable the exact DEVELOPMENT hook under a separate authorization — NOT STARTED

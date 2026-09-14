@@ -31,6 +31,22 @@ This baseline is unconnected. Owner-approved non-secret development/staging proj
 - The canonical logical reference names and resolution statuses exist only in `docs/architecture.md`. `DEFINED_LOGICAL` is not a provider binding; `OWNER_VALUE_REQUIRED` blocks connected use. Neither status grants access, approval, migration, deployment, or production truth.
 - Command, outbox, migration, and CI workloads use distinct environment-scoped identities and audiences. Application/runtime identities never receive table ownership, `BYPASSRLS`, universal tenant access, or migration authority; the migration identity is separately gated and cannot be substituted by CI.
 
+## DEVELOPMENT Supabase Auth-admin ephemeral execution class
+
+`SUPABASE_AUTH_ADMIN_EPHEMERAL` is an authorization-engine **execution capability label**, not a credential value, key format, service-role alias, or permission to obtain a provider secret. Agents must actively enforce all of the following before a future plan may use this class:
+
+- The plan environment must be exactly `DEVELOPMENT`, the provider must be `supabase`, the responsibility must be `AUTH`, the execution class must be `PROVIDER_MUTATION`, and the operation must be in the `provider.auth-*` namespace. Any other environment, provider, responsibility, execution class, or operation stops.
+- The class must be the only allowed credential class for that step. It may not be mixed with `OWNER_INTERACTIVE_SESSION`, `MIGRATION_IDENTITY`, `SYNTHETIC_IDENTITY`, `EPHEMERAL_SYNTHETIC_ACCESS_TOKEN`, `SERVICE_ROLE`, or any fallback class.
+- Credential material may originate only from an approved environment secret boundary and may exist only inside the approved server-side executor's memory for the bounded operation. The repository, agent, browser, plan engine, approval record, progress record, preflight request, evidence bundle, CI job output, logs, traces, or user-visible response may not retrieve or receive the material.
+- The control plane may carry only the class label. The credential value, hash, digest, fingerprint, prefix-expanded value, connection string, provider payload, or derived reversible representation must not be stored, returned, logged, copied, exported, committed, or attached as evidence.
+- Provider capability is proven only through a non-secret executor-capability attestation with evidence type `auth.admin-executor-capability.observed`. That assertion is `DIGEST_ONLY`; its digest represents the non-secret executor capability reference, **never** the credential material.
+- Plans using the class must explicitly prohibit `credential.persist`, `credential.expose`, `credential.log`, `credential.return`, `credential.digest`, `credential.copy`, `credential.create`, `credential.rotate`, and `credential.export` at both plan and step scope.
+- A plan using the class must not model the credential as an `EPHEMERAL_SENSITIVE` binding. The secret is outside the Avuhz control-plane model; only executor capability is modeled.
+- The class does not waive the existing prohibition on shared service-role keys or long-lived static credentials. Any concrete executor binding must independently satisfy the secret-management and workload-identity requirements in this file. If it cannot, stop; do not retrieve a key to make the plan executable.
+- The canonical baseline must scan for modern Supabase secret-key prefixes in addition to the existing credential-shaped-content and Semgrep rules. A suspected match is treated as exposure: stop and remediate without printing the value.
+- Existence of this class grants no provider authority. Secret retrieval, executor binding, plan approval, provider preflight, provider execution, outcome persistence, metadata binding, hook enablement, token issuance, DATA access, Render changes, STAGING, and PRODUCTION each remain separate authorization boundaries as applicable.
+- AUTH v20 remains immutable and `DRAFT_BLOCKED`; do not rewrite it to consume this class. A new forward-only AUTH plan (v21 or later) is required before any synthetic-identity provider attempt.
+
 ## GitHub and CI/CD controls
 
 - Work occurs on bounded feature branches through pull requests. `main` and release tags are protected from direct/force pushes and deletion.

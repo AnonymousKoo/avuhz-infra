@@ -25,6 +25,7 @@ python3 tests/contracts/validate_command_payloads.py
 python3 tests/contracts/validate_handoff_engagement.py
 python3 tests/contracts/validate_orchestration_foundation.py
 python3 tests/contracts/validate_bounded_authorization_plan.py
+python3 tests/contracts/validate_supabase_auth_admin_credential_model.py
 python3 tests/contracts/validate_development_auth_plan_v8.py
 python3 tests/contracts/validate_development_auth_plan_v9.py
 python3 tests/contracts/validate_development_auth_plan_v10.py
@@ -61,7 +62,7 @@ fi
 printf 'check: forbidden credential-shaped content\n'
 if rg -n -i --hidden --glob '!.git/**' \
   --glob '!contracts/fixtures/v1/identifiers.cases.json' \
-  '(authorization|api[_-]?key|client[_-]?secret|access[_-]?token|bearer)[[:space:]]*[:=][[:space:]]*[A-Za-z0-9_./:+-]{16,}' .; then
+  '(authorization|api[_-]?key|client[_-]?secret|access[_-]?token|bearer)[[:space:]]*[:=][[:space:]]*[A-Za-z0-9_./:+-]{16,}|sb_secret_[A-Za-z0-9._-]{8,}' .; then
   printf 'error: potential literal authentication material detected\n' >&2
   exit 1
 fi

@@ -20,13 +20,14 @@
 - The DATA outbox function `search_path` warning was repaired through a separate bounded provider artifact and independently verified; Supabase Security Advisor returned zero findings afterward.
 - DATA v3 sealed the migration identity and independently verified tenant isolation. DATA v3 is `COMPLETED`; both steps are `CONSUMED / SUCCEEDED / PASS`.
 - Final DATA verification proved 16 Avuhz tables, RLS on all 16, one exact tenant policy per table, no direct Avuhz table authority for `PUBLIC`, `anon`, `authenticated`, or `service_role`, the canonical command-service ACL surface only, sealed migration-role membership, unchanged canonical migration history, and zero Security Advisor lints.
-- The registered DEVELOPMENT Render service `avuhz-command-dev` exists and has demonstrated bounded liveness. Its readiness remains intentionally unavailable until hosted identity and DATA dependencies are connected.
-- Local DEVELOPMENT identity and DATA composition boundaries are implemented and tested. The DATA composition is deliberately restricted to disposable loopback PostgreSQL; the hosted service does not yet use it as a remote provider connector.
+- The registered DEVELOPMENT Render service `avuhz-command-dev` exists at `https://avuhz-command-dev.onrender.com`; recorded bounded evidence includes `GET /health/live = 200` and intentional `GET /health/ready = 503`.
+- Local DEVELOPMENT trusted-identity deterministic fake positive/negative identity tests are implemented and green.
+- The disposable local PostgreSQL DEVELOPMENT DATA composition and UnitOfWork tests are green.
 - The repository now has a root `ARCHITECTURE.md` that distinguishes implemented infrastructure from required future shared-core primitives.
 
 ## Current runtime truth
 
-`src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`.
+`src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`. The live hosted DEVELOPMENT composition still uses its unavailable real-provider resolver.
 
 Therefore:
 
@@ -35,11 +36,11 @@ Therefore:
 - command/query requests fail closed at trusted identity resolution; and
 - no hosted Supabase DATA connection is created by the current service composition.
 
-This is intentional. AUTH/DATA provider-foundation completion does not itself authorize runtime credential creation, hosted adapter wiring, or readiness promotion.
+This is intentional. AUTH/DATA provider-foundation completion does not itself authorize runtime credential creation, hosted adapter wiring, or readiness promotion. The default Supabase `aud=authenticated` is rejected by Avuhz; the approved DEVELOPMENT command-service audience remains separate.
 
 ## Multi-tenant truth
 
-The DEVELOPMENT DATA surface is not an aspirational design; it is deployed and verified:
+The DEVELOPMENT DATA surface is deployed and verified:
 
 - 16 Avuhz tables;
 - RLS enabled on all 16;
@@ -48,6 +49,43 @@ The DEVELOPMENT DATA surface is not an aspirational design; it is deployed and v
 - zero direct Avuhz table grants to `PUBLIC`, `anon`, `authenticated`, or `service_role`;
 - canonical command-service privileges only; and
 - runtime authority separate from migration authority.
+
+The hardened canonical-initial-migration lineage was certified at repository commit `5591dd6a99dd2d56dba6b682ab45198143d7539f`; at that historical certification point, clean disposable replay passes nine PostgreSQL tests. That lineage evidence remains historical proof even though the baseline has since been applied to DEVELOPMENT DATA and further sealed/verified through DATA v3.
+
+## Preserved certification evidence
+
+These facts are retained because they are part of the repository's production-readiness certification history. Historical snapshots are explicitly marked and do not override the current AUTH v16 / DATA v3 state.
+
+### One-use DEVELOPMENT JWKS discovery
+
+The bounded historical AUTH discovery used endpoint class `DEVELOPMENT_AUTH_JWKS` and observed HTTP `200`, key count `1`, supported metadata `ES256/EC/P-256`, private key material absent, and validation `PASS`. The discarded raw response was bound by SHA-256 `c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af`.
+
+The discovery involved no credential, token, cookie, API key, DATA-provider access, redirect, retry, raw-response persistence, or remote mutation. The completed JWKS discovery grants no continuing AUTH/DATA access or provider authority.
+
+### Local observability certification
+
+Historical local-only observability evidence remains valid: Prometheus and node-exporter were locally certified, and the managed local Grafana path was separately validated. This is not hosted production telemetry, and no Grafana Cloud resource is claimed by that evidence.
+
+### Superseded AUTH v9 snapshot
+
+For certification lineage only, the older snapshot recorded: DEVELOPMENT AUTH v9 Step 1 is canonically `CONSUMED / SUCCEEDED / PASS`; Step 2 is canonically `AUTHORIZED / NOT_STARTED / unconsumed`; the owner approval/window that authorized v9 has expired. The same old snapshot said the hook `has not been remotely created or enabled`.
+
+Those v9/hook statements are **historical and superseded**, not current instructions. AUTH v15 later created and hardened the hook and sealed its migration identity, and AUTH v16 verified the hook remains disabled. Agents must not revive v9 execution from this historical text.
+
+## Production-readiness blockers still open
+
+Production remains blocked by, at minimum:
+
+- production outbox identity/provider sink;
+- production AUTH/DATA registry;
+- complete protected CI provenance/SBOM publication;
+- hosted observability/alerting;
+- backup/PITR RPO/RTO and restore proof;
+- deployment/rollback rehearsal;
+- environment-scoped secret boundaries and short-lived workload identities;
+- capacity/SLO proof and production network enforcement.
+
+These are blockers, not implied resources or authorizations.
 
 ## In progress
 
@@ -98,7 +136,7 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Remote authorization
 
-`REMOTE_AUTHORIZATION`: none.
+`REMOTE_AUTHORIZATION`: none. No provider mutation is currently authorized.
 
 No further AUTH call, DATA operation, Render change, Supabase mutation, staging action, production action, hook enablement, synthetic-identity creation, metadata mutation, token issuance, or hosted adapter wiring is currently authorized by this document or by completion of earlier plans.
 

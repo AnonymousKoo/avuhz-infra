@@ -2,7 +2,7 @@
 
 `CURRENT_PHASE`: Phase 5 remains frozen. Engineering/production-readiness milestone 9.5 is active.
 
-`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 is complete and verified. DEVELOPMENT DATA v3 is complete and verified. DEVELOPMENT AUTH v17 and v18 remain immutable, unapproved, unexecuted, and unconsumed after their owner-approval timing windows became unusable. The forward-only DEVELOPMENT AUTH v19 synthetic-identity plan is `READY_FOR_APPROVAL` but unapproved, unexecuted, and unconsumed. The hosted DEVELOPMENT Render service remains intentionally fail-closed for dependency readiness because real hosted identity and DATA adapters are not yet injected.
+`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 is complete and verified. DEVELOPMENT DATA v3 is complete and verified. DEVELOPMENT AUTH v17 and v18 remain immutable, unapproved, unexecuted, and unconsumed after their owner-approval timing windows became unusable. The forward-only DEVELOPMENT AUTH v19 synthetic-identity plan is `READY_FOR_APPROVAL`; its exact owner approval is now persisted ahead of the `2026-09-14T09:00:00Z` effective time, while Step 1 remains unexecuted and unconsumed. The hosted DEVELOPMENT Render service remains intentionally fail-closed for dependency readiness because real hosted identity and DATA adapters are not yet injected.
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`.
 
@@ -18,7 +18,8 @@
 - AUTH v16 independently verified the sealed state: the hook owner/body/ACL match, the migration identity cannot be used through a SET path, and the hook remains disabled. AUTH v16 is `COMPLETED / CONSUMED / SUCCEEDED / PASS`.
 - AUTH v17 defined exactly one synthetic-identity provider mutation but remained unapproved and unexecuted. Its immutable authorization window began before the owner instruction to approve arrived, and the authorization engine forbids backdating `approved_at`; v17 therefore remains historical `PENDING / NOT_STARTED / NOT_STARTED / unconsumed` evidence only.
 - AUTH v18 preserved the exact same synthetic-identity scope but also remained unapproved and unexecuted because the owner authorization arrived 12 seconds after its immutable effective start. v18 therefore remains historical `PENDING / NOT_STARTED / NOT_STARTED / unconsumed` evidence only; backdating is prohibited.
-- The forward-only AUTH v19 repository plan preserves the exact v18 synthetic-identity resource, operation, credential class, v16 disabled-hook prerequisite evidence, expected postcondition, and prohibited action set under a new future authorization window with a 60-minute-plus approval safety buffer. It grants no authority without a separate exact approval.
+- The forward-only AUTH v19 repository plan preserves the exact v18 synthetic-identity resource, operation, credential class, v16 disabled-hook prerequisite evidence, expected postcondition, and prohibited action set under a future authorization window with a 60-minute-plus approval safety buffer.
+- AUTH v19 exact owner approval is persisted with approval digest `sha256:3e31e523d03220c8301a76430dbd3d1c7a72538b711661b187ea063c3306e6d9`, approved at `2026-09-14T07:45:58Z`, effective at `2026-09-14T09:00:00Z`, and expiring at `2026-09-14T12:00:00Z`. Persisting the approval did not authorize or execute the provider step in repository progress.
 - DATA v2 applied the canonical provider-neutral 16-table Avuhz baseline to DEVELOPMENT DATA.
 - The DATA outbox function `search_path` warning was repaired through a separate bounded provider artifact and independently verified; Supabase Security Advisor returned zero findings afterward.
 - DATA v3 sealed the migration identity and independently verified tenant isolation. DATA v3 is `COMPLETED`; both steps are `CONSUMED / SUCCEEDED / PASS`.
@@ -94,13 +95,13 @@ These are blockers, not implied resources or authorizations.
 
 Engineering-readiness milestone 9.5 remains active. Provider foundations are complete through AUTH v16 and DATA v3. AUTH v17 and AUTH v18 remain immutable historical plan state only: each is `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`, with no approval file and no provider execution.
 
-AUTH v19 is the active forward-only plan. Its plan digest is `sha256:4e6bb3a76b4d15b7993b2567c6743497b285bbecd03100f7ce73bbbc7a0cc72e`. Its initial progress digest is `sha256:ef3d232916d7be0d4a65e94d0bbfaa635258c937ae58bfa038fd43a4bf185fa8`. Its authorization window is bounded from `2026-09-14T09:00:00Z` through `2026-09-14T12:00:00Z`. A bound window is not approval and does not authorize provider contact or mutation.
+AUTH v19 is the active forward-only plan. Its plan digest is `sha256:4e6bb3a76b4d15b7993b2567c6743497b285bbecd03100f7ce73bbbc7a0cc72e`. Its initial progress digest remains `sha256:ef3d232916d7be0d4a65e94d0bbfaa635258c937ae58bfa038fd43a4bf185fa8`. Its owner approval digest is `sha256:3e31e523d03220c8301a76430dbd3d1c7a72538b711661b187ea063c3306e6d9`. The exact approval is effective from `2026-09-14T09:00:00Z` through `2026-09-14T12:00:00Z`. Step 1 remains `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`; there is no execution-progress file, provider preflight evidence, or success evidence.
 
 ## Next task
 
-Create and persist the **separate exact owner approval for DEVELOPMENT AUTH v19 Step 1 before `2026-09-14T09:00:00Z`**, after re-confirming canonical `main`, the AUTH project `pwlhruwutoitnieactol`, the exact v16 prerequisite evidence, the still-pending v17/v18 historical state, and the still-pending v19 progress record.
+During the valid v19 window, separately authorize the **exact DEVELOPMENT AUTH v19 Step 1 provider preflight and one synthetic-identity creation attempt**, after re-confirming canonical `main`, AUTH project `pwlhruwutoitnieactol`, the exact v16 prerequisite evidence, the v19 approval digest, and the still-pending v19 progress record.
 
-That approval action must stop before provider execution. Creating the approval must not create the synthetic identity, bind metadata, enable the hook, issue a token, touch DATA, change Render, or affect staging/production. Backdating v17 or v18 is prohibited.
+That provider action is a separate execution boundary. It must create at most one dedicated synthetic DEVELOPMENT Auth identity and stop after verifying that exact outcome. It must not bind tenant metadata, bind a server allowlist, enable the hook, issue a token, touch DATA, change Render, or affect staging/production.
 
 After a separately authorized provider execution eventually creates and verifies the identity, the intended sequence remains:
 
@@ -115,7 +116,7 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Do not start yet
 
-- Do not create the synthetic Auth identity merely because the v19 plan exists.
+- Do not create the synthetic Auth identity merely because the v19 approval exists; provider execution remains a separate explicit boundary and must occur inside the valid window.
 - Do not backdate or execute AUTH v17 or AUTH v18.
 - Do not create tenant metadata in the same action as the synthetic Auth identity.
 - Do not enable the custom access-token hook yet.
@@ -141,9 +142,11 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Remote authorization
 
-`REMOTE_AUTHORIZATION`: none. No provider mutation is currently authorized.
+`REMOTE_AUTHORIZATION`: the exact repository owner approval for AUTH v19 Step 1 is persisted for the bounded `2026-09-14T09:00:00Z`–`2026-09-14T12:00:00Z` window. **No provider execution occurred in the approval-persistence task, and provider execution remains a separate explicit action boundary.**
 
-No AUTH provider call, DATA operation, Render change, Supabase mutation, staging action, production action, hook enablement, synthetic-identity creation, metadata mutation, token issuance, or hosted adapter wiring is authorized merely by the v19 plan package or completion of earlier plans.
+No provider mutation is currently authorized for execution by this repository-only approval-persistence task; provider execution remains a separate explicit action boundary.
+
+No DATA operation, Render change, staging action, production action, hook enablement, metadata mutation, token issuance, or hosted adapter wiring is authorized by the v19 Step 1 approval.
 
 ## Recovery rule
 
@@ -155,7 +158,7 @@ Never destroy valid interrupted work. Never force push.
 
 1. Read `AGENTS.md`.
 2. Read `ARCHITECTURE.md`, `SECURITY.md`, and this file.
-3. Inspect the latest canonical plan/progress artifacts relevant to the exact next boundary.
+3. Inspect the latest canonical plan/progress/approval artifacts relevant to the exact next boundary.
 4. Confirm repository/environment/project/responsibility/resource before any change.
 5. Complete one bounded resource change only.
 6. Run focused validation and the full applicable gate.

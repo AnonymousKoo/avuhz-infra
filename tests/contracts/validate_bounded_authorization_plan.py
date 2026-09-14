@@ -22,6 +22,12 @@ V16_APPROVAL_PATH = (
 V16_APPROVAL_FILE_DIGEST = (
     "sha256:9c1251084937314b0dcdc9df165370d845aaec30dbf692d8264eb4b45706068b"
 )
+V19_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v19.approval.json"
+)
+V19_APPROVAL_FILE_DIGEST = (
+    "sha256:b62c4808b508b1afd5e3cc15d339dceb6231f9b3933e0862533379447a224544"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -98,6 +104,7 @@ def main() -> int:
         legacy.V14_APPROVAL_PATH,
         V15_APPROVAL_PATH,
         V16_APPROVAL_PATH,
+        V19_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
         DATA_V3_APPROVAL_PATH,
@@ -106,12 +113,14 @@ def main() -> int:
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized AUTH v8-v16 plus DATA v1-v3 and DATA search-path-repair v1 approvals"
+            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19 and DATA v1-v3 and DATA search-path-repair v1 approvals"
         )
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
     if file_digest(V16_APPROVAL_PATH) != V16_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v16 approval file digest mismatch")
+    if file_digest(V19_APPROVAL_PATH) != V19_APPROVAL_FILE_DIGEST:
+        raise SystemExit("exact authorized v19 approval file digest mismatch")
     if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
@@ -140,6 +149,7 @@ def main() -> int:
                 if path not in {
                     V15_APPROVAL_PATH,
                     V16_APPROVAL_PATH,
+                    V19_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
                     DATA_V3_APPROVAL_PATH,

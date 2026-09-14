@@ -24,9 +24,9 @@ Ordered milestones from the separation checkpoint:
    6. Complete DEVELOPMENT identity validation and hosted runtime integration. — NEXT
       - Build the forward-only v17 plan for one dedicated synthetic DEVELOPMENT Auth identity — COMPLETE; SUPERSEDED UNAPPROVED/UNEXECUTED DUE APPROVAL-TIMING CONSTRAINT
       - Build the forward-only v18 plan with the exact unchanged synthetic-identity scope — COMPLETE; SUPERSEDED UNAPPROVED/UNEXECUTED AFTER THE OWNER APPROVAL ARRIVED 12 SECONDS AFTER ITS EFFECTIVE START
-      - Build the forward-only v19 plan with the exact unchanged synthetic-identity scope and a 60-minute-plus approval safety buffer — CURRENT BOUNDARY
-      - Create the exact v19 owner approval before its `2026-09-14T09:00:00Z` effective time and authorize only Step 1 — NEXT BOUNDARY
-      - Execute and verify creation of exactly one synthetic DEVELOPMENT Auth identity — NOT STARTED
+      - Build the forward-only v19 plan with the exact unchanged synthetic-identity scope and a 60-minute-plus approval safety buffer — COMPLETE
+      - Create the exact v19 owner approval before its `2026-09-14T09:00:00Z` effective time — COMPLETE; PROVIDER EXECUTION NOT ATTEMPTED
+      - Execute and verify creation of exactly one synthetic DEVELOPMENT Auth identity during the bounded v19 window under a separate provider-execution authorization — NEXT BOUNDARY
       - Bind provider-controlled tenant metadata — NOT STARTED
       - Bind the exact server-owned read-only allowlist tuple — NOT STARTED
       - Enable the exact DEVELOPMENT hook under a separate authorization — NOT STARTED

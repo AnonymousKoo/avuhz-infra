@@ -1,0 +1,473 @@
+name: DEVELOPMENT AUTH v21 Synthetic Identity Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type EXECUTE_V21_SYNTHETIC_IDENTITY to authorize this exact bounded run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: development-auth-v21-synthetic-identity-execution
+  cancel-in-progress: false
+
+jobs:
+  execute-development-auth-v21-synthetic-identity:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+
+    env:
+      AVUHZ_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: e818f636-5470-4f39-a040-12f7e723b6c3
+      AVUHZ_PLAN_VERSION: '21'
+      AVUHZ_PLAN_DIGEST: sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a
+      AVUHZ_APPROVAL_ID: 9d27e05a-30f7-42ad-92d4-450b5cd16e2a
+      AVUHZ_APPROVAL_DIGEST: sha256:7f3344ed21daec73c8877615f3366bcd430ccd63c1ad0e29c32bbc75fd8b9164
+      AVUHZ_WINDOW_START: '2026-09-14T14:00:00Z'
+      AVUHZ_WINDOW_END: '2026-09-14T17:00:00Z'
+      AVUHZ_TARGET_EMAIL: avuhz-development-synthetic@example.invalid
+      AVUHZ_CAPABILITY_RUN_ID: '34861618340'
+      AVUHZ_CAPABILITY_HEAD_SHA: 5273c5a89b0eb3b4593ddd2c53da977452469cec
+      AVUHZ_CAPABILITY_REFERENCE_DIGEST: sha256:a3487c9bb0850b814f2ee90911fc29077ecdd066e3b09ebc29a952b71db643a8
+      AVUHZ_IDENTITY_PREFLIGHT_REFERENCE_DIGEST: sha256:fd32ea9a5cc7e44c0117969b88b54682222ca640233278e3b76bc1bef19d5e9d
+      AVUHZ_EXECUTION_REFERENCE_DIGEST: sha256:8411f3205e87db06ff359fa65ba205f68a3c395170e8239c3ce1f4e2d94ef49f
+      SUPABASE_AUTH_ADMIN_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_ADMIN_EPHEMERAL }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify immutable v21 authority and executor boundary
+        shell: bash
+        env:
+          AVUHZ_DISPATCH_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::DEVELOPMENT AUTH v21 execution is allowed only from main."
+            exit 1
+          fi
+
+          if [[ "${AVUHZ_DISPATCH_CONFIRMATION}" != "EXECUTE_V21_SYNTHETIC_IDENTITY" ]]; then
+            echo "::error::Exact v21 execution confirmation was not supplied."
+            exit 1
+          fi
+
+          if [[ -z "${SUPABASE_AUTH_ADMIN_EPHEMERAL:-}" ]]; then
+            echo "::error::Required DEVELOPMENT Auth-admin ephemeral secret is unavailable."
+            exit 1
+          fi
+
+          if [[ "${SUPABASE_AUTH_ADMIN_EPHEMERAL}" != sb_secret_* ]]; then
+            echo "::error::DEVELOPMENT Auth-admin execution requires the dedicated modern Supabase secret key."
+            exit 1
+          fi
+
+          now_epoch="$(date -u +%s)"
+          window_start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          window_end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < window_start_epoch || now_epoch >= window_end_epoch )); then
+            echo "::error::DEVELOPMENT AUTH v21 authorization window is not active."
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          plan_path = Path("contracts/plans/v1/development-auth-integration-v21.plan.json")
+          approval_path = Path("contracts/plans/v1/development-auth-integration-v21.approval.json")
+          progress_path = Path("contracts/plans/v1/development-auth-integration-v21.progress.json")
+          v16_evidence_path = Path("contracts/plans/v1/development-auth-step1-v16-success.evidence.json")
+
+          plan = json.loads(plan_path.read_text(encoding="utf-8"))
+          approval = json.loads(approval_path.read_text(encoding="utf-8"))
+          progress = json.loads(progress_path.read_text(encoding="utf-8"))
+
+          if plan.get("plan_id") != os.environ["AVUHZ_PLAN_ID"]:
+              raise SystemExit("v21 plan ID mismatch")
+          if str(plan.get("plan_version")) != os.environ["AVUHZ_PLAN_VERSION"]:
+              raise SystemExit("v21 plan version mismatch")
+          if plan.get("plan_digest") != os.environ["AVUHZ_PLAN_DIGEST"]:
+              raise SystemExit("v21 plan digest mismatch")
+          target = plan.get("target", {})
+          if target.get("provider_reference") != "supabase":
+              raise SystemExit("v21 provider mismatch")
+          if target.get("responsibility") != "AUTH":
+              raise SystemExit("v21 responsibility mismatch")
+          if target.get("project_reference") != os.environ["AVUHZ_PROJECT_REF"]:
+              raise SystemExit("v21 project mismatch")
+
+          window = plan.get("authorization_window", {})
+          if window.get("binding_state") != "BOUND":
+              raise SystemExit("v21 authorization window is not bound")
+          if window.get("starts_at") != os.environ["AVUHZ_WINDOW_START"]:
+              raise SystemExit("v21 authorization start mismatch")
+          if window.get("expires_at") != os.environ["AVUHZ_WINDOW_END"]:
+              raise SystemExit("v21 authorization expiry mismatch")
+
+          if approval.get("approval_id") != os.environ["AVUHZ_APPROVAL_ID"]:
+              raise SystemExit("v21 approval ID mismatch")
+          if approval.get("plan_id") != os.environ["AVUHZ_PLAN_ID"]:
+              raise SystemExit("v21 approval plan ID mismatch")
+          if approval.get("plan_digest") != os.environ["AVUHZ_PLAN_DIGEST"]:
+              raise SystemExit("v21 approval plan digest mismatch")
+          if approval.get("approval_digest") != os.environ["AVUHZ_APPROVAL_DIGEST"]:
+              raise SystemExit("v21 approval digest mismatch")
+          if approval.get("decision") != "APPROVE" or approval.get("status") != "ACTIVE":
+              raise SystemExit("v21 approval is not active APPROVE")
+          if approval.get("environment") != "DEVELOPMENT":
+              raise SystemExit("v21 approval environment mismatch")
+          if approval.get("effective_at") != os.environ["AVUHZ_WINDOW_START"]:
+              raise SystemExit("v21 approval effective time mismatch")
+          if approval.get("expires_at") != os.environ["AVUHZ_WINDOW_END"]:
+              raise SystemExit("v21 approval expiry mismatch")
+          if approval.get("authority_scope") != "EXACT_PLAN_ONLY":
+              raise SystemExit("v21 approval scope mismatch")
+
+          if progress.get("plan_id") != os.environ["AVUHZ_PLAN_ID"]:
+              raise SystemExit("v21 progress plan mismatch")
+          if progress.get("overall_state") != "NOT_STARTED":
+              raise SystemExit("v21 progress is not pristine")
+          states = progress.get("step_states")
+          if not isinstance(states, list) or len(states) != 1:
+              raise SystemExit("v21 progress step shape mismatch")
+          state = states[0]
+          if state.get("step_id") != "development.auth.v21.step.01.create-synthetic-identity-admin":
+              raise SystemExit("v21 progress step mismatch")
+          if state.get("execution_state") != "NOT_STARTED" or state.get("authorization_consumed") is not False:
+              raise SystemExit("v21 step is not pristine")
+
+          steps = plan.get("steps")
+          if not isinstance(steps, list) or len(steps) != 1:
+              raise SystemExit("v21 plan step shape mismatch")
+          step = steps[0]
+          if step.get("step_id") != "development.auth.v21.step.01.create-synthetic-identity-admin":
+              raise SystemExit("v21 step ID mismatch")
+          if step.get("operation") != "provider.auth-identity.create-one":
+              raise SystemExit("v21 operation mismatch")
+          if step.get("execution_class") != "PROVIDER_MUTATION":
+              raise SystemExit("v21 execution class mismatch")
+          policy = step.get("credential_policy", {})
+          if policy.get("allowed_classes") != ["SUPABASE_AUTH_ADMIN_EPHEMERAL"]:
+              raise SystemExit("v21 credential class mismatch")
+          if os.environ["AVUHZ_TARGET_EMAIL"] not in step.get("expected_postcondition", ""):
+              raise SystemExit("v21 target email mismatch")
+
+          raw_v16 = "sha256:" + hashlib.sha256(v16_evidence_path.read_bytes()).hexdigest()
+          required = step.get("required_evidence")
+          if not isinstance(required, list) or len(required) != 1:
+              raise SystemExit("v21 required evidence shape mismatch")
+          if required[0].get("evidence_type") != "hook.v2.disabled-acl.verified":
+              raise SystemExit("v21 required hook evidence type mismatch")
+          if required[0].get("exact_digest") != raw_v16:
+              raise SystemExit("v21 required hook evidence digest mismatch")
+
+          print("immutable_v21_authority_verified=true")
+          print("v16_disabled_hook_evidence_verified=true")
+          PY
+
+      - name: Verify prior non-secret Auth-admin capability attestation
+        shell: bash
+        env:
+          GH_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          if ! http_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${GH_READ_TOKEN}" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${AVUHZ_CAPABILITY_RUN_ID}")"; then
+            echo "::error::Capability-attestation lookup failed."
+            exit 1
+          fi
+
+          if [[ "$http_status" != "200" ]]; then
+            echo "::error::Capability-attestation lookup did not return HTTP 200."
+            exit 1
+          fi
+
+          python3 - "$response_file" <<'PY'
+          import json
+          import os
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              run = json.load(handle)
+
+          expected = {
+              "id": int(os.environ["AVUHZ_CAPABILITY_RUN_ID"]),
+              "name": "DEVELOPMENT AUTH v21 Admin Capability Certification",
+              "event": "workflow_dispatch",
+              "status": "completed",
+              "conclusion": "success",
+              "head_branch": "main",
+              "head_sha": os.environ["AVUHZ_CAPABILITY_HEAD_SHA"],
+              "path": ".github/workflows/development-auth-v21-admin-capability-certification.yml",
+          }
+          for key, value in expected.items():
+              if run.get(key) != value:
+                  raise SystemExit(f"capability attestation mismatch: {key}")
+          PY
+
+          configuration_reference='github-actions://AnonymousKoo/avuhz-infra/.github/workflows/development-auth-v21-admin-capability-certification.yml@main#environment=development;project=pwlhruwutoitnieactol;operation=auth.admin.listUsers'
+          observed_digest="sha256:$(printf '%s' "$configuration_reference" | sha256sum | awk '{print $1}')"
+          if [[ "$observed_digest" != "${AVUHZ_CAPABILITY_REFERENCE_DIGEST}" ]]; then
+            echo "::error::Capability reference digest mismatch."
+            exit 1
+          fi
+
+          echo "auth_admin_executor_capability_attestation_verified=true"
+          echo "admin_executor_configuration_reference_digest=${observed_digest}"
+
+      - name: Preflight exact empty DEVELOPMENT Auth target
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          now_epoch="$(date -u +%s)"
+          window_end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch >= window_end_epoch )); then
+            echo "::error::DEVELOPMENT AUTH v21 authorization expired before provider preflight."
+            exit 1
+          fi
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          if ! http_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users?page=1&per_page=1000")"; then
+            echo "::error::Synthetic identity preflight request failed."
+            exit 1
+          fi
+
+          if [[ "$http_status" != "200" ]]; then
+            echo "::error::Synthetic identity preflight did not return HTTP 200."
+            exit 1
+          fi
+
+          python3 - "$response_file" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+          users = payload.get("users") if isinstance(payload, dict) else None
+          if not isinstance(users, list):
+              raise SystemExit("unexpected Auth-admin list-users response shape")
+          if users:
+              raise SystemExit("DEVELOPMENT AUTH is not empty; stopping before mutation")
+          PY
+
+          preflight_reference='github-actions://AnonymousKoo/avuhz-infra/.github/workflows/development-auth-v21-synthetic-identity-execution.yml@main#environment=development;project=pwlhruwutoitnieactol;operation=auth.admin.listUsers;target=avuhz-development-synthetic@example.invalid'
+          observed_digest="sha256:$(printf '%s' "$preflight_reference" | sha256sum | awk '{print $1}')"
+          if [[ "$observed_digest" != "${AVUHZ_IDENTITY_PREFLIGHT_REFERENCE_DIGEST}" ]]; then
+            echo "::error::Identity-create preflight reference digest mismatch."
+            exit 1
+          fi
+
+          echo "synthetic_identity_create_preflight_verified=true"
+          echo "identity_create_preflight_reference_digest=${observed_digest}"
+          echo "provider_mutation_attempted=false"
+          echo "credential_material_observed_by_control_plane=false"
+
+      - name: Create and verify exactly one passwordless synthetic identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          now_epoch="$(date -u +%s)"
+          window_end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch >= window_end_epoch )); then
+            echo "::error::DEVELOPMENT AUTH v21 authorization expired before provider mutation."
+            exit 1
+          fi
+
+          create_body="$(mktemp)"
+          create_response="$(mktemp)"
+          verify_response="$(mktemp)"
+          trap 'rm -f "$create_body" "$create_response" "$verify_response"' EXIT
+
+          python3 - "$create_body" <<'PY'
+          import json
+          import os
+          import sys
+
+          with open(sys.argv[1], "w", encoding="utf-8") as handle:
+              json.dump({"email": os.environ["AVUHZ_TARGET_EMAIL"], "email_confirm": True}, handle, separators=(",", ":"))
+          PY
+
+          if ! create_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$create_response" \
+            --write-out '%{http_code}' \
+            --request POST \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data-binary "@$create_body" \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users")"; then
+            echo "::error::Synthetic identity create request failed; outcome is ambiguous and execution stops."
+            exit 1
+          fi
+
+          if [[ "$create_status" != "200" && "$create_status" != "201" ]]; then
+            echo "::error::Synthetic identity create request returned an unexpected HTTP status; execution stops."
+            exit 1
+          fi
+
+          created_user_id="$(python3 - "$create_response" <<'PY'
+          import json
+          import os
+          import sys
+          import uuid
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+          if not isinstance(payload, dict):
+              raise SystemExit("unexpected create-user response shape")
+          if any(key in payload for key in ("access_token", "refresh_token", "session")):
+              raise SystemExit("unexpected token or session material in create-user response")
+          user = payload.get("user") if isinstance(payload.get("user"), dict) else payload
+          user_id = user.get("id")
+          if not isinstance(user_id, str):
+              raise SystemExit("create-user response omitted provider subject")
+          try:
+              uuid.UUID(user_id)
+          except ValueError:
+              raise SystemExit("create-user response provider subject is not a UUID")
+          if user.get("email") != os.environ["AVUHZ_TARGET_EMAIL"]:
+              raise SystemExit("create-user response email mismatch")
+          if not (user.get("email_confirmed_at") or user.get("confirmed_at")):
+              raise SystemExit("create-user response is not email-confirmed")
+          user_metadata = user.get("user_metadata")
+          if user_metadata not in (None, {}):
+              raise SystemExit("unexpected user metadata in create-user response")
+          print(user_id)
+          PY
+          )"
+
+          if [[ -z "$created_user_id" ]]; then
+            echo "::error::Created provider subject was unavailable for verification."
+            exit 1
+          fi
+
+          if ! verify_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$verify_response" \
+            --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users?page=1&per_page=1000")"; then
+            echo "::error::Post-create verification request failed; outcome is ambiguous and execution stops."
+            exit 1
+          fi
+
+          if [[ "$verify_status" != "200" ]]; then
+            echo "::error::Post-create verification did not return HTTP 200; outcome is ambiguous and execution stops."
+            exit 1
+          fi
+
+          python3 - "$verify_response" "$created_user_id" <<'PY'
+          import json
+          import os
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              payload = json.load(handle)
+          users = payload.get("users") if isinstance(payload, dict) else None
+          if not isinstance(users, list):
+              raise SystemExit("unexpected post-create list-users response shape")
+          if len(users) != 1:
+              raise SystemExit("post-create DEVELOPMENT AUTH user count is not exactly one")
+          user = users[0]
+          if not isinstance(user, dict):
+              raise SystemExit("post-create user response shape is invalid")
+          if user.get("id") != sys.argv[2]:
+              raise SystemExit("post-create provider subject mismatch")
+          if user.get("email") != os.environ["AVUHZ_TARGET_EMAIL"]:
+              raise SystemExit("post-create synthetic email mismatch")
+          if not (user.get("email_confirmed_at") or user.get("confirmed_at")):
+              raise SystemExit("post-create synthetic identity is not email-confirmed")
+          if user.get("user_metadata") not in (None, {}):
+              raise SystemExit("post-create synthetic identity has unexpected user metadata")
+          PY
+
+          execution_reference='github-actions://AnonymousKoo/avuhz-infra/.github/workflows/development-auth-v21-synthetic-identity-execution.yml@main#environment=development;project=pwlhruwutoitnieactol;operation=auth.admin.createUser;target=avuhz-development-synthetic@example.invalid;email_confirm=true'
+          observed_execution_digest="sha256:$(printf '%s' "$execution_reference" | sha256sum | awk '{print $1}')"
+          if [[ "$observed_execution_digest" != "${AVUHZ_EXECUTION_REFERENCE_DIGEST}" ]]; then
+            echo "::error::Execution reference digest mismatch after provider mutation; outcome is ambiguous and execution stops."
+            exit 1
+          fi
+
+          subject_digest="sha256:$(printf '%s' "$created_user_id" | sha256sum | awk '{print $1}')"
+
+          echo "plan_id_verified=${AVUHZ_PLAN_ID}"
+          echo "plan_digest_verified=${AVUHZ_PLAN_DIGEST}"
+          echo "approval_id_verified=${AVUHZ_APPROVAL_ID}"
+          echo "approval_digest_verified=${AVUHZ_APPROVAL_DIGEST}"
+          echo "project_ref_verified=true"
+          echo "authorization_window_verified=true"
+          echo "provider_mutation_attempted=true"
+          echo "provider_mutation_succeeded=true"
+          echo "synthetic_identity_created_verified=true"
+          echo "synthetic_identity_subject_digest=${subject_digest}"
+          echo "execution_configuration_reference_digest=${observed_execution_digest}"
+          echo "password_supplied=false"
+          echo "user_metadata_supplied=false"
+          echo "app_metadata_supplied=false"
+          echo "tenant_metadata_supplied=false"
+          echo "invitation_requested=false"
+          echo "session_or_token_requested=false"
+          echo "data_project_touched=false"
+          echo "render_touched=false"
+          echo "credential_material_observed_by_control_plane=false"

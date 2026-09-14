@@ -1,114 +1,121 @@
 # Current Build State
 
-`CURRENT_PHASE`: Phase 5 remains frozen. Engineering/production-readiness milestone 9.5 is active: DEVELOPMENT AUTH and DATA are being connected under separate physical Supabase boundaries. AUTH v9 Step 1 is canonically consumed/succeeded/PASS; Step 2 is recorded `AUTHORIZED / NOT_STARTED / unconsumed`, but its time-bound owner approval has expired and it is not executable until a fresh approval/window and preflight are canonically bound. The former staging project has been owner-directed, cleaned, and selected as the dedicated DEVELOPMENT DATA project; staging is deferred and unconfigured.
+`CURRENT_PHASE`: Phase 5 remains frozen. Engineering/production-readiness milestone 9.5 is active.
 
-`CURRENT_HEAD`: `HEAD` (`chore: reclassify DEVELOPMENT DATA project`)
+`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 is complete and verified. DEVELOPMENT DATA v3 is complete and verified. The hosted DEVELOPMENT Render service remains intentionally fail-closed for dependency readiness because real hosted identity and DATA adapters are not yet injected.
 
-`CURRENT_BRANCH`: `chore/reclassify-development-data-project`
+`PLATFORM_PRODUCTION_READINESS`: `NOT_READY`.
 
-`LAST_GREEN_MILESTONE`: Canonical `main` through PR #20 records DEVELOPMENT AUTH v9 Step 1 as `CONSUMED / SUCCEEDED / PASS` and Step 2 as `AUTHORIZED / NOT_STARTED / unconsumed`, with exact-head CI green and no v9 provider mutation. The current DATA-reclassification branch still requires its own CI and merge gate.
+`READY_FOR_PHASE6`: `NO`.
 
-`COMPLETED`:
+## Completed foundation work
 
-- Avuhz active runtime and contracts contain zero Sekinfra/OIA implementation dependencies.
-- The active migration directory starts with one hardened candidate canonical initial migration containing 16 provider-neutral Avuhz tables and no extracted-domain tables; validators permit only later unique timestamp-ordered, transaction-enclosed migrations.
-- Historical mixed migration provenance remains recoverable in Git history; repository evidence confirms Phase 5A-5D mixed migrations were local-only and absent from the recorded remote migration history.
-- ImplementationHandoff and all completed Phase 5D records preserve exact ID/version/digest bindings, immutable history, bounded optimistic transitions, idempotency, events, and atomic outbox writes.
-- Every current authoritative table has command-service tenant RLS; `public`, `anon`, and `authenticated` have no direct table authority.
-- Fresh disposable PostgreSQL replay, RLS isolation, bounded grants, exact handoff round-trip, immutable history, idempotency conflict/transition, and atomic rollback certification are green.
-- Focused runtime, schema, migration, security, Semgrep, credential, and baseline checks are green.
-- Avuhz runs with zero active Sekinfra/OIA runtime references and has no dependency on Sekinfra implementation internals.
-- Sekinfra owns and runs OIA independently without importing Avuhz internal modules or requiring a shared database.
-- The cross-repository handoff contract is deterministic, versioned, digest-bound, tenant-bound, and green through ImplementationBrief creation.
-- Full Avuhz and Sekinfra runtime, contract, migration, persistence, RLS/security, separation, and cross-repository certification suites are green against disposable local PostgreSQL where applicable.
-- ClientAcceptance requires trusted `CLIENT_ACCEPTANCE_AUTHORITY` human context, exact upstream identities/versions/digests, and an exact build artifact; workload or payload claims cannot establish acceptance.
-- ClientAcceptance decision history is immutable and supersession-explicit, and each accepted command atomically persists the decision, idempotency result, schema-valid lifecycle event, and pending outbox intent.
-- Client acceptance creates no DeploymentAuthorization or deployment authority. The D3 runtime, frozen-contract, security, fresh-migration, RLS, restart-durability, history, concurrency, idempotency, and rollback suites are green.
-- DeploymentAuthorization requires exact accepted ClientAcceptance, passing QAResult, successful BuildExecutionResult, released CodexBuildPackage, and active ImplementationAuthorization identity/version/digest bindings; no mutable-latest shortcut can establish authority.
-- Deployment authority requires separate attributable CLIENT and PROVIDER human approvals, remains exact to the approved artifact, environment, targets, actions, prohibited actions, and validity window, and cannot be established by workload or payload claims.
-- DeploymentAuthorization proposal, activation, revision, revocation, expiry, immutable-history, tenant-RLS, concurrency, idempotency, lifecycle-event, transactional-outbox, restart-durability, and rollback behavior is green against disposable local PostgreSQL.
-- DeploymentAuthorization creates authorization only; a separate exact valid authorization is required to start DeploymentExecution.
-- D5 freezes distinct DeploymentExecution operation-attempt truth and DeploymentVerification target-state truth; a started or `SUCCEEDED` attempt never establishes verified deployment.
-- D5 defines two resources, three commands, three capabilities, three lifecycle events, and two read models with exact authority-chain IDs/versions/digests, immutable attempt history, deterministic outcome derivation, and fail-closed rollback requirements.
-- D5 contracts are provider-neutral across roofing/home services, security staffing, and medical-office operations, reject generic success/verification claims and secret-bearing fields, and govern trusted attribution, exact predecessor versions, idempotency, concurrency, event/outbox, and tenant boundaries in the active runtime.
-- D5a activates only `StartDeploymentExecution` and `CompleteDeploymentExecution`, the DeploymentExecution resource/read view, repository port, UnitOfWork wiring, and local `avuhz_deployment_executions` table. Attempts remain immutable and operation `SUCCEEDED` leaves `deployment_verified=false`.
-- D5a derives `SUCCEEDED`, `FAILED`, `PARTIAL`, or `BLOCKED` solely from exact per-target outcomes and trusted evidence provenance; no caller success field, workload claim, or secret-bearing payload can establish truth.
-- Fresh disposable PostgreSQL migration replay, 15-table RLS/policy certification, static persistence checks, focused runtime/history/idempotency/concurrency/atomicity tests, D5 contract validators, Semgrep, credential scanning, and baseline checks are green. The psycopg adapter suite is present but skipped in this interpreter because the pinned dependency is not installed; no remote dependency fetch was attempted.
-- D5b activates only `RecordDeploymentVerification`, the DeploymentVerification resource/read view, immutable repository port/UnitOfWork wiring, and local `avuhz_deployment_verifications` table.
-- Verification binds the exact terminal DeploymentExecution version/digest and repeated authority chain, covers every authorized target once, validates observed artifact truth and trusted provenance, and derives `VERIFIED`, `FAILED`, `PARTIAL`, or `BLOCKED`; only `VERIFIED` sets `deployment_verified=true`.
-- Retests create exact superseding immutable verification attempts. Failed, partial, and blocked history cannot be rewritten, and every non-verified disposition derives `rollback_required=true` without performing rollback.
-- Fresh disposable PostgreSQL replay certifies 16 tables, tenant RLS/policies, bounded service grants, immutable verification history, and the existing atomicity/security baseline. The psycopg adapter suite is present but skipped in this interpreter because no local driver is installed; no dependency or remote access was attempted.
-- The complete frozen D5 execution/verification runtime boundary is active. No provider deployment operation, rollback operation, production change, Phase 6 work, or client-system production deployment occurred.
-- Phase 5 freeze certification validates the complete ten-record chain from ImplementationHandoff through DeploymentVerification with exact identity/version/digest bindings, schema-valid authoritative records, one tenant/engagement boundary, immutable history, bounded evidence/provenance, and attributable protected human authority.
-- The active command registry, migration binding guard, and D5 architecture status are reconciled to the complete D5a/D5b runtime. The provider-neutral canonical initial migration preserves the exact 16-table surface, complete tenant RLS, and no extracted-domain tables.
-- Full runtime, architecture/separation, cross-repository, Sekinfra boundary/producer, contract, schema, static migration, disposable PostgreSQL replay, atomicity, RLS, Semgrep, credential, forbidden-path, compilation, and diff checks are green on the last certified baseline. Optional psycopg adapter tests remain skipped where no local driver is installed.
-- Active Avuhz runtime/contract references to Sekinfra/OIA remain zero. Phase 5 is frozen; later work must preserve this baseline and may not infer real deployment or production authority.
-- Avuhz platform production is explicitly separate from client-system deployment. The minimum API/worker/data/auth/identity/secrets/migration/observability/backup/CI/CD/environment/rollback architecture and owner-authorized registry are defined in canonical architecture/security documentation.
-- Codex/Claude remain untrusted engineering workloads: they may build, test, scan, and draft evidence but cannot approve, merge, select production targets, access production secrets, migrate, deploy, or establish success. The local build/test/evidence portion of the dry run is implemented; connected staging, deployment, verification, and rollback steps remain unimplemented.
-- The local service is a real buildable wheel/console artifact with a framework-neutral WSGI application, loopback-only memory composition, one governed command route, nine allowlisted read-only query types, explicit `engagement:read` access, fixed non-human trusted identity, request limits, and sanitized error handling.
-- `GET /health/startup`, `/health/live`, and `/health/ready` are bounded and non-sensitive. Readiness checks require configured data/identity dependencies, return `503` on unavailable/exceptional probes, and never return connection details or stack traces.
-- The local outbox worker consumes only existing committed outbox intents, requires tenant-bound `INTERNAL_SERVICE` context plus `event:publish_internal`, and cannot commit domain collections. The fake sink is bounded, local, and idempotent; no provider integration or remote delivery exists.
-- Claims use lease tokens, record versions, and PostgreSQL `FOR UPDATE SKIP LOCKED`; failures retain the immutable event, schedule bounded exponential retry, or enter explicit `FAILED_TERMINAL`. Attempt history records worker provenance and timestamps without error messages, responses, credentials, or provider payloads.
-- Restart, expired-lease recovery, post-sink commit interruption, concurrent exclusion, idempotent replay, missing-event terminal handling, tenant/trusted-worker denial, schema, migration, and frozen Phase 5 compatibility tests are green. The opt-in PostgreSQL adapter test is present but skipped where no local DSN or psycopg driver is available.
-- The fixed local engineering pipeline builds the unified service/worker wheel offline, runs runtime/service/worker/architecture/engineering tests, frozen Phase 5 contract validators, static/local migration checks, and the canonical security baseline, then verifies embedded package identity and exact artifact digest.
-- The canonical evidence schema records only bounded source, tool, command-catalog, check-count, digest, timestamp, artifact, dependency-inventory, review, and readiness facts. It excludes command output, environment values, provider payloads, credentials, and secrets; evidence and artifacts are written once outside Git and made read-only.
-- Evidence validation fails closed for missing, expired, source-stale, artifact-stale, command-catalog-stale, internally inconsistent, or secret-bearing records. The review gate binds every required step digest.
-- The autonomous dry run requires an explicit simulated reviewer decision. Automation cannot establish human approval, deployment authority, production readiness, or production truth; all production/deployment/mutation flags are permanently false. No deploy path or provider integration exists.
-- Platform production remains `NOT_READY`: the locally packaged service/worker artifact is not a certified production deployable and there is still no production AUTH/DATA registry, trusted issuer integration, production outbox identity/provider sink, secret manager/service identities, complete protected CI provenance/SBOM publication, hosted observability/alerting, measured capacity/SLOs, approved production migration lineage, backup/PITR RPO/RTO and restore proof, or deployment/rollback rehearsal.
-- DEVELOPMENT AUTH is physically bound to Supabase project `pwlhruwutoitnieactol`; DEVELOPMENT DATA is physically bound to the separate Supabase project `gnuqaefotwgkwurjpyik`, with the exact `TrustedExecutionContext.tenant_id -> avuhz.tenant_id` bridge. Staging is deferred and has no registered Supabase AUTH or DATA project; production is unconfigured and its project does not exist.
-- The owner-directed cleanup of `gnuqaefotwgkwurjpyik` removed the prior staging/Sekinfra user-created surface before DATA reclassification. Final provider inspection observed zero user-created public relations/routines/enums, zero Auth users/identities, zero Storage buckets/objects, zero Edge Functions, and zero Supabase remote migration-history entries. No credential values, user identifiers, tokens, raw provider payloads, or business rows were retained in repository evidence.
-- The DATA project clean state is registration evidence only. The hardened provider-neutral baseline remains the candidate canonical initial DATA migration; it has not been applied remotely and clean-state status grants no migration, runtime-credential, adapter-wiring, or readiness authority.
-- DEVELOPMENT AUTH v9 Step 1 is canonically `CONSUMED / SUCCEEDED / PASS`. Step 2 is canonically `AUTHORIZED / NOT_STARTED / unconsumed`, while Steps 3-5 remain pending. The owner approval/window that authorized v9 has expired, so Step 2 cannot be executed until a fresh approval/window is bound and a fresh provider preflight passes; no v9 Step 2 provider mutation has occurred.
-- Development and future staging retain distinct provider-neutral command, outbox, migration, CI, issuer, audience, and tenant-RLS logical references. Runtime identities remain tenant-bound with no universal RLS bypass, and migration authority remains separate from application/runtime and CI authority.
-- The attributable environment/platform/security/data-migration/deployment owner is `github:AnonymousKoo`; owner identity binding alone is not approval for a change. The DEVELOPMENT AUTH issuer and DEVELOPMENT DATA project reference are owner-approved non-secret bindings.
-- The exact DEVELOPMENT Render command-service binding is owner-confirmed in the canonical registry. Staging runtime, staging AUTH/DATA projects, environment-scoped secret boundaries, telemetry destinations, and network enforcement resources remain unresolved/`OWNER_VALUE_REQUIRED` where documented.
-- Non-production recovery is rebuild plus canonical Git migrations and approved synthetic seed after any separately authorized logical dump required by a risky migration; no PITR capability is claimed. Application rollback uses an exact prior artifact, database rollback defaults to forward correction, destructive migrations are prohibited, and data-restoration rollback is unauthorized.
-- Only the command/query service may have public ingress; the worker has no public inbound endpoint; outbound access is limited to approved environment Supabase and telemetry destinations; environment resources and credentials must remain isolated.
-- The wheel exposes `avuhz-service-development` separately from the unchanged loopback-only `avuhz-service`. DEVELOPMENT settings now require the exact separate DATA project `gnuqaefotwgkwurjpyik`, AUTH project `pwlhruwutoitnieactol`, approved issuer/audience, tenant/RLS bridge, workload identity, and Render `PORT` configuration.
-- DEVELOPMENT uses no local/static identity resolver or in-memory authority path. Startup/liveness remain bounded, readiness is `503` while hosted DATA and trusted-identity adapters are unavailable, and command/query requests fail at trusted identity resolution. The completed JWKS discovery grants no continuing AUTH/DATA access or Supabase mutation authority.
-- The wheel packages the single canonical `contracts/schemas/v1` catalog as `avuhz_contracts` package data. An isolated install outside the repository resolves `schema_root()` from `site-packages` and loads the complete fixed catalog; repository development may continue using the same source tree directly.
-- Owner-confirmed Render DEVELOPMENT evidence records service `avuhz-command-dev` at `https://avuhz-command-dev.onrender.com`, successful deployment of commit `6bff57065151462fc74861c68a232454b2ef9a20`, `GET /health/live = 200`, and intentional fail-closed `GET /health/ready = 503`. Recording this evidence grants no further deployment or provider authority.
-- The provider-neutral DEVELOPMENT trusted-identity resolver maps only exact verifier-produced evidence for the approved issuer and audience into tenant-bound `TrustedExecutionContext` semantics. It accepts only the frozen caller/capability vocabulary, establishes no human authority, validates bounded UTC lifetime, and rejects invalid or malformed evidence without exposing details.
-- The local DEVELOPMENT trusted-identity resolver and deterministic fake positive/negative identity tests are implemented and green. The live hosted DEVELOPMENT composition still uses its unavailable real-provider resolver; hosted DATA and identity readiness remain unavailable, and no JWT/provider adapter, runtime DATA credential, token, or secret has been wired.
-- The local DEVELOPMENT DATA composition reuses the canonical PostgresStore, PostgresUnitOfWork, repository ports, and `avuhz_command_service` database role. It accepts only loopback disposable databases, preserves the approved DATA project reference as configuration, and keeps `avuhz_command_service_dev` distinct from `avuhz_migration_service_dev`.
-- Trusted DEVELOPMENT context is required before UnitOfWork creation, and `TrustedExecutionContext.tenant_id` remains transaction-locally bound to `avuhz.tenant_id`. Staging/wrong-audience contexts fail before connection; unauthenticated or missing-tenant contexts close the opened transaction.
-- The disposable local PostgreSQL DEVELOPMENT DATA composition and UnitOfWork tests are green on the last certified baseline. Fresh replay certifies all 16 canonical tables, tenant RLS, no superuser/BYPASSRLS runtime role, bounded grants, cross-tenant denial, restart round-trip, immutable history, idempotency conflict/transition, and event/outbox atomic rollback. The hosted Render DEVELOPMENT composition remains unwired and reports DATA/identity readiness unavailable.
-- The real DEVELOPMENT AUTH and DATA adapter boundaries and least-privilege credential model are defined. The AUTH adapter implements only `DevelopmentIdentityVerifier.verify`; the existing resolver alone constructs `TrustedExecutionContext`. The DATA adapter injects the existing connection factory/PostgresStore/UnitOfWork path and cannot use service-role, migration, ownership, superuser, `BYPASSRLS`, DDL, or universal-tenant authority.
-- The first connected-validation package splits one credential-free AUTH JWKS discovery GET from a later separately authorized read-only DATA catalog/RLS transaction. Both define bounded secret-free evidence and deterministic stop conditions; neither authorizes remediation, wiring, readiness, migration, mutation, or a second call.
-- DEVELOPMENT AUTH discovery evidence: endpoint class `DEVELOPMENT_AUTH_JWKS`; timestamp `2026-09-01T15:14:17.159453Z`; HTTP `200`; content type `application/json`; key count `1`; supported metadata `ES256/EC/P-256`; private key material absent; validation `PASS`; raw-response SHA-256 `c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af`. No credential, token, cookie, API key, DATA-provider access, redirect, retry, raw-response persistence, or remote mutation occurred during that discovery.
-- Frozen DEVELOPMENT identity policy requires top-level `avuhz_tenant_id`, exactly one canonical tenant UUID per token, a newly issued token for tenant switching, and exact JWT `aud=audience.avuhz.command-service.development`; default Supabase `aud=authenticated` is rejected by Avuhz.
-- JWT role/roles/permissions/scope/capability/authority claims establish no Avuhz authority. Capabilities come only from an environment-scoped server-owned allowlist keyed by exact `(issuer, audience, subject, tenant_id, caller_type)`. The synthetic boundary is `HUMAN` with only `engagement:read`, no authority roles, a provider-assigned opaque `sub`, and ephemeral token delivery outside prompts/Git/logs/docs.
-- Under the current Supabase adapter design a Custom Access Token Hook is required to emit the approved tenant claim and service audience. It must emit no Avuhz capabilities or authority roles and has not been remotely created or enabled. Supabase remains an adapter; AUTH and DATA are now physically separated in DEVELOPMENT.
-- The canonical initial migration lineage is hardened at `5591dd6a99dd2d56dba6b682ab45198143d7539f`. Its explicit transaction and remote-safety preflight are validated; clean disposable replay passes nine PostgreSQL tests with the 16-table tenant-RLS surface intact. The canonical DATA migration has not been applied to `gnuqaefotwgkwurjpyik`.
-- Local-only observability evidence is recorded separately from hosted telemetry: Prometheus health/readiness, self-scrape, and `node_exporter` scrape are green; managed local Grafana `12.4.2` is healthy at `127.0.0.1:3002`, uses recovered persistent data, and queries Prometheus. A legacy orphaned Grafana remains on port `3000` pending a controlled Docker maintenance window. This is not Render telemetry and no Grafana Cloud resource is claimed.
-- The provider-neutral bounded authorization-plan model separates immutable plan definition, attributable exact owner approval, and versioned progress. It enforces plan ID/version/digest binding, expiry, one-resource-at-a-time order, exact target/operation/credential scope, prior evidence, independent verification, stop-on-drift, consumed authorization, and resume without replay. It has no alternate Avuhz/JWT authority path.
-- DEVELOPMENT AUTH v8 is stopped after its failed/rolled-back Step 2; retry authority is consumed and later v8 steps remain blocked. DEVELOPMENT AUTH v9 is the hosted PostgreSQL 17 forward-correction plan. V9 Step 1 is complete; v9 Step 2 is recorded authorized but cannot execute under the expired owner approval window; Steps 3-5 remain pending.
+- Phase 5 execution/verification is frozen behind the provider-neutral governed runtime and contracts.
+- DEVELOPMENT AUTH and DEVELOPMENT DATA are physically separated and must never be conflated:
+  - AUTH: Supabase `pwlhruwutoitnieactol`
+  - DATA: Supabase `gnuqaefotwgkwurjpyik`
+- AUTH v15 successfully bootstrapped the restricted migration identity, applied the hardened custom access-token hook, and sealed the migration identity.
+- AUTH v16 independently verified the sealed state: the hook owner/body/ACL match, the migration identity cannot be used through a SET path, and the hook remains disabled. AUTH v16 is `COMPLETED / CONSUMED / SUCCEEDED / PASS`.
+- DATA v2 applied the canonical provider-neutral 16-table Avuhz baseline to DEVELOPMENT DATA.
+- The DATA outbox function `search_path` warning was repaired through a separate bounded provider artifact and independently verified; Supabase Security Advisor returned zero findings afterward.
+- DATA v3 sealed the migration identity and independently verified tenant isolation. DATA v3 is `COMPLETED`; both steps are `CONSUMED / SUCCEEDED / PASS`.
+- Final DATA verification proved 16 Avuhz tables, RLS on all 16, one exact tenant policy per table, no direct Avuhz table authority for `PUBLIC`, `anon`, `authenticated`, or `service_role`, the canonical command-service ACL surface only, sealed migration-role membership, unchanged canonical migration history, and zero Security Advisor lints.
+- The registered DEVELOPMENT Render service `avuhz-command-dev` exists and has demonstrated bounded liveness. Its readiness remains intentionally unavailable until hosted identity and DATA dependencies are connected.
+- Local DEVELOPMENT identity and DATA composition boundaries are implemented and tested. The DATA composition is deliberately restricted to disposable loopback PostgreSQL; the hosted service does not yet use it as a remote provider connector.
+- The repository now has a root `ARCHITECTURE.md` that distinguishes implemented infrastructure from required future shared-core primitives.
 
+## Current runtime truth
 
-`PLATFORM_PRODUCTION_READINESS`: `NOT_READY`. Architecture and gates are defined; DEVELOPMENT AUTH/DATA integration, isolated staging, recovery/capacity/security evidence, and production configuration remain incomplete.
+`src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`.
 
-`READY_FOR_PHASE6`: `NO`. Resolve and certify platform production-readiness implementation milestones before beginning Phase 6.
+Therefore:
 
-`IN_PROGRESS`: Engineering-readiness milestone 9.5. This branch reclassifies the clean former-staging Supabase project as dedicated DEVELOPMENT DATA and updates runtime/tests/registry accordingly. No DATA baseline migration or hosted adapter wiring is authorized by this branch. AUTH v9 provider execution is paused pending fresh time-bound owner authorization.
+- startup/liveness can be healthy;
+- `/health/ready` remains `503`;
+- command/query requests fail closed at trusted identity resolution; and
+- no hosted Supabase DATA connection is created by the current service composition.
 
-`NEXT_TASK`: Complete CI/review/merge of this DEVELOPMENT DATA reclassification. After it is canonical, create a fresh DEVELOPMENT AUTH v9 owner approval/window, rerun the exact Step 2 read-only provider preflight, and separately authorize Step 2 execution only.
+This is intentional. AUTH/DATA provider-foundation completion does not itself authorize runtime credential creation, hosted adapter wiring, or readiness promotion.
 
-`DO_NOT_START_YET`: AUTH v9 Step 2 under the expired approval, AUTH Steps 3-5, remote DATA baseline migration, DATA runtime-credential creation/wiring, staging or production resource creation, hook enablement, synthetic user/tenant creation, token issuance, production/client-system deployment, hosted observability/backup integrations, Phase 6, or later roadmap work without their separate gates.
+## Multi-tenant truth
 
-`KNOWN_DIRTY/PARTIAL_WORK`: The DATA reclassification branch requires CI and merge review. The Supabase project still has the display name `Avuhz Staging`; project ID `gnuqaefotwgkwurjpyik` is the stable identity and the display-name cleanup is administrative only. The legacy local Grafana cleanup remains deferred to a controlled Docker maintenance window. Generated evidence, virtual environments, wheel files, and disposable PostgreSQL databases remain local artifacts outside the repository.
+The DEVELOPMENT DATA surface is not an aspirational design; it is deployed and verified:
 
-`REMOTE_AUTHORIZATION`: No provider mutation is currently authorized. The owner-authorized cleanup/reclassification preparation of `gnuqaefotwgkwurjpyik` is complete. DEVELOPMENT AUTH v9 Step 2 remains recorded `AUTHORIZED / NOT_STARTED / unconsumed`, but the underlying approval window is expired and grants no current execution authority. No further AUTH call, DATA migration/application, Render change, Supabase mutation, staging/production action, or other remote operation may occur without a fresh exact gate. Never force push.
+- 16 Avuhz tables;
+- RLS enabled on all 16;
+- one `avuhz_command_service_tenant_isolation` policy per table;
+- policy scoping through the transaction-local `avuhz.tenant_id` setting;
+- zero direct Avuhz table grants to `PUBLIC`, `anon`, `authenticated`, or `service_role`;
+- canonical command-service privileges only; and
+- runtime authority separate from migration authority.
 
-`RECOVERY_RULE`: `INSPECT -> PRESERVE -> COMPLETE -> VALIDATE -> COMMIT`. Never destroy valid interrupted work.
+## In progress
 
-## FUTURE_AGENT_WORKFLOW
+Engineering-readiness milestone 9.5 remains active. Provider foundations are now ahead of the older narrative that previously described AUTH v9 and an unapplied DATA migration.
 
-1. Read the canonical agent rules.
-2. Read `CURRENT_BUILD_STATE`.
-3. Read architecture and security only when `NEXT_TASK` requires them.
-4. Complete `NEXT_TASK` only.
-5. Run focused tests.
-6. Update `CURRENT_BUILD_STATE`.
-7. Commit only the completed milestone if green.
-8. Do not push unless explicitly authorized.
-9. Stop after the milestone.
+The immediate work is no longer schema bootstrap or AUTH hook creation. The next identity-validation chain must continue forward from the verified disabled-hook checkpoint.
+
+## Next task
+
+Create a fresh **repository-local forward-only DEVELOPMENT AUTH v17 plan** for exactly one dedicated synthetic DEVELOPMENT Auth identity in project `pwlhruwutoitnieactol`.
+
+That repository plan is the next task; creating the plan does **not** authorize the provider mutation. Provider execution must remain a later separately authorized boundary with fresh exact preflight.
+
+The intended sequence after that identity exists is:
+
+1. bind only provider-controlled DEVELOPMENT tenant metadata;
+2. bind the exact server-owned allowlist tuple with read-only `engagement:read` and no authority roles;
+3. separately authorize hook enablement;
+4. issue one short-lived synthetic token under its own boundary;
+5. validate issuer/audience/signature/tenant/subject/policy locally; and only then
+6. plan hosted identity and DATA adapter wiring for the Render DEVELOPMENT service.
+
+Each item remains a separate bounded resource/action boundary.
+
+## Do not start yet
+
+- Do not create tenant metadata in the same action as the synthetic Auth identity.
+- Do not enable the custom access-token hook yet.
+- Do not issue or retain a synthetic access token yet.
+- Do not wire Render to hosted AUTH or DATA yet.
+- Do not create runtime credentials or use a service-role shortcut.
+- Do not alter RLS, tenant policy, command-service grants, migration ownership, or sealed role membership without a new exact plan.
+- Do not create staging or production resources.
+- Do not begin Phase 6.
+- Do not treat n8n, communications, or billing as implemented merely because they are required architectural primitives.
+
+## Known gaps
+
+- No dedicated synthetic DEVELOPMENT Auth identity has been created for the next end-to-end identity proof.
+- The custom access-token hook exists but remains disabled.
+- Hosted DEVELOPMENT identity and DATA adapters are not wired.
+- No canonical n8n workflow exports are present in this repository.
+- No shared communications provider adapter is implemented here yet.
+- No shared Stripe billing/usage-metering engine is implemented here yet.
+- No dashboard application code or Supabase Edge Functions are present in the canonical tree.
+- Hosted observability, environment-scoped secret bindings, concrete network enforcement, staging, backup/restore proof, capacity/SLO proof, and production configuration remain incomplete.
+- `docs/architecture.md` contains detailed historical material and older readiness snapshots. When it conflicts with `ARCHITECTURE.md`, current code/provider evidence, or this file, the newer canonical evidence wins.
+
+## Remote authorization
+
+`REMOTE_AUTHORIZATION`: none.
+
+No further AUTH call, DATA operation, Render change, Supabase mutation, staging action, production action, hook enablement, synthetic-identity creation, metadata mutation, token issuance, or hosted adapter wiring is currently authorized by this document or by completion of earlier plans.
+
+## Recovery rule
+
+`RECOVERY_RULE`: `INSPECT -> PRESERVE -> COMPLETE -> VALIDATE -> COMMIT`.
+
+Never destroy valid interrupted work. Never force push.
+
+## Future agent workflow
+
+1. Read `AGENTS.md`.
+2. Read `ARCHITECTURE.md`, `SECURITY.md`, and this file.
+3. Inspect the latest canonical plan/progress artifacts relevant to the exact next boundary.
+4. Confirm repository/environment/project/responsibility/resource before any change.
+5. Complete one bounded resource change only.
+6. Run focused validation and the full applicable gate.
+7. Record sanitized evidence.
+8. Stop at the next authority boundary.
+9. End with one explicit next action.

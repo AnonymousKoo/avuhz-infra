@@ -1,2 +1,4 @@
 jsonschema==4.10.3
 psycopg[binary]==3.3.4
+PyJWT[crypto]==2.14.0
+cryptography==50.0.1

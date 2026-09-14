@@ -1,0 +1,23 @@
+{
+  "progress_id": "64d11eaf-f8d5-4c52-b0e3-7c0a3bcd594f",
+  "plan_id": "02640972-5a93-4286-9ce9-e0ffed45279e",
+  "plan_version": 1,
+  "plan_digest": "sha256:23f2ceb93120ab848ba614cf435f1a612913bc3d386eca0af67eb81563f51f47",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.data.search-path-repair.v1.step.01.repair-outbox-function-search-path",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-14T02:35:38Z",
+  "progress_digest": "sha256:e782d26d5d7cdc40035f336904a49d0a505f045696ccce1c4dc189e00cd11639"
+}

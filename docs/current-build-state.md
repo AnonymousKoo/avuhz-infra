@@ -2,7 +2,7 @@
 
 `CURRENT_PHASE`: Phase 5 remains frozen. Engineering/production-readiness milestone 9.5 is active.
 
-`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 is complete and verified. DEVELOPMENT DATA v3 is complete and verified. DEVELOPMENT AUTH v17 and v18 remain immutable, unapproved, unexecuted, and unconsumed after their owner-approval timing windows became unusable. DEVELOPMENT AUTH v19 has an exact persisted owner approval but remains unexecuted and unconsumed; the owner-interactive dashboard path was stopped before mutation because Supabase's create-user form requires a password. AUTH v20 remains immutable `DRAFT_BLOCKED` and unexecutable. Authorization-plan v2 now defines the narrowly scoped `SUPABASE_AUTH_ADMIN_EPHEMERAL` server-executor capability class and handling rules needed by a future forward-only plan without exposing, hashing, persisting, or returning credential material. No v21 plan, executor binding, provider approval, or provider execution exists yet. The hosted DEVELOPMENT Render service remains intentionally fail-closed for dependency readiness because real hosted identity and DATA adapters are not yet injected.
+`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 is complete and verified. DEVELOPMENT DATA v3 is complete and verified. DEVELOPMENT AUTH v17 and v18 remain immutable, unapproved, unexecuted, and unconsumed after their owner-approval timing windows became unusable. DEVELOPMENT AUTH v19 has an exact persisted owner approval but remains unexecuted and unconsumed; the owner-interactive dashboard path was stopped before mutation because Supabase's create-user form requires a password. AUTH v20 remains immutable `DRAFT_BLOCKED` and unexecutable. Authorization-plan v2 defines the narrowly scoped `SUPABASE_AUTH_ADMIN_EPHEMERAL` server-executor capability class and handling rules without exposing, hashing, persisting, or returning credential material. AUTH v21 now exists as a fresh forward-only `READY_FOR_APPROVAL` plan for exactly one passwordless synthetic DEVELOPMENT Auth identity; it has no approval, no provider execution, and no executor-capability preflight evidence yet. The hosted DEVELOPMENT Render service remains intentionally fail-closed for dependency readiness because real hosted identity and DATA adapters are not yet injected.
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`.
 
@@ -22,8 +22,10 @@
 - The v19 provider preflight verified DEVELOPMENT AUTH project `pwlhruwutoitnieactol`, zero Auth users, zero Avuhz tenant-metadata rows, and unchanged hardened disabled-hook state. The owner-interactive dashboard create-user path was then stopped before mutation because its form requires a password; v19 progress therefore remains `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`, with no success evidence and no synthetic user created.
 - AUTH v20 records a forward-only correction toward the supported Supabase Admin `createUser` email-only confirmed route for `avuhz-development-synthetic@example.invalid`, while explicitly prohibiting password/password-hash creation, invitation, metadata, session/token issuance, credential persistence/exposure/logging, hook enablement, DATA, Render, staging, and production changes. v20 remains intentionally `DRAFT_BLOCKED`, has no authorization window, permits credential class `NONE`, and grants no provider authority. The introduction of authorization-plan v2 does not mutate or retroactively unblock v20.
 - Authorization-plan v2 is backward-compatible with the historical plan surface and adds only `SUPABASE_AUTH_ADMIN_EPHEMERAL`. The class is valid only for `DEVELOPMENT` + `supabase` + `AUTH` + `PROVIDER_MUTATION` + `provider.auth-*`, must be the sole allowed class, and carries no secret value. Its handling contract requires approved environment-secret-boundary origin, server-executor-memory-only residency, class-label-only control-plane visibility, and prohibits material digest, persistence, logging, return, copying, export, creation, and rotation.
-- Authorization of a future step using that class requires a digest-only non-secret executor-capability attestation (`auth.admin-executor-capability.observed`). The digest represents the non-secret executor capability reference, never provider credential material. A future concrete executor binding must still satisfy `SECURITY.md`; the class does not permit a shared service-role key or long-lived static credential shortcut.
-- The canonical baseline now certifies the new credential model and scans for modern Supabase secret-key prefixes in addition to the existing credential-shaped-content and Semgrep gates.
+- Authorization of a step using that class requires a digest-only non-secret executor-capability attestation (`auth.admin-executor-capability.observed`). The digest represents the non-secret executor capability reference, never provider credential material. A concrete executor binding must still satisfy `SECURITY.md`; the class does not permit a shared service-role key or long-lived static credential shortcut.
+- AUTH v21 is the fresh forward-only plan that uses the v2 class without editing v20. It binds DEVELOPMENT AUTH project `pwlhruwutoitnieactol`, the existing v16 disabled-hook evidence, the exact `provider.auth-identity.create-one` operation, the passwordless Supabase Admin `createUser` email-only confirmed path for `avuhz-development-synthetic@example.invalid`, and the exact no-password/no-metadata/no-invite/no-session/no-token/no-DATA/no-Render boundary. Its authorization window is `2026-09-14T14:00:00Z` through `2026-09-14T17:00:00Z`, but no v21 approval exists and no provider authority is granted merely because the plan is `READY_FOR_APPROVAL`.
+- AUTH v21 requires two runtime preflights before execution authorization can succeed: the sanitized identity/provider-state preflight (`auth.synthetic-identity.create-preflight.observed`) and the digest-only non-secret executor-capability attestation (`auth.admin-executor-capability.observed`). Credential material is not a binding and must never appear in plan, approval, progress, evidence, request, log, or agent-visible surfaces.
+- The canonical baseline certifies the credential model, the v21 plan package, and modern Supabase secret-key prefixes in addition to the existing credential-shaped-content and Semgrep gates.
 - DATA v2 applied the canonical provider-neutral 16-table Avuhz baseline to DEVELOPMENT DATA.
 - The DATA outbox function `search_path` warning was repaired through a separate bounded provider artifact and independently verified; Supabase Security Advisor returned zero findings afterward.
 - DATA v3 sealed the migration identity and independently verified tenant isolation. DATA v3 is `COMPLETED`; both steps are `CONSUMED / SUCCEEDED / PASS`.
@@ -44,7 +46,7 @@ Therefore:
 - command/query requests fail closed at trusted identity resolution; and
 - no hosted Supabase DATA connection is created by the current service composition.
 
-This is intentional. AUTH/DATA provider-foundation completion and the authorization-plan v2 credential class do not themselves authorize runtime credential creation, secret retrieval, hosted adapter wiring, or readiness promotion. The default Supabase `aud=authenticated` is rejected by Avuhz; the approved DEVELOPMENT command-service audience remains separate.
+This is intentional. AUTH/DATA provider-foundation completion and authorization-plan v2/v21 planning do not themselves authorize runtime credential creation, secret retrieval, hosted adapter wiring, or readiness promotion. The default Supabase `aud=authenticated` is rejected by Avuhz; the approved DEVELOPMENT command-service audience remains separate.
 
 ## Multi-tenant truth
 
@@ -103,13 +105,13 @@ AUTH v19 remains immutable with plan digest `sha256:4e6bb3a76b4d15b7993b2567c674
 
 AUTH v20 remains immutable with plan digest `sha256:3870b6e83f4a7983e2a1fa668066790f4fd5ef77a70e4e801c081ae2459f509b` and initial progress digest `sha256:60c1818e6951a6493c08111a485ffdf3820b3ec9cc7c923b95a4ea5d3d79ec97`. It remains `DRAFT_BLOCKED`, not `READY_FOR_APPROVAL`; its authorization window is `UNRESOLVED_BLOCKER`, its credential policy permits only `NONE`, and its historical unresolved binding remains `binding.development.auth.v20.server-admin-credential-class`. There is no v20 approval, execution-progress file, provider-preflight evidence, or success evidence.
 
-Authorization-plan v2 now provides the model needed for a **new** forward-only plan. No provider executor has yet been proven to satisfy the class, no credential material has been retrieved, and no v21-or-later plan or approval exists.
+AUTH v21 is the current forward-only plan with plan digest `sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a` and initial progress digest `sha256:de228d038b4f5cd2cae216b429f4ec8e0022ca502191be426991b58f3845cf25`. It is `READY_FOR_APPROVAL`, targets only DEVELOPMENT AUTH `pwlhruwutoitnieactol`, and binds the exact window `2026-09-14T14:00:00Z` through `2026-09-14T17:00:00Z`. Its sole permitted credential class is `SUPABASE_AUTH_ADMIN_EPHEMERAL`, its progress remains `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`, and there is no v21 approval, execution-progress file, provider-preflight evidence, success evidence, or synthetic identity.
 
 ## Next task
 
-Create a fresh forward-only DEVELOPMENT AUTH plan (v21 or later) for **exactly one passwordless synthetic Auth identity** using `SUPABASE_AUTH_ADMIN_EPHEMERAL`. The new plan must bind AUTH project `pwlhruwutoitnieactol`, the existing v16 disabled-hook evidence, the exact supported Admin `createUser` email-only confirmed operation, the no-password/no-metadata/no-token constraints, and the credential-handling contract from authorization-plan v2.
+Create a separate exact owner approval for AUTH v21 while its immutable window remains usable. That approval must bind only plan id `e818f636-5470-4f39-a040-12f7e723b6c3`, plan version `21`, plan digest `sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a`, environment `DEVELOPMENT`, and the existing `2026-09-14T14:00:00Z` through `2026-09-14T17:00:00Z` window.
 
-That plan must require the non-secret executor-capability preflight attestation and remain provider-neutral until a separate exact owner approval and provider-execution authorization. Creating the plan must not retrieve a Supabase credential, test a credential, create a user, or contact DATA/Render.
+Approval persistence remains repository-only and must not retrieve or test any provider credential. Provider execution is a later separate boundary: immediately before any mutation, re-confirm canonical main, exact approval/window, DEVELOPMENT AUTH project `pwlhruwutoitnieactol`, the v16 disabled-hook prerequisite, the clean identity preflight, and the non-secret `auth.admin-executor-capability.observed` attestation. If the capability cannot be proven without exposing credential material, stop.
 
 After a separately authorized future provider execution eventually creates and verifies the identity, the intended sequence remains:
 
@@ -126,9 +128,10 @@ Each item remains a separate bounded resource/action boundary.
 
 - Do not execute or reuse AUTH v19's owner-interactive synthetic-user path; the dashboard requires a password and that path was stopped before mutation.
 - Do not create a v20 approval or edit v20 to use the new credential class; v20 is immutable historical `DRAFT_BLOCKED` state.
-- Do not retrieve, display, hash, fingerprint, log, copy, export, create, rotate, or persist a Supabase credential merely because authorization-plan v2 recognizes `SUPABASE_AUTH_ADMIN_EPHEMERAL`.
+- Do not retrieve, display, hash, fingerprint, log, copy, export, create, rotate, or persist a Supabase credential merely because authorization-plan v2 recognizes `SUPABASE_AUTH_ADMIN_EPHEMERAL` or v21 is `READY_FOR_APPROVAL`.
 - Do not treat the new class as `service_role`, as permission to use a shared service-role key, or as an exception to the workload-identity/secret-boundary requirements in `SECURITY.md`.
-- Do not perform the provider mutation in the same resource change as the fresh v21-or-later plan.
+- Do not treat v21 plan creation as owner approval or provider-execution authorization.
+- Do not perform the provider mutation in the same resource change as v21 approval persistence.
 - Do not create tenant metadata in the same action as the synthetic Auth identity.
 - Do not enable the custom access-token hook yet.
 - Do not issue or retain a synthetic access token yet.
@@ -141,7 +144,7 @@ Each item remains a separate bounded resource/action boundary.
 ## Known gaps
 
 - No dedicated synthetic DEVELOPMENT Auth identity has been created for the next end-to-end identity proof.
-- No fresh v21-or-later synthetic-identity plan, owner approval, or provider-execution authorization exists yet.
+- AUTH v21 exists and is `READY_FOR_APPROVAL`, but no v21 owner approval or provider-execution authorization exists yet.
 - No concrete server executor has yet produced the required non-secret `auth.admin-executor-capability.observed` preflight attestation under the new class, and no credential material has been retrieved or validated.
 - The custom access-token hook exists but remains disabled.
 - Hosted DEVELOPMENT identity and DATA adapters are not wired.
@@ -154,9 +157,9 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Remote authorization
 
-`REMOTE_AUTHORIZATION`: authorization-plan v2 defines a credential class but grants no remote authority. AUTH v20 remains `DRAFT_BLOCKED`, has no authorization window, has no approval file, and grants no provider authority. AUTH v19's earlier exact approval artifact remains part of immutable history, but its owner-interactive provider path was stopped before mutation and must not be reused.
+`REMOTE_AUTHORIZATION`: AUTH v21 is `READY_FOR_APPROVAL` but has no approval file and grants no remote authority. AUTH v20 remains immutable `DRAFT_BLOCKED`. AUTH v19's earlier exact approval artifact remains part of immutable history, but its owner-interactive provider path was stopped before mutation and must not be reused.
 
-No provider mutation is currently authorized. No secret retrieval, executor binding, DATA operation, Render change, staging action, production action, hook enablement, metadata mutation, token issuance, or hosted adapter wiring is authorized by this repository-only credential-model change.
+No provider mutation is currently authorized. No secret retrieval, executor binding, DATA operation, Render change, staging action, production action, hook enablement, metadata mutation, token issuance, or hosted adapter wiring is authorized by the v21 repository-only plan package.
 
 ## Recovery rule
 

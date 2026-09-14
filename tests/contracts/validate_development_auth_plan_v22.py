@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate DEVELOPMENT AUTH v22 tenant metadata plan before approval."""
+"""Validate DEVELOPMENT AUTH v22 tenant metadata plan after owner approval, before execution."""
 from __future__ import annotations
 
 import hashlib
@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
+    approval_digest,
     initial_progress,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -21,13 +23,16 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v22.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v22.progress.json"
+APPROVAL_PATH = BASE / "development-auth-integration-v22.approval.json"
 V21_SUCCESS_PATH = BASE / "development-auth-step1-v21-success.evidence.json"
 V16_SUCCESS_PATH = BASE / "development-auth-step1-v16-success.evidence.json"
 
 PLAN_ID = "9dec1b7c-198b-4590-9750-80e68106db98"
 PROGRESS_ID = "a8967e0b-f465-4a56-8083-6404fc53ba80"
+APPROVAL_ID = "992dfd16-6f9d-4f39-8c56-a53b7e3a1094"
 PLAN_DIGEST = "sha256:d45d82a3fe6ff702044b2f976178f947e2db8399da08c3f7d5f6931612ddbd9d"
 PROGRESS_DIGEST = "sha256:a81b2a689079515720472ad0188b3cf23fb22d2b5f423e7abf538eb462c24f8d"
+APPROVAL_DIGEST = "sha256:28726aa2424ca8436088ac9530642416c56e045a8e2fff2b0ca9897499bfa3d5"
 STEP_ID = "development.auth.v22.step.01.bind-synthetic-tenant-app-metadata"
 PROJECT = "pwlhruwutoitnieactol"
 TENANT_ID = "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0"
@@ -35,6 +40,9 @@ SUBJECT_DIGEST = "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace
 TARGET_METADATA_DIGEST = "sha256:cd89c12abf5ed8c3dc03f4766a6d7cd9f1b8388b9e98468e9673233550a910a6"
 V21_SUCCESS_DIGEST = "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3a0f8c7211fffa"
 V16_SUCCESS_DIGEST = "sha256:0cfa1a3515e6496e9bc215de4579d5e4ff5b46f0299227b60708dc72ff2fb194"
+APPROVED_AT = "2026-09-14T19:23:16Z"
+EFFECTIVE_AT = "2026-09-14T19:30:00Z"
+EXPIRES_AT = "2026-09-14T22:30:00Z"
 
 TARGET_APP_METADATA = {
     "provider": "email",
@@ -63,11 +71,14 @@ def declaration(step: dict, binding_id: str) -> dict:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     v21 = load(V21_SUCCESS_PATH)
     v16 = load(V16_SUCCESS_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, EFFECTIVE_AT)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-14T22:29:59Z")
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 22
@@ -80,10 +91,25 @@ def main() -> int:
     assert plan["target"]["responsibility"] == "AUTH"
     assert plan["authorization_window"] == {
         "binding_state": "BOUND",
-        "starts_at": "2026-09-14T19:30:00Z",
-        "expires_at": "2026-09-14T22:30:00Z",
+        "starts_at": EFFECTIVE_AT,
+        "expires_at": EXPIRES_AT,
     }
     assert plan["ordered_step_ids"] == [STEP_ID]
+
+    assert approval["approval_id"] == APPROVAL_ID
+    assert approval["plan_id"] == PLAN_ID
+    assert approval["plan_version"] == 22
+    assert approval["plan_digest"] == PLAN_DIGEST
+    assert approval["owner_identity"] == "github:AnonymousKoo"
+    assert approval["decision"] == "APPROVE"
+    assert approval["environment"] == "DEVELOPMENT"
+    assert approval["approved_at"] == APPROVED_AT
+    assert approval["effective_at"] == EFFECTIVE_AT
+    assert approval["expires_at"] == EXPIRES_AT
+    assert approval["status"] == "ACTIVE"
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert approval["approval_digest"] == APPROVAL_DIGEST
+    assert approval_digest(approval) == APPROVAL_DIGEST
 
     step = plan["steps"][0]
     assert step["step_id"] == STEP_ID
@@ -172,7 +198,6 @@ def main() -> int:
     assert state["binding_assertions"] == []
 
     for forbidden in (
-        BASE / "development-auth-integration-v22.approval.json",
         BASE / "development-auth-integration-v22.execution-progress.json",
         BASE / "development-auth-step1-v22-preflight.evidence.json",
         BASE / "development-auth-step1-v22-success.evidence.json",
@@ -181,9 +206,9 @@ def main() -> int:
         assert not forbidden.exists(), forbidden
 
     print(
-        "DEVELOPMENT_AUTH_V22_PLAN=PASS "
-        "(exact synthetic subject digest + canonical tenant + app_metadata target bound; "
-        "no approval or provider execution present)"
+        "DEVELOPMENT_AUTH_V22_APPROVAL=PASS "
+        "(exact-plan owner approval active only for 19:30Z-22:30Z; "
+        "no provider execution or executor workflow present)"
     )
     return 0
 

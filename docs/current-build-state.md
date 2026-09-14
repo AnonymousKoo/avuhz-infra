@@ -2,7 +2,7 @@
 
 `CURRENT_PHASE`: Phase 5 remains frozen. Engineering/production-readiness milestone 9.5 is active.
 
-`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 is complete and verified. DEVELOPMENT DATA v3 is complete and verified. The repository-only DEVELOPMENT AUTH v17 synthetic-identity plan is `READY_FOR_APPROVAL` but unapproved, unexecuted, and unconsumed. The hosted DEVELOPMENT Render service remains intentionally fail-closed for dependency readiness because real hosted identity and DATA adapters are not yet injected.
+`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 is complete and verified. DEVELOPMENT DATA v3 is complete and verified. DEVELOPMENT AUTH v17 remains immutable, unapproved, unexecuted, and unconsumed after its owner-approval timing window became unusable. The forward-only DEVELOPMENT AUTH v18 synthetic-identity plan is `READY_FOR_APPROVAL` but unapproved, unexecuted, and unconsumed. The hosted DEVELOPMENT Render service remains intentionally fail-closed for dependency readiness because real hosted identity and DATA adapters are not yet injected.
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`.
 
@@ -16,7 +16,8 @@
   - DATA: Supabase `gnuqaefotwgkwurjpyik`
 - AUTH v15 successfully bootstrapped the restricted migration identity, applied the hardened custom access-token hook, and sealed the migration identity.
 - AUTH v16 independently verified the sealed state: the hook owner/body/ACL match, the migration identity cannot be used through a SET path, and the hook remains disabled. AUTH v16 is `COMPLETED / CONSUMED / SUCCEEDED / PASS`.
-- The forward-only AUTH v17 repository plan defines exactly one future provider mutation: create `identity.development.synthetic-avuhz` in DEVELOPMENT AUTH. The plan is bound to the exact v16 disabled-hook evidence, prohibits tenant metadata, allowlist, hook enablement, token issuance, DATA, Render, staging, and production changes, and grants no authority without a separate exact approval.
+- AUTH v17 defined exactly one synthetic-identity provider mutation but remained unapproved and unexecuted. Its immutable authorization window began before the owner instruction to approve arrived, and the authorization engine forbids backdating `approved_at`; v17 therefore remains historical `PENDING / NOT_STARTED / NOT_STARTED / unconsumed` evidence only.
+- The forward-only AUTH v18 repository plan preserves the exact v17 synthetic-identity resource, operation, credential class, v16 disabled-hook prerequisite evidence, expected postcondition, and prohibited action set under a new future authorization window. It grants no authority without a separate exact approval.
 - DATA v2 applied the canonical provider-neutral 16-table Avuhz baseline to DEVELOPMENT DATA.
 - The DATA outbox function `search_path` warning was repaired through a separate bounded provider artifact and independently verified; Supabase Security Advisor returned zero findings afterward.
 - DATA v3 sealed the migration identity and independently verified tenant isolation. DATA v3 is `COMPLETED`; both steps are `CONSUMED / SUCCEEDED / PASS`.
@@ -90,15 +91,15 @@ These are blockers, not implied resources or authorizations.
 
 ## In progress
 
-Engineering-readiness milestone 9.5 remains active. Provider foundations are complete through AUTH v16 and DATA v3. AUTH v17 is now defined repository-side as one exact synthetic-identity creation step and remains `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`.
+Engineering-readiness milestone 9.5 remains active. Provider foundations are complete through AUTH v16 and DATA v3. AUTH v17 remains immutable historical plan state only: `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`, with no approval file and no provider execution.
 
-The v17 plan digest is `sha256:58da83d494d2efdd19b09a5ac837b0804be61df24dd88abc0a1ed0c51dcf85d2`. Its authorization window is bounded from `2026-09-14T06:00:00Z` through `2026-09-14T09:00:00Z`. A bound window is not approval and does not authorize provider contact or mutation.
+AUTH v18 is the active forward-only plan. Its plan digest is `sha256:7da691db562c93e051a381411297116cc59de6d32eef215b65fc9ac7f10f8175`. Its initial progress digest is `sha256:826919f64b1f72def239bac5d44ce247bf6ffabd4bbce686d0396c7a17f6c4b6`. Its authorization window is bounded from `2026-09-14T07:30:00Z` through `2026-09-14T10:30:00Z`. A bound window is not approval and does not authorize provider contact or mutation.
 
 ## Next task
 
-Create and persist the **separate exact owner approval for DEVELOPMENT AUTH v17 Step 1** while the plan window is valid, after re-confirming canonical `main`, the AUTH project `pwlhruwutoitnieactol`, the exact v16 prerequisite evidence, and the still-pending v17 progress record.
+Create and persist the **separate exact owner approval for DEVELOPMENT AUTH v18 Step 1 before `2026-09-14T07:30:00Z`**, after re-confirming canonical `main`, the AUTH project `pwlhruwutoitnieactol`, the exact v16 prerequisite evidence, the still-pending v17 historical state, and the still-pending v18 progress record.
 
-That approval action must stop before provider execution. Creating the approval must not create the synthetic identity, bind metadata, enable the hook, issue a token, touch DATA, change Render, or affect staging/production.
+That approval action must stop before provider execution. Creating the approval must not create the synthetic identity, bind metadata, enable the hook, issue a token, touch DATA, change Render, or affect staging/production. Backdating a v17 approval is prohibited.
 
 After a separately authorized provider execution eventually creates and verifies the identity, the intended sequence remains:
 
@@ -113,7 +114,8 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Do not start yet
 
-- Do not create the synthetic Auth identity merely because the v17 plan exists.
+- Do not create the synthetic Auth identity merely because the v18 plan exists.
+- Do not backdate or execute AUTH v17.
 - Do not create tenant metadata in the same action as the synthetic Auth identity.
 - Do not enable the custom access-token hook yet.
 - Do not issue or retain a synthetic access token yet.
@@ -140,7 +142,7 @@ Each item remains a separate bounded resource/action boundary.
 
 `REMOTE_AUTHORIZATION`: none. No provider mutation is currently authorized.
 
-No AUTH provider call, DATA operation, Render change, Supabase mutation, staging action, production action, hook enablement, synthetic-identity creation, metadata mutation, token issuance, or hosted adapter wiring is authorized merely by the v17 plan package or completion of earlier plans.
+No AUTH provider call, DATA operation, Render change, Supabase mutation, staging action, production action, hook enablement, synthetic-identity creation, metadata mutation, token issuance, or hosted adapter wiring is authorized merely by the v18 plan package or completion of earlier plans.
 
 ## Recovery rule
 

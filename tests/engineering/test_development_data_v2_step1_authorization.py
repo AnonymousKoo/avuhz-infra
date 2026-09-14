@@ -16,7 +16,6 @@ from avuhz_engineering.authorization_plan import (  # noqa: E402
     validate_plan,
     validate_progress,
 )
-from avuhz_runtime.implementation_handoff import canonical_digest  # noqa: E402
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 PLAN_PATH = ROOT / "contracts/plans/v1/development-data-integration-v2.plan.json"
@@ -27,6 +26,7 @@ STEP1_PREFLIGHT_PATH = ROOT / "contracts/plans/v1/development-data-step1-v2-pref
 STEP1_SUCCESS_PATH = ROOT / "contracts/plans/v1/development-data-step1-v2-success.evidence.json"
 STEP2_SUCCESS_PATH = ROOT / "contracts/plans/v1/development-data-step2-v2-success.evidence.json"
 STEP3_PREFLIGHT_PATH = ROOT / "contracts/plans/v1/development-data-step3-v2-preflight.evidence.json"
+STEP3_SUCCESS_PATH = ROOT / "contracts/plans/v1/development-data-step3-v2-success.evidence.json"
 
 PLAN_ID = "a7034439-f9e7-4358-90ef-cf221dfd1d1b"
 PLAN_DIGEST = "sha256:ed141409e31c0aa70944ca801047f05db574ef3e905dd85dcd2e81c0a393d695"
@@ -40,6 +40,7 @@ T1O = "2026-09-13T22:54:53Z"
 T2A = "2026-09-13T23:09:56Z"
 T2O = "2026-09-13T23:24:38Z"
 T3A = "2026-09-13T23:47:26Z"
+T3O = "2026-09-14T00:00:44Z"
 
 PACKAGE = "sha256:ab86caddb7da33e174d14684d00af97941482b35a6cc5fa5cf172865de93bef8"
 PREFLIGHT1 = "sha256:83374a5770b00b6a548b72ed627cf493456562a3297678a9ab3455ef2ef94beb"
@@ -49,10 +50,10 @@ BASELINE_VALUE = "sha256:e05c1a9995f1c3383e5237678f766ce9729a1e29756afbee287e882
 SUCCESS2 = "sha256:9c1e742d1d77d8ac63a2ea201fc39789a54f384f9caa684e24d45112ef27053c"
 IDENTITY_STATE = "sha256:732bf7b9f980dada32ef566dd3b7c9873673086b751e333db4fcdbc4e3ea1898"
 IDENTITY_VALUE = "sha256:63a91b034cf50e65877b8dae4f7fe2aa86f1355e211c2f006be9268032fcf612"
-STEP2_PROGRESS = "sha256:a3410f72e6ade8bcd7a116412e21b2e6ea6e8f912dead2affd4e9e234e7d7148"
 PREFLIGHT3 = "sha256:c780ec5939cde52cbc7b7da7b7836f11b0f56cb8f77959d44d8cb275eef48266"
 PREFLIGHT3_CFG = "sha256:e38a67a1463b7a67ec341d6de6a55bb42ab44bb93e4c18cfaff39490a7702a7f"
-STEP3_PROGRESS = "sha256:54cf5afc8d4a64dafa253ff1269b0fa542def95e367530d4660309526314a815"
+SUCCESS3 = "sha256:4c01cf41fd7dd5cac07576cba6bddea2644f30250788ae58299e6def626e486c"
+STEP3_SUCCESS_PROGRESS = "sha256:70d9f86df61e58268bd60c1297cd83b04a18adc4c5044ed3723361697442afbb"
 
 
 def load(path: Path) -> dict:
@@ -94,26 +95,28 @@ def request(plan: dict, index: int, required: list[dict], prior: list[str]) -> d
 
 
 class DevelopmentDataV2ExecutionAuthorizationTest(unittest.TestCase):
-    def test_exact_chain_through_step3_authorization(self) -> None:
+    def test_exact_chain_through_step3_success(self) -> None:
         plan = load(PLAN_PATH)
         approval = load(APPROVAL_PATH)
         initial = load(INITIAL_PROGRESS_PATH)
         canonical = load(EXECUTION_PROGRESS_PATH)
         p1 = load(STEP1_PREFLIGHT_PATH)
+        e1 = load(STEP1_SUCCESS_PATH)
         e2 = load(STEP2_SUCCESS_PATH)
         p3 = load(STEP3_PREFLIGHT_PATH)
+        e3 = load(STEP3_SUCCESS_PATH)
 
         validate_plan(plan, SCHEMA_ROOT)
         validate_progress(plan, initial, SCHEMA_ROOT)
         validate_progress(plan, canonical, SCHEMA_ROOT)
-        for timestamp in (T1A, T1O, T2A, T2O, T3A):
+        for timestamp in (T1A, T1O, T2A, T2O, T3A, T3O):
             validate_approval(plan, approval, SCHEMA_ROOT, timestamp)
 
         self.assertEqual(plan["target"]["project_reference"], PROJECT)
         self.assertEqual(plan["steps"][2]["step_id"], STEP3_ID)
         self.assertEqual(plan["steps"][2]["execution_class"], "PROVIDER_READ")
 
-        a1 = {
+        step1_preflight = {
             "binding_id": "binding.development.data.v2.empty-bootstrap-preflight",
             "phase": "RESOLVED_BY_STEP_PREFLIGHT",
             "value_class": "CONFIGURATION_REFERENCE",
@@ -126,16 +129,25 @@ class DevelopmentDataV2ExecutionAuthorizationTest(unittest.TestCase):
             "value_digest": PREFLIGHT1_CFG,
             "recorded_at": T1A,
         }
-        s1a = authorize_step(
-            plan, approval, initial,
-            request(plan, 0, [{"evidence_type": "repository.data-v2.artifact-package.verified",
-                               "evidence_digest": PACKAGE}], []),
-            SCHEMA_ROOT, T1A, trusted_preflight_assertions=[a1],
-        )
         self.assertEqual(p1["evidence_digest"], PREFLIGHT1)
+        s1a = authorize_step(
+            plan,
+            approval,
+            initial,
+            request(
+                plan,
+                0,
+                [{"evidence_type": "repository.data-v2.artifact-package.verified", "evidence_digest": PACKAGE}],
+                [],
+            ),
+            SCHEMA_ROOT,
+            T1A,
+            trusted_preflight_assertions=[step1_preflight],
+        )
 
         self.assertEqual(raw_digest(STEP1_SUCCESS_PATH), SUCCESS1)
-        b1 = {
+        self.assertEqual(e1["outcome"], "SUCCEEDED_VERIFIED")
+        step1_binding = {
             "binding_id": "binding.development.data.v2.empty-baseline-state",
             "phase": "PRODUCED_BY_CURRENT_STEP",
             "value_class": "CONTENT_DIGEST",
@@ -149,24 +161,41 @@ class DevelopmentDataV2ExecutionAuthorizationTest(unittest.TestCase):
             "recorded_at": T1O,
         }
         s1 = record_step_outcome(
-            plan, approval, s1a, STEP1_ID, "SUCCEEDED", "PASS",
-            [{"evidence_type": "data.empty-baseline.verified",
-              "evidence_reference": "provider.execution.data-v2.step1.attempt1.verified",
-              "evidence_digest": SUCCESS1, "recorded_at": T1O}],
-            plan["steps"][0]["expected_postcondition"], None, SCHEMA_ROOT, T1O,
-            binding_assertions=[b1],
+            plan,
+            approval,
+            s1a,
+            STEP1_ID,
+            "SUCCEEDED",
+            "PASS",
+            [{
+                "evidence_type": "data.empty-baseline.verified",
+                "evidence_reference": "provider.execution.data-v2.step1.attempt1.verified",
+                "evidence_digest": SUCCESS1,
+                "recorded_at": T1O,
+            }],
+            plan["steps"][0]["expected_postcondition"],
+            None,
+            SCHEMA_ROOT,
+            T1O,
+            binding_assertions=[step1_binding],
         )
 
         s2a = authorize_step(
-            plan, approval, s1,
-            request(plan, 1, [{"evidence_type": "data.empty-baseline.verified",
-                               "evidence_digest": SUCCESS1}], [SUCCESS1]),
-            SCHEMA_ROOT, T2A,
+            plan,
+            approval,
+            s1,
+            request(
+                plan,
+                1,
+                [{"evidence_type": "data.empty-baseline.verified", "evidence_digest": SUCCESS1}],
+                [SUCCESS1],
+            ),
+            SCHEMA_ROOT,
+            T2A,
         )
         self.assertEqual(raw_digest(STEP2_SUCCESS_PATH), SUCCESS2)
         self.assertEqual(e2["verification_observation"]["migration_identity_state_digest"], IDENTITY_STATE)
-
-        b2 = {
+        step2_binding = {
             "binding_id": "binding.development.data.v2.migration-identity-state",
             "phase": "PRODUCED_BY_CURRENT_STEP",
             "value_class": "CONTENT_DIGEST",
@@ -180,57 +209,29 @@ class DevelopmentDataV2ExecutionAuthorizationTest(unittest.TestCase):
             "recorded_at": T2O,
         }
         s2 = record_step_outcome(
-            plan, approval, s2a, STEP2_ID, "SUCCEEDED", "PASS",
-            [{"evidence_type": "data.migration-identity.bootstrapped",
-              "evidence_reference": "provider.execution.data-v2.step2.attempt1.verified",
-              "evidence_digest": SUCCESS2, "recorded_at": T2O}],
-            plan["steps"][1]["expected_postcondition"], None, SCHEMA_ROOT, T2O,
-            binding_assertions=[b2],
+            plan,
+            approval,
+            s2a,
+            STEP2_ID,
+            "SUCCEEDED",
+            "PASS",
+            [{
+                "evidence_type": "data.migration-identity.bootstrapped",
+                "evidence_reference": "provider.execution.data-v2.step2.attempt1.verified",
+                "evidence_digest": SUCCESS2,
+                "recorded_at": T2O,
+            }],
+            plan["steps"][1]["expected_postcondition"],
+            None,
+            SCHEMA_ROOT,
+            T2O,
+            binding_assertions=[step2_binding],
         )
-        self.assertEqual(s2["record_version"], 5)
-        self.assertEqual(s2["progress_digest"], STEP2_PROGRESS)
 
-        self.assertEqual(p3["evidence_type"], "data.migration-identity.preflight.observed")
-        self.assertEqual(p3["observed_at"], T3A)
-        self.assertEqual(p3["preflight_result"], "PASS")
+        self.assertEqual(p3["evidence_digest"], PREFLIGHT3)
+        self.assertEqual(p3["configuration_digest"], PREFLIGHT3_CFG)
         self.assertEqual(p3["migration_identity_state_digest"], IDENTITY_STATE)
-        p3_body = {k: v for k, v in p3.items() if k not in {"evidence_digest", "configuration_digest"}}
-        self.assertEqual(canonical_digest(p3_body), PREFLIGHT3)
-
-        obs = p3["database_observation"]
-        cfg = {
-            "project_reference": p3["project_reference"],
-            "project_status": p3["project_status"],
-            "project_region": p3["project_region"],
-            "postgres_engine": p3["postgres_engine"],
-            "database_version": p3["database_version"],
-            "database_observation": obs,
-            "migration_identity_state_digest": p3["migration_identity_state_digest"],
-            "preflight_result": p3["preflight_result"],
-        }
-        self.assertEqual(canonical_digest(cfg), PREFLIGHT3_CFG)
-        self.assertFalse(obs["can_login"])
-        self.assertFalse(obs["is_superuser"])
-        self.assertTrue(obs["can_createrole"])
-        self.assertFalse(obs["can_bypassrls"])
-        self.assertEqual(obs["public_usage_grantable_count"], 1)
-        self.assertEqual(obs["public_create_nongrantable_count"], 1)
-        self.assertEqual(obs["explicit_postgres_set_edge_count"], 1)
-        self.assertEqual(obs["provider_admin_noset_edge_count"], 1)
-        self.assertEqual(obs["total_membership_edges"], 2)
-        for field in (
-            "direct_database_acl_count", "provider_schema_privilege_count",
-            "table_privilege_count", "sequence_privilege_count",
-            "direct_function_execute_count", "avuhz_schema_count",
-            "avuhz_relation_count", "avuhz_routine_count", "avuhz_type_count",
-            "avuhz_trigger_count", "avuhz_policy_count", "applied_migration_count",
-        ):
-            self.assertEqual(obs[field], 0)
-        self.assertFalse(obs["command_service_role_exists"])
-        self.assertFalse(p3["source"]["provider_mutation_attempted"])
-        self.assertFalse(p3["source"]["row_data_read"])
-
-        a3 = {
+        step3_preflight = {
             "binding_id": "binding.development.data.v2.migration-identity-preflight",
             "phase": "RESOLVED_BY_STEP_PREFLIGHT",
             "value_class": "CONFIGURATION_REFERENCE",
@@ -244,27 +245,95 @@ class DevelopmentDataV2ExecutionAuthorizationTest(unittest.TestCase):
             "recorded_at": T3A,
         }
         s3a = authorize_step(
-            plan, approval, s2,
-            request(plan, 2, [{"evidence_type": "data.migration-identity.bootstrapped",
-                               "evidence_digest": SUCCESS2}], [SUCCESS1, SUCCESS2]),
-            SCHEMA_ROOT, T3A, trusted_preflight_assertions=[a3],
+            plan,
+            approval,
+            s2,
+            request(
+                plan,
+                2,
+                [{"evidence_type": "data.migration-identity.bootstrapped", "evidence_digest": SUCCESS2}],
+                [SUCCESS1, SUCCESS2],
+            ),
+            SCHEMA_ROOT,
+            T3A,
+            trusted_preflight_assertions=[step3_preflight],
         )
 
-        self.assertEqual(canonical, s3a)
-        self.assertEqual(canonical["record_version"], 6)
-        self.assertEqual(canonical["progress_digest"], STEP3_PROGRESS)
+        self.assertEqual(raw_digest(STEP3_SUCCESS_PATH), SUCCESS3)
+        self.assertEqual(e3["evidence_type"], "data.migration-identity.verified")
+        self.assertEqual(e3["outcome"], "SUCCEEDED_VERIFIED")
+        self.assertEqual(e3["recorded_at"], T3O)
+        self.assertEqual(e3["verification_observation"]["migration_identity_state_digest"], IDENTITY_STATE)
+        self.assertTrue(e3["verification_observation"]["postcondition_verified"])
+        self.assertTrue(e3["verification_observation"]["migration_history_verified_empty"])
+        self.assertTrue(e3["verification_observation"]["migration_identity_state_unchanged"])
+        self.assertFalse(e3["verification_observation"]["provider_mutation_attempted"])
+        for field in (
+            "credential_retained",
+            "raw_provider_payload_retained",
+            "pii_retained",
+            "row_data_read",
+            "auth_resource_touched",
+            "staging_resource_touched",
+            "production_resource_touched",
+            "application_schema_created",
+            "command_service_role_created",
+        ):
+            self.assertFalse(e3["security_state"][field])
+
+        step3_binding = {
+            "binding_id": "binding.development.data.v2.migration-identity-verified",
+            "phase": "PRODUCED_BY_CURRENT_STEP",
+            "value_class": "CONTENT_DIGEST",
+            "source_step_id": None,
+            "evidence_type": "data.migration-identity.verified",
+            "evidence_digest": SUCCESS3,
+            "digest_policy": "REQUIRED",
+            "persistence_policy": "DIGEST_ONLY",
+            "sanitized_value": None,
+            "value_digest": IDENTITY_VALUE,
+            "recorded_at": T3O,
+        }
+        s3 = record_step_outcome(
+            plan,
+            approval,
+            s3a,
+            STEP3_ID,
+            "SUCCEEDED",
+            "PASS",
+            [{
+                "evidence_type": "data.migration-identity.verified",
+                "evidence_reference": "provider.execution.data-v2.step3.attempt1.verified",
+                "evidence_digest": SUCCESS3,
+                "recorded_at": T3O,
+            }],
+            plan["steps"][2]["expected_postcondition"],
+            None,
+            SCHEMA_ROOT,
+            T3O,
+            binding_assertions=[step3_binding],
+        )
+
+        self.assertEqual(canonical, s3)
+        self.assertEqual(canonical["record_version"], 7)
+        self.assertEqual(canonical["progress_digest"], STEP3_SUCCESS_PROGRESS)
         state = canonical["step_states"][2]
-        self.assertEqual(state["authorization_state"], "AUTHORIZED")
-        self.assertEqual(state["execution_state"], "NOT_STARTED")
-        self.assertFalse(state["authorization_consumed"])
+        self.assertEqual(state["authorization_state"], "CONSUMED")
+        self.assertEqual(state["execution_state"], "SUCCEEDED")
+        self.assertEqual(state["verification_state"], "PASS")
+        self.assertTrue(state["authorization_consumed"])
         self.assertEqual(
             [item["binding_id"] for item in state["binding_assertions"]],
-            ["binding.development.data.v2.migration-identity-state",
-             "binding.development.data.v2.migration-identity-preflight"],
+            [
+                "binding.development.data.v2.migration-identity-state",
+                "binding.development.data.v2.migration-identity-preflight",
+                "binding.development.data.v2.migration-identity-verified",
+            ],
         )
         for pending in canonical["step_states"][3:]:
             self.assertEqual(pending["authorization_state"], "PENDING")
             self.assertEqual(pending["execution_state"], "NOT_STARTED")
+            self.assertEqual(pending["verification_state"], "NOT_STARTED")
             self.assertFalse(pending["authorization_consumed"])
 
 

@@ -3,7 +3,7 @@
   "plan_id": "f6ae6374-878e-4a84-9b33-3f5718ed01b9",
   "plan_version": 3,
   "plan_digest": "sha256:d958bb5cb4d12524ebfb3d748e025af64b8c32da6e77e17ca8559239f18e0eb8",
-  "record_version": 3,
+  "record_version": 4,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -40,16 +40,30 @@
     },
     {
       "step_id": "development.data.v3.step.02.verify-tenant-isolation",
-      "authorization_state": "PENDING",
+      "authorization_state": "AUTHORIZED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
       "evidence": [],
       "observed_postcondition": null,
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.data.v3.migration-identity-sealed",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.data.v3.step.01.seal-migration-identity",
+          "evidence_type": "data.migration-identity.sealed",
+          "evidence_digest": "sha256:ccce61683282152c55225147555d7e6a54ed33218bf02c1a01dc25f06ad5f188",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:1a1e1ad3aeb6f4a9c92e17b0a4b82b1c150862f3d6360aeeafee87676d94fbfb",
+          "recorded_at": "2026-09-14T03:13:10Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-14T02:11:34Z",
-  "progress_digest": "sha256:16dbf6794a6735f243467970baaa1babdc1274ea6cea2d66c246ad2c96d8de5a"
+  "updated_at": "2026-09-14T03:13:10Z",
+  "progress_digest": "sha256:179fc8f4f0cfe87b1df83dca643ef4c54bfbe335e0fbf7bc62d689033710a088"
 }

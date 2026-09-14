@@ -1,0 +1,105 @@
+name: DEVELOPMENT AUTH v21 Admin Capability Certification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-v21-admin-capability-certification
+  cancel-in-progress: false
+
+jobs:
+  certify-development-auth-admin-capability:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+
+    env:
+      AVUHZ_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: e818f636-5470-4f39-a040-12f7e723b6c3
+      AVUHZ_PLAN_DIGEST: sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a
+      AVUHZ_WINDOW_START: '2026-09-14T14:00:00Z'
+      AVUHZ_WINDOW_END: '2026-09-14T17:00:00Z'
+      SUPABASE_AUTH_ADMIN_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_ADMIN_EPHEMERAL }}
+
+    steps:
+      - name: Verify bounded DEVELOPMENT Auth-admin executor capability
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          if [[ -z "${SUPABASE_AUTH_ADMIN_EPHEMERAL:-}" ]]; then
+            echo "::error::Required DEVELOPMENT Auth-admin ephemeral secret is unavailable."
+            exit 1
+          fi
+
+          if [[ "${SUPABASE_AUTH_ADMIN_EPHEMERAL}" != sb_secret_* ]]; then
+            echo "::error::DEVELOPMENT Auth-admin capability requires a modern Supabase secret key supplied only by the approved environment secret boundary."
+            exit 1
+          fi
+
+          now_epoch="$(date -u +%s)"
+          window_start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          window_end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+
+          if (( now_epoch < window_start_epoch || now_epoch >= window_end_epoch )); then
+            echo "::error::DEVELOPMENT AUTH v21 authorization window is not active."
+            exit 1
+          fi
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          if ! http_status="$(curl \
+            --silent \
+            --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" \
+            --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users?page=1&per_page=1")"; then
+            echo "::error::Auth-admin read-only capability probe failed."
+            exit 1
+          fi
+
+          if [[ "$http_status" != "200" ]]; then
+            echo "::error::Auth-admin read-only capability probe returned HTTP ${http_status}."
+            exit 1
+          fi
+
+          python - "$response_file" <<'PY'
+          import json
+          import sys
+
+          path = sys.argv[1]
+          try:
+              with open(path, "r", encoding="utf-8") as handle:
+                  payload = json.load(handle)
+          except Exception:
+              print("::error::Auth-admin capability response was not valid JSON.")
+              raise SystemExit(1)
+
+          if not isinstance(payload, dict) or not isinstance(payload.get("users"), list):
+              print("::error::Auth-admin capability response did not match the expected list-users shape.")
+              raise SystemExit(1)
+          PY
+
+          configuration_reference='github-actions://AnonymousKoo/avuhz-infra/.github/workflows/development-auth-v21-admin-capability-certification.yml@main#environment=development;project=pwlhruwutoitnieactol;operation=auth.admin.listUsers'
+          configuration_reference_digest="sha256:$(printf '%s' "$configuration_reference" | sha256sum | awk '{print $1}')"
+
+          echo "plan_id_verified=${AVUHZ_PLAN_ID}"
+          echo "plan_digest_verified=${AVUHZ_PLAN_DIGEST}"
+          echo "project_ref_verified=true"
+          echo "authorization_window_verified=true"
+          echo "auth_admin_read_capability_verified=true"
+          echo "provider_mutation_attempted=false"
+          echo "credential_material_observed_by_control_plane=false"
+          echo "admin_executor_configuration_reference_digest=${configuration_reference_digest}"

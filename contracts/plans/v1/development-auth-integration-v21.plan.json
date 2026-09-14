@@ -1,7 +1,7 @@
 {
   "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
   "plan_version": 21,
-  "plan_digest": "sha256:e7410c35e9de2e8c4e60d538e9f1e7fd79bc49e58f51788b2a1e5d931467ab0c",
+  "plan_digest": "sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a",
   "definition_status": "READY_FOR_APPROVAL",
   "environment": "DEVELOPMENT",
   "target": {
@@ -183,10 +183,6 @@
     "render.operation",
     "staging.target",
     "production.target",
-    "v17.approval.backdate",
-    "v17.plan.execute",
-    "v18.approval.backdate",
-    "v18.plan.execute",
     "v19.plan.execute",
     "v19.approval.reuse",
     "v20.approval.create",

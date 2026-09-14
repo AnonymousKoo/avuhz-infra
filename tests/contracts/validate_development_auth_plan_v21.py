@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate forward-only DEVELOPMENT AUTH v21 passwordless synthetic identity plan."""
+"""Validate forward-only DEVELOPMENT AUTH v21 passwordless synthetic identity approval."""
 from __future__ import annotations
 
 import hashlib
@@ -10,11 +10,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import (
+    approval_digest,
+    initial_progress,
+    plan_digest,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v21.plan.json"
 PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v21.progress.json"
+APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v21.approval.json"
 V20_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v20.plan.json"
 V20_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v20.progress.json"
 V19_PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v19.plan.json"
@@ -23,8 +31,10 @@ V16_EVIDENCE_PATH = ROOT / "contracts/plans/v1/development-auth-step1-v16-succes
 
 PLAN_ID = "e818f636-5470-4f39-a040-12f7e723b6c3"
 PROGRESS_ID = "01813bf8-cf24-48c2-aad2-af87c8aab6e6"
+APPROVAL_ID = "9d27e05a-30f7-42ad-92d4-450b5cd16e2a"
 PLAN_DIGEST = "sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a"
 PROGRESS_DIGEST = "sha256:de228d038b4f5cd2cae216b429f4ec8e0022ca502191be426991b58f3845cf25"
+APPROVAL_DIGEST = "sha256:7f3344ed21daec73c8877615f3366bcd430ccd63c1ad0e29c32bbc75fd8b9164"
 V20_PLAN_DIGEST = "sha256:3870b6e83f4a7983e2a1fa668066790f4fd5ef77a70e4e801c081ae2459f509b"
 V20_PROGRESS_DIGEST = "sha256:60c1818e6951a6493c08111a485ffdf3820b3ec9cc7c923b95a4ea5d3d79ec97"
 V19_PLAN_DIGEST = "sha256:4e6bb3a76b4d15b7993b2567c6743497b285bbecd03100f7ce73bbbc7a0cc72e"
@@ -32,8 +42,10 @@ V19_PROGRESS_DIGEST = "sha256:ef3d232916d7be0d4a65e94d0bbfaa635258c937ae58bfa038
 V16_EVIDENCE_DIGEST = "sha256:0cfa1a3515e6496e9bc215de4579d5e4ff5b46f0299227b60708dc72ff2fb194"
 STEP_ID = "development.auth.v21.step.01.create-synthetic-identity-admin"
 CREATED_AT = "2026-09-14T12:44:21Z"
+APPROVED_AT = "2026-09-14T13:55:11Z"
 STARTS_AT = "2026-09-14T14:00:00Z"
 EXPIRES_AT = "2026-09-14T17:00:00Z"
+LAST_VALID_AT = "2026-09-14T16:59:59Z"
 CREDENTIAL_CLASS = "SUPABASE_AUTH_ADMIN_EPHEMERAL"
 CAPABILITY_EVIDENCE = "auth.admin-executor-capability.observed"
 SYNTHETIC_EMAIL = "avuhz-development-synthetic@example.invalid"
@@ -68,6 +80,7 @@ def raw_digest(path: Path) -> str:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     v20_plan = load(V20_PLAN_PATH)
     v20_progress = load(V20_PROGRESS_PATH)
     v19_plan = load(V19_PLAN_PATH)
@@ -76,6 +89,8 @@ def main() -> int:
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, STARTS_AT)
+    validate_approval(plan, approval, SCHEMA_ROOT, LAST_VALID_AT)
     validate_plan(v20_plan, SCHEMA_ROOT)
     validate_progress(v20_plan, v20_progress, SCHEMA_ROOT)
 
@@ -99,6 +114,23 @@ def main() -> int:
     }
     assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
     assert plan["ordered_step_ids"] == [STEP_ID]
+
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 21,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": STARTS_AT,
+        "expires_at": EXPIRES_AT,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
 
     step = plan["steps"][0]
     assert step["step_id"] == STEP_ID
@@ -133,7 +165,10 @@ def main() -> int:
     ):
         assert prohibited in step["prohibited_actions"]
         assert prohibited in plan["prohibited_actions"]
-    for prohibited in ("v19.plan.execute", "v19.approval.reuse", "v20.approval.create", "v20.plan.execute", "v20.plan.rewrite"):
+    for prohibited in (
+        "v19.plan.execute", "v19.approval.reuse", "v20.approval.create",
+        "v20.plan.execute", "v20.plan.rewrite",
+    ):
         assert prohibited in plan["prohibited_actions"]
 
     declarations = step["binding_declarations"]
@@ -207,7 +242,6 @@ def main() -> int:
     assert state["binding_assertions"] == []
 
     for path in (
-        ROOT / "contracts/plans/v1/development-auth-integration-v21.approval.json",
         ROOT / "contracts/plans/v1/development-auth-integration-v21.execution-progress.json",
         ROOT / "contracts/plans/v1/development-auth-step1-v21-preflight.evidence.json",
         ROOT / "contracts/plans/v1/development-auth-step1-v21-success.evidence.json",
@@ -218,10 +252,9 @@ def main() -> int:
         assert not path.exists(), path
 
     print(
-        "DEVELOPMENT_AUTH_V21_PLAN=PASS "
-        "(READY_FOR_APPROVAL only; DEVELOPMENT AUTH exact target; passwordless Admin createUser; "
-        "Supabase Auth-admin ephemeral class only; non-secret executor capability preflight required; "
-        "v20 immutable; no approval/provider authority)"
+        "DEVELOPMENT_AUTH_V21_APPROVAL=PASS "
+        "(exact owner approval bound to DEVELOPMENT AUTH v21; passwordless Admin createUser only; "
+        "Supabase Auth-admin ephemeral class only; no preflight/provider execution authority consumed)"
     )
     return 0
 

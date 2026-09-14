@@ -1,0 +1,34 @@
+{
+  "progress_id": "02ce9f9e-7ec4-424a-b1f0-8b36ecf98a80",
+  "plan_id": "f6ae6374-878e-4a84-9b33-3f5718ed01b9",
+  "plan_version": 3,
+  "plan_digest": "sha256:d958bb5cb4d12524ebfb3d748e025af64b8c32da6e77e17ca8559239f18e0eb8",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.data.v3.step.01.seal-migration-identity",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.data.v3.step.02.verify-tenant-isolation",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-14T01:28:04Z",
+  "progress_digest": "sha256:74987ec0ec0017e33b11020dde570846879ccd00f465cb24c000d7a35252741e"
+}

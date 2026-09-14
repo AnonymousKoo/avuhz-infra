@@ -1,0 +1,70 @@
+{
+  "progress_id": "01813bf8-cf24-48c2-aad2-af87c8aab6e6",
+  "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+  "plan_version": 21,
+  "plan_digest": "sha256:1e7499dccdb1d245c427114dda018983221ddc75941310e32ddb93fd84494f0a",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-identity.created",
+          "evidence_reference": "provider.execution.v21.step1.attempt1.verified",
+          "evidence_digest": "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3a0f8c7211fffa",
+          "recorded_at": "2026-09-14T16:24:06Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one dedicated synthetic DEVELOPMENT Auth identity exists in AUTH project pwlhruwutoitnieactol, created by the Supabase Admin createUser email-only confirmed path for avuhz-development-synthetic@example.invalid; no password, credential material, user metadata, app metadata, tenant metadata, invite, session, token, hook state, DATA, Render, staging, or production change occurs; the provider-assigned opaque subject is retained only as a digest-bound reference.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v21.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:2b3bd96c745a56879b348b4d538c64106bba69a5a8a152724a1660fc7243d775",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:a3487c9bb0850b814f2ee90911fc29077ecdd066e3b09ebc29a952b71db643a8",
+          "recorded_at": "2026-09-14T15:50:56Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v21.identity-create-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.create-preflight.observed",
+          "evidence_digest": "sha256:d1769c076ec68b792a3622b38c856c2bb2939c13f2f0b7aa75d19db6e825731a",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:fd32ea9a5cc7e44c0117969b88b54682222ca640233278e3b76bc1bef19d5e9d",
+          "recorded_at": "2026-09-14T15:50:56Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v21.synthetic-identity",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.created",
+          "evidence_digest": "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3a0f8c7211fffa",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9123b537af3bb3e2b543fd24a5510e30fd8f4f0ab27b8056421397ad0a9081a0",
+          "recorded_at": "2026-09-14T16:24:06Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-14T16:24:06Z",
+  "progress_digest": "sha256:13340bda7d8ff8b059494fc390e47f37684153ccbef43eb62acdea56e38b89eb"
+}

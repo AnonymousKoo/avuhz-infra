@@ -1,0 +1,65 @@
+{
+  "evidence_type": "auth.synthetic-identity.execution-preflight.observed",
+  "observation_only": true,
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+  "plan_version": 21,
+  "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+  "capability_attestation": {
+    "evidence_type": "auth.admin-executor-capability.observed",
+    "environment": "DEVELOPMENT",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+    "plan_version": 21,
+    "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+    "observed_at": "2026-09-14T15:21:43Z",
+    "source": {
+      "workflow_run_id": 34861618340,
+      "workflow_head_sha": "5273c5a89b0eb3b4593ddd2c53da977452469cec",
+      "workflow_conclusion": "success",
+      "provider_mutation_attempted": false,
+      "credential_material_observed_by_control_plane": false
+    },
+    "configuration_digest": "sha256:a3487c9bb0850b814f2ee90911fc29077ecdd066e3b09ebc29a952b71db643a8",
+    "result": "PASS",
+    "evidence_digest": "sha256:2b3bd96c745a56879b348b4d538c64106bba69a5a8a152724a1660fc7243d775"
+  },
+  "identity_create_preflight": {
+    "evidence_type": "auth.synthetic-identity.create-preflight.observed",
+    "environment": "DEVELOPMENT",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+    "plan_version": 21,
+    "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+    "observed_at": "2026-09-14T15:50:56Z",
+    "source": {
+      "workflow_run_id": 34864827864,
+      "workflow_head_sha": "6c70f6d1e457bbb21b833369a6e5bbae7eac88da",
+      "workflow_step": "Preflight exact empty DEVELOPMENT Auth target",
+      "provider_mutation_attempted": false,
+      "credential_material_observed_by_control_plane": false
+    },
+    "auth_user_count": 0,
+    "synthetic_identity_match_count": 0,
+    "configuration_digest": "sha256:fd32ea9a5cc7e44c0117969b88b54682222ca640233278e3b76bc1bef19d5e9d",
+    "result": "PASS",
+    "evidence_digest": "sha256:d1769c076ec68b792a3622b38c856c2bb2939c13f2f0b7aa75d19db6e825731a"
+  },
+  "security_state": {
+    "credential_retained": false,
+    "credential_material_observed_by_control_plane": false,
+    "raw_provider_payload_retained": false,
+    "pii_retained": false,
+    "provider_mutation_attempted": false,
+    "data_resource_touched": false,
+    "render_touched": false
+  },
+  "recorded_at": "2026-09-14T15:50:56Z"
+}

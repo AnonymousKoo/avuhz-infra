@@ -1,0 +1,23 @@
+{
+  "progress_id": "01813bf8-cf24-48c2-aad2-af87c8aab6e6",
+  "plan_id": "e818f636-5470-4f39-a040-12f7e723b6c3",
+  "plan_version": 21,
+  "plan_digest": "sha256:e7410c35e9de2e8c4e60d538e9f1e7fd79bc49e58f51788b2a1e5d931467ab0c",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v21.step.01.create-synthetic-identity-admin",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-14T12:44:21Z",
+  "progress_digest": "sha256:4fe494c84a052e5c5d6e6e6cb54eb4a5ffb7c6b24d71fb03ba1472e3518e5982"
+}

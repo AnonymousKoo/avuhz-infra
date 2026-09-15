@@ -104,7 +104,7 @@ def main() -> int:
     for required in (
         BASE_EXECUTOR_SHA256,
         "development_auth_v30_token_executor.py",
-        OLD if False else "OLD_PLAN_ID",
+        "OLD_PLAN_ID",
         "NEW_PLAN_ID",
         "source.replace(\"v30\", \"v31\").replace(\"V30\", \"V31\")",
         "V31_BASE_EXECUTOR_DIGEST_MISMATCH",

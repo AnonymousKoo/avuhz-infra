@@ -1,108 +1,109 @@
 # Avuhz Architecture
 
-This file is the current repository-level architecture source of truth. Detailed historical design material remains under `docs/`, but current implementation state is determined by this file, `docs/current-build-state.md`, canonical code, migrations/provider artifacts, and the latest bounded-authorization progress records.
+Avuhz is a multi-tenant, API-first business operating-system control plane. This file describes what is implemented in this repository now; older design material under `docs/` is historical unless it agrees with current code, migrations/provider artifacts, and `docs/current-build-state.md`.
 
-## System role
+## Control-plane law
 
-Avuhz is a multi-tenant, API-first business operating-system control plane. Shared infrastructure belongs in Avuhz; verticals supply thin domain logic through governed contracts and may not create competing infrastructure paths.
+Shared infrastructure belongs in Avuhz. Verticals such as roofing/home services, security/VerifiedPost, real estate/mortgage, or any future domain are thin domain logic on top of the shared backbone.
 
-Hard constraint: no vertical — roofing/home services, security/VerifiedPost, real estate/mortgage, or any other domain — may implement its own billing, authentication, tenant authority, or automation infrastructure. A vertical may define domain contracts, policies, and lifecycle logic, but it must consume the shared Avuhz backbone.
+**Hard constraint:** no vertical may implement its own billing, authentication, tenant-authority, or automation infrastructure. Verticals may define domain contracts, policy, and lifecycle logic, but billing, auth, tenant isolation, and orchestration must remain shared Avuhz services.
 
-## Five control-plane primitives
+## 1. Identity & Access
 
-### 1. Identity & Access
+The implemented DEVELOPMENT identity boundary uses a dedicated Supabase AUTH project: `pwlhruwutoitnieactol`. DEVELOPMENT DATA uses a different Supabase project and must never be substituted for AUTH.
 
-Implemented foundation:
+The current stack is:
 
-- DEVELOPMENT AUTH is a dedicated Supabase project: `pwlhruwutoitnieactol`.
-- `src/avuhz_service/development_identity.py` contains the provider-neutral trusted DEVELOPMENT identity resolver boundary.
-- The hardened custom access-token hook exists remotely as `public.avuhz_development_custom_access_token_hook_v1(jsonb)` and is owned by the sealed migration identity.
-- AUTH v16 is canonically `COMPLETED`; the hook is verified disabled and its ACL is restricted to the provider auth administrator path.
-- Caller JWT role/scope/capability claims do not establish Avuhz authority. Trusted server policy constructs `TrustedExecutionContext`.
+- `src/avuhz_service/development_supabase_jwt.py`: ES256 JWT verification against the DEVELOPMENT Supabase JWKS, exact issuer, and exact command-service audience.
+- `src/avuhz_service/development_supabase_identity.py`: one server-owned subject-digest allowlist entry mapped to one tenant and the single `engagement:read` capability.
+- `src/avuhz_runtime/guards.py`: trusted execution context plus environment, tenant, capability, subject, version, and human-authority guards.
+- `supabase/provider-artifacts/development-auth/`: bounded AUTH SQL artifacts, including the hardened custom access-token hook function.
 
-Current boundary: no synthetic DEVELOPMENT Auth identity has yet been created for end-to-end token validation, and the hosted DEVELOPMENT service still uses a fail-closed unavailable identity resolver.
+AUTH v21 created exactly one passwordless synthetic DEVELOPMENT Auth identity; AUTH v24 bound the canonical tenant in provider-controlled `app_metadata`; AUTH v26 bound the one read-only server allowlist tuple; AUTH v28 enabled the hosted Custom Access Token hook on `public.avuhz_development_custom_access_token_hook_v1`. The hook rewrites `aud` to `audience.avuhz.command-service.development` and emits `avuhz_tenant_id` only from validated `app_metadata`.
 
-### 2. Event-driven workflow/orchestration engine
+RBAC/ABAC is implemented as trusted server-side policy, not as caller-supplied role claims. `TrustedExecutionContext` carries principal, caller type, tenant, organization, capabilities, authority roles, environment, audience, and authentication strength; `GuardPipeline` evaluates those attributes before command execution. Caller JWT payload fields do not independently grant Avuhz authority.
 
-Architectural rule: n8n is a bounded command/query client. It may invoke Avuhz APIs and workflows, but it may not write authoritative Avuhz tables directly or become an alternate authority path.
+Current hosted limitation: `src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver`. The provider-specific verifier exists and is tested, but the hosted DEVELOPMENT service has not yet injected it. One short-lived synthetic-token end-to-end validation is also still not complete.
 
-Current repository state: no canonical n8n workflow-export directory or n8n workflow JSON is present on `main`. Therefore orchestration infrastructure is not claimed as implemented here yet.
+## 2. Event-driven workflow / orchestration engine
 
-### 3. Data abstraction layer
+n8n is the required shared orchestration engine, but **no canonical n8n workflow exports exist in this repository today**. File search found no workflow JSON/export directory, and `security/forbidden-path-patterns.txt` currently rejects `n8n-workflows/` and `.n8n/` paths.
 
-Implemented foundation:
+The implemented event foundation beneath future orchestration is Avuhz-owned:
 
-- DEVELOPMENT DATA is a separate Supabase project: `gnuqaefotwgkwurjpyik`.
-- AUTH and DATA are separate physical projects and must never be conflated or substituted for one another.
-- The canonical migration is `supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql`.
-- The deployed DEVELOPMENT DATA surface contains 16 provider-neutral Avuhz tables.
-- RLS is enabled on all 16 tables with one exact `avuhz_command_service_tenant_isolation` policy per table.
-- The migration identity is sealed; application authority is distinct from migration authority.
-- DATA v3 is canonically `COMPLETED` and the Supabase Security Advisor returned zero findings at the final verification.
+- `contracts/schemas/v1/orchestration/lifecycle-event.schema.json` defines append-only sanitized lifecycle events.
+- `avuhz_lifecycle_events` stores non-authoritative transition events with `sanitized_metadata`.
+- `avuhz_outbox_deliveries` plus `src/avuhz_worker/outbox.py` provide bounded at-least-once delivery with idempotency, leases, retries, and safe failure codes.
+- n8n must consume Avuhz API/event boundaries; it must never become an alternate authority path or write authoritative Avuhz tables directly.
 
-The local DATA composition in `src/avuhz_service/development_data.py` is deliberately restricted to disposable loopback PostgreSQL. The hosted Render service does not yet inject a real Supabase DATA connector.
+Because no n8n export is present, orchestration is an architectural primitive and integration target, not a claimed deployed implementation.
 
-### 4. Communication layer
+## 3. Data abstraction layer
 
-Required shared primitive: communications must be centralized behind Avuhz-owned provider adapters, including email-domain controls such as SPF/DKIM/DMARC, Twilio messaging where approved, and internal notification/event delivery.
+DEVELOPMENT DATA is Supabase project `gnuqaefotwgkwurjpyik`. DEVELOPMENT AUTH is `pwlhruwutoitnieactol`. **These projects have different responsibilities and must never be conflated.**
 
-Current repository state: no production or DEVELOPMENT email/Twilio communication adapter is present in the inspected canonical tree. No vertical may create a private communication infrastructure path to bypass the shared layer.
+The canonical provider-neutral schema is `supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql`. It creates 16 authoritative `avuhz_*` tables and the command-service database role `avuhz_command_service`.
 
-### 5. Billing engine
+For the authoritative Avuhz tables, the implemented isolation model is:
 
-Required shared primitive: Avuhz must have one shared billing implementation using Stripe and usage metering derived from internal governed events. Vertical-specific billing engines are prohibited.
+- every table carries `tenant_id`;
+- RLS is enabled on all 16 tables;
+- every table has one `avuhz_command_service_tenant_isolation` policy;
+- the policy compares row `tenant_id` with transaction-local `current_setting('avuhz.tenant_id', true)`;
+- `PUBLIC`, `anon`, `authenticated`, and `service_role` are explicitly revoked from direct Avuhz-table access;
+- `avuhz_command_service` receives `SELECT` on all 16 tables, `INSERT` only on the 15 tables that support creation through the governed runtime, and column-scoped `UPDATE` grants for allowed transitions;
+- runtime/application authority is separate from migration/DDL authority.
 
-Current repository state: no Stripe billing adapter, billing service, or usage-metering implementation is present in the inspected canonical tree. This is a required future shared-core capability, not an existing implementation.
+`src/avuhz_runtime/postgres.py` and the UnitOfWork path bridge trusted tenant context into the transaction. `src/avuhz_service/development_data.py` currently permits only disposable loopback PostgreSQL for certification; the hosted DEVELOPMENT service still uses `_UnavailableUnitOfWork`, so no real hosted Supabase DATA adapter is injected yet.
 
-## Multi-tenant isolation model
+There is also a preserved legacy schema inventory at `supabase/inventory/current_public_schema.sql`. That inventory contains non-Avuhz tables with older broad policies such as `authenticated_full_access USING (true) WITH CHECK (true)` and anon demo-read policies. Those legacy policies are **not** the isolation model for the `avuhz_*` authority path and must not be copied into new Avuhz resources. They remain legacy security debt requiring separate ownership and remediation decisions.
 
-The current DATA tenant model is implemented in PostgreSQL, not merely documented:
+## 4. Communication layer
 
-- every authoritative Avuhz table carries `tenant_id`;
-- RLS is enabled on all 16 deployed Avuhz tables;
-- each table has one `FOR ALL TO avuhz_command_service` tenant-isolation policy;
-- the policy scopes access through `tenant_id = nullif(current_setting('avuhz.tenant_id', true), '')::uuid`;
-- `TrustedExecutionContext.tenant_id` is transaction-locally bridged to `avuhz.tenant_id` by the governed UnitOfWork path;
-- `PUBLIC`, `anon`, `authenticated`, and `service_role` have no direct Avuhz table grants;
-- final DEVELOPMENT DATA certification observed the canonical command-service privilege surface only: 16 table `SELECT` grants, 15 table `INSERT` grants, and 47 narrowly scoped column `UPDATE` grants, with no unexpected command-service privileges.
+The required shared communication layer includes email-domain controls (SPF, DKIM, DMARC), approved messaging providers such as Twilio, and internal notification delivery behind Avuhz-owned adapters.
 
-Runtime identities must never own authoritative tables, receive `BYPASSRLS`, receive universal tenant authority, or receive migration/DDL authority.
+What exists now is only local/provider configuration scaffolding: `supabase/config.toml` has local SMTP testing enabled and a disabled Twilio Auth configuration block that references an environment variable for the auth token. No Avuhz email adapter, Twilio adapter, SPF/DKIM/DMARC deployment configuration, or production notification provider implementation is present in the canonical tree.
 
-## DEVELOPMENT runtime
+No vertical may fill this gap by creating its own parallel communications infrastructure.
 
-The registered DEVELOPMENT command/query service is the Render service `avuhz-command-dev`. Its public liveness endpoint is intentionally independent from dependency readiness.
+## 5. Billing engine
 
-`src/avuhz_service/development.py` currently instantiates `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`. As a result, startup/liveness may be healthy while `/health/ready` remains `503`, and command/query requests fail closed before trusted identity resolution. This is the correct current behavior until separately authorized hosted AUTH and DATA adapters are wired.
+The required billing primitive is one shared Avuhz billing engine using Stripe with usage metering derived from governed internal events. Billing authority and metering must remain cross-domain infrastructure; vertical-specific Stripe integrations or billing ledgers are prohibited.
+
+No Stripe SDK, Stripe adapter, billing service, usage-metering worker, or billing table is present in the inspected repository. This is a required shared-core capability, not an implemented one.
+
+## API/runtime shape
+
+The service is a Python WSGI command/query API. `src/avuhz_service/application.py` exposes `/v1/commands`, `/v1/queries`, and bounded health endpoints. Mutations have one governed Executor path; queries require trusted identity plus `engagement:read`. Responses are `no-store`, and the local request handler suppresses access logging because paths may contain authoritative identifiers.
+
+Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jsonschema`. The repository also pins the Supabase CLI for local/provider artifact work. A DEVELOPMENT Render service is recorded in canonical state, but readiness remains intentionally fail-closed until hosted AUTH and DATA adapters are injected and independently verified.
 
 ## Repository resource map
 
-- Canonical architecture: `ARCHITECTURE.md`
-- Security/change controls: `SECURITY.md`
-- Agent operating rules: `AGENTS.md`
-- Current readiness state: `docs/current-build-state.md`
+- Root architecture context: `ARCHITECTURE.md`
+- Security/change rules: `SECURITY.md`
+- Coding-agent rules: `AGENTS.md`
+- Current implementation/readiness truth: `docs/current-build-state.md`
 - Ordered roadmap: `docs/roadmap.md`
-- Runtime and service code: `src/avuhz_runtime/`, `src/avuhz_service/`, `src/avuhz_worker/`
-- Supabase migrations: `supabase/migrations/`
-- Supabase provider artifacts: `supabase/provider-artifacts/`
-- Bounded authorization plans/evidence: `contracts/plans/v1/`
-- Tests: `tests/`
-- n8n workflow exports: none present on canonical `main`
-- Supabase Edge Functions: no edge-functions directory present on canonical `main`
-- Dashboard application code: no dashboard application directory present on canonical `main`
-
-## Authority boundaries
-
-Repository registration, green CI, a healthy Render liveness endpoint, a completed AUTH/DATA migration, or a provider-read result does not authorize the next provider change. Every external resource action requires its own exact environment/project/responsibility confirmation, bounded authorization, preflight, execution, verification, and evidence consumption.
-
-No staging or production AUTH/DATA projects are currently registered. Production remains `NOT_READY`, and Phase 6 must not begin until the engineering/production-readiness milestone is completed.
+- Runtime/service/worker code: `src/avuhz_runtime/`, `src/avuhz_service/`, `src/avuhz_worker/`
+- Contract schemas and bounded plans/evidence: `contracts/schemas/v1/`, `contracts/plans/v1/`
+- Supabase canonical migration: `supabase/migrations/`
+- Supabase provider-specific AUTH/DATA artifacts: `supabase/provider-artifacts/`
+- Preserved legacy schema inventory: `supabase/inventory/current_public_schema.sql`
+- Local Supabase configuration: `supabase/config.toml`
+- Tests and security gates: `tests/`, `scripts/check-baseline.sh`, `.semgrep.yml`, `security/forbidden-path-patterns.txt`
+- n8n workflow exports: **none present**
+- Supabase Edge Functions: **none present**; `edge_runtime` is enabled in local config, but no function source directory exists
+- Dashboard/frontend application code: **none present**
 
 ## Known Gaps
 
-- The hosted DEVELOPMENT service is not connected to real AUTH or DATA adapters and therefore remains intentionally not ready.
-- The custom access-token hook is created and hardened but remains disabled; no dedicated synthetic DEVELOPMENT Auth identity, tenant metadata binding, allowlist binding, token issuance, or end-to-end token validation is complete.
-- No canonical n8n workflow exports are present in this repository.
-- No shared communications provider adapter is implemented here yet.
-- No shared Stripe billing/usage-metering engine is implemented here yet.
-- No dashboard application code or Supabase Edge Functions are present in the inspected canonical tree.
-- Hosted Grafana Cloud/OpenTelemetry, environment-scoped secret bindings, concrete network enforcement, staging, backup/restore proof, capacity/SLO proof, and production configuration remain incomplete.
-- `docs/architecture.md` contains useful detailed historical design material, including older readiness snapshots. When it conflicts with this root file, current code/provider evidence, or `docs/current-build-state.md`, the newer canonical evidence wins.
+- End-to-end issuance and local validation of one short-lived synthetic DEVELOPMENT token is not complete.
+- Hosted DEVELOPMENT identity and DATA adapters are not wired; `/health/ready` therefore remains intentionally unavailable.
+- No canonical n8n workflow exports or deployed n8n integration are present.
+- No shared communications provider adapter or SPF/DKIM/DMARC deployment configuration is implemented here.
+- No shared Stripe billing/usage-metering engine is implemented here.
+- No dashboard application code or Supabase Edge Function source is present.
+- The preserved legacy public-schema inventory contains broad authenticated and anon-demo access patterns outside the `avuhz_*` authority path; those policies must be treated as legacy security debt rather than copied forward.
+- Hosted observability/alerting, concrete network enforcement, backup/restore proof, capacity/SLO proof, isolated staging, and production configuration remain incomplete.
+- Production readiness is `NOT_READY`, and Phase 6 is not yet authorized by the current roadmap.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate pristine DEVELOPMENT AUTH v28 dashboard-bundle preparation."""
+"""Validate DEVELOPMENT AUTH v28 through verified dashboard hook enablement."""
 from __future__ import annotations
 
 import hashlib
@@ -12,8 +12,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
     approval_digest,
+    authorize_step,
     initial_progress,
     plan_digest,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -25,6 +27,9 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v28.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v28.progress.json"
+EXECUTION_PATH = BASE / "development-auth-integration-v28.execution-progress.json"
+PREFLIGHT_PATH = BASE / "development-auth-step1-v28-preflight.evidence.json"
+SUCCESS_PATH = BASE / "development-auth-step1-v28-success.evidence.json"
 APPROVAL_PATH = BASE / "development-auth-integration-v28.approval.json"
 OBSERVATION_PATH = BASE / "development-auth-v28-dashboard-bundle.observation.json"
 V16_PATH = BASE / "development-auth-step1-v16-success.evidence.json"
@@ -60,6 +65,14 @@ APPROVAL_ID = "e0d2c051-50c5-4306-91ac-6ef5b81a062e"
 APPROVAL_DIGEST = "sha256:9d645db0eeba77e7908989ee2c96bd34280ba9bf13de756e381aab3f55a28ad5"
 APPROVAL_FILE_DIGEST = "sha256:45c9dce1f521bd734b608d5a62fdc69043dca02c00508bfb5d9c05fa799e0f5d"
 APPROVED_AT = "2026-09-15T20:03:41Z"
+AUTH_AT = "2026-09-15T20:40:12Z"
+OUTCOME_AT = "2026-09-15T20:41:54Z"
+PREFLIGHT_RAW_DIGEST = "sha256:14eb67ebc3cde2b34b60dab52e17d72ba88fac82e9899b0fae197f4b18941fb1"
+PREFLIGHT_EVIDENCE_DIGEST = "sha256:877d7568c2c59996e0cabb793ea7611e55dcbdeadb7d413985f75613fdc5586c"
+PREFLIGHT_CONFIG_DIGEST = "sha256:88d752293176c4b04f829d4afe3775260441558bda762d130e2a009d7104ea18"
+AUTHORIZED_PROGRESS_DIGEST = "sha256:65ce0b39bf368ce03c1f131d8c1ce9852ea874252df02b7a636f5f0bedb66ccc"
+SUCCESS_EVIDENCE_DIGEST = "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c"
+SUCCESS_PROGRESS_DIGEST = "sha256:1aa545222c50b3931834f9e76b6d58143d93896a2202d5cecd3b718e89c9c9af"
 
 
 def load(path: Path) -> dict:
@@ -68,6 +81,12 @@ def load(path: Path) -> dict:
 
 def raw_digest(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def component_digest(value: dict) -> str:
+    body = dict(value)
+    body.pop("evidence_digest")
+    return canonical_digest(body)
 
 
 def main() -> int:
@@ -238,17 +257,175 @@ def main() -> int:
     assert state["authorization_consumed"] is False
     assert state["evidence"] == [] and state["binding_assertions"] == []
 
-    for path in (
-        BASE / "development-auth-integration-v28.execution-progress.json",
-        BASE / "development-auth-step1-v28-preflight.evidence.json",
-        BASE / "development-auth-step1-v28-success.evidence.json",
-    ):
-        assert not path.exists()
-    assert not list((ROOT / ".github/workflows").glob("*v28*"))
+    preflight = load(PREFLIGHT_PATH)
+    assert raw_digest(PREFLIGHT_PATH) == PREFLIGHT_RAW_DIGEST
+    assert preflight["evidence_type"] == "hook.configuration.preflight.observed"
+    assert preflight["observation_only"] is True
+    assert preflight["project_reference"] == PROJECT
+    assert preflight["plan_id"] == PLAN_ID and preflight["plan_version"] == 28
+    assert preflight["step_id"] == STEP_ID and preflight["observed_at"] == AUTH_AT
+    assert preflight["result"] == "PASS"
+    assert preflight["evidence_digest"] == PREFLIGHT_EVIDENCE_DIGEST
+    assert component_digest(preflight) == PREFLIGHT_EVIDENCE_DIGEST
+    assert preflight["configuration_digest"] == PREFLIGHT_CONFIG_DIGEST
+    hosted_before = preflight["hosted_auth_observation"]
+    assert hosted_before["auth_hooks_page_entries"] == 0
+    assert hosted_before["custom_access_token_hook_configured"] is False
+    assert hosted_before["custom_access_token_hook_enabled"] is False
+    assert hosted_before["target_hook_uri"] == HOOK_URI
+    db_before = preflight["database_observation"]
+    assert db_before["function_exists"] is True
+    assert db_before["function_owner"] == "avuhz_migration_service_dev"
+    assert db_before["function_language"] == "plpgsql"
+    assert db_before["function_stable"] is True
+    assert db_before["function_security_invoker"] is True
+    assert db_before["function_search_path_exact"] is True
+    assert db_before["function_return_type"] == "jsonb"
+    assert db_before["function_body_matches_certified_v2"] is True
+    assert db_before["permission_state"] == expected_state
+    assert db_before["permission_state_digest"] == STATE_DIGEST
+    assert preflight["authorization_observation"] == {
+        "window_active": True,
+        "approval_exact": True,
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "credential_material_observed": False,
+    }
 
+    preflight_assertion = {
+        "binding_id": "binding.development.auth.v28.hook-configuration-preflight",
+        "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+        "value_class": "CONTENT_DIGEST",
+        "source_step_id": None,
+        "evidence_type": "hook.configuration.preflight.observed",
+        "evidence_digest": PREFLIGHT_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": PREFLIGHT_CONFIG_DIGEST,
+        "recorded_at": AUTH_AT,
+    }
+    request = {
+        "plan_id": PLAN_ID,
+        "plan_version": 28,
+        "plan_digest": PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": PROJECT,
+        "responsibility": "AUTH",
+        "issuer_reference": DEVELOPMENT_AUTH_ISSUER,
+        "audience_reference": DEVELOPMENT_SERVICE_AUDIENCE,
+        "step_id": STEP_ID,
+        "resource_reference": "hook.development.custom-access-token",
+        "resource_version": "version.2",
+        "resource_digest": BUNDLE_DIGEST,
+        "operation": "provider.auth-hook.create-exact-dashboard-bundle",
+        "execution_class": "PROVIDER_MUTATION",
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "required_evidence": [
+            {"evidence_type": item["evidence_type"], "evidence_digest": item["exact_digest"]}
+            for item in step["required_evidence"]
+        ],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    authorized = authorize_step(
+        plan, approval, progress, request, SCHEMA_ROOT, AUTH_AT,
+        trusted_preflight_assertions=[preflight_assertion],
+    )
+    assert authorized["record_version"] == 2
+    assert authorized["progress_digest"] == AUTHORIZED_PROGRESS_DIGEST
+    assert authorized["step_states"][0]["authorization_state"] == "AUTHORIZED"
+
+    success = load(SUCCESS_PATH)
+    assert raw_digest(SUCCESS_PATH) == SUCCESS_EVIDENCE_DIGEST
+    assert success["evidence_type"] == "hook.enablement.verified"
+    assert success["environment"] == "DEVELOPMENT" and success["responsibility"] == "AUTH"
+    assert success["project_reference"] == PROJECT
+    assert success["plan_id"] == PLAN_ID and success["plan_version"] == 28
+    assert success["step_id"] == STEP_ID and success["attempt"] == 1
+    assert success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert success["recorded_at"] == OUTCOME_AT
+    execution_observation = success["execution_observation"]
+    assert execution_observation["execution_class"] == "PROVIDER_MUTATION"
+    assert execution_observation["credential_class"] == "OWNER_INTERACTIVE_SESSION"
+    assert execution_observation["owner_interactive_dashboard_action"] == "create_auth_hook"
+    assert execution_observation["provider_mutation_attempts"] == 1
+    assert execution_observation["provider_mutation_committed"] is True
+    assert execution_observation["dashboard_bundle_digest"] == BUNDLE_DIGEST
+    assert execution_observation["hook_configuration_digest"] == HOOK_CONFIG_DIGEST
+    assert execution_observation["permission_reconciliation_expected_net_change"] is False
+    for key in ("token_or_session_requested", "credential_material_observed", "data_resource_touched", "render_touched", "n8n_touched", "staging_touched", "production_touched"):
+        assert execution_observation[key] is False, key
+
+    provider_after = success["provider_observation"]
+    assert provider_after["auth_hooks_page_entries"] == 1
+    assert provider_after["custom_access_token_hook_enabled"] is True
+    assert provider_after["hook_type"] == "custom_access_token"
+    assert provider_after["hook_transport"] == "postgres_function"
+    assert provider_after["hook_schema"] == "public"
+    assert provider_after["hook_function"] == "avuhz_development_custom_access_token_hook_v1"
+    assert provider_after["hook_uri"] == HOOK_URI
+    assert provider_after["function_owner"] == "avuhz_migration_service_dev"
+    assert provider_after["function_language"] == "plpgsql"
+    assert provider_after["function_stable"] is True
+    assert provider_after["function_security_invoker"] is True
+    assert provider_after["function_search_path_exact"] is True
+    assert provider_after["function_return_type"] == "jsonb"
+    assert provider_after["function_body_matches_certified_v2"] is True
+    assert provider_after["permission_state"] == expected_state
+    assert provider_after["permission_state_unchanged_from_preflight"] is True
+    assert provider_after["auth_user_count"] == 1
+    assert provider_after["tenant_bound_user_count"] == 1
+    assert provider_after["session_count"] == 0
+    assert provider_after["refresh_token_count"] == 0
+    assert all(success["verification_observation"].values())
+    assert all(value is False for value in success["security_state"].values())
+
+    produced_binding = {
+        "binding_id": "binding.development.auth.v28.hook-enablement",
+        "phase": "PRODUCED_BY_CURRENT_STEP",
+        "value_class": "CONTENT_DIGEST",
+        "source_step_id": None,
+        "evidence_type": "hook.enablement.verified",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": HOOK_CONFIG_DIGEST,
+        "recorded_at": OUTCOME_AT,
+    }
+    outcome_evidence = [{
+        "evidence_type": "hook.enablement.verified",
+        "evidence_reference": "provider.execution.v28.step1.attempt1.verified",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "recorded_at": OUTCOME_AT,
+    }]
+    expected_execution = record_step_outcome(
+        plan, approval, authorized, STEP_ID, "SUCCEEDED", "PASS",
+        outcome_evidence, step["expected_postcondition"], None, SCHEMA_ROOT, OUTCOME_AT,
+        binding_assertions=[produced_binding],
+    )
+    execution = load(EXECUTION_PATH)
+    validate_progress(plan, execution, SCHEMA_ROOT)
+    assert execution == expected_execution
+    assert execution["record_version"] == 3
+    assert execution["overall_state"] == "COMPLETED"
+    assert execution["progress_digest"] == SUCCESS_PROGRESS_DIGEST
+    execution_state = execution["step_states"][0]
+    assert execution_state["authorization_state"] == "CONSUMED"
+    assert execution_state["execution_state"] == "SUCCEEDED"
+    assert execution_state["verification_state"] == "PASS"
+    assert execution_state["authorization_consumed"] is True
+    assert execution_state["safe_error_code"] is None
+    assert execution_state["binding_assertions"] == [preflight_assertion, produced_binding]
+
+    assert not list((ROOT / ".github/workflows").glob("*v28*"))
     print(
-        "DEVELOPMENT_AUTH_V28_APPROVAL=PASS "
-        "(exact owner approval persisted before effective time; exact observed dashboard bundle retained; OWNER_INTERACTIVE_SESSION only; pristine/unexecuted)"
+        "DEVELOPMENT_AUTH_V28_OUTCOME=PASS "
+        "(exact dashboard hook bundle created once and verified; authorization consumed; permission state unchanged; zero sessions/refresh tokens; no DATA/Render/n8n/staging/production effect)"
     )
     return 0
 

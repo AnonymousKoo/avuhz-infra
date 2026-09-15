@@ -1,0 +1,57 @@
+{
+  "progress_id": "facbecc8-e60f-4f3c-9c74-21e81d65092a",
+  "plan_id": "d65f18e6-ef65-42a9-96c3-d50a037c4866",
+  "plan_version": 28,
+  "plan_digest": "sha256:dd5414b753903501a4a7998d854288611ac9195f3199c405c29eb865dbd2d3db",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v28.step.01.create-exact-custom-access-token-hook-bundle",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "hook.enablement.verified",
+          "evidence_reference": "provider.execution.v28.step1.attempt1.verified",
+          "evidence_digest": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c",
+          "recorded_at": "2026-09-15T20:41:54Z"
+        }
+      ],
+      "observed_postcondition": "Only the exact DEVELOPMENT custom access-token hook dashboard bundle is applied; all bound prerequisite and postcondition digests remain exact, and no other provider or runtime resource changes.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v28.hook-configuration-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.configuration.preflight.observed",
+          "evidence_digest": "sha256:877d7568c2c59996e0cabb793ea7611e55dcbdeadb7d413985f75613fdc5586c",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:88d752293176c4b04f829d4afe3775260441558bda762d130e2a009d7104ea18",
+          "recorded_at": "2026-09-15T20:40:12Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v28.hook-enablement",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.enablement.verified",
+          "evidence_digest": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:c73dbf937dc150d883c6abd4b6f3593ee77846fa067ce7ebf1bed9b7890e1602",
+          "recorded_at": "2026-09-15T20:41:54Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-15T20:41:54Z",
+  "progress_digest": "sha256:1aa545222c50b3931834f9e76b6d58143d93896a2202d5cecd3b718e89c9c9af"
+}

@@ -1,0 +1,15 @@
+{
+  "approval_id": "73412786-d0a4-454a-822d-a467da964725",
+  "plan_id": "b9532651-b0a2-420f-a3fb-bde9c5c3d396",
+  "plan_version": 25,
+  "plan_digest": "sha256:70f57ac94af8906388dc07fe21284d46182c3efb9c8c5eb2cc3d303e723aa5b8",
+  "owner_identity": "github:AnonymousKoo",
+  "decision": "APPROVE",
+  "environment": "DEVELOPMENT",
+  "effective_at": "2026-09-15T04:00:00Z",
+  "expires_at": "2026-09-15T10:00:00Z",
+  "approved_at": "2026-09-15T02:31:52Z",
+  "status": "ACTIVE",
+  "authority_scope": "EXACT_PLAN_ONLY",
+  "approval_digest": "sha256:45c4a8f88ab1392c367a6ce414d8ca9fea987439a77db024e7adff5d1dbea476"
+}

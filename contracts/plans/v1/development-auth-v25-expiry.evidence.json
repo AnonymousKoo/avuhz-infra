@@ -1,0 +1,29 @@
+{
+  "record_type": "DEVELOPMENT_AUTH_V25_EXPIRY_AUDIT",
+  "record_version": 1,
+  "plan_id": "b9532651-b0a2-420f-a3fb-bde9c5c3d396",
+  "plan_version": 25,
+  "plan_digest": "sha256:70f57ac94af8906388dc07fe21284d46182c3efb9c8c5eb2cc3d303e723aa5b8",
+  "approval_id": "73412786-d0a4-454a-822d-a467da964725",
+  "approval_digest": "sha256:45c4a8f88ab1392c367a6ce414d8ca9fea987439a77db024e7adff5d1dbea476",
+  "approval_file_digest": "sha256:ef122cf1b6c28853fe047c52a66ca096993e7b7ea05fd79c16d96f045821dfbd",
+  "environment": "DEVELOPMENT",
+  "effective_at": "2026-09-15T04:00:00Z",
+  "expires_at": "2026-09-15T10:00:00Z",
+  "observed_at": "2026-09-15T12:21:18Z",
+  "outcome": "EXPIRED_UNEXECUTED",
+  "progress_state": {
+    "overall_state": "NOT_STARTED",
+    "authorization_state": "PENDING",
+    "execution_state": "NOT_STARTED",
+    "verification_state": "NOT_STARTED",
+    "authorization_consumed": false
+  },
+  "effects": {
+    "allowlist_bound": false,
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "credential_used": false
+  },
+  "continuation_rule": "DO_NOT_REUSE_APPROVAL_OR_WINDOW; CREATE_FRESH_FORWARD_ONLY_PLAN"
+}

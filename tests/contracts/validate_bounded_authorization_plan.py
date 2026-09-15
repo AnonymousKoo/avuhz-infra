@@ -64,6 +64,12 @@ V27_APPROVAL_PATH = (
 V27_APPROVAL_FILE_DIGEST = (
     "sha256:c9fae3414c77863904a5f28c912edfc78c9756f186c040258e551be708922e00"
 )
+V28_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v28.approval.json"
+)
+V28_APPROVAL_FILE_DIGEST = (
+    "sha256:45c9dce1f521bd734b608d5a62fdc69043dca02c00508bfb5d9c05fa799e0f5d"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -146,6 +152,7 @@ def main() -> int:
         V25_APPROVAL_PATH,
         V26_APPROVAL_PATH,
         V27_APPROVAL_PATH,
+        V28_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
         DATA_V3_APPROVAL_PATH,
@@ -156,7 +163,7 @@ def main() -> int:
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22, optional exact v24, exact v25/v26/v27, and DATA v1-v3 and DATA search-path-repair v1 approvals"
+            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22, optional exact v24, exact v25/v26/v27/v28, and DATA v1-v3 and DATA search-path-repair v1 approvals"
         )
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
@@ -176,6 +183,8 @@ def main() -> int:
         raise SystemExit("exact authorized v26 approval file digest mismatch")
     if file_digest(V27_APPROVAL_PATH) != V27_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v27 approval file digest mismatch")
+    if file_digest(V28_APPROVAL_PATH) != V28_APPROVAL_FILE_DIGEST:
+        raise SystemExit("exact authorized v28 approval file digest mismatch")
     if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
@@ -211,6 +220,7 @@ def main() -> int:
                     V25_APPROVAL_PATH,
                     V26_APPROVAL_PATH,
                     V27_APPROVAL_PATH,
+                    V28_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
                     DATA_V3_APPROVAL_PATH,

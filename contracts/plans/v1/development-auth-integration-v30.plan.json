@@ -1,0 +1,451 @@
+{
+  "plan_id": "d89b1ba0-6a85-4897-8d40-33af4de45e4a",
+  "plan_version": 30,
+  "plan_digest": "sha256:8b1d92022e192c73b856d5d399843a3ee4c9dac4d08e9c7778293f765f8ebd6f",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-15T22:30:00Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-15T23:00:00Z",
+    "expires_at": "2026-09-16T05:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v30.step.01.generate-existing-user-recovery-link",
+    "development.auth.v30.step.02.consume-token-and-revoke-session",
+    "development.auth.v30.step.03.validate-token-exact"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v30.step.01.generate-existing-user-recovery-link",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.synthetic-recovery-link",
+        "resource_reference": "credential.development.synthetic-recovery-link-one-use",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": "sha256:236308020509e3c25000ac446ae0068da939880418daa624a5614ff484bfa05d"
+      },
+      "operation": "provider.auth-recovery-link.generate-existing-user-one",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e"
+        },
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba"
+        },
+        {
+          "evidence_type": "hook.enablement.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c"
+        },
+        {
+          "evidence_type": "auth.admin-bootstrap.credential-retired",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:9e310b6b114b4b4a2b71f35a6f9b6324231f3f071a2fdecc5d589d7b91e635ef"
+        },
+        {
+          "evidence_type": "auth.synthetic-token.v29-precanonical-rejected",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:9177fddb267c8e7735e19813a1f9c53f60403450c2c90d62fbb5ae75cf3f1f6d"
+        }
+      ],
+      "expected_postcondition": "Exactly one one-time recovery-link credential is generated in executor memory for the existing synthetic DEVELOPMENT identity. The provider operation must fail if that identity does not exist; no user is created, no email is sent, no session or access/refresh token is issued, and no credential material is persisted or exposed.",
+      "prohibited_actions": [
+        "audience.widen",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "credential.reuse",
+        "credential.rotate",
+        "data.operation",
+        "email.send",
+        "hook.disable",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "n8n.operation",
+        "password.set",
+        "production.target",
+        "recovery-link.reuse",
+        "refresh-token.persist",
+        "render.operation",
+        "server-allowlist.modify",
+        "session.issue",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.log",
+        "token.persist"
+      ],
+      "stop_conditions": [
+        "credential-material.observed",
+        "executor-capability.attestation.missing",
+        "hook.state-drift",
+        "identity.count-drift",
+        "identity.subject-drift",
+        "publishable-key.binding-invalid",
+        "recovery-link.outcome.ambiguous",
+        "refresh-token.preexisting",
+        "scope.drift",
+        "session.preexisting",
+        "target.mismatch",
+        "tenant.binding-drift"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+        ],
+        "values_stored": false,
+        "ephemeral_handling": {
+          "material_source": "APPROVED_ENVIRONMENT_SECRET_BOUNDARY",
+          "material_residency": "SERVER_EXECUTOR_MEMORY_ONLY",
+          "control_plane_visibility": "CLASS_LABEL_ONLY",
+          "material_digest": "PROHIBITED",
+          "persistence": "PROHIBITED",
+          "logging": "PROHIBITED",
+          "return_policy": "PROHIBITED",
+          "proof_policy": "NON_SECRET_EXECUTOR_CAPABILITY_ATTESTATION"
+        }
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v30.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v30.live-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-token.live-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.synthetic-recovery-link.generated",
+          "established_binding_ids": [
+            "binding.development.auth.v30.synthetic-recovery-link"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.v30.step.02.consume-token-and-revoke-session",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "auth.synthetic-session-lifecycle",
+        "resource_reference": "session.development.synthetic-one-use-lifecycle",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": "sha256:10828dc23324d2e83e6c9dddf26261102c8a212e2531541d590622c7b7b4248e"
+      },
+      "operation": "provider.auth-recovery-link.consume-one-and-revoke-session",
+      "dependency_step_ids": [
+        "development.auth.v30.step.01.generate-existing-user-recovery-link"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-recovery-link.generated",
+          "source_step_id": "development.auth.v30.step.01.generate-existing-user-recovery-link",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "The exact one-time recovery link is consumed once, exactly one short-lived DEVELOPMENT Auth session is issued, its access and refresh tokens remain only in executor memory, and that exact session is immediately signed out with local scope. Provider readback then proves zero auth.sessions and zero auth.refresh_tokens for the synthetic identity. The refresh token is never used or persisted; the access JWT remains only in executor memory for the final validation step.",
+      "prohibited_actions": [
+        "audience.widen",
+        "data.operation",
+        "hook.disable",
+        "hook.modify",
+        "hook.target-change",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "n8n.operation",
+        "password.set",
+        "production.target",
+        "recovery-link.reuse",
+        "refresh-token.log",
+        "refresh-token.persist",
+        "refresh-token.print",
+        "refresh-token.reuse",
+        "render.operation",
+        "server-allowlist.modify",
+        "session.issue.additional",
+        "session.revoke.other",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue.additional",
+        "token.log",
+        "token.persist",
+        "token.print",
+        "token.refresh",
+        "token.reuse"
+      ],
+      "stop_conditions": [
+        "access-token.handoff.missing",
+        "credential-material.persisted",
+        "logout.failed",
+        "recovery-link.handoff.missing",
+        "recovery-link.reuse",
+        "refresh-token.cleanup-failed",
+        "refresh-token.missing",
+        "scope.drift",
+        "session.cleanup-failed",
+        "session.cleanup.unavailable",
+        "session.count-mismatch",
+        "token-material.persisted",
+        "token.lifetime.invalid",
+        "token.missing"
+      ],
+      "correction_reference": "correction.cleanup.exact.session.or.stop.owner.review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SYNTHETIC_IDENTITY"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v30.synthetic-recovery-link",
+          "phase": "EPHEMERAL_HANDOFF",
+          "value_class": "EPHEMERAL_SENSITIVE",
+          "source_step_id": "development.auth.v30.step.01.generate-existing-user-recovery-link",
+          "evidence_type": "auth.synthetic-recovery-link.generated",
+          "digest_policy": "PROHIBITED",
+          "persistence_policy": "PROHIBITED"
+        },
+        {
+          "binding_id": "binding.development.auth.v30.session-cleanup",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-session.lifecycle-completed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.lifecycle-completed",
+          "established_binding_ids": [
+            "binding.development.auth.v30.synthetic-access-token",
+            "binding.development.auth.v30.session-cleanup"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.v30.step.03.validate-token-exact",
+      "ordinal": 3,
+      "resource": {
+        "resource_type": "auth.synthetic-token-validation",
+        "resource_reference": "validation.development.synthetic-one-use",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": "sha256:7123897737828e0f8b1d3c1e37ed12ee768e17cd674309cacab1169415327456"
+      },
+      "operation": "provider.auth-token.validate-one",
+      "dependency_step_ids": [
+        "development.auth.v30.step.02.consume-token-and-revoke-session"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.lifecycle-completed",
+          "source_step_id": "development.auth.v30.step.02.consume-token-and-revoke-session",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        },
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba"
+        }
+      ],
+      "expected_postcondition": "After provider session cleanup, the one in-memory access JWT is validated against live DEVELOPMENT JWKS and Avuhz identity policy: ES256 signature, exact issuer/audience, tenant, subject digest, authenticated/aal1/non-anonymous identity, HUMAN caller, engagement:read only, and empty authority roles; provider readback still proves zero sessions and refresh tokens, then all token material is discarded.",
+      "prohibited_actions": [
+        "audience.widen",
+        "command.mutation",
+        "data.operation",
+        "hook.disable",
+        "hook.modify",
+        "hook.target-change",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "n8n.operation",
+        "production.target",
+        "provider.mutation",
+        "refresh-token.log",
+        "refresh-token.persist",
+        "refresh-token.print",
+        "refresh-token.reuse",
+        "render.operation",
+        "server-allowlist.modify",
+        "session.issue",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.log",
+        "token.persist",
+        "token.print",
+        "token.refresh",
+        "token.reuse"
+      ],
+      "stop_conditions": [
+        "access-token.handoff.missing",
+        "session-cleanup.evidence-missing",
+        "jwks.read-failed",
+        "jwt.algorithm-mismatch",
+        "jwt.signature-invalid",
+        "jwt.issuer-mismatch",
+        "jwt.audience-mismatch",
+        "jwt.tenant-mismatch",
+        "jwt.subject-mismatch",
+        "jwt.policy-mismatch",
+        "token-material.persisted",
+        "scope.drift"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v30.synthetic-access-token",
+          "phase": "EPHEMERAL_HANDOFF",
+          "value_class": "EPHEMERAL_SENSITIVE",
+          "source_step_id": "development.auth.v30.step.02.consume-token-and-revoke-session",
+          "evidence_type": "auth.synthetic-session.lifecycle-completed",
+          "digest_policy": "PROHIBITED",
+          "persistence_policy": "PROHIBITED"
+        },
+        {
+          "binding_id": "binding.development.auth.v30.session-cleanup",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.v30.step.02.consume-token-and-revoke-session",
+          "evidence_type": "auth.synthetic-session.lifecycle-completed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v30.validated-policy",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-token.validation.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.synthetic-token.validation.verified",
+          "established_binding_ids": [
+            "binding.development.auth.v30.validated-policy"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "audience.widen",
+    "credential.copy",
+    "credential.create",
+    "credential.digest",
+    "credential.export",
+    "credential.expose",
+    "credential.log",
+    "credential.persist",
+    "credential.return",
+    "credential.rotate",
+    "data.operation",
+    "hook.disable",
+    "hook.modify",
+    "hook.target-change",
+    "identity.create",
+    "identity.delete",
+    "identity.modify",
+    "n8n.operation",
+    "production.target",
+    "refresh-token.log",
+    "refresh-token.persist",
+    "refresh-token.print",
+    "refresh-token.reuse",
+    "render.operation",
+    "server-allowlist.modify",
+    "staging.target",
+    "tenant-metadata.modify",
+    "token.log",
+    "token.persist",
+    "token.print",
+    "token.refresh",
+    "token.reuse"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "credential-material.observed",
+    "evidence.missing",
+    "hook.state-drift",
+    "identity.count-drift",
+    "outcome.ambiguous",
+    "preexisting-session.detected",
+    "scope.drift",
+    "session-cleanup.failed",
+    "target.drift",
+    "tenant.binding-drift",
+    "token-validation.failed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

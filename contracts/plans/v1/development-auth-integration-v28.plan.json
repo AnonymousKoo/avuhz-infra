@@ -1,0 +1,239 @@
+{
+  "plan_id": "d65f18e6-ef65-42a9-96c3-d50a037c4866",
+  "plan_version": 28,
+  "plan_digest": "sha256:dd5414b753903501a4a7998d854288611ac9195f3199c405c29eb865dbd2d3db",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-15T19:02:46Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-15T20:30:00Z",
+    "expires_at": "2026-09-16T02:30:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v28.step.01.create-exact-custom-access-token-hook-bundle"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v28.step.01.create-exact-custom-access-token-hook-bundle",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.hook-dashboard-mutation-bundle",
+        "resource_reference": "hook.development.custom-access-token",
+        "binding_state": "BOUND",
+        "exact_version": "version.2",
+        "exact_digest": "sha256:f3c5463a0a443e4290da202d47184cf65f8174cda05de5e7c7dd1b1717924025"
+      },
+      "operation": "provider.auth-hook.create-exact-dashboard-bundle",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "hook.v2.disabled-acl.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:0cfa1a3515e6496e9bc215de4579d5e4ff5b46f0299227b60708dc72ff2fb194"
+        },
+        {
+          "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e"
+        },
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba"
+        },
+        {
+          "evidence_type": "auth.admin-bootstrap.credential-retired",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:9e310b6b114b4b4a2b71f35a6f9b6324231f3f071a2fdecc5d589d7b91e635ef"
+        },
+        {
+          "evidence_type": "auth.hook-dashboard-bundle.observed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:c377b5b6fe8d312a8f380d1bbbe718f19771bf3ea078a9395bdd9e308f2ff463"
+        }
+      ],
+      "expected_postcondition": "Only the exact DEVELOPMENT custom access-token hook dashboard bundle is applied; all bound prerequisite and postcondition digests remain exact, and no other provider or runtime resource changes.",
+      "prohibited_actions": [
+        "other-hook.enable",
+        "hook-body.modify",
+        "hook-function.modify",
+        "function-owner.modify",
+        "audience.widen",
+        "authority-claim.emit",
+        "identity.create",
+        "identity.modify",
+        "identity.delete",
+        "tenant-metadata.bind",
+        "tenant-metadata.modify",
+        "token.issue",
+        "session.issue",
+        "credential.create",
+        "credential.reuse",
+        "credential.persist",
+        "credential.expose",
+        "data.operation",
+        "render.operation",
+        "staging.target",
+        "production.target",
+        "unlisted-provider-effect",
+        "permission-state.widen"
+      ],
+      "stop_conditions": [
+        "hook-target.mismatch",
+        "hook-function.missing",
+        "hook-function.body-drift",
+        "hook-function.owner-drift",
+        "hook-function.acl-drift",
+        "hook.unexpectedly-enabled",
+        "hook.configuration.unexpected",
+        "multiple-hooks.enabled",
+        "tenant.evidence.mismatch",
+        "server-policy.evidence.mismatch",
+        "retirement.evidence.mismatch",
+        "credential.requested",
+        "scope.drift",
+        "enablement.outcome.ambiguous",
+        "dashboard-bundle.mismatch",
+        "bound-state.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v28.target-hook-configuration",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:c73dbf937dc150d883c6abd4b6f3593ee77846fa067ce7ebf1bed9b7890e1602",
+            "exact_digest": "sha256:7741183b2ef025bd30ac079ef85f9ebbc724eff07340fbd8af0ecb631f3d67ac"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v28.target-hook-configuration.bundle",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:f3c5463a0a443e4290da202d47184cf65f8174cda05de5e7c7dd1b1717924025",
+            "exact_digest": "sha256:13b2b942750ecf74115be59a6012bec9c1db3d6218e064a2cc23f9e277837b71"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v28.target-hook-configuration.state",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:974b40e7f289136e3a309017ba0205917dd6fb179d4479b148a14e806e1d244c",
+            "exact_digest": "sha256:cc80c99d55a82abd4e4a4aeaf957449ac3062e3817ad5cd6885caf363781b852"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v28.hook-configuration-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.configuration.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v28.hook-enablement",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "hook.enablement.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "hook.enablement.verified",
+          "established_binding_ids": [
+            "binding.development.auth.v28.hook-enablement"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "other-hook.enable",
+    "hook-body.modify",
+    "hook-function.modify",
+    "function-owner.modify",
+    "audience.widen",
+    "authority-claim.emit",
+    "identity.create",
+    "identity.modify",
+    "identity.delete",
+    "tenant-metadata.bind",
+    "tenant-metadata.modify",
+    "token.issue",
+    "session.issue",
+    "credential.create",
+    "credential.reuse",
+    "credential.persist",
+    "credential.expose",
+    "cross-environment.bind",
+    "data.operation",
+    "render.operation",
+    "staging.target",
+    "production.target",
+    "unlisted-provider-effect",
+    "permission-state.widen"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "authorization.unbound",
+    "hook-target.mismatch",
+    "hook-function.body-drift",
+    "hook-function.owner-drift",
+    "hook-function.acl-drift",
+    "hook.unexpectedly-enabled",
+    "multiple-hooks.enabled",
+    "retirement.evidence.mismatch",
+    "credential.requested",
+    "dashboard-bundle.mismatch",
+    "bound-state.mismatch"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

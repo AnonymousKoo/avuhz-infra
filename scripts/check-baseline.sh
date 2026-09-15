@@ -28,6 +28,7 @@ python3 tests/contracts/validate_bounded_authorization_plan.py
 python3 tests/contracts/validate_supabase_auth_admin_credential_model.py
 python3 tests/contracts/validate_development_auth_admin_retirement.py
 python3 tests/contracts/validate_development_auth_plan_v27.py
+python3 tests/contracts/validate_development_auth_plan_v28.py
 python3 tests/contracts/validate_development_auth_plan_v8.py
 python3 tests/contracts/validate_development_auth_plan_v9.py
 python3 tests/contracts/validate_development_auth_plan_v10.py

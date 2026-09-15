@@ -2,7 +2,7 @@
 
 `CURRENT_PHASE`: Phase 5 remains frozen. Engineering/production-readiness milestone 9.5 is active.
 
-`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 and DEVELOPMENT DATA v3 remain complete and verified provider foundations. AUTH v21 successfully created and verified exactly one passwordless synthetic DEVELOPMENT Auth identity with zero sessions or refresh tokens. AUTH v22 has an expired historical approval but no execution; AUTH v23 is unapproved and unexecuted historical state. AUTH v24 tenant metadata binding is complete and verified: the same synthetic identity now carries the exact canonical DEVELOPMENT tenant in provider-controlled `app_metadata`, while user metadata, email, role, sessions, refresh tokens, and hook state remained unchanged. AUTH v25 received an exact owner approval but expired unexecuted; its immutable audit records pristine/unconsumed progress, no allowlist bind, no provider contact, and no credential use. AUTH v26 is the fresh forward-only repository-only plan for the same exact server-owned read-only allowlist; it now has an exact owner approval recorded before its immutable window, remains `LOCAL_ONLY`, permits credential class `NONE`, and is still unexecuted/unconsumed. The DEVELOPMENT Auth-admin bootstrap credential retirement remains a separate pending security cleanup. The hosted DEVELOPMENT Render service remains intentionally fail-closed because real hosted identity and DATA adapters are not yet injected.
+`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 and DEVELOPMENT DATA v3 remain complete and verified provider foundations. AUTH v21 successfully created and verified exactly one passwordless synthetic DEVELOPMENT Auth identity with zero sessions or refresh tokens. AUTH v22 has an expired historical approval but no execution; AUTH v23 is unapproved and unexecuted historical state. AUTH v24 tenant metadata binding is complete and verified: the same synthetic identity now carries the exact canonical DEVELOPMENT tenant in provider-controlled `app_metadata`, while user metadata, email, role, sessions, refresh tokens, and hook state remained unchanged. AUTH v25 received an exact owner approval but expired unexecuted; its immutable audit records pristine/unconsumed progress, no allowlist bind, no provider contact, and no credential use. AUTH v26 completed the exact server-owned read-only allowlist bind: one entry is now persisted in the DEVELOPMENT identity policy, the authorization was consumed exactly once, execution/verification are `SUCCEEDED / PASS`, credential class was `NONE`, and no provider contact occurred. The DEVELOPMENT Auth-admin bootstrap credential retirement remains a separate pending security cleanup. The hosted DEVELOPMENT Render service remains intentionally fail-closed because real hosted identity and DATA adapters are not yet injected.
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`.
 
@@ -48,7 +48,7 @@ Therefore:
 - command/query requests fail closed at trusted identity resolution; and
 - no hosted Supabase DATA connection is created by the current service composition.
 
-This is intentional. AUTH v21/v24 completion, DATA v3 completion, v25 historical expiry, and AUTH v26 local-policy planning do not themselves authorize runtime credential creation, secret retrieval, hosted adapter wiring, or readiness promotion. The default Supabase `aud=authenticated` is rejected by Avuhz; the approved DEVELOPMENT command-service audience remains separate.
+This is intentional. AUTH v21/v24 completion, DATA v3 completion, v25 historical expiry, and AUTH v26 local-policy completion do not themselves authorize runtime credential creation, secret retrieval, hosted adapter wiring, or readiness promotion. The default Supabase `aud=authenticated` is rejected by Avuhz; the approved DEVELOPMENT command-service audience remains separate.
 
 ## Multi-tenant truth
 
@@ -103,13 +103,13 @@ These are blockers, not implied resources or authorizations.
 
 Engineering-readiness milestone 9.5 remains active. AUTH v21 synthetic identity creation and AUTH v24 tenant metadata binding are complete and verified. AUTH v22 remains expired/unexecuted historical state and AUTH v23 remains unapproved/unexecuted historical state. Neither may be reused or revived.
 
-AUTH v25 is immutable historical state with plan id `b9532651-b0a2-420f-a3fb-bde9c5c3d396`, plan digest `sha256:70f57ac94af8906388dc07fe21284d46182c3efb9c8c5eb2cc3d303e723aa5b8`, exact owner approval, and expired window `2026-09-15T04:00:00Z` through `2026-09-15T10:00:00Z`. Its canonical audit outcome is `EXPIRED_UNEXECUTED`; progress remains pristine `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`, and no allowlist, provider, or credential effect occurred. AUTH v26 is the current forward-only plan with plan id `f6c223d0-5e3e-43e1-b90c-190367840bec`, plan digest `sha256:e43e7a01dd79686bbb5efa744444126800e0d5b488461253fa7281fdd227a2c4`, pristine progress digest `sha256:204fdf51178987ecd23b8843030e03e2199ca1137b7e6e2e26afbcaac34000cc`, the unchanged policy digest `sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6`, and fresh immutable window `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z`. It has exact owner approval recorded at `2026-09-15T13:01:38Z`, remains `LOCAL_ONLY`, credential class `NONE`, pristine/unconsumed, and has no execution artifacts.
+AUTH v25 is immutable historical state with plan id `b9532651-b0a2-420f-a3fb-bde9c5c3d396`, plan digest `sha256:70f57ac94af8906388dc07fe21284d46182c3efb9c8c5eb2cc3d303e723aa5b8`, exact owner approval, and expired window `2026-09-15T04:00:00Z` through `2026-09-15T10:00:00Z`. Its canonical audit outcome is `EXPIRED_UNEXECUTED`; progress remains pristine `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`, and no allowlist, provider, or credential effect occurred. AUTH v26 is the current forward-only plan with plan id `f6c223d0-5e3e-43e1-b90c-190367840bec`, plan digest `sha256:e43e7a01dd79686bbb5efa744444126800e0d5b488461253fa7281fdd227a2c4`, pristine progress digest `sha256:204fdf51178987ecd23b8843030e03e2199ca1137b7e6e2e26afbcaac34000cc`, the unchanged policy digest `sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6`, and fresh immutable window `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z`. Its exact owner approval was recorded at `2026-09-15T13:01:38Z`; the local bind executed at `2026-09-15T16:06:53Z` and verified at `2026-09-15T16:06:54Z`. Execution progress is `COMPLETED / CONSUMED / SUCCEEDED / PASS` with digest `sha256:57c9ddc55f2327712f161b4544125ba632c80dd6cca3da727d834ebb999db37a`; success evidence digest is `sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba`. Credential class was `NONE`; no provider contact or mutation occurred.
 
 The hosted DEVELOPMENT runtime remains deliberately unwired: `src/avuhz_service/development.py` still uses `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`. The server-owned allowlist type and fail-closed Supabase identity verifier are implemented and tested, but the exact v25 policy is not yet bound into runtime composition.
 
 ## Next task
 
-AUTH v26 now has exact owner approval and remains local-only/unexecuted. Once its immutable window is active, its execution must bind exactly one server-owned allowlist entry using the verified v21 subject digest and v24 tenant UUID, provider-neutral principal reference `subject.development-synthetic-user`, exact DEVELOPMENT issuer/audience, `HUMAN` caller type, only `engagement:read`, and empty authority roles. It must use no credential and make no provider read or mutation. The expired v25 approval/window must not be reused; the local policy bind remains a separate future execution/evidence boundary from this approval PR.
+AUTH v26 is complete and consumed. Exactly one server-owned allowlist entry now binds the verified v21 subject digest and v24 tenant UUID, provider-neutral principal reference `subject.development-synthetic-user`, exact DEVELOPMENT issuer/audience, `HUMAN` caller type, only `engagement:read`, and empty authority roles. The hosted identity resolver remains deliberately unwired; hook enablement, token issuance, and hosted adapter wiring remain separate future boundaries. Before any new provider mutation, retire the old DEVELOPMENT Auth-admin bootstrap credential under its own exact authorization.
 
 After the allowlist is separately authorized, executed, and verified, the intended sequence remains:
 
@@ -140,8 +140,8 @@ Each item remains a separate bounded resource/action boundary.
 ## Known gaps
 
 - The dedicated synthetic DEVELOPMENT Auth identity exists and tenant metadata is bound, but the exact server-owned read-only allowlist is not yet applied.
-- AUTH v25 is expired/unexecuted historical state and must not be reused; AUTH v26 now has exact owner approval but remains pristine/unexecuted until its immutable window becomes active.
-- The DEVELOPMENT Auth-admin bootstrap credential retirement remains pending as a separate security cleanup; it must not be reused for v25.
+- AUTH v25 is expired/unexecuted historical state and must not be reused; AUTH v26 completed the exact local-only allowlist bind and is consumed.
+- The DEVELOPMENT Auth-admin bootstrap credential retirement remains pending as a separate security cleanup; it must not be reused for any future provider mutation.
 - The custom access-token hook exists but remains disabled.
 - No end-to-end short-lived synthetic token validation has been completed yet.
 - Hosted DEVELOPMENT identity and DATA adapters are not wired.
@@ -154,7 +154,7 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Remote authorization
 
-`REMOTE_AUTHORIZATION`: AUTH v21 and v24 are completed/consumed historical authority. AUTH v22 is expired and unexecuted; AUTH v23 is unapproved and unexecuted; AUTH v25 has expired exact approval but remained unexecuted/unconsumed. AUTH v26 has exact owner approval bound only to its immutable `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z` window; it remains unexecuted/unconsumed.
+`REMOTE_AUTHORIZATION`: AUTH v21, v24, and v26 are completed/consumed historical authority. AUTH v22 is expired and unexecuted; AUTH v23 is unapproved and unexecuted; AUTH v25 has expired exact approval but remained unexecuted/unconsumed. AUTH v26 consumed its exact local-only authority inside the immutable `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z` window; it grants no further execution authority.
 
 No provider mutation is currently authorized by v25. V25 itself prohibits provider read/mutation and credential use. Hook enablement, token issuance, DATA access, Render changes, staging, production, and hosted adapter wiring remain separate future boundaries.
 

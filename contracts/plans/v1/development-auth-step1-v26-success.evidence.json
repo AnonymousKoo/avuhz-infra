@@ -1,0 +1,52 @@
+{
+  "evidence_type": "server.capability-policy.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "f6c223d0-5e3e-43e1-b90c-190367840bec",
+  "plan_version": 26,
+  "step_id": "development.auth.v26.step.01.bind-server-read-only-allowlist",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "execution_observation": {
+    "execution_class": "LOCAL_ONLY",
+    "credential_class": "NONE",
+    "policy_resource_reference": "policy.development.synthetic-engagement-read",
+    "policy_resource_version": "version.1",
+    "policy_digest": "sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6",
+    "source_path": "src/avuhz_service/development_supabase_identity.py",
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "credential_used": false
+  },
+  "policy_observation": {
+    "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience": "audience.avuhz.command-service.development",
+    "subject_digest": "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5",
+    "principal_reference": "subject.development-synthetic-user",
+    "tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+    "caller_type": "HUMAN",
+    "capabilities": [
+      "engagement:read"
+    ],
+    "authority_roles": []
+  },
+  "verification_observation": {
+    "exact_tuple_verified": true,
+    "policy_digest_verified": true,
+    "allowlist_entry_count_verified": true,
+    "development_composition_remains_fail_closed": true,
+    "hosted_identity_adapter_wired": false
+  },
+  "security_state": {
+    "credential_material_observed_by_control_plane": false,
+    "raw_provider_subject_retained": false,
+    "pii_retained": false,
+    "token_retained": false,
+    "session_retained": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "hook_enable_action_performed": false
+  },
+  "recorded_at": "2026-09-15T16:06:54Z"
+}

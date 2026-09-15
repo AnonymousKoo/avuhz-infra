@@ -10,7 +10,7 @@ VALIDATOR = ROOT / "tests/contracts/validate_development_auth_plan_v26.py"
 
 
 class DevelopmentAuthV26PlanTests(unittest.TestCase):
-    def test_v26_forward_only_plan_is_certified(self):
+    def test_v26_local_allowlist_outcome_is_certified(self):
         result = subprocess.run(
             [sys.executable, str(VALIDATOR)],
             cwd=ROOT,
@@ -19,7 +19,7 @@ class DevelopmentAuthV26PlanTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("DEVELOPMENT_AUTH_V26_APPROVAL=PASS", result.stdout)
+        self.assertIn("DEVELOPMENT_AUTH_V26_OUTCOME=PASS", result.stdout)
 
 
 if __name__ == "__main__":

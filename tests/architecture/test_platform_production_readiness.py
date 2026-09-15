@@ -49,7 +49,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         ):
             self.assertIn(value, ARCHITECTURE)
         self.assertIn("registration grants no connection or mutation authority", SECURITY)
-        self.assertIn("No provider mutation is currently authorized", STATE)
+        self.assertIn("No provider mutation is authorized before the v28 effective time", STATE)
 
     def test_environment_reference_model_is_distinct_tenant_bound_and_fail_closed(self):
         for value in (
@@ -102,7 +102,7 @@ class PlatformProductionReadinessTests(unittest.TestCase):
         ):
             self.assertIn(value, ARCHITECTURE)
         self.assertIn("No Render service or deployment-target identifier is defined", ARCHITECTURE)
-        self.assertIn("No provider mutation is currently authorized", STATE)
+        self.assertIn("No provider mutation is authorized before the v28 effective time", STATE)
 
     def test_ci_secrets_change_policy_and_evidence_gates_are_defined(self):
         for heading in (

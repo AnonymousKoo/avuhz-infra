@@ -10,7 +10,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import (
+    approval_digest,
+    initial_progress,
+    plan_digest,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
 from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_service.development import DEVELOPMENT_AUTH_ISSUER, DEVELOPMENT_AUTH_PROJECT_REF, DEVELOPMENT_SERVICE_AUDIENCE
 
@@ -18,6 +25,7 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v28.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v28.progress.json"
+APPROVAL_PATH = BASE / "development-auth-integration-v28.approval.json"
 OBSERVATION_PATH = BASE / "development-auth-v28-dashboard-bundle.observation.json"
 V16_PATH = BASE / "development-auth-step1-v16-success.evidence.json"
 V24_PATH = BASE / "development-auth-step1-v24-success.evidence.json"
@@ -48,6 +56,10 @@ V26_DIGEST = "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e799
 RETIREMENT_DIGEST = "sha256:9e310b6b114b4b4a2b71f35a6f9b6324231f3f071a2fdecc5d589d7b91e635ef"
 V27_APPROVAL_RAW_DIGEST = "sha256:c9fae3414c77863904a5f28c912edfc78c9756f186c040258e551be708922e00"
 V27_PROGRESS_RAW_DIGEST = "sha256:9eac24d7bba644402143d6085a88a968d0ca77937f8b64405a12b843c669a3b7"
+APPROVAL_ID = "e0d2c051-50c5-4306-91ac-6ef5b81a062e"
+APPROVAL_DIGEST = "sha256:9d645db0eeba77e7908989ee2c96bd34280ba9bf13de756e381aab3f55a28ad5"
+APPROVAL_FILE_DIGEST = "sha256:45c9dce1f521bd734b608d5a62fdc69043dca02c00508bfb5d9c05fa799e0f5d"
+APPROVED_AT = "2026-09-15T20:03:41Z"
 
 
 def load(path: Path) -> dict:
@@ -61,9 +73,12 @@ def raw_digest(path: Path) -> str:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     observation = load(OBSERVATION_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-16T02:29:59Z")
 
     assert plan["plan_id"] == PLAN_ID and plan["plan_version"] == 28
     assert plan["plan_digest"] == PLAN_DIGEST and plan_digest(plan) == PLAN_DIGEST
@@ -82,6 +97,25 @@ def main() -> int:
     }
     assert plan["authorization_window"] == {"binding_state": "BOUND", "starts_at": WINDOW_START, "expires_at": WINDOW_END}
     assert plan["ordered_step_ids"] == [STEP_ID]
+
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 28,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW_START
 
     step = plan["steps"][0]
     assert step["step_id"] == STEP_ID and step["ordinal"] == 1
@@ -205,7 +239,6 @@ def main() -> int:
     assert state["evidence"] == [] and state["binding_assertions"] == []
 
     for path in (
-        BASE / "development-auth-integration-v28.approval.json",
         BASE / "development-auth-integration-v28.execution-progress.json",
         BASE / "development-auth-step1-v28-preflight.evidence.json",
         BASE / "development-auth-step1-v28-success.evidence.json",
@@ -214,8 +247,8 @@ def main() -> int:
     assert not list((ROOT / ".github/workflows").glob("*v28*"))
 
     print(
-        "DEVELOPMENT_AUTH_V28_PREPARED=PASS "
-        "(exact observed dashboard bundle digest-bound; permission state fail-closed; OWNER_INTERACTIVE_SESSION only; pristine/unapproved/unexecuted)"
+        "DEVELOPMENT_AUTH_V28_APPROVAL=PASS "
+        "(exact owner approval persisted before effective time; exact observed dashboard bundle retained; OWNER_INTERACTIVE_SESSION only; pristine/unexecuted)"
     )
     return 0
 

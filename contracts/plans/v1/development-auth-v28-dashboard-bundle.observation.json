@@ -1,0 +1,72 @@
+{
+  "evidence_type": "auth.hook-dashboard-bundle.observed",
+  "record_version": 1,
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "recorded_at": "2026-09-15T19:45:24Z",
+  "observation_basis": "OWNER_INTERACTIVE_DASHBOARD_SCREEN_PLUS_READ_ONLY_PROVIDER_PREFLIGHT",
+  "dashboard_action_cancelled": true,
+  "dashboard_bundle": {
+    "dashboard_action": "create_auth_hook",
+    "hook_configuration": {
+      "hook_type": "custom_access_token",
+      "hook_function": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+      "hook_uri": "pg-functions://postgres/public/avuhz_development_custom_access_token_hook_v1",
+      "enabled": true,
+      "environment": "DEVELOPMENT",
+      "project_reference": "pwlhruwutoitnieactol"
+    },
+    "permission_effects": [
+      {
+        "object": "function:public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "principal": "supabase_auth_admin",
+        "capability": "EXECUTE",
+        "desired_state": "PRESENT"
+      },
+      {
+        "object": "schema:public",
+        "principal": "supabase_auth_admin",
+        "capability": "USAGE",
+        "desired_state": "PRESENT"
+      },
+      {
+        "object": "function:public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "principal": "authenticated",
+        "capability": "EXECUTE",
+        "desired_state": "ABSENT"
+      },
+      {
+        "object": "function:public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "principal": "anon",
+        "capability": "EXECUTE",
+        "desired_state": "ABSENT"
+      },
+      {
+        "object": "function:public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+        "principal": "public",
+        "capability": "EXECUTE",
+        "desired_state": "ABSENT"
+      }
+    ],
+    "expected_net_permission_change": false
+  },
+  "preflight_permission_state": {
+    "public_execute": false,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": false,
+    "supabase_auth_admin_execute": true,
+    "supabase_auth_admin_public_usage": true
+  },
+  "security_state": {
+    "hook_created": false,
+    "token_or_session_issued": false,
+    "credential_material_observed": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  }
+}

@@ -40,8 +40,12 @@ Ordered milestones from the separation checkpoint:
       - Create the exact AUTH v26 owner approval before its `2026-09-15T15:00:00Z` effective time — COMPLETE.
       - Bind the exact AUTH v26 server-owned read-only allowlist tuple during its active window — COMPLETE; exactly one entry, `HUMAN`, `engagement:read` only, empty authority roles, credential class `NONE`, no provider contact.
       - Retire the completed DEVELOPMENT Auth-admin bootstrap credential — COMPLETE; dedicated provider key deletion owner-confirmed, GitHub `development` environment binding independently verified absent, ignored local `supabase/.temp` secret material independently verified absent, no credential material retained.
-      - Prepare forward-only AUTH v27 for the exact DEVELOPMENT custom access-token hook configuration — COMPLETE AS PREPARATION; plan `cf30c352-08f2-4d17-98e5-9dbc5edc103e` is `READY_FOR_APPROVAL`, credential class `OWNER_INTERACTIVE_SESSION`, window `2026-09-15T18:30:00Z` through `2026-09-16T00:30:00Z`, pristine/unapproved/unexecuted.
-      - Enable the exact DEVELOPMENT hook under the separately approved v27 boundary — NOT STARTED
+      - Prepare forward-only AUTH v27 for the exact DEVELOPMENT custom access-token hook configuration — COMPLETE AS PREPARATION; plan `cf30c352-08f2-4d17-98e5-9dbc5edc103e`, credential class `OWNER_INTERACTIVE_SESSION`, window `2026-09-15T18:30:00Z` through `2026-09-16T00:30:00Z`.
+      - Create the exact AUTH v27 owner approval — COMPLETE; approval `671bb3cb-3555-44a2-b7e3-17bcb04eeb03` is canonical.
+      - Execute AUTH v27 hook enablement — STOPPED PRE-MUTATION; fresh provider preflight passed, but the Supabase dashboard disclosed a five-effect permission reconciliation bundle outside v27’s narrower ACL boundary, so Create hook was canceled and v27 remains pristine/unconsumed.
+      - Prepare forward-only AUTH v28 for the exact observed dashboard Create hook bundle — COMPLETE AS PREPARATION; plan `d65f18e6-ef65-42a9-96c3-d50a037c4866` is `READY_FOR_APPROVAL`, credential class `OWNER_INTERACTIVE_SESSION`, window `2026-09-15T20:30:00Z` through `2026-09-16T02:30:00Z`, exact bundle/permission-state evidence bound, pristine/unapproved/unexecuted.
+      - Create the exact AUTH v28 owner approval — NOT STARTED
+      - Execute only the exact DEVELOPMENT dashboard hook bundle during the active v28 window after a fresh matching preflight — NOT STARTED
       - Issue and locally validate one short-lived synthetic token — NOT STARTED
       - Wire the hosted DEVELOPMENT trusted-identity adapter — NOT STARTED
       - Wire the hosted DEVELOPMENT DATA adapter with least privilege — NOT STARTED

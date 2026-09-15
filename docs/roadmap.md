@@ -36,9 +36,9 @@ Ordered milestones from the separation checkpoint:
       - AUTH v23 tenant-metadata continuation — HISTORICAL; unapproved and unexecuted.
       - Bind provider-controlled tenant metadata — COMPLETE through AUTH v24; exact tenant metadata verified with identity/session/hook state unchanged.
       - Prepare forward-only AUTH v25 for the exact server-owned read-only allowlist tuple — COMPLETE AS HISTORICAL PLAN; exact owner approval expired unexecuted, progress remains pristine/unconsumed, and no allowlist/provider/credential effect occurred.
-      - Prepare fresh forward-only AUTH v26 with the exact unchanged local-only allowlist scope — COMPLETE AS REPOSITORY-ONLY PLAN; `READY_FOR_APPROVAL`, `LOCAL_ONLY`, credential class `NONE`, window `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z`, no provider contact or execution authority.
+      - Prepare fresh forward-only AUTH v26 with the exact unchanged local-only allowlist scope — COMPLETE AS HISTORICAL PREPARATION; it entered `READY_FOR_APPROVAL` as `LOCAL_ONLY`, credential class `NONE`, with window `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z` and no provider contact.
       - Create the exact AUTH v26 owner approval before its `2026-09-15T15:00:00Z` effective time — COMPLETE.
-      - Bind the exact AUTH v26 server-owned read-only allowlist tuple during its active window — NEXT BOUNDARY; exactly one entry, `HUMAN`, `engagement:read` only, empty authority roles, credential class `NONE`.
+      - Bind the exact AUTH v26 server-owned read-only allowlist tuple during its active window — COMPLETE; exactly one entry, `HUMAN`, `engagement:read` only, empty authority roles, credential class `NONE`, no provider contact.
       - Enable the exact DEVELOPMENT hook under a separate authorization — NOT STARTED
       - Issue and locally validate one short-lived synthetic token — NOT STARTED
       - Wire the hosted DEVELOPMENT trusted-identity adapter — NOT STARTED

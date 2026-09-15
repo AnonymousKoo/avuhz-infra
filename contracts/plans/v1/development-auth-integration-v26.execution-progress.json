@@ -1,0 +1,44 @@
+{
+  "progress_id": "87328d7e-4da7-4ecb-967b-5c06b4dc0e32",
+  "plan_id": "f6c223d0-5e3e-43e1-b90c-190367840bec",
+  "plan_version": 26,
+  "plan_digest": "sha256:e43e7a01dd79686bbb5efa744444126800e0d5b488461253fa7281fdd227a2c4",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v26.step.01.bind-server-read-only-allowlist",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "evidence_reference": "repository.execution.v26.step1.attempt1.verified",
+          "evidence_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba",
+          "recorded_at": "2026-09-15T16:06:54Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one DEVELOPMENT server-owned allowlist entry binds the verified subject digest, provider-neutral principal reference, canonical tenant, exact issuer/audience, and HUMAN caller policy to only engagement:read with empty authority roles. No provider, credential, identity, tenant metadata, hook, token, session, DATA, Render, staging, or production resource is read or changed.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v26.server-capability-policy",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "server.capability-policy.verified",
+          "evidence_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6",
+          "recorded_at": "2026-09-15T16:06:54Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-15T16:06:54Z",
+  "progress_digest": "sha256:57c9ddc55f2327712f161b4544125ba632c80dd6cca3da727d834ebb999db37a"
+}

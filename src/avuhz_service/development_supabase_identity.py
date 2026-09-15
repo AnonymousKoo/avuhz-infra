@@ -51,6 +51,16 @@ class DevelopmentIdentityAllowlistEntry:
             raise ValueError("valid canonical tenant id is required")
 
 
+DEVELOPMENT_SYNTHETIC_READ_ONLY_POLICY_DIGEST = "sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6"
+DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST = (
+    DevelopmentIdentityAllowlistEntry(
+        subject_digest="sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5",
+        principal_reference="subject.development-synthetic-user",
+        tenant_id="1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+    ),
+)
+
+
 def _subject_digest(subject: str) -> str:
     return "sha256:" + hashlib.sha256(subject.encode("utf-8")).hexdigest()
 

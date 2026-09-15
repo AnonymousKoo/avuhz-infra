@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate DEVELOPMENT AUTH v26 through exact owner-approval persistence."""
+"""Validate DEVELOPMENT AUTH v26 through the verified local read-only allowlist bind."""
 from __future__ import annotations
 
 import hashlib
@@ -13,8 +13,10 @@ sys.path.insert(0, str(ROOT / "src"))
 from avuhz_engineering.authorization_plan import (
     AuthorizationPlanStop,
     approval_digest,
+    authorize_step,
     initial_progress,
     plan_digest,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -25,13 +27,19 @@ from avuhz_service.development import (
     DEVELOPMENT_AUTH_PROJECT_REF,
     DEVELOPMENT_SERVICE_AUDIENCE,
 )
-from avuhz_service.development_supabase_identity import DevelopmentIdentityAllowlistEntry
+from avuhz_service.development_supabase_identity import (
+    DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
+    DEVELOPMENT_SYNTHETIC_READ_ONLY_POLICY_DIGEST,
+    DevelopmentIdentityAllowlistEntry,
+)
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v26.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v26.progress.json"
 APPROVAL_PATH = BASE / "development-auth-integration-v26.approval.json"
+EXECUTION_PATH = BASE / "development-auth-integration-v26.execution-progress.json"
+SUCCESS_PATH = BASE / "development-auth-step1-v26-success.evidence.json"
 V25_PLAN_PATH = BASE / "development-auth-integration-v25.plan.json"
 V25_PROGRESS_PATH = BASE / "development-auth-integration-v25.progress.json"
 V25_APPROVAL_PATH = BASE / "development-auth-integration-v25.approval.json"
@@ -59,6 +67,11 @@ V21_SUCCESS_DIGEST = "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3
 V24_SUCCESS_DIGEST = "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e"
 WINDOW_START = "2026-09-15T15:00:00Z"
 WINDOW_END = "2026-09-15T21:00:00Z"
+AUTH_AT = "2026-09-15T16:06:53Z"
+OUTCOME_AT = "2026-09-15T16:06:54Z"
+SUCCESS_EVIDENCE_DIGEST = "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba"
+AUTHORIZED_PROGRESS_DIGEST = "sha256:7af01b83ec6360d102e7e4c0923218e230ad343a20b56b29e44f2d8392c7c2fc"
+SUCCESS_PROGRESS_DIGEST = "sha256:57c9ddc55f2327712f161b4544125ba632c80dd6cca3da727d834ebb999db37a"
 
 
 def load(path: Path) -> dict:
@@ -199,6 +212,103 @@ def main() -> int:
     assert state["authorization_consumed"] is False
     assert state["evidence"] == [] and state["binding_assertions"] == []
 
+    request = {
+        "plan_id": PLAN_ID, "plan_version": 26, "plan_digest": PLAN_DIGEST,
+        "environment": "DEVELOPMENT", "provider_reference": "supabase",
+        "project_reference": PROJECT, "responsibility": "AUTH",
+        "issuer_reference": DEVELOPMENT_AUTH_ISSUER,
+        "audience_reference": DEVELOPMENT_SERVICE_AUDIENCE,
+        "step_id": STEP_ID,
+        "resource_reference": "policy.development.synthetic-engagement-read",
+        "resource_version": "version.1", "resource_digest": POLICY_DIGEST,
+        "operation": "local.capability-policy.bind-exact-tuple",
+        "execution_class": "LOCAL_ONLY", "credential_class": "NONE",
+        "required_evidence": [
+            {"evidence_type": "auth.synthetic-identity.created", "evidence_digest": V21_SUCCESS_DIGEST},
+            {"evidence_type": "auth.synthetic-identity.tenant-metadata.bound", "evidence_digest": V24_SUCCESS_DIGEST},
+        ],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False, "extra_privileges": False,
+        "unauthorized_migration_surface": False, "scope_expansion": False,
+    }
+    expected_authorized = authorize_step(
+        plan, approval, progress, request, SCHEMA_ROOT, AUTH_AT,
+    )
+    assert expected_authorized["record_version"] == 2
+    assert expected_authorized["progress_digest"] == AUTHORIZED_PROGRESS_DIGEST
+    assert expected_authorized["step_states"][0]["authorization_state"] == "AUTHORIZED"
+    assert expected_authorized["step_states"][0]["binding_assertions"] == []
+
+    success = load(SUCCESS_PATH)
+    assert raw_digest(SUCCESS_PATH) == SUCCESS_EVIDENCE_DIGEST
+    assert success["evidence_type"] == "server.capability-policy.verified"
+    assert success["environment"] == "DEVELOPMENT"
+    assert success["responsibility"] == "AUTH"
+    assert success["project_reference"] == PROJECT
+    assert success["plan_id"] == PLAN_ID and success["plan_version"] == 26
+    assert success["step_id"] == STEP_ID and success["attempt"] == 1
+    assert success["outcome"] == "SUCCEEDED_VERIFIED"
+    observed = success["execution_observation"]
+    assert observed == {
+        "execution_class": "LOCAL_ONLY",
+        "credential_class": "NONE",
+        "policy_resource_reference": "policy.development.synthetic-engagement-read",
+        "policy_resource_version": "version.1",
+        "policy_digest": POLICY_DIGEST,
+        "source_path": "src/avuhz_service/development_supabase_identity.py",
+        "provider_contact_attempted": False,
+        "provider_mutation_attempted": False,
+        "credential_used": False,
+    }
+    assert success["policy_observation"] == target_policy
+    assert success["verification_observation"] == {
+        "exact_tuple_verified": True,
+        "policy_digest_verified": True,
+        "allowlist_entry_count_verified": True,
+        "development_composition_remains_fail_closed": True,
+        "hosted_identity_adapter_wired": False,
+    }
+    assert all(value is False for value in success["security_state"].values())
+    assert success["recorded_at"] == OUTCOME_AT
+
+    produced_binding = {
+        "binding_id": "binding.development.auth.v26.server-capability-policy",
+        "phase": "PRODUCED_BY_CURRENT_STEP",
+        "value_class": "CONTENT_DIGEST",
+        "source_step_id": None,
+        "evidence_type": "server.capability-policy.verified",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": POLICY_DIGEST,
+        "recorded_at": OUTCOME_AT,
+    }
+    outcome_evidence = [{
+        "evidence_type": "server.capability-policy.verified",
+        "evidence_reference": "repository.execution.v26.step1.attempt1.verified",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "recorded_at": OUTCOME_AT,
+    }]
+    expected_execution = record_step_outcome(
+        plan, approval, expected_authorized, STEP_ID, "SUCCEEDED", "PASS",
+        outcome_evidence, step["expected_postcondition"], None, SCHEMA_ROOT, OUTCOME_AT,
+        binding_assertions=[produced_binding],
+    )
+    execution = load(EXECUTION_PATH)
+    validate_progress(plan, execution, SCHEMA_ROOT)
+    assert execution == expected_execution
+    assert execution["record_version"] == 3
+    assert execution["overall_state"] == "COMPLETED"
+    assert execution["progress_digest"] == SUCCESS_PROGRESS_DIGEST
+    execution_state = execution["step_states"][0]
+    assert execution_state["authorization_state"] == "CONSUMED"
+    assert execution_state["authorization_consumed"] is True
+    assert execution_state["execution_state"] == "SUCCEEDED"
+    assert execution_state["verification_state"] == "PASS"
+    assert execution_state["safe_error_code"] is None
+    assert execution_state["binding_assertions"] == [produced_binding]
+
     v25_plan = load(V25_PLAN_PATH)
     v25_progress = load(V25_PROGRESS_PATH)
     v25_approval = load(V25_APPROVAL_PATH)
@@ -229,6 +339,19 @@ def main() -> int:
     assert entry.subject_digest == SUBJECT_DIGEST
     assert entry.principal_reference == PRINCIPAL_REFERENCE
     assert entry.tenant_id == TENANT_ID
+    assert DEVELOPMENT_SYNTHETIC_READ_ONLY_POLICY_DIGEST == POLICY_DIGEST
+    assert DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST == (entry,)
+    bound_policy = {
+        "issuer": DEVELOPMENT_AUTH_ISSUER,
+        "audience": DEVELOPMENT_SERVICE_AUDIENCE,
+        "subject_digest": DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST[0].subject_digest,
+        "principal_reference": DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST[0].principal_reference,
+        "tenant_id": DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST[0].tenant_id,
+        "caller_type": "HUMAN",
+        "capabilities": ["engagement:read"],
+        "authority_roles": [],
+    }
+    assert canonical_digest(bound_policy) == POLICY_DIGEST
     identity_policy = IDENTITY_POLICY_PATH.read_text(encoding="utf-8")
     for fragment in (
         '_READ_ONLY_CAPABILITIES = frozenset({"engagement:read"})',
@@ -239,14 +362,14 @@ def main() -> int:
         assert fragment in identity_policy, fragment
     assert "identity_resolver=_UnavailableIdentityResolver()" in DEVELOPMENT_COMPOSITION_PATH.read_text(encoding="utf-8")
 
-    assert not (BASE / "development-auth-integration-v26.execution-progress.json").exists()
+    assert EXECUTION_PATH.exists()
+    assert SUCCESS_PATH.exists()
     assert not (BASE / "development-auth-step1-v26-preflight.evidence.json").exists()
-    assert not (BASE / "development-auth-step1-v26-success.evidence.json").exists()
     assert not list((ROOT / ".github/workflows").glob("*v26*"))
 
     print(
-        "DEVELOPMENT_AUTH_V26_APPROVAL=PASS "
-        "(exact owner approval persisted before effective time; LOCAL_ONLY; credential NONE; pristine/unexecuted; no provider contact)"
+        "DEVELOPMENT_AUTH_V26_OUTCOME=PASS "
+        "(exact local allowlist bound once; authorization consumed; LOCAL_ONLY; credential NONE; no provider contact; hosted resolver still unwired)"
     )
     return 0
 

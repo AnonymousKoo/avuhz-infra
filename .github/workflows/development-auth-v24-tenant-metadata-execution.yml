@@ -324,7 +324,7 @@ jobs:
           path, user_id = sys.argv[1], sys.argv[2]
           query = f"""
           with target_hook as (
-            select p.oid, p.proowner, p.prosecdef, p.provolatile, p.proconfig, p.prosrc
+            select p.oid, p.proowner, p.prosecdef, p.provolatile, p.proconfig, p.prosrc, p.proacl
               from pg_proc p
              where p.oid = to_regprocedure('public.avuhz_development_custom_access_token_hook_v1(jsonb)')
           ),

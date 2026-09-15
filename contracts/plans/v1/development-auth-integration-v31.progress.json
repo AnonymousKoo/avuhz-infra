@@ -1,0 +1,45 @@
+{
+  "progress_id": "80e70c73-2e8f-4687-b05f-4f57ddead0a7",
+  "plan_id": "c2a83103-7177-4bf4-855f-c3428b2d5b73",
+  "plan_version": 31,
+  "plan_digest": "sha256:8ea09f44c3c5e65a6a8d86b0df6579b0f4476b63ae6c167a6194948c86aab043",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v31.step.01.generate-existing-user-recovery-link",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v31.step.02.consume-token-and-revoke-session",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v31.step.03.validate-token-exact",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-15T23:50:00Z",
+  "progress_digest": "sha256:c72006da9f3c8c108a0dcc97f9dd2b5c5f426f6c83bb14b3ebe9f496c90b92a5"
+}

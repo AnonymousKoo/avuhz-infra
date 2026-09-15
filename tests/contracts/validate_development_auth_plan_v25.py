@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the repository-only DEVELOPMENT AUTH v25 read-only allowlist plan preparation."""
+"""Validate DEVELOPMENT AUTH v25 through exact owner-approval persistence."""
 from __future__ import annotations
 
 import hashlib
@@ -10,7 +10,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import (
+    approval_digest,
+    initial_progress,
+    plan_digest,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
 from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_service.development import (
     DEVELOPMENT_AUTH_ISSUER,
@@ -23,6 +30,7 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v25.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v25.progress.json"
+APPROVAL_PATH = BASE / "development-auth-integration-v25.approval.json"
 V21_SUCCESS_PATH = BASE / "development-auth-step1-v21-success.evidence.json"
 V24_SUCCESS_PATH = BASE / "development-auth-step1-v24-success.evidence.json"
 IDENTITY_POLICY_PATH = ROOT / "src/avuhz_service/development_supabase_identity.py"
@@ -35,6 +43,10 @@ PLAN_VERSION = 25
 PLAN_DIGEST = "sha256:70f57ac94af8906388dc07fe21284d46182c3efb9c8c5eb2cc3d303e723aa5b8"
 PROGRESS_ID = "a95f013c-839e-40e8-bd52-e04494034617"
 PROGRESS_DIGEST = "sha256:8a9a5a36174bfadd5b67e182ce9c6891904b6a4e4c27850144f9c97eed4ef8d9"
+APPROVAL_ID = "73412786-d0a4-454a-822d-a467da964725"
+APPROVAL_DIGEST = "sha256:45c4a8f88ab1392c367a6ce414d8ca9fea987439a77db024e7adff5d1dbea476"
+APPROVAL_FILE_DIGEST = "sha256:ef122cf1b6c28853fe047c52a66ca096993e7b7ea05fd79c16d96f045821dfbd"
+APPROVED_AT = "2026-09-15T02:31:52Z"
 STEP_ID = "development.auth.v25.step.01.bind-server-read-only-allowlist"
 PROJECT = "pwlhruwutoitnieactol"
 SUBJECT_DIGEST = "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5"
@@ -75,8 +87,11 @@ def declaration(step: dict, binding_id: str) -> dict:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-15T09:59:59Z")
 
     assert plan["plan_id"] == PLAN_ID and plan["plan_version"] == PLAN_VERSION
     assert plan["plan_digest"] == PLAN_DIGEST and plan_digest(plan) == PLAN_DIGEST
@@ -97,6 +112,25 @@ def main() -> int:
         "binding_state": "BOUND", "starts_at": WINDOW_START, "expires_at": WINDOW_END,
     }
     assert plan["ordered_step_ids"] == [STEP_ID]
+
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": PLAN_VERSION,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW_START
 
     step = plan["steps"][0]
     assert step["step_id"] == STEP_ID and step["ordinal"] == 1
@@ -196,7 +230,7 @@ def main() -> int:
     composition = DEVELOPMENT_COMPOSITION_PATH.read_text(encoding="utf-8")
     assert "identity_resolver=_UnavailableIdentityResolver()" in composition
 
-    assert not (BASE / "development-auth-integration-v25.approval.json").exists()
+    assert APPROVAL_PATH.exists()
     assert not (BASE / "development-auth-integration-v25.execution-progress.json").exists()
     assert not (BASE / "development-auth-step1-v25-success.evidence.json").exists()
     assert not (BASE / "development-auth-step1-v25-preflight.evidence.json").exists()
@@ -210,8 +244,8 @@ def main() -> int:
     assert "Prepare forward-only AUTH v25" in roadmap
 
     print(
-        "DEVELOPMENT_AUTH_V25_PREPARED=PASS "
-        "(exact local-only server allowlist plan; credential class NONE; no provider contact or mutation; no v25 approval/execution artifacts)"
+        "DEVELOPMENT_AUTH_V25_APPROVAL=PASS "
+        "(exact owner approval persisted before effective time; local-only plan; credential class NONE; pristine unexecuted progress; no provider contact or mutation)"
     )
     return 0
 

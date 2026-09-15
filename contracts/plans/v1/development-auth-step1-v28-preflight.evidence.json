@@ -1,0 +1,51 @@
+{
+  "evidence_type": "hook.configuration.preflight.observed",
+  "observation_only": true,
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "responsibility": "AUTH",
+  "plan_id": "d65f18e6-ef65-42a9-96c3-d50a037c4866",
+  "plan_version": 28,
+  "step_id": "development.auth.v28.step.01.create-exact-custom-access-token-hook-bundle",
+  "observed_at": "2026-09-15T20:40:12Z",
+  "observation_basis": "OWNER_INTERACTIVE_DASHBOARD_SCREEN_PLUS_READ_ONLY_PROVIDER_PREFLIGHT",
+  "hosted_auth_observation": {
+    "auth_hooks_page_entries": 0,
+    "custom_access_token_hook_configured": false,
+    "custom_access_token_hook_enabled": false,
+    "target_hook_type": "custom_access_token",
+    "target_hook_uri": "pg-functions://postgres/public/avuhz_development_custom_access_token_hook_v1",
+    "target_schema": "public",
+    "target_function": "avuhz_development_custom_access_token_hook_v1",
+    "dashboard_bundle_digest": "sha256:f3c5463a0a443e4290da202d47184cf65f8174cda05de5e7c7dd1b1717924025"
+  },
+  "database_observation": {
+    "function_exists": true,
+    "function_owner": "avuhz_migration_service_dev",
+    "function_language": "plpgsql",
+    "function_stable": true,
+    "function_security_invoker": true,
+    "function_search_path_exact": true,
+    "function_return_type": "jsonb",
+    "function_body_matches_certified_v2": true,
+    "permission_state": {
+      "public_execute": false,
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_role_execute": false,
+      "supabase_auth_admin_execute": true,
+      "supabase_auth_admin_public_usage": true
+    },
+    "permission_state_digest": "sha256:974b40e7f289136e3a309017ba0205917dd6fb179d4479b148a14e806e1d244c"
+  },
+  "authorization_observation": {
+    "window_active": true,
+    "approval_exact": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "credential_material_observed": false
+  },
+  "configuration_digest": "sha256:88d752293176c4b04f829d4afe3775260441558bda762d130e2a009d7104ea18",
+  "result": "PASS",
+  "evidence_digest": "sha256:877d7568c2c59996e0cabb793ea7611e55dcbdeadb7d413985f75613fdc5586c"
+}

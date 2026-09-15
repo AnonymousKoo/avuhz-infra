@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate fresh forward-only DEVELOPMENT AUTH v26 local allowlist preparation."""
+"""Validate DEVELOPMENT AUTH v26 through exact owner-approval persistence."""
 from __future__ import annotations
 
 import hashlib
@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
     AuthorizationPlanStop,
+    approval_digest,
     initial_progress,
     plan_digest,
     validate_approval,
@@ -30,6 +31,7 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v26.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v26.progress.json"
+APPROVAL_PATH = BASE / "development-auth-integration-v26.approval.json"
 V25_PLAN_PATH = BASE / "development-auth-integration-v25.plan.json"
 V25_PROGRESS_PATH = BASE / "development-auth-integration-v25.progress.json"
 V25_APPROVAL_PATH = BASE / "development-auth-integration-v25.approval.json"
@@ -43,6 +45,10 @@ PLAN_ID = "f6c223d0-5e3e-43e1-b90c-190367840bec"
 PLAN_DIGEST = "sha256:e43e7a01dd79686bbb5efa744444126800e0d5b488461253fa7281fdd227a2c4"
 PROGRESS_ID = "87328d7e-4da7-4ecb-967b-5c06b4dc0e32"
 PROGRESS_DIGEST = "sha256:204fdf51178987ecd23b8843030e03e2199ca1137b7e6e2e26afbcaac34000cc"
+APPROVAL_ID = "81b253a2-c63e-4749-b918-20665c0a335c"
+APPROVAL_DIGEST = "sha256:9c0c24b34d9bdedebd4506b20062cb0ead936b176e4ecde8583bf2312895f226"
+APPROVAL_FILE_DIGEST = "sha256:4d7b8b08c7e934754b5988578575e313bc2ae15f3ca1f648732e7bb2d9d3c911"
+APPROVED_AT = "2026-09-15T13:01:38Z"
 STEP_ID = "development.auth.v26.step.01.bind-server-read-only-allowlist"
 PROJECT = "pwlhruwutoitnieactol"
 SUBJECT_DIGEST = "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5"
@@ -72,8 +78,11 @@ def declaration(step: dict, binding_id: str) -> dict:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-15T20:59:59Z")
 
     assert plan["plan_id"] == PLAN_ID and plan["plan_version"] == 26
     assert plan["plan_digest"] == PLAN_DIGEST and plan_digest(plan) == PLAN_DIGEST
@@ -96,6 +105,25 @@ def main() -> int:
         "expires_at": WINDOW_END,
     }
     assert plan["ordered_step_ids"] == [STEP_ID]
+
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 26,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW_START
 
     step = plan["steps"][0]
     assert step["step_id"] == STEP_ID and step["ordinal"] == 1
@@ -211,15 +239,14 @@ def main() -> int:
         assert fragment in identity_policy, fragment
     assert "identity_resolver=_UnavailableIdentityResolver()" in DEVELOPMENT_COMPOSITION_PATH.read_text(encoding="utf-8")
 
-    assert not (BASE / "development-auth-integration-v26.approval.json").exists()
     assert not (BASE / "development-auth-integration-v26.execution-progress.json").exists()
     assert not (BASE / "development-auth-step1-v26-preflight.evidence.json").exists()
     assert not (BASE / "development-auth-step1-v26-success.evidence.json").exists()
     assert not list((ROOT / ".github/workflows").glob("*v26*"))
 
     print(
-        "DEVELOPMENT_AUTH_V26_PREPARED=PASS "
-        "(fresh forward-only exact allowlist plan after v25 expiry; LOCAL_ONLY; credential NONE; pristine/unapproved/unexecuted; no provider contact)"
+        "DEVELOPMENT_AUTH_V26_APPROVAL=PASS "
+        "(exact owner approval persisted before effective time; LOCAL_ONLY; credential NONE; pristine/unexecuted; no provider contact)"
     )
     return 0
 

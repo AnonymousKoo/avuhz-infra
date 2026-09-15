@@ -19,7 +19,7 @@ class DevelopmentAuthV26PlanTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("DEVELOPMENT_AUTH_V26_PREPARED=PASS", result.stdout)
+        self.assertIn("DEVELOPMENT_AUTH_V26_APPROVAL=PASS", result.stdout)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,23 @@
+{
+  "progress_id": "5b3bd835-ceb8-4f14-b8a2-02e52487d4d2",
+  "plan_id": "cf30c352-08f2-4d17-98e5-9dbc5edc103e",
+  "plan_version": 27,
+  "plan_digest": "sha256:9d2ab111c08ed6455b847c578eb6aa949cee12707ccb104e666e5fbe7b08c1c6",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v27.step.01.enable-exact-custom-access-token-hook",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-15T17:14:26Z",
+  "progress_digest": "sha256:001d3d0dfd7d714ac7ae68da3d864014b658b76f4a09a0a0ba93939636b9233a"
+}

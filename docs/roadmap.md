@@ -39,6 +39,7 @@ Ordered milestones from the separation checkpoint:
       - Prepare fresh forward-only AUTH v26 with the exact unchanged local-only allowlist scope — COMPLETE AS HISTORICAL PREPARATION; it entered `READY_FOR_APPROVAL` as `LOCAL_ONLY`, credential class `NONE`, with window `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z` and no provider contact.
       - Create the exact AUTH v26 owner approval before its `2026-09-15T15:00:00Z` effective time — COMPLETE.
       - Bind the exact AUTH v26 server-owned read-only allowlist tuple during its active window — COMPLETE; exactly one entry, `HUMAN`, `engagement:read` only, empty authority roles, credential class `NONE`, no provider contact.
+      - Retire the completed DEVELOPMENT Auth-admin bootstrap credential — COMPLETE; dedicated provider key deletion owner-confirmed, GitHub `development` environment binding independently verified absent, ignored local `supabase/.temp` secret material independently verified absent, no credential material retained.
       - Enable the exact DEVELOPMENT hook under a separate authorization — NOT STARTED
       - Issue and locally validate one short-lived synthetic token — NOT STARTED
       - Wire the hosted DEVELOPMENT trusted-identity adapter — NOT STARTED

@@ -2,7 +2,7 @@
 
 `CURRENT_PHASE`: Phase 5 remains frozen. Engineering/production-readiness milestone 9.5 is active.
 
-`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 and DEVELOPMENT DATA v3 remain complete and verified provider foundations. AUTH v21 successfully created and verified exactly one passwordless synthetic DEVELOPMENT Auth identity with zero sessions or refresh tokens. AUTH v22 has an expired historical approval but no execution; AUTH v23 is unapproved and unexecuted historical state. AUTH v24 tenant metadata binding is complete and verified: the same synthetic identity now carries the exact canonical DEVELOPMENT tenant in provider-controlled `app_metadata`, while user metadata, email, role, sessions, refresh tokens, and hook state remained unchanged. AUTH v25 received an exact owner approval but expired unexecuted; its immutable audit records pristine/unconsumed progress, no allowlist bind, no provider contact, and no credential use. AUTH v26 completed the exact server-owned read-only allowlist bind: one entry is now persisted in the DEVELOPMENT identity policy, the authorization was consumed exactly once, execution/verification are `SUCCEEDED / PASS`, credential class was `NONE`, and no provider contact occurred. The DEVELOPMENT Auth-admin bootstrap credential retirement remains a separate pending security cleanup. The hosted DEVELOPMENT Render service remains intentionally fail-closed because real hosted identity and DATA adapters are not yet injected.
+`CURRENT_CANONICAL_STATE`: DEVELOPMENT AUTH v16 and DEVELOPMENT DATA v3 remain complete and verified provider foundations. AUTH v21 successfully created and verified exactly one passwordless synthetic DEVELOPMENT Auth identity with zero sessions or refresh tokens. AUTH v22 has an expired historical approval but no execution; AUTH v23 is unapproved and unexecuted historical state. AUTH v24 tenant metadata binding is complete and verified: the same synthetic identity now carries the exact canonical DEVELOPMENT tenant in provider-controlled `app_metadata`, while user metadata, email, role, sessions, refresh tokens, and hook state remained unchanged. AUTH v25 received an exact owner approval but expired unexecuted; its immutable audit records pristine/unconsumed progress, no allowlist bind, no provider contact, and no credential use. AUTH v26 completed the exact server-owned read-only allowlist bind: one entry is now persisted in the DEVELOPMENT identity policy, the authorization was consumed exactly once, execution/verification are `SUCCEEDED / PASS`, credential class was `NONE`, and no provider contact occurred. The DEVELOPMENT Auth-admin bootstrap credential is retired: provider deletion is owner-confirmed, the GitHub `development` environment binding is independently verified absent, and ignored local `supabase/.temp` secret material is independently verified absent. The retirement audit is canonical and retains no credential material. The hosted DEVELOPMENT Render service remains intentionally fail-closed because real hosted identity and DATA adapters are not yet injected.
 
 `PLATFORM_PRODUCTION_READINESS`: `NOT_READY`.
 
@@ -105,28 +105,29 @@ Engineering-readiness milestone 9.5 remains active. AUTH v21 synthetic identity 
 
 AUTH v25 is immutable historical state with plan id `b9532651-b0a2-420f-a3fb-bde9c5c3d396`, plan digest `sha256:70f57ac94af8906388dc07fe21284d46182c3efb9c8c5eb2cc3d303e723aa5b8`, exact owner approval, and expired window `2026-09-15T04:00:00Z` through `2026-09-15T10:00:00Z`. Its canonical audit outcome is `EXPIRED_UNEXECUTED`; progress remains pristine `PENDING / NOT_STARTED / NOT_STARTED / unconsumed`, and no allowlist, provider, or credential effect occurred. AUTH v26 is the current forward-only plan with plan id `f6c223d0-5e3e-43e1-b90c-190367840bec`, plan digest `sha256:e43e7a01dd79686bbb5efa744444126800e0d5b488461253fa7281fdd227a2c4`, pristine progress digest `sha256:204fdf51178987ecd23b8843030e03e2199ca1137b7e6e2e26afbcaac34000cc`, the unchanged policy digest `sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6`, and fresh immutable window `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z`. Its exact owner approval was recorded at `2026-09-15T13:01:38Z`; the local bind executed at `2026-09-15T16:06:53Z` and verified at `2026-09-15T16:06:54Z`. Execution progress is `COMPLETED / CONSUMED / SUCCEEDED / PASS` with digest `sha256:57c9ddc55f2327712f161b4544125ba632c80dd6cca3da727d834ebb999db37a`; success evidence digest is `sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba`. Credential class was `NONE`; no provider contact or mutation occurred.
 
-The hosted DEVELOPMENT runtime remains deliberately unwired: `src/avuhz_service/development.py` still uses `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`. The server-owned allowlist type and fail-closed Supabase identity verifier are implemented and tested, but the exact v25 policy is not yet bound into runtime composition.
+The canonical DEVELOPMENT Auth-admin bootstrap retirement audit is `contracts/plans/v1/development-auth-admin-bootstrap-retirement.evidence.json`, observed at `2026-09-15T16:48:52Z`, with raw file digest `sha256:9e310b6b114b4b4a2b71f35a6f9b6324231f3f071a2fdecc5d589d7b91e635ef`. It records provider deletion as owner-confirmed rather than independently provider-verified, while the GitHub `development` environment secret binding and local ignored `supabase/.temp` secret material are independently verified absent. No credential material is retained in the audit.
+
+The hosted DEVELOPMENT runtime remains deliberately unwired: `src/avuhz_service/development.py` still uses `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`. The exact v26 server-owned allowlist entry is now persisted and verified, but hosted identity resolution is intentionally not yet injected into runtime composition.
 
 ## Next task
 
-AUTH v26 is complete and consumed. Exactly one server-owned allowlist entry now binds the verified v21 subject digest and v24 tenant UUID, provider-neutral principal reference `subject.development-synthetic-user`, exact DEVELOPMENT issuer/audience, `HUMAN` caller type, only `engagement:read`, and empty authority roles. The hosted identity resolver remains deliberately unwired; hook enablement, token issuance, and hosted adapter wiring remain separate future boundaries. Before any new provider mutation, retire the old DEVELOPMENT Auth-admin bootstrap credential under its own exact authorization.
+AUTH v26 is complete and consumed. Exactly one server-owned allowlist entry now binds the verified v21 subject digest and v24 tenant UUID, provider-neutral principal reference `subject.development-synthetic-user`, exact DEVELOPMENT issuer/audience, `HUMAN` caller type, only `engagement:read`, and empty authority roles. The DEVELOPMENT Auth-admin bootstrap credential is now retired under its separate security boundary. The hosted identity resolver remains deliberately unwired; hook enablement, token issuance, and hosted adapter wiring remain separate future boundaries.
 
-After the allowlist is separately authorized, executed, and verified, the intended sequence remains:
+With the allowlist complete and the bootstrap credential retired, the intended sequence is now:
 
-1. retire the completed v24 DEVELOPMENT Auth-admin bootstrap credential under its own exact security boundary before any later provider mutation;
-2. separately authorize exact DEVELOPMENT hook enablement;
-3. issue one short-lived synthetic token under its own boundary;
-4. validate issuer/audience/signature/tenant/subject/policy locally without retaining the token;
-5. plan and wire the hosted DEVELOPMENT trusted-identity adapter; and only then
-6. plan and wire the hosted DEVELOPMENT DATA adapter and promote readiness after both dependencies verify independently.
+1. separately authorize exact DEVELOPMENT hook enablement with a fresh exact provider-mutation boundary and no reuse of the retired bootstrap credential;
+2. issue one short-lived synthetic token under its own boundary;
+3. validate issuer/audience/signature/tenant/subject/policy locally without retaining the token;
+4. plan and wire the hosted DEVELOPMENT trusted-identity adapter; and only then
+5. plan and wire the hosted DEVELOPMENT DATA adapter and promote readiness after both dependencies verify independently.
 
 Each item remains a separate bounded resource/action boundary.
 
 ## Do not start yet
 
-- Do not reuse AUTH v22, v23, or v24 approval/credential authority for v25 or any later step.
-- Do not use the existing DEVELOPMENT Auth-admin bootstrap credential for v25; v25 permits only credential class `NONE`.
-- Do not contact Supabase, DATA, Render, n8n, staging, or production while preparing or executing the local-only v25 allowlist boundary.
+- Do not reuse AUTH v22, v23, or v24 approval/credential authority for any later step.
+- Do not recreate or reuse the retired DEVELOPMENT Auth-admin bootstrap credential. Any future provider mutation requires a fresh exact authorization and a fresh credential lifecycle.
+- Do not contact Supabase AUTH for hook enablement until a fresh exact plan and approval authorize that provider mutation. DATA, Render, n8n, staging, and production remain outside that boundary.
 - Do not persist or reconstruct the raw provider subject; only the verified digest may participate in the server-owned allowlist.
 - Do not widen the allowlist beyond exactly one entry, `HUMAN`, `engagement:read` only, and empty authority roles.
 - Do not enable the custom access-token hook yet.
@@ -139,9 +140,9 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Known gaps
 
-- The dedicated synthetic DEVELOPMENT Auth identity exists and tenant metadata is bound, but the exact server-owned read-only allowlist is not yet applied.
+- The dedicated synthetic DEVELOPMENT Auth identity exists, tenant metadata is bound, and the exact server-owned read-only allowlist is applied; hosted runtime composition is still intentionally unwired.
 - AUTH v25 is expired/unexecuted historical state and must not be reused; AUTH v26 completed the exact local-only allowlist bind and is consumed.
-- The DEVELOPMENT Auth-admin bootstrap credential retirement remains pending as a separate security cleanup; it must not be reused for any future provider mutation.
+- The DEVELOPMENT Auth-admin bootstrap credential retirement is complete. Provider deletion is owner-confirmed; the GitHub `development` environment binding and local ignored temp secret material are independently verified absent. The retired credential must not be reused.
 - The custom access-token hook exists but remains disabled.
 - No end-to-end short-lived synthetic token validation has been completed yet.
 - Hosted DEVELOPMENT identity and DATA adapters are not wired.
@@ -156,7 +157,7 @@ Each item remains a separate bounded resource/action boundary.
 
 `REMOTE_AUTHORIZATION`: AUTH v21, v24, and v26 are completed/consumed historical authority. AUTH v22 is expired and unexecuted; AUTH v23 is unapproved and unexecuted; AUTH v25 has expired exact approval but remained unexecuted/unconsumed. AUTH v26 consumed its exact local-only authority inside the immutable `2026-09-15T15:00:00Z` through `2026-09-15T21:00:00Z` window; it grants no further execution authority.
 
-No provider mutation is currently authorized by v25. V25 itself prohibits provider read/mutation and credential use. Hook enablement, token issuance, DATA access, Render changes, staging, production, and hosted adapter wiring remain separate future boundaries.
+No provider mutation is currently authorized. Hook enablement, token issuance, DATA access, Render changes, staging, production, and hosted adapter wiring remain separate future boundaries and require their own exact authority.
 
 ## Recovery rule
 

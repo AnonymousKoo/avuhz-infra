@@ -40,6 +40,12 @@ V22_APPROVAL_PATH = (
 V22_APPROVAL_FILE_DIGEST = (
     "sha256:7a633546900c00f502a33d5d5434499337489e2dc92701e94738322dd9571d20"
 )
+V24_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-integration-v24.approval.json"
+)
+V24_APPROVAL_FILE_DIGEST = (
+    "sha256:1dfe97b377cf75d52b3660a0dfd8db648950fa4228b7ff42ba90151efa649cb2"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -124,10 +130,12 @@ def main() -> int:
         DATA_V3_APPROVAL_PATH,
         DATA_SEARCH_PATH_REPAIR_V1_APPROVAL_PATH,
     }
+    if V24_APPROVAL_PATH.exists():
+        expected_approval_paths.add(V24_APPROVAL_PATH)
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22 and DATA v1-v3 and DATA search-path-repair v1 approvals"
+            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22, optional exact v24, and DATA v1-v3 and DATA search-path-repair v1 approvals"
         )
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
@@ -139,6 +147,8 @@ def main() -> int:
         raise SystemExit("exact authorized v21 approval file digest mismatch")
     if file_digest(V22_APPROVAL_PATH) != V22_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v22 approval file digest mismatch")
+    if V24_APPROVAL_PATH.exists() and file_digest(V24_APPROVAL_PATH) != V24_APPROVAL_FILE_DIGEST:
+        raise SystemExit("exact authorized v24 approval file digest mismatch")
     if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
@@ -170,6 +180,7 @@ def main() -> int:
                     V19_APPROVAL_PATH,
                     V21_APPROVAL_PATH,
                     V22_APPROVAL_PATH,
+                    V24_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
                     DATA_V3_APPROVAL_PATH,

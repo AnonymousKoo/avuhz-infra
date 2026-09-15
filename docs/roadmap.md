@@ -29,11 +29,14 @@ Ordered milestones from the separation checkpoint:
       - Attempt the v19 owner-interactive execution path without weakening credential controls — STOPPED BEFORE MUTATION; the Supabase dashboard create-user form requires a password, which is outside v19's no-credential-persistence intent. No synthetic identity was created and v19 progress remains unconsumed.
       - Define forward-only AUTH v20 for the supported Supabase Admin `createUser` email-only confirmed route — COMPLETE AS IMMUTABLE `DRAFT_BLOCKED`; v20 has no authorization window, permits credential class `NONE`, and cannot be approved or executed.
       - Design and certify the minimum server-side Auth-admin execution credential class/handling rule without retrieving, exposing, hashing, logging, returning, or persisting credential material — COMPLETE through backward-compatible authorization-plan v2 and `SUPABASE_AUTH_ADMIN_EPHEMERAL`; class use is DEVELOPMENT/Supabase/AUTH/provider-mutation only and requires a digest-only non-secret executor-capability attestation.
-      - Create a new forward-only AUTH v21 plan for exactly one passwordless synthetic identity using the v2 credential class while preserving v20 unchanged — COMPLETE; `READY_FOR_APPROVAL`, exact window `2026-09-14T14:00:00Z` through `2026-09-14T17:00:00Z`, no approval/provider authority yet.
-      - Separately create exact owner approval for v21, then perform provider preflight proving both clean identity state and the non-secret executor capability before any mutation — NEXT BOUNDARY
-      - Execute exactly one passwordless Admin `createUser` operation only after the separate provider-execution authorization boundary; credential material remains outside Avuhz control-plane surfaces — NOT STARTED
-      - Bind provider-controlled tenant metadata — NOT STARTED
-      - Bind the exact server-owned read-only allowlist tuple — NOT STARTED
+      - Create a new forward-only AUTH v21 plan for exactly one passwordless synthetic identity using the v2 credential class while preserving v20 unchanged — COMPLETE.
+      - Separately create exact owner approval for v21 and prove clean identity state plus the non-secret executor capability — COMPLETE.
+      - Execute exactly one passwordless Admin `createUser` operation with credential material outside Avuhz control-plane surfaces — COMPLETE through AUTH v21; exactly one synthetic identity verified with zero sessions/refresh tokens.
+      - AUTH v22 tenant-metadata continuation — HISTORICAL; exact approval existed but expired without execution.
+      - AUTH v23 tenant-metadata continuation — HISTORICAL; unapproved and unexecuted.
+      - Bind provider-controlled tenant metadata — COMPLETE through AUTH v24; exact tenant metadata verified with identity/session/hook state unchanged.
+      - Prepare forward-only AUTH v25 for the exact server-owned read-only allowlist tuple — COMPLETE AS REPOSITORY-ONLY PLAN; `LOCAL_ONLY`, credential class `NONE`, no provider contact or execution authority.
+      - Separately approve and bind the exact server-owned read-only allowlist tuple — NEXT BOUNDARY; exactly one entry, `HUMAN`, `engagement:read` only, empty authority roles.
       - Enable the exact DEVELOPMENT hook under a separate authorization — NOT STARTED
       - Issue and locally validate one short-lived synthetic token — NOT STARTED
       - Wire the hosted DEVELOPMENT trusted-identity adapter — NOT STARTED

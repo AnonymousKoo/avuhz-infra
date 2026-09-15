@@ -1,0 +1,40 @@
+{
+  "record_type": "DEVELOPMENT_AUTH_ADMIN_BOOTSTRAP_CREDENTIAL_RETIREMENT",
+  "record_version": 1,
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "credential_class": "SUPABASE_AUTH_ADMIN_EPHEMERAL",
+  "credential_reference": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_ADMIN_EPHEMERAL",
+  "outcome": "RETIRED",
+  "observed_at": "2026-09-15T16:48:52Z",
+  "provider_secret_key_deletion": {
+    "status": "OWNER_CONFIRMED_DELETED",
+    "verification_basis": "OWNER_INTERACTIVE_CONFIRMATION",
+    "independently_verified": false
+  },
+  "github_environment_binding": {
+    "environment_reference": "development",
+    "status": "VERIFIED_ABSENT",
+    "verification_basis": "GITHUB_ENVIRONMENT_SECRET_NAME_LIST",
+    "independently_verified": true
+  },
+  "local_temp_secret_material": {
+    "scope": "supabase/.temp/**",
+    "status": "VERIFIED_ABSENT",
+    "verification_basis": "LOCAL_FILESYSTEM_RESCAN",
+    "independently_verified": true
+  },
+  "security_state": {
+    "credential_material_observed_by_control_plane": false,
+    "credential_material_persisted": false,
+    "credential_material_logged": false,
+    "provider_read_token_changed": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "hook_state_changed": false,
+    "token_or_session_issued": false
+  },
+  "continuation_rule": "DO_NOT_REUSE_RETIRED_BOOTSTRAP_CREDENTIAL; FRESH_EXACT_AUTHORIZATION_AND_FRESH_CREDENTIAL_REQUIRED_FOR_ANY_FUTURE_PROVIDER_MUTATION"
+}

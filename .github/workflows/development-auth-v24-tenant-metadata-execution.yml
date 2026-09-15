@@ -349,7 +349,7 @@ jobs:
           select
             current_user = 'supabase_read_only_user' as read_only_identity_ok,
             (select count(*) from auth.sessions where user_id = '{user_id}'::uuid) as session_count,
-            (select count(*) from auth.refresh_tokens where user_id = '{user_id}'::uuid) as refresh_token_count,
+            (select count(*) from auth.refresh_tokens where user_id = '{user_id}') as refresh_token_count,
             exists(select 1 from target_hook) as hook_function_exists,
             coalesce((select pg_get_userbyid(proowner) from target_hook), '') as hook_owner,
             coalesce((select not prosecdef from target_hook), false) as hook_security_invoker,

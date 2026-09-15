@@ -1,0 +1,23 @@
+{
+  "progress_id": "a95f013c-839e-40e8-bd52-e04494034617",
+  "plan_id": "b9532651-b0a2-420f-a3fb-bde9c5c3d396",
+  "plan_version": 25,
+  "plan_digest": "sha256:70f57ac94af8906388dc07fe21284d46182c3efb9c8c5eb2cc3d303e723aa5b8",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v25.step.01.bind-server-read-only-allowlist",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-15T02:24:00Z",
+  "progress_digest": "sha256:8a9a5a36174bfadd5b67e182ce9c6891904b6a4e4c27850144f9c97eed4ef8d9"
+}

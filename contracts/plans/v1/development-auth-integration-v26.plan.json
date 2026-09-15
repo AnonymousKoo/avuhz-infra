@@ -1,0 +1,209 @@
+{
+  "plan_id": "f6c223d0-5e3e-43e1-b90c-190367840bec",
+  "plan_version": 26,
+  "plan_digest": "sha256:e43e7a01dd79686bbb5efa744444126800e0d5b488461253fa7281fdd227a2c4",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-15T12:33:52Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-15T15:00:00Z",
+    "expires_at": "2026-09-15T21:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v26.step.01.bind-server-read-only-allowlist"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v26.step.01.bind-server-read-only-allowlist",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "server.capability-policy-entry",
+        "resource_reference": "policy.development.synthetic-engagement-read",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": "sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6"
+      },
+      "operation": "local.capability-policy.bind-exact-tuple",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-identity.created",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3a0f8c7211fffa"
+        },
+        {
+          "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e"
+        }
+      ],
+      "expected_postcondition": "Exactly one DEVELOPMENT server-owned allowlist entry binds the verified subject digest, provider-neutral principal reference, canonical tenant, exact issuer/audience, and HUMAN caller policy to only engagement:read with empty authority roles. No provider, credential, identity, tenant metadata, hook, token, session, DATA, Render, staging, or production resource is read or changed.",
+      "prohibited_actions": [
+        "provider.read",
+        "provider.mutation",
+        "credential.use",
+        "credential.persist",
+        "credential.expose",
+        "identity.create",
+        "identity.delete",
+        "tenant-metadata.bind",
+        "hook.enable",
+        "token.issue",
+        "session.issue",
+        "capability.wildcard",
+        "authority-role.add",
+        "caller-authority.trust",
+        "raw-provider-subject.persist",
+        "cross-environment.bind",
+        "data.operation",
+        "render.operation",
+        "staging.target",
+        "production.target"
+      ],
+      "stop_conditions": [
+        "identity.evidence.missing",
+        "subject-digest.mismatch",
+        "tenant.mismatch",
+        "principal-reference.mismatch",
+        "policy.digest.mismatch",
+        "implementation.policy-drift",
+        "scope.drift",
+        "credential.requested",
+        "provider-contact.requested",
+        "outcome.ambiguous"
+      ],
+      "correction_reference": "correction.local-policy-revision",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v26.synthetic-subject-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5",
+            "exact_digest": "sha256:9123b537af3bb3e2b543fd24a5510e30fd8f4f0ab27b8056421397ad0a9081a0"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v26.canonical-tenant",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "UUID_IDENTIFIER",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+            "exact_digest": "sha256:49e84286f672440b033fef648e8efd8cd0be5a3e4697bb19fbfab360e8e51748"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v26.principal-reference",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "subject.development-synthetic-user",
+            "exact_digest": "sha256:73ae70a5943924d2364cbd9e4221d453e707371eb743689a8b4c060922c6546d"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v26.target-server-capability-policy",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6",
+            "exact_digest": "sha256:390815e34efb7024a5b39eaa3d2f3ff0571492f4b9cdafda3a35d3729f57ad32"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v26.server-capability-policy",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "server.capability-policy.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "established_binding_ids": [
+            "binding.development.auth.v26.server-capability-policy"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "provider.read",
+    "provider.mutation",
+    "credential.use",
+    "credential.persist",
+    "credential.expose",
+    "identity.create",
+    "identity.delete",
+    "tenant-metadata.bind",
+    "hook.enable",
+    "token.issue",
+    "session.issue",
+    "capability.wildcard",
+    "authority-role.add",
+    "caller-authority.trust",
+    "raw-provider-subject.persist",
+    "cross-environment.bind",
+    "data.operation",
+    "render.operation",
+    "staging.target",
+    "production.target"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "authorization.unbound",
+    "subject-digest.mismatch",
+    "tenant.mismatch",
+    "principal-reference.mismatch",
+    "policy.digest.mismatch",
+    "implementation.policy-drift",
+    "credential.requested",
+    "provider-contact.requested"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

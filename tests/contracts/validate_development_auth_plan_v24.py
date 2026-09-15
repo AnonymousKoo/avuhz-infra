@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the fresh DEVELOPMENT AUTH v24 continuation before execution."""
+"""Validate DEVELOPMENT AUTH v24 through verified tenant-metadata persistence."""
 from __future__ import annotations
 
 import hashlib
@@ -12,8 +12,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
+    authorize_step,
     initial_progress,
     plan_digest,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -24,6 +26,9 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v24.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v24.progress.json"
+EXECUTION_PATH = BASE / "development-auth-integration-v24.execution-progress.json"
+PREFLIGHT_PATH = BASE / "development-auth-step1-v24-preflight.evidence.json"
+SUCCESS_PATH = BASE / "development-auth-step1-v24-success.evidence.json"
 APPROVAL_PATH = BASE / "development-auth-integration-v24.approval.json"
 V21_SUCCESS_PATH = BASE / "development-auth-step1-v21-success.evidence.json"
 V16_SUCCESS_PATH = BASE / "development-auth-step1-v16-success.evidence.json"
@@ -47,6 +52,27 @@ TARGET_EMAIL = "avuhz-development-synthetic@example.invalid"
 HOOK_SIGNATURE = "public.avuhz_development_custom_access_token_hook_v1(jsonb)"
 PROVIDER_READ_SECRET = "AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN"
 AUTH_ADMIN_SECRET = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_ADMIN_EPHEMERAL"
+PROGRESS_ID = "546152c1-e32d-44b8-b3be-aca5cc1489cb"
+APPROVAL_DIGEST = "sha256:e0e2aaf98920bde28e5cd3e070adf7b8ac262832067f0f04191f0fe09028e223"
+INITIAL_PROGRESS_DIGEST = "sha256:f86884c6ddd1d73f3604f64154f250b2b70ea9640e7e196c227f8be4b6b3b4ef"
+AUTHORIZED_PROGRESS_DIGEST = "sha256:33abfbac1460c39798b3c012a956efb28319eb6423b4b18bc919a7bd54e0d092"
+SUCCESS_PROGRESS_DIGEST = "sha256:1e0a008dab126f6922503071e29324074cd9a7ca49536947864543bfd2fd0d01"
+BASELINE_METADATA_DIGEST = "sha256:5b0bfedb37484704aa0240dc706cc13b4d6c47f967a417f4babd5dc4bc10ad65"
+CAP_CONFIG_DIGEST = "sha256:007ed4605dcc1245eb0ad6b7b37e85441195c95232dd6e617dd5cca27aa5262d"
+CAP_EVIDENCE_DIGEST = "sha256:8842d29d21bb8a8de11c11e64cc79ce8ef07ae7b096082185ca46d46b0aafd8d"
+LIVE_CONFIG_DIGEST = "sha256:8cb75569e341a77ec6212b537cf8c051a302f16cdd444122e4e7a58c1715deef"
+LIVE_EVIDENCE_DIGEST = "sha256:2ae1053953068a6b2d3dc90aacb9a3100f01b230eac3962fd13dde185d55e52e"
+META_CONFIG_DIGEST = "sha256:90b58119c0502d197314ffc69265550eb300fa75bcec73e213849fa7fc38b7fe"
+META_EVIDENCE_DIGEST = "sha256:e998bde6e56511e9604feee5e153be9a5f90408ff0e49ba17481785d8fdafd51"
+PREFLIGHT_RAW_DIGEST = "sha256:0b6f4f45173d9dce5f80984c79e7be56350668b3cab0620871d392aed71e160a"
+SUCCESS_EVIDENCE_DIGEST = "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e"
+EXECUTION_CONFIG_DIGEST = "sha256:a8a8b79ce4c1d0c6ff78d842cb7ad14cebf979a948f3d373d24c8269b79042c5"
+RUN_ID = 34918764216
+RUN_SHA = "0a48268a5f37e863c75a195a4c1a8226e2275d63"
+AUTH_AT = "2026-09-15T01:49:23Z"
+OUTCOME_AT = "2026-09-15T01:49:24Z"
+
+BASELINE_APP_METADATA = {"provider": "email", "providers": ["email"]}
 
 TARGET_APP_METADATA = {
     "provider": "email",
@@ -61,6 +87,12 @@ def load(path: Path) -> dict:
 
 def raw_digest(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def component_digest(value: dict) -> str:
+    body = dict(value)
+    body.pop("evidence_digest")
+    return canonical_digest(body)
 
 
 def declaration(step: dict, binding_id: str) -> dict:
@@ -225,19 +257,256 @@ def main() -> int:
     assert state["evidence"] == []
     assert state["binding_assertions"] == []
 
-    if APPROVAL_PATH.exists():
-        approval = load(APPROVAL_PATH)
-        validate_approval(plan, approval, SCHEMA_ROOT, approval["effective_at"])
-        assert approval["plan_id"] == PLAN_ID
-        assert approval["plan_version"] == PLAN_VERSION
-        assert approval["plan_digest"] == PLAN_DIGEST
-        assert approval["owner_identity"] == "github:AnonymousKoo"
-        assert approval["decision"] == "APPROVE"
-        assert approval["environment"] == "DEVELOPMENT"
-        assert approval["effective_at"] == WINDOW_START
-        assert approval["expires_at"] == WINDOW_END
-        assert approval["status"] == "ACTIVE"
-        assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    approval = load(APPROVAL_PATH)
+    for moment in (WINDOW_START, AUTH_AT, OUTCOME_AT):
+        validate_approval(plan, approval, SCHEMA_ROOT, moment)
+    assert approval["plan_id"] == PLAN_ID
+    assert approval["plan_version"] == PLAN_VERSION
+    assert approval["plan_digest"] == PLAN_DIGEST
+    assert approval["approval_digest"] == APPROVAL_DIGEST
+    assert approval["owner_identity"] == "github:AnonymousKoo"
+    assert approval["decision"] == "APPROVE"
+    assert approval["environment"] == "DEVELOPMENT"
+    assert approval["effective_at"] == WINDOW_START
+    assert approval["expires_at"] == WINDOW_END
+    assert approval["status"] == "ACTIVE"
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+
+    assert progress["progress_id"] == PROGRESS_ID
+    assert progress["progress_digest"] == INITIAL_PROGRESS_DIGEST
+
+    preflight = load(PREFLIGHT_PATH)
+    assert raw_digest(PREFLIGHT_PATH) == PREFLIGHT_RAW_DIGEST
+    assert preflight["observation_only"] is True
+    assert preflight["plan_id"] == PLAN_ID and preflight["plan_version"] == 24
+    assert preflight["project_reference"] == PROJECT
+    assert preflight["step_id"] == STEP_ID
+    capability_observation = preflight["capability_attestation"]
+    live_observation = preflight["live_read_only_preflight"]
+    metadata_observation = preflight["tenant_metadata_preflight"]
+    for observed, expected_type, expected_digest in (
+        (capability_observation, "auth.admin-executor-capability.observed", CAP_EVIDENCE_DIGEST),
+        (live_observation, "auth.synthetic-identity.live-preflight.observed", LIVE_EVIDENCE_DIGEST),
+        (metadata_observation, "auth.synthetic-identity.tenant-metadata-preflight.observed", META_EVIDENCE_DIGEST),
+    ):
+        assert observed["evidence_type"] == expected_type
+        assert observed["source"]["workflow_run_id"] == RUN_ID
+        assert observed["source"]["workflow_head_sha"] == RUN_SHA
+        assert observed["source"]["workflow_conclusion"] == "success"
+        assert observed["source"]["provider_mutation_attempted"] is False
+        assert observed["source"]["credential_material_observed_by_control_plane"] is False
+        assert observed["result"] == "PASS"
+        assert observed["evidence_digest"] == expected_digest
+        assert component_digest(observed) == expected_digest
+
+    cap_config = {
+        "credential_class": "SUPABASE_AUTH_ADMIN_EPHEMERAL",
+        "credential_shape": "sb_secret_*",
+        "project_reference": PROJECT,
+        "workflow_environment": "development",
+    }
+    assert canonical_digest(cap_config) == CAP_CONFIG_DIGEST
+    assert capability_observation["configuration_digest"] == CAP_CONFIG_DIGEST
+
+    live_keys = (
+        "project_reference", "read_only_execution_identity", "auth_user_count",
+        "synthetic_identity_match_count", "synthetic_subject_digest",
+        "synthetic_email_confirmed", "user_metadata_exact_provider_shape",
+        "app_metadata_exact_pretenant_shape", "session_count", "refresh_token_count",
+        "hosted_auth_custom_access_token_hook_disabled",
+        "hosted_auth_custom_access_token_hook_unconfigured", "hook_function_exists",
+        "hook_owner", "hook_security_invoker", "hook_stable", "hook_search_path_exact",
+        "hook_function_body_verified", "auth_admin_execute_acl_count",
+        "public_execute_acl_count", "app_role_execute_acl_count",
+    )
+    assert canonical_digest({key: live_observation[key] for key in live_keys}) == LIVE_CONFIG_DIGEST
+    assert live_observation["configuration_digest"] == LIVE_CONFIG_DIGEST
+    assert live_observation["read_only_execution_identity"] == "supabase_read_only_user"
+    assert live_observation["auth_user_count"] == 1
+    assert live_observation["synthetic_identity_match_count"] == 1
+    assert live_observation["synthetic_subject_digest"] == SUBJECT_DIGEST
+    assert live_observation["session_count"] == 0 and live_observation["refresh_token_count"] == 0
+    assert live_observation["hook_owner"] == "avuhz_migration_service_dev"
+    assert live_observation["auth_admin_execute_acl_count"] == 1
+    assert live_observation["public_execute_acl_count"] == 0
+    assert live_observation["app_role_execute_acl_count"] == 0
+
+    metadata_keys = (
+        "project_reference", "synthetic_subject_digest", "baseline_app_metadata_digest",
+        "target_app_metadata_digest", "canonical_tenant_id", "identity_count",
+        "user_metadata_unchanged_required", "email_unchanged_required",
+        "role_unchanged_required",
+    )
+    assert canonical_digest({key: metadata_observation[key] for key in metadata_keys}) == META_CONFIG_DIGEST
+    assert canonical_digest(BASELINE_APP_METADATA) == BASELINE_METADATA_DIGEST
+    assert metadata_observation["configuration_digest"] == META_CONFIG_DIGEST
+    assert metadata_observation["baseline_app_metadata_digest"] == BASELINE_METADATA_DIGEST
+    assert metadata_observation["target_app_metadata_digest"] == TARGET_METADATA_DIGEST
+    assert metadata_observation["canonical_tenant_id"] == TENANT_ID
+    assert metadata_observation["identity_count"] == 1
+
+    preflight_security = preflight["security_state"]
+    for key in (
+        "credential_material_retained_by_execution_artifacts",
+        "credential_material_observed_by_control_plane", "raw_provider_payload_retained",
+        "raw_provider_subject_retained", "pii_retained", "provider_mutation_attempted",
+        "data_resource_touched", "render_touched",
+    ):
+        assert preflight_security[key] is False, key
+    assert preflight_security["ephemeral_admin_secret_retirement_pending"] is True
+
+    assertions = []
+    for binding_id, observed in (
+        ("binding.development.auth.v24.admin-executor-capability", capability_observation),
+        ("binding.development.auth.v24.live-read-only-preflight", live_observation),
+        ("binding.development.auth.v24.tenant-metadata-preflight", metadata_observation),
+    ):
+        binding = declaration(step, binding_id)
+        assertions.append({
+            "binding_id": binding_id,
+            "phase": binding["phase"],
+            "value_class": binding["value_class"],
+            "source_step_id": None,
+            "evidence_type": binding["evidence_type"],
+            "evidence_digest": observed["evidence_digest"],
+            "digest_policy": binding["digest_policy"],
+            "persistence_policy": binding["persistence_policy"],
+            "sanitized_value": None,
+            "value_digest": observed["configuration_digest"],
+            "recorded_at": AUTH_AT,
+        })
+
+    request = {
+        "plan_id": PLAN_ID, "plan_version": 24, "plan_digest": PLAN_DIGEST,
+        "environment": "DEVELOPMENT", "provider_reference": "supabase",
+        "project_reference": PROJECT, "responsibility": "AUTH",
+        "issuer_reference": f"https://{PROJECT}.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": STEP_ID, "resource_reference": "identity.development.synthetic-avuhz",
+        "resource_version": "version.1", "resource_digest": None,
+        "operation": "provider.auth-identity.app-metadata.bind-one",
+        "execution_class": "PROVIDER_MUTATION",
+        "credential_class": "SUPABASE_AUTH_ADMIN_EPHEMERAL",
+        "required_evidence": [
+            {"evidence_type": "auth.synthetic-identity.created", "evidence_digest": V21_SUCCESS_DIGEST},
+            {"evidence_type": "hook.v2.disabled-acl.verified", "evidence_digest": V16_SUCCESS_DIGEST},
+        ],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False, "extra_privileges": False,
+        "unauthorized_migration_surface": False, "scope_expansion": False,
+    }
+    authorized = authorize_step(
+        plan, approval, progress, request, SCHEMA_ROOT, AUTH_AT,
+        trusted_preflight_assertions=assertions,
+    )
+    assert authorized["progress_digest"] == AUTHORIZED_PROGRESS_DIGEST
+
+    success = load(SUCCESS_PATH)
+    assert raw_digest(SUCCESS_PATH) == SUCCESS_EVIDENCE_DIGEST
+    assert success["evidence_type"] == "auth.synthetic-identity.tenant-metadata.bound"
+    assert success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert success["plan_id"] == PLAN_ID and success["plan_version"] == 24
+    assert success["step_id"] == STEP_ID
+    observed_execution = success["execution_observation"]
+    assert observed_execution["workflow_run_id"] == RUN_ID
+    assert observed_execution["workflow_head_sha"] == RUN_SHA
+    assert observed_execution["workflow_conclusion"] == "success"
+    assert observed_execution["provider_mutation_attempts"] == 1
+    assert observed_execution["provider_mutation_committed"] is True
+    assert observed_execution["live_read_only_preflight_verified"] is True
+    assert observed_execution["target_app_metadata_digest"] == TARGET_METADATA_DIGEST
+    execution_config = {
+        "plan_digest": PLAN_DIGEST, "project_reference": PROJECT,
+        "workflow_run_id": RUN_ID, "workflow_head_sha": RUN_SHA,
+        "target_app_metadata_digest": TARGET_METADATA_DIGEST,
+        "credential_class": "SUPABASE_AUTH_ADMIN_EPHEMERAL",
+    }
+    assert canonical_digest(execution_config) == EXECUTION_CONFIG_DIGEST
+    assert observed_execution["execution_configuration_digest"] == EXECUTION_CONFIG_DIGEST
+    for key in (
+        "user_metadata_changed", "email_changed", "role_changed",
+        "token_or_session_requested", "hook_change_attempted",
+        "data_resource_touched", "render_touched",
+    ):
+        assert observed_execution[key] is False, key
+
+    provider_after = success["provider_observation"]
+    assert provider_after["auth_user_count"] == 1
+    assert provider_after["synthetic_identity_match_count"] == 1
+    assert provider_after["synthetic_subject_digest"] == SUBJECT_DIGEST
+    assert provider_after["synthetic_email_confirmed"] is True
+    assert provider_after["user_metadata_exact_provider_shape"] is True
+    assert provider_after["app_metadata_exact_target_shape"] is True
+    assert provider_after["canonical_tenant_id"] == TENANT_ID
+    assert provider_after["session_count"] == 0 and provider_after["refresh_token_count"] == 0
+    assert provider_after["hook_function_exists"] is True
+    assert provider_after["hook_owner_exact"] is True
+    assert provider_after["hook_security_invoker"] is True
+    assert provider_after["hook_stable"] is True
+    assert provider_after["hook_search_path_exact"] is True
+    assert provider_after["hook_function_body_verified"] is True
+    assert provider_after["auth_admin_execute_acl_count"] == 1
+    assert provider_after["public_execute_acl_count"] == 0
+    assert provider_after["app_role_execute_acl_count"] == 0
+    assert provider_after["hosted_auth_custom_access_token_hook_disabled"] is True
+    assert provider_after["hosted_auth_custom_access_token_hook_unconfigured"] is True
+
+    verified = success["verification_observation"]
+    for key in (
+        "post_mutation_user_readback_verified", "post_mutation_identity_count_verified",
+        "provider_subject_digest_verified", "tenant_metadata_postcondition_verified",
+        "postcondition_verified",
+    ):
+        assert verified[key] is True, key
+    assert verified["provider_mutation_retried"] is False
+    success_security = success["security_state"]
+    for key in (
+        "credential_material_retained_by_execution_artifacts",
+        "credential_material_observed_by_control_plane", "raw_provider_payload_retained",
+        "raw_provider_subject_retained", "pii_retained", "session_retained",
+        "token_retained", "data_resource_touched", "render_touched",
+        "hook_enable_action_performed",
+    ):
+        assert success_security[key] is False, key
+    assert success_security["ephemeral_admin_secret_retirement_pending"] is True
+
+    produced_binding = {
+        "binding_id": "binding.development.auth.v24.tenant-metadata",
+        "phase": "PRODUCED_BY_CURRENT_STEP",
+        "value_class": "CONFIGURATION_REFERENCE",
+        "source_step_id": None,
+        "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": TARGET_METADATA_DIGEST,
+        "recorded_at": OUTCOME_AT,
+    }
+    outcome_evidence = [{
+        "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+        "evidence_reference": "provider.execution.v24.step1.attempt1.verified",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "recorded_at": OUTCOME_AT,
+    }]
+    expected_execution = record_step_outcome(
+        plan, approval, authorized, STEP_ID, "SUCCEEDED", "PASS",
+        outcome_evidence, step["expected_postcondition"], None, SCHEMA_ROOT, OUTCOME_AT,
+        binding_assertions=[produced_binding],
+    )
+    execution = load(EXECUTION_PATH)
+    validate_progress(plan, execution, SCHEMA_ROOT)
+    assert execution == expected_execution
+    assert execution["record_version"] == 3
+    assert execution["overall_state"] == "COMPLETED"
+    assert execution["progress_digest"] == SUCCESS_PROGRESS_DIGEST
+    execution_state = execution["step_states"][0]
+    assert execution_state["authorization_state"] == "CONSUMED"
+    assert execution_state["execution_state"] == "SUCCEEDED"
+    assert execution_state["verification_state"] == "PASS"
+    assert execution_state["authorization_consumed"] is True
+    assert execution_state["safe_error_code"] is None
+    assert execution_state["binding_assertions"] == assertions + [produced_binding]
 
     assert READ_ONLY_REFERENCE_PATH.exists()
     read_only_reference = READ_ONLY_REFERENCE_PATH.read_text(encoding="utf-8")
@@ -308,17 +577,10 @@ def main() -> int:
     assert re.search(r"sb_secret_[A-Za-z0-9_-]{16,}", workflow) is None
     assert re.search(r"\beyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b", workflow) is None
 
-    for forbidden in (
-        BASE / "development-auth-integration-v24.execution-progress.json",
-        BASE / "development-auth-step1-v24-preflight.evidence.json",
-        BASE / "development-auth-step1-v24-success.evidence.json",
-    ):
-        assert not forbidden.exists(), forbidden
-
     print(
-        "DEVELOPMENT_AUTH_V24_EXECUTOR_PREPARED=PASS "
-        "(fresh forward-only plan, pristine progress, mandatory live read-only preflight, "
-        "single bounded metadata mutation, and no v24 execution evidence present)"
+        "DEVELOPMENT_AUTH_V24_OUTCOME=PASS "
+        "(tenant app metadata bound and verified; one bounded mutation; zero sessions/refresh tokens; "
+        "no DATA/Render/hook mutation; ephemeral admin secret retirement remains a separate action)"
     )
     return 0
 

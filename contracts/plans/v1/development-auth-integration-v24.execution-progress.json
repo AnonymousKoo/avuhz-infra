@@ -1,0 +1,83 @@
+{
+  "progress_id": "546152c1-e32d-44b8-b3be-aca5cc1489cb",
+  "plan_id": "777a4d74-d56d-4ba2-b16b-5ce7ea79b7b1",
+  "plan_version": 24,
+  "plan_digest": "sha256:90a85d960741ecc74559774d1b946a71297a1c837c3230fafd55e392bf908719",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v24.step.01.bind-synthetic-tenant-app-metadata",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+          "evidence_reference": "provider.execution.v24.step1.attempt1.verified",
+          "evidence_digest": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e",
+          "recorded_at": "2026-09-15T01:49:24Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one existing synthetic DEVELOPMENT Auth identity in AUTH project pwlhruwutoitnieactol retains provider-managed app_metadata provider=email and providers=[email] and additionally has app_metadata.avuhz_tenant_id=1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0; user_metadata, identity count, email confirmation, password input, roles, sessions, refresh tokens, hook state, DATA, Render, staging, and production remain unchanged; the raw provider subject is not persisted.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v24.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:8842d29d21bb8a8de11c11e64cc79ce8ef07ae7b096082185ca46d46b0aafd8d",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:007ed4605dcc1245eb0ad6b7b37e85441195c95232dd6e617dd5cca27aa5262d",
+          "recorded_at": "2026-09-15T01:49:23Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v24.live-read-only-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.live-preflight.observed",
+          "evidence_digest": "sha256:2ae1053953068a6b2d3dc90aacb9a3100f01b230eac3962fd13dde185d55e52e",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:8cb75569e341a77ec6212b537cf8c051a302f16cdd444122e4e7a58c1715deef",
+          "recorded_at": "2026-09-15T01:49:23Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v24.tenant-metadata-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.tenant-metadata-preflight.observed",
+          "evidence_digest": "sha256:e998bde6e56511e9604feee5e153be9a5f90408ff0e49ba17481785d8fdafd51",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:90b58119c0502d197314ffc69265550eb300fa75bcec73e213849fa7fc38b7fe",
+          "recorded_at": "2026-09-15T01:49:23Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v24.tenant-metadata",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+          "evidence_digest": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:cd89c12abf5ed8c3dc03f4766a6d7cd9f1b8388b9e98468e9673233550a910a6",
+          "recorded_at": "2026-09-15T01:49:24Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-15T01:49:24Z",
+  "progress_digest": "sha256:1e0a008dab126f6922503071e29324074cd9a7ca49536947864543bfd2fd0d01"
+}

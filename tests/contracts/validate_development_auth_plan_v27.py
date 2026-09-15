@@ -10,7 +10,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import (
+    approval_digest,
+    initial_progress,
+    plan_digest,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
 from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_service.development import DEVELOPMENT_AUTH_ISSUER, DEVELOPMENT_AUTH_PROJECT_REF, DEVELOPMENT_SERVICE_AUDIENCE
 
@@ -18,6 +25,7 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v27.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v27.progress.json"
+APPROVAL_PATH = BASE / "development-auth-integration-v27.approval.json"
 V16_PATH = BASE / "development-auth-step1-v16-success.evidence.json"
 V24_PATH = BASE / "development-auth-step1-v24-success.evidence.json"
 V26_PATH = BASE / "development-auth-step1-v26-success.evidence.json"
@@ -40,6 +48,10 @@ V16_DIGEST = "sha256:0cfa1a3515e6496e9bc215de4579d5e4ff5b46f0299227b60708dc72ff2
 V24_DIGEST = "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e"
 V26_DIGEST = "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba"
 RETIREMENT_DIGEST = "sha256:9e310b6b114b4b4a2b71f35a6f9b6324231f3f071a2fdecc5d589d7b91e635ef"
+APPROVAL_ID = "671bb3cb-3555-44a2-b7e3-17bcb04eeb03"
+APPROVAL_DIGEST = "sha256:ace0f43dc2ba057eeb17e924cd1b7bac057e2f1d33f8da46f8e46f403a1edfe7"
+APPROVAL_FILE_DIGEST = "sha256:c9fae3414c77863904a5f28c912edfc78c9756f186c040258e551be708922e00"
+APPROVED_AT = "2026-09-15T17:31:18Z"
 
 
 def load(path: Path) -> dict:
@@ -53,8 +65,11 @@ def raw_digest(path: Path) -> str:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-16T00:29:59Z")
 
     assert plan["plan_id"] == PLAN_ID and plan["plan_version"] == 27
     assert plan["plan_digest"] == PLAN_DIGEST and plan_digest(plan) == PLAN_DIGEST
@@ -73,6 +88,25 @@ def main() -> int:
     }
     assert plan["authorization_window"] == {"binding_state": "BOUND", "starts_at": WINDOW_START, "expires_at": WINDOW_END}
     assert plan["ordered_step_ids"] == [STEP_ID]
+
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 27,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW_START
 
     step = plan["steps"][0]
     assert step["step_id"] == STEP_ID and step["ordinal"] == 1
@@ -168,15 +202,14 @@ def main() -> int:
     assert state["authorization_consumed"] is False
     assert state["evidence"] == [] and state["binding_assertions"] == []
 
-    assert not (BASE / "development-auth-integration-v27.approval.json").exists()
     assert not (BASE / "development-auth-integration-v27.execution-progress.json").exists()
     assert not (BASE / "development-auth-step1-v27-preflight.evidence.json").exists()
     assert not (BASE / "development-auth-step1-v27-success.evidence.json").exists()
     assert not list((ROOT / ".github/workflows").glob("*v27*"))
 
     print(
-        "DEVELOPMENT_AUTH_V27_PREPARED=PASS "
-        "(exact hook target digest-bound; OWNER_INTERACTIVE_SESSION only; pristine/unapproved/unexecuted; retired bootstrap credential cannot be reused)"
+        "DEVELOPMENT_AUTH_V27_APPROVAL=PASS "
+        "(exact owner approval persisted before effective time; OWNER_INTERACTIVE_SESSION only; pristine/unexecuted; retired bootstrap credential cannot be reused)"
     )
     return 0
 

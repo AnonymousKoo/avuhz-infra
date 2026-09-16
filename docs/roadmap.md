@@ -48,8 +48,13 @@ Ordered milestones from the separation checkpoint:
       - Execute only the exact DEVELOPMENT dashboard hook bundle during the active v28 window after a fresh matching preflight — COMPLETE; exact hook enabled once, permission state unchanged, authorization consumed, verification PASS, zero sessions/refresh tokens
       - Review the local AUTH v29 synthetic-token candidate before canonicalization — COMPLETE; REJECTED PRE-CANONICAL / UNEXECUTED because `magiclink` could create a missing user despite `identity.create` being prohibited and Management API key enumeration could expose secret-key material to the runner. No provider contact or credential use occurred.
       - Prepare forward-only AUTH v30 for one existing-user recovery-link token lifecycle — COMPLETE AS PREPARATION; plan `d89b1ba0-6a85-4897-8d40-33af4de45e4a`, digest `sha256:8b1d92022e192c73b856d5d399843a3ee4c9dac4d08e9c7778293f765f8ebd6f`, window `2026-09-15T23:00:00Z` through `2026-09-16T05:00:00Z`; existing-user recovery only, pre-bound publishable key, one session immediately locally revoked, then post-revocation ES256/issuer/audience/tenant/subject/read-only-policy validation; pristine/unapproved/unexecuted.
-      - Create the separate exact AUTH v30 owner approval — NEXT; no v30 provider action is authorized before that artifact is canonical.
-      - Execute and record one short-lived synthetic token lifecycle under exact v30 authority — NOT STARTED
+      - AUTH v30 remained unapproved and unexecuted — HISTORICAL; its authority was never activated.
+      - Prepare and approve forward-only AUTH v31 — COMPLETE; exact approval became canonical.
+      - Execute AUTH v31 Step 1 — STOPPED / CONSUMED; one provider mutation attempt ended with `V31_RECOVERY_LINK_GENERATION_FAILED`, provider outcome `AMBIGUOUS`, exact historical response classification `UNKNOWN`, Steps 2-3 blocked/unconsumed, retry unauthorized.
+      - Correct the direct Auth HTTP response parser/classification defect — COMPLETE through PR #110; historical v31 outcome remains ambiguous.
+      - Prepare forward-only AUTH v32 with the corrected parser and existing v32 secret referenced by name only — COMPLETE AS REPOSITORY-LOCAL PREPARATION; plan `e8cd574a-a532-4c95-ab5d-5c069c1bbb96`, digest `sha256:c43b0b906bfb0c03e763d6cc5a13d47a900b40eb4db8fd904c799c524ec6c37c`, window `2026-09-17T15:00:00Z` through `2026-09-17T21:00:00Z`; pristine/unapproved/unexecuted, no provider contact or secret use.
+      - Create the separate exact AUTH v32 owner approval — NEXT; no v32 provider action is authorized by preparation.
+      - Execute and record one short-lived synthetic token lifecycle under exact v32 authority — NOT STARTED
       - Wire the hosted DEVELOPMENT trusted-identity adapter — NOT STARTED
       - Wire the hosted DEVELOPMENT DATA adapter with least privilege — NOT STARTED
       - Promote hosted readiness only after both dependencies verify independently — NOT STARTED

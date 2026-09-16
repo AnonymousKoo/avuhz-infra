@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class DevelopmentAuthV32PlanTests(unittest.TestCase):
-    def test_v32_synthetic_token_preparation_is_certified(self) -> None:
+    def test_v32_synthetic_token_approval_is_certified(self) -> None:
         env = dict(os.environ)
         env["PYTHONPATH"] = "src:."
         result = subprocess.run(
@@ -21,7 +21,7 @@ class DevelopmentAuthV32PlanTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
-        self.assertIn("DEVELOPMENT_AUTH_V32_PREPARED=PASS", result.stdout)
+        self.assertIn("DEVELOPMENT_AUTH_V32_APPROVED=PASS", result.stdout)
 
 
 if __name__ == "__main__":

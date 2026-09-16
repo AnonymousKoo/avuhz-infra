@@ -12,7 +12,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import validate_plan, validate_progress  # noqa: E402
+from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
 from avuhz_runtime.implementation_handoff import canonical_digest  # noqa: E402
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
@@ -29,6 +34,9 @@ EXECUTOR_PATH = ROOT / "scripts/development_auth_v32_token_executor.py"
 PLAN_ID = "e8cd574a-a532-4c95-ab5d-5c069c1bbb96"
 PLAN_DIGEST = "sha256:c43b0b906bfb0c03e763d6cc5a13d47a900b40eb4db8fd904c799c524ec6c37c"
 PROGRESS_DIGEST = "sha256:7539fdec222abaddce8fc6fce1ffd5299c793db34aa97a05932adccc253825f3"
+APPROVAL_ID = "22afae15-0eb0-4d29-927d-ed2d6405eb02"
+APPROVED_AT = "2026-09-16T15:01:37Z"
+APPROVAL_DIGEST = "sha256:6c3e89a1beb71b6c6d4265ea768fe18e0635b7469d32ac244cd4a650e7743bee"
 V31_PLAN_DIGEST = "sha256:8ea09f44c3c5e65a6a8d86b0df6579b0f4476b63ae6c167a6194948c86aab043"
 V31_EXECUTION_DIGEST = "sha256:88d8021f785120d91d4314d7c14028ca5bd8467db2f38b4ac7dea866d6399190"
 V31_FAILURE_DIGEST = "sha256:1ed8a2fcbdb7d168e48387a42096be23bee05c3eb8732735b4502374b0dbb034"
@@ -71,6 +79,7 @@ def normalized_scope(plan: dict) -> dict:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     v31_plan = load(V31_PLAN_PATH)
     v31_execution = load(V31_EXECUTION_PATH)
     v31_failure = load(V31_FAILURE_PATH)
@@ -139,6 +148,24 @@ def main() -> int:
         for state in progress["step_states"]
     )
 
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 32,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+
     workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
     executor = EXECUTOR_PATH.read_text(encoding="utf-8")
     for required in (
@@ -193,7 +220,6 @@ def main() -> int:
         assert required in derived
 
     for path in (
-        APPROVAL_PATH,
         BASE / "development-auth-integration-v32.execution-progress.json",
         BASE / "development-auth-step1-v32-preflight.evidence.json",
         BASE / "development-auth-step1-v32-success.evidence.json",
@@ -203,9 +229,9 @@ def main() -> int:
         assert not path.exists()
 
     print(
-        "DEVELOPMENT_AUTH_V32_PREPARED=PASS "
+        "DEVELOPMENT_AUTH_V32_APPROVED=PASS "
         "(v31 stopped/consumed and retry unauthorized; corrected direct-HTTP parser "
-        "pinned; exact DEVELOPMENT AUTH project; pristine/unapproved/unexecuted; "
+        "pinned; exact DEVELOPMENT AUTH project; pristine/approved/unexecuted; "
         "v32 secret referenced by name only; no provider contact)"
     )
     return 0

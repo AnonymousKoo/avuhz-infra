@@ -16,12 +16,15 @@ from avuhz_engineering.authorization_plan import (  # noqa: E402
     validate_plan,
     validate_progress,
 )
+from avuhz_runtime.implementation_handoff import canonical_digest  # noqa: E402
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-auth-integration-v31.plan.json"
 PROGRESS_PATH = BASE / "development-auth-integration-v31.progress.json"
 APPROVAL_PATH = BASE / "development-auth-integration-v31.approval.json"
+EXECUTION_PROGRESS_PATH = BASE / "development-auth-integration-v31.execution-progress.json"
+FAILURE_EVIDENCE_PATH = BASE / "development-auth-step1-v31-failure.evidence.json"
 V30_PLAN_PATH = BASE / "development-auth-integration-v30.plan.json"
 V30_PROGRESS_PATH = BASE / "development-auth-integration-v30.progress.json"
 WORKFLOW_PATH = ROOT / ".github/workflows/development-auth-v31-token-validation.yml"
@@ -30,6 +33,8 @@ EXECUTOR_PATH = ROOT / "scripts/development_auth_v31_token_executor.py"
 PLAN_ID = "c2a83103-7177-4bf4-855f-c3428b2d5b73"
 PLAN_DIGEST = "sha256:8ea09f44c3c5e65a6a8d86b0df6579b0f4476b63ae6c167a6194948c86aab043"
 PROGRESS_DIGEST = "sha256:c72006da9f3c8c108a0dcc97f9dd2b5c5f426f6c83bb14b3ebe9f496c90b92a5"
+EXECUTION_PROGRESS_DIGEST = "sha256:88d8021f785120d91d4314d7c14028ca5bd8467db2f38b4ac7dea866d6399190"
+FAILURE_EVIDENCE_DIGEST = "sha256:1ed8a2fcbdb7d168e48387a42096be23bee05c3eb8732735b4502374b0dbb034"
 WINDOW_START = "2026-09-16T00:15:00Z"
 WINDOW_END = "2026-09-16T06:15:00Z"
 PROJECT = "pwlhruwutoitnieactol"
@@ -49,8 +54,11 @@ def utc(value: str) -> datetime:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    execution_progress = load(EXECUTION_PROGRESS_PATH)
+    failure_evidence = load(FAILURE_EVIDENCE_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_progress(plan, execution_progress, SCHEMA_ROOT)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 31
@@ -131,8 +139,110 @@ def main() -> int:
     ):
         assert required in derived
 
+    assert failure_evidence == {
+        "evidence_type": "auth.synthetic-recovery-link.generated",
+        "environment": "DEVELOPMENT",
+        "responsibility": "AUTH",
+        "provider_reference": "supabase",
+        "project_reference": PROJECT,
+        "plan_id": PLAN_ID,
+        "plan_version": 31,
+        "plan_digest": PLAN_DIGEST,
+        "step_id": "development.auth.v31.step.01.generate-existing-user-recovery-link",
+        "attempt": 1,
+        "outcome": "FAILED_AMBIGUOUS",
+        "safe_error_code": "V31_RECOVERY_LINK_GENERATION_FAILED",
+        "execution_observation": {
+            "workflow_run_id": 35046258011,
+            "execution_sha": "1b156d906522923b301f1e7feccc7fd15f9adfa8",
+            "execution_class": "PROVIDER_MUTATION",
+            "provider_mutation_attempts": 1,
+            "provider_mutation_outcome": "AMBIGUOUS",
+            "step_2_lifecycle_reached": False,
+            "step_3_jwt_validation_reached": False,
+            "session_issuance_reached": False,
+            "emergency_cleanup": "NOT_NEEDED",
+            "post_failure_provider_readback_performed": False,
+        },
+        "preflight_observation": {
+            "session_count": 0,
+            "refresh_token_count": 0,
+            "zero_sessions_verified": True,
+            "zero_refresh_tokens_verified": True,
+        },
+        "failure_observation": {
+            "exact_historical_provider_response_classification": "UNKNOWN",
+            "collapsed_safe_code_conditions": [
+                "PROVIDER_OR_HTTP_REJECTION",
+                "REQUEST_OR_NETWORK_FAILURE",
+                "INVALID_JSON",
+                "SUCCESSFUL_RAW_SUPABASE_RESPONSE_REJECTED_AS_UNEXPECTED_SHAPE",
+            ],
+        },
+        "root_cause_review": {
+            "status": "CONFIRMED_EXECUTOR_DEFECT",
+            "classification": "DIRECT_AUTH_HTTP_RESPONSE_PARSED_AS_SDK_TRANSFORMED_RESPONSE_SHAPE",
+            "correction_reference": "github.pull-request.110",
+            "correction_commit": "fb9c2c6061528c3fb56c97f5307366306a3fb275",
+            "basis": [
+                "The v31 executor called the direct Supabase Auth HTTP endpoint but expected the SDK-transformed nested response shape.",
+                "The old executor mapped provider or HTTP rejection, request or network failure, invalid JSON, and rejection of a successful raw Supabase response shape to the same safe error code.",
+                "PR 110 corrected the parser and error classification, but the sanitized historical record cannot distinguish which condition occurred in workflow run 35046258011.",
+            ],
+            "exact_historical_provider_response_classification": "UNKNOWN",
+            "retry_authorized": False,
+            "forward_only_correction_required": True,
+        },
+        "authority_state": {
+            "step_1_authorization": "CONSUMED",
+            "step_1_authorization_consumed": True,
+            "retry_authorized": False,
+            "forward_only_correction_required": True,
+        },
+        "security_state": {
+            "secret_material_recorded": False,
+            "token_material_recorded": False,
+            "recovery_link_material_recorded": False,
+            "raw_provider_response_recorded": False,
+            "pii_recorded": False,
+            "data_resource_touched": False,
+            "render_touched": False,
+            "n8n_touched": False,
+            "staging_touched": False,
+            "production_touched": False,
+        },
+        "recorded_at": "2026-09-16T02:00:13Z",
+    }
+    assert canonical_digest(failure_evidence) == FAILURE_EVIDENCE_DIGEST
+
+    assert execution_progress["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    assert execution_progress["record_version"] == 3
+    assert execution_progress["overall_state"] == "STOPPED"
+    assert execution_progress["updated_at"] == "2026-09-16T02:00:13Z"
+    step1 = execution_progress["step_states"][0]
+    assert step1["authorization_state"] == "CONSUMED"
+    assert step1["execution_state"] == "FAILED"
+    assert step1["verification_state"] == "FAIL"
+    assert step1["authorization_consumed"] is True
+    assert step1["safe_error_code"] == "V31_RECOVERY_LINK_GENERATION_FAILED"
+    assert step1["evidence"] == [{
+        "evidence_type": "auth.synthetic-recovery-link.generated",
+        "evidence_reference": "github.actions.run.35046258011.step1.attempt1.failed-ambiguous",
+        "evidence_digest": FAILURE_EVIDENCE_DIGEST,
+        "recorded_at": "2026-09-16T02:00:13Z",
+    }]
+    assert step1["binding_assertions"] == []
+    assert all(
+        state["authorization_state"] == "BLOCKED"
+        and state["execution_state"] == "NOT_STARTED"
+        and state["verification_state"] == "NOT_STARTED"
+        and state["authorization_consumed"] is False
+        and state["evidence"] == []
+        and state["binding_assertions"] == []
+        for state in execution_progress["step_states"][1:]
+    )
+
     for path in (
-        BASE / "development-auth-integration-v31.execution-progress.json",
         BASE / "development-auth-step1-v31-preflight.evidence.json",
         BASE / "development-auth-step1-v31-success.evidence.json",
         BASE / "development-auth-step2-v31-success.evidence.json",
@@ -155,8 +265,9 @@ def main() -> int:
 
     print(
         f"DEVELOPMENT_AUTH_V31_{state}=PASS "
-        "(forward-only timing continuation of unapproved v30; exact AUTH project; "
-        "pristine progress; no provider execution evidence)"
+        "(exact AUTH project; pristine original progress preserved; Step 1 "
+        "CONSUMED/FAILED/FAIL with ambiguous provider mutation outcome and retry "
+        "unauthorized; Steps 2-3 BLOCKED and unconsumed; forward-only correction required)"
     )
     return 0
 

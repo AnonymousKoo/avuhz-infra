@@ -22,6 +22,8 @@ OLD_WINDOW_START = "2026-09-15T23:00:00Z"
 NEW_WINDOW_START = "2026-09-16T00:15:00Z"
 OLD_WINDOW_END = "2026-09-16T05:00:00Z"
 NEW_WINDOW_END = "2026-09-16T06:15:00Z"
+OLD_PLAN_VERSION_GUARD = 'plan["plan_version"] != 30'
+NEW_PLAN_VERSION_GUARD = 'plan["plan_version"] != 31'
 
 
 def derived_source() -> str:
@@ -29,7 +31,14 @@ def derived_source() -> str:
     if hashlib.sha256(raw).hexdigest() != BASE_EXECUTOR_SHA256:
         raise SystemExit("V31_BASE_EXECUTOR_DIGEST_MISMATCH")
     source = raw.decode("utf-8")
-    required = (OLD_PLAN_ID, OLD_PLAN_DIGEST, OLD_WINDOW_START, OLD_WINDOW_END, '"plan_version": 30')
+    required = (
+        OLD_PLAN_ID,
+        OLD_PLAN_DIGEST,
+        OLD_WINDOW_START,
+        OLD_WINDOW_END,
+        '"plan_version": 30',
+        OLD_PLAN_VERSION_GUARD,
+    )
     if any(value not in source for value in required):
         raise SystemExit("V31_BASE_EXECUTOR_SHAPE_MISMATCH")
     source = source.replace("v30", "v31").replace("V30", "V31")
@@ -38,6 +47,7 @@ def derived_source() -> str:
     source = source.replace(OLD_WINDOW_START, NEW_WINDOW_START)
     source = source.replace(OLD_WINDOW_END, NEW_WINDOW_END)
     source = source.replace('"plan_version": 30', '"plan_version": 31')
+    source = source.replace(OLD_PLAN_VERSION_GUARD, NEW_PLAN_VERSION_GUARD)
     return source
 
 

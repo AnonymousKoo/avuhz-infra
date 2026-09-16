@@ -2,6 +2,7 @@
 """Validate DEVELOPMENT AUTH v31 forward-only synthetic-token continuation."""
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from datetime import datetime
@@ -108,8 +109,18 @@ def main() -> int:
         "NEW_PLAN_ID",
         "source.replace(\"v30\", \"v31\").replace(\"V30\", \"V31\")",
         "V31_BASE_EXECUTOR_DIGEST_MISMATCH",
+        "OLD_PLAN_VERSION_GUARD",
+        "NEW_PLAN_VERSION_GUARD",
     ):
         assert required in executor
+
+    spec = importlib.util.spec_from_file_location("development_auth_v31_token_executor", EXECUTOR_PATH)
+    assert spec is not None and spec.loader is not None
+    executor_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(executor_module)
+    derived = executor_module.derived_source()
+    assert 'plan["plan_version"] != 31' in derived
+    assert 'plan["plan_version"] != 30' not in derived
 
     for path in (
         BASE / "development-auth-integration-v31.execution-progress.json",

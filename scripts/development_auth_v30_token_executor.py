@@ -144,6 +144,54 @@ def request_json(
         stop(error_code)
 
 
+def request_generate_recovery_link(admin_secret: str) -> dict[str, Any]:
+    url = f"https://{PROJECT}.supabase.co/auth/v1/admin/generate_link"
+    body = json.dumps(
+        {"type": "recovery", "email": TARGET_EMAIL},
+        separators=(",", ":"),
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers=admin_headers(admin_secret),
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            if response.status != 200:
+                stop("V30_RECOVERY_LINK_PROVIDER_REJECTED")
+            raw = response.read()
+    except SafeStop:
+        raise
+    except urllib.error.HTTPError:
+        stop("V30_RECOVERY_LINK_PROVIDER_REJECTED")
+    except Exception:
+        stop("V30_RECOVERY_LINK_REQUEST_FAILED")
+    if not raw:
+        stop("V30_RECOVERY_LINK_RESPONSE_INVALID")
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except Exception:
+        stop("V30_RECOVERY_LINK_RESPONSE_INVALID")
+    if not isinstance(payload, dict):
+        stop("V30_RECOVERY_LINK_RESPONSE_SHAPE_INVALID")
+    return payload
+
+
+def parse_generate_recovery_link_response(payload: dict[str, Any], user_id: str) -> str:
+    recovery_link = payload.get("action_link")
+    verification_type = payload.get("verification_type")
+    generated_id = payload.get("id")
+    if not isinstance(recovery_link, str) or not recovery_link or verification_type != "recovery":
+        stop("V30_RECOVERY_LINK_RESPONSE_SHAPE_INVALID")
+    if not isinstance(generated_id, str) or not _CANONICAL_UUID.fullmatch(generated_id):
+        stop("V30_RECOVERY_LINK_RESPONSE_SHAPE_INVALID")
+    generated_digest = "sha256:" + hashlib.sha256(generated_id.encode("utf-8")).hexdigest()
+    if generated_id != user_id or generated_digest != SUBJECT_DIGEST:
+        stop("V30_RECOVERY_LINK_IDENTITY_MISMATCH")
+    return recovery_link
+
+
 def management_headers(read_token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {read_token}", "Accept": "application/json"}
 
@@ -637,26 +685,9 @@ def main() -> int:
             SCHEMA_ROOT, observed_at, trusted_preflight_assertions=assertions,
         )
 
-        generated = request_json(
-            f"https://{PROJECT}.supabase.co/auth/v1/admin/generate_link",
-            method="POST",
-            headers=admin_headers(admin_secret),
-            body={"type": "recovery", "email": TARGET_EMAIL},
-            expected=(200,),
-            error_code="V30_RECOVERY_LINK_GENERATION_FAILED",
-        )
-        if not isinstance(generated, dict) or not isinstance(generated.get("properties"), dict):
-            stop("V30_RECOVERY_LINK_GENERATION_FAILED")
-        recovery_link = generated["properties"].get("action_link")
-        verification_type = generated["properties"].get("verification_type")
-        generated_user = generated.get("user")
-        if not isinstance(recovery_link, str) or verification_type != "recovery" or not isinstance(generated_user, dict):
-            stop("V30_RECOVERY_LINK_GENERATION_FAILED")
-        generated_id = generated_user.get("id")
-        if not isinstance(generated_id, str) or not _CANONICAL_UUID.fullmatch(generated_id):
-            stop("V30_RECOVERY_LINK_IDENTITY_MISMATCH")
-        if "sha256:" + hashlib.sha256(generated_id.encode("utf-8")).hexdigest() != SUBJECT_DIGEST or generated_id != user_id:
-            stop("V30_RECOVERY_LINK_IDENTITY_MISMATCH")
+        generated = request_generate_recovery_link(admin_secret)
+        recovery_link = parse_generate_recovery_link_response(generated, user_id)
+        generated = None
         after_generate = hook_and_session_state(read_token, user_id)
         validate_zero_sessions(after_generate, code="V30_UNEXPECTED_SESSION_AFTER_LINK")
 

@@ -33,7 +33,7 @@ PROGRESS_DIGEST = "sha256:c72006da9f3c8c108a0dcc97f9dd2b5c5f426f6c83bb14b3ebe9f4
 WINDOW_START = "2026-09-16T00:15:00Z"
 WINDOW_END = "2026-09-16T06:15:00Z"
 PROJECT = "pwlhruwutoitnieactol"
-BASE_EXECUTOR_SHA256 = "a32ae8d3598c615cc6e96f6673274c1bdd43c4ded569046b2547ceb24acc22c4"
+BASE_EXECUTOR_SHA256 = "6e3e8e79cdc8f726b3f0b3981fdf00045a3beac70dece3898d91c3c81bf5d9a5"
 
 
 def load(path: Path) -> dict:
@@ -121,6 +121,15 @@ def main() -> int:
     derived = executor_module.derived_source()
     assert 'plan["plan_version"] != 31' in derived
     assert 'plan["plan_version"] != 30' not in derived
+    for required in (
+        "request_generate_recovery_link",
+        "parse_generate_recovery_link_response",
+        "V31_RECOVERY_LINK_PROVIDER_REJECTED",
+        "V31_RECOVERY_LINK_REQUEST_FAILED",
+        "V31_RECOVERY_LINK_RESPONSE_INVALID",
+        "V31_RECOVERY_LINK_RESPONSE_SHAPE_INVALID",
+    ):
+        assert required in derived
 
     for path in (
         BASE / "development-auth-integration-v31.execution-progress.json",

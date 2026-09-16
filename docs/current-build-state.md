@@ -168,7 +168,7 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Remote authorization
 
-`REMOTE_AUTHORIZATION`: AUTH v21, v24, v26, and v28 are completed/consumed historical authority. AUTH v22 is expired and unexecuted; AUTH v23 is unapproved and unexecuted; AUTH v25 expired unexecuted/unconsumed. AUTH v27 remains pristine/unconsumed, AUTH v29 never became canonical, and AUTH v30 remains unapproved/unexecuted. AUTH v31 is consumed/stopped and cannot be retried. AUTH v32 is `READY_FOR_APPROVAL` with pristine/unconsumed progress and no approval artifact; preparation grants no provider authority.
+`REMOTE_AUTHORIZATION`: AUTH v21, v24, v26, and v28 are completed/consumed historical authority. AUTH v28 is consumed and grants no further execution authority. AUTH v22 is expired and unexecuted; AUTH v23 is unapproved and unexecuted; AUTH v25 expired unexecuted/unconsumed. AUTH v27 remains pristine/unconsumed, AUTH v29 never became canonical, and AUTH v30 remains unapproved/unexecuted. AUTH v31 is consumed/stopped and cannot be retried. AUTH v32 is `READY_FOR_APPROVAL` with pristine/unconsumed progress and no approval artifact; preparation grants no provider authority.
 
 Synthetic token execution under v32, DATA access, Render changes, staging, production, and hosted adapter wiring remain separate boundaries and require their own exact authorization where applicable.
 

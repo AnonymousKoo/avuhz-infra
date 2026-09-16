@@ -48,7 +48,7 @@ PROGRESS_ID = "8255b2ec-d7bf-4276-933a-da5490e35bff"
 PROGRESS_DIGEST = "sha256:ed6c3afa8aaed2f5f62431c0b6d0976ab35bde08dc7d9a0651725d33e15d7241"
 PROGRESS_RAW_DIGEST = "sha256:eed7c19d3f4b8c7c208a7b700775c34e06fda4176ba62c6a811f6f49f0b37f2e"
 REVIEW_RAW_DIGEST = "sha256:9177fddb267c8e7735e19813a1f9c53f60403450c2c90d62fbb5ae75cf3f1f6d"
-EXECUTOR_RAW_DIGEST = "sha256:a32ae8d3598c615cc6e96f6673274c1bdd43c4ded569046b2547ceb24acc22c4"
+EXECUTOR_RAW_DIGEST = "sha256:6e3e8e79cdc8f726b3f0b3981fdf00045a3beac70dece3898d91c3c81bf5d9a5"
 WORKFLOW_RAW_DIGEST = "sha256:0016a395b15c34c66d0408efc7417d6c83e5452eb7fb9f99f5bd5c899824d012"
 PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
@@ -407,8 +407,15 @@ def main() -> int:
 
     for fragment in (
         '/auth/v1/admin/generate_link',
-        'body={"type": "recovery", "email": TARGET_EMAIL}',
+        '{"type": "recovery", "email": TARGET_EMAIL}',
+        'payload.get("action_link")',
+        'payload.get("id")',
         'verification_type != "recovery"',
+        'V30_RECOVERY_LINK_PROVIDER_REJECTED',
+        'V30_RECOVERY_LINK_REQUEST_FAILED',
+        'V30_RECOVERY_LINK_RESPONSE_INVALID',
+        'V30_RECOVERY_LINK_RESPONSE_SHAPE_INVALID',
+        'generated = None',
         'query.get("type") != ["recovery"]',
         '/auth/v1/logout?scope=local',
         'DevelopmentSupabaseEs256JwtVerifier().verify(access_token)',
@@ -425,12 +432,13 @@ def main() -> int:
     assert "resolve_publishable_key" not in executor
     assert DATA_PROJECT not in executor
     assert "api.render.com" not in executor
-    assert executor.index('body={"type": "recovery", "email": TARGET_EMAIL}') < executor.index('/auth/v1/logout?scope=local')
+    assert executor.index('{"type": "recovery", "email": TARGET_EMAIL}') < executor.index('/auth/v1/logout?scope=local')
     assert executor.index('/auth/v1/logout?scope=local') < executor.index('DevelopmentSupabaseEs256JwtVerifier().verify(access_token)')
     for unsafe in (
         "print(access_token", "print(refresh_token", "print(recovery_link",
         "print(admin_secret", "print(publishable_key", "sha256(admin_secret",
-        "sha256(access_token", "sha256(refresh_token", "sha256(recovery_link",
+        "print(payload", "print(generated", "sha256(access_token",
+        "sha256(refresh_token", "sha256(recovery_link", "exc.read(",
     ):
         assert unsafe not in executor, unsafe
     assert re.search(r"sb_secret_[A-Za-z0-9_-]{16,}", executor) is None

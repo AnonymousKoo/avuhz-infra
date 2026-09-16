@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_EXECUTOR = ROOT / "scripts/development_auth_v30_token_executor.py"
-BASE_EXECUTOR_SHA256 = "a32ae8d3598c615cc6e96f6673274c1bdd43c4ded569046b2547ceb24acc22c4"
+BASE_EXECUTOR_SHA256 = "6e3e8e79cdc8f726b3f0b3981fdf00045a3beac70dece3898d91c3c81bf5d9a5"
 
 OLD_PLAN_ID = "d89b1ba0-6a85-4897-8d40-33af4de45e4a"
 NEW_PLAN_ID = "c2a83103-7177-4bf4-855f-c3428b2d5b73"

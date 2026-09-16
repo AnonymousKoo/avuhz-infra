@@ -98,7 +98,7 @@ def main() -> int:
         WINDOW_END,
         "development-auth-integration-v31.approval.json",
         "scripts/development_auth_v31_token_executor.py",
-        "secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_TOKEN_VALIDATION_V30_EPHEMERAL",
+        "secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_TOKEN_VALIDATION_V31_EPHEMERAL",
     ):
         assert required in workflow
     for required in (

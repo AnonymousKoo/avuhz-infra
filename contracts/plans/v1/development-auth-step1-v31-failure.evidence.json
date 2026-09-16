@@ -1,0 +1,74 @@
+{
+  "evidence_type": "auth.synthetic-recovery-link.generated",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "c2a83103-7177-4bf4-855f-c3428b2d5b73",
+  "plan_version": 31,
+  "plan_digest": "sha256:8ea09f44c3c5e65a6a8d86b0df6579b0f4476b63ae6c167a6194948c86aab043",
+  "step_id": "development.auth.v31.step.01.generate-existing-user-recovery-link",
+  "attempt": 1,
+  "outcome": "FAILED_AMBIGUOUS",
+  "safe_error_code": "V31_RECOVERY_LINK_GENERATION_FAILED",
+  "execution_observation": {
+    "workflow_run_id": 35046258011,
+    "execution_sha": "1b156d906522923b301f1e7feccc7fd15f9adfa8",
+    "execution_class": "PROVIDER_MUTATION",
+    "provider_mutation_attempts": 1,
+    "provider_mutation_outcome": "AMBIGUOUS",
+    "step_2_lifecycle_reached": false,
+    "step_3_jwt_validation_reached": false,
+    "session_issuance_reached": false,
+    "emergency_cleanup": "NOT_NEEDED",
+    "post_failure_provider_readback_performed": false
+  },
+  "preflight_observation": {
+    "session_count": 0,
+    "refresh_token_count": 0,
+    "zero_sessions_verified": true,
+    "zero_refresh_tokens_verified": true
+  },
+  "failure_observation": {
+    "exact_historical_provider_response_classification": "UNKNOWN",
+    "collapsed_safe_code_conditions": [
+      "PROVIDER_OR_HTTP_REJECTION",
+      "REQUEST_OR_NETWORK_FAILURE",
+      "INVALID_JSON",
+      "SUCCESSFUL_RAW_SUPABASE_RESPONSE_REJECTED_AS_UNEXPECTED_SHAPE"
+    ]
+  },
+  "root_cause_review": {
+    "status": "CONFIRMED_EXECUTOR_DEFECT",
+    "classification": "DIRECT_AUTH_HTTP_RESPONSE_PARSED_AS_SDK_TRANSFORMED_RESPONSE_SHAPE",
+    "correction_reference": "github.pull-request.110",
+    "correction_commit": "fb9c2c6061528c3fb56c97f5307366306a3fb275",
+    "basis": [
+      "The v31 executor called the direct Supabase Auth HTTP endpoint but expected the SDK-transformed nested response shape.",
+      "The old executor mapped provider or HTTP rejection, request or network failure, invalid JSON, and rejection of a successful raw Supabase response shape to the same safe error code.",
+      "PR 110 corrected the parser and error classification, but the sanitized historical record cannot distinguish which condition occurred in workflow run 35046258011."
+    ],
+    "exact_historical_provider_response_classification": "UNKNOWN",
+    "retry_authorized": false,
+    "forward_only_correction_required": true
+  },
+  "authority_state": {
+    "step_1_authorization": "CONSUMED",
+    "step_1_authorization_consumed": true,
+    "retry_authorized": false,
+    "forward_only_correction_required": true
+  },
+  "security_state": {
+    "secret_material_recorded": false,
+    "token_material_recorded": false,
+    "recovery_link_material_recorded": false,
+    "raw_provider_response_recorded": false,
+    "pii_recorded": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "recorded_at": "2026-09-16T02:00:13Z"
+}

@@ -1,0 +1,52 @@
+{
+  "progress_id": "80e70c73-2e8f-4687-b05f-4f57ddead0a7",
+  "plan_id": "c2a83103-7177-4bf4-855f-c3428b2d5b73",
+  "plan_version": 31,
+  "plan_digest": "sha256:8ea09f44c3c5e65a6a8d86b0df6579b0f4476b63ae6c167a6194948c86aab043",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v31.step.01.generate-existing-user-recovery-link",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-recovery-link.generated",
+          "evidence_reference": "github.actions.run.35046258011.step1.attempt1.failed-ambiguous",
+          "evidence_digest": "sha256:1ed8a2fcbdb7d168e48387a42096be23bee05c3eb8732735b4502374b0dbb034",
+          "recorded_at": "2026-09-16T02:00:13Z"
+        }
+      ],
+      "observed_postcondition": "Step 1 stopped with V31_RECOVERY_LINK_GENERATION_FAILED after exactly one provider mutation attempt. The provider mutation outcome is ambiguous and the exact historical provider response classification is unknown; no post-failure provider readback occurred. Session issuance was not reached, so emergency cleanup was not needed.",
+      "safe_error_code": "V31_RECOVERY_LINK_GENERATION_FAILED",
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v31.step.02.consume-token-and-revoke-session",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v31.step.03.validate-token-exact",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-16T02:00:13Z",
+  "progress_digest": "sha256:88d8021f785120d91d4314d7c14028ca5bd8467db2f38b4ac7dea866d6399190"
+}

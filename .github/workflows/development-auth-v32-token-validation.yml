@@ -1,0 +1,123 @@
+name: DEVELOPMENT AUTH v32 Synthetic Token Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type EXECUTE_V32_SYNTHETIC_TOKEN_VALIDATION to authorize this exact bounded run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-v32-synthetic-token-validation
+  cancel-in-progress: false
+
+jobs:
+  validate-development-auth-synthetic-token:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: development
+
+    env:
+      AVUHZ_EXPECTED_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: e8cd574a-a532-4c95-ab5d-5c069c1bbb96
+      AVUHZ_PLAN_DIGEST: sha256:c43b0b906bfb0c03e763d6cc5a13d47a900b40eb4db8fd904c799c524ec6c37c
+      AVUHZ_WINDOW_START: '2026-09-17T15:00:00Z'
+      AVUHZ_WINDOW_END: '2026-09-17T21:00:00Z'
+      AVUHZ_V32_CONFIRMATION: ${{ inputs.confirmation }}
+      AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN }}
+      # v32 uses its own environment-bound ephemeral admin secret.
+      AVUHZ_DEVELOPMENT_SUPABASE_AUTH_TOKEN_VALIDATION_V32_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_TOKEN_VALIDATION_V32_EPHEMERAL }}
+      AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify exact v32 repository authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::V32_MAIN_ONLY"
+            exit 1
+          fi
+          if [[ "${AVUHZ_V32_CONFIRMATION}" != "EXECUTE_V32_SYNTHETIC_TOKEN_VALIDATION" ]]; then
+            echo "::error::V32_CONFIRMATION_MISMATCH"
+            exit 1
+          fi
+          if [[ -z "${AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN:-}" ]]; then
+            echo "::error::V32_PROVIDER_READ_CREDENTIAL_UNAVAILABLE"
+            exit 1
+          fi
+          if [[ -z "${AVUHZ_DEVELOPMENT_SUPABASE_AUTH_TOKEN_VALIDATION_V32_EPHEMERAL:-}" ]]; then
+            echo "::error::V32_FRESH_ADMIN_CREDENTIAL_UNAVAILABLE"
+            exit 1
+          fi
+          if [[ "${AVUHZ_DEVELOPMENT_SUPABASE_AUTH_TOKEN_VALIDATION_V32_EPHEMERAL}" != sb_secret_* ]]; then
+            echo "::error::V32_FRESH_ADMIN_CREDENTIAL_INVALID"
+            exit 1
+          fi
+          if [[ -z "${AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY:-}" ]]; then
+            echo "::error::V32_PUBLISHABLE_KEY_UNAVAILABLE"
+            exit 1
+          fi
+          if [[ "${AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY}" != sb_publishable_* ]]; then
+            echo "::error::V32_PUBLISHABLE_KEY_INVALID"
+            exit 1
+          fi
+
+          approval_path="contracts/plans/v1/development-auth-integration-v32.approval.json"
+          if [[ ! -f "${approval_path}" ]]; then
+            echo "::error::V32_EXACT_OWNER_APPROVAL_ABSENT"
+            exit 1
+          fi
+          if [[ -e contracts/plans/v1/development-auth-integration-v32.execution-progress.json ]] \
+             || [[ -e contracts/plans/v1/development-auth-step1-v32-preflight.evidence.json ]] \
+             || compgen -G 'contracts/plans/v1/development-auth-step*-v32-success.evidence.json' >/dev/null; then
+            echo "::error::V32_EXECUTION_ARTIFACT_ALREADY_EXISTS"
+            exit 1
+          fi
+
+          now_epoch="$(date -u +%s)"
+          start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < start_epoch || now_epoch >= end_epoch )); then
+            echo "::error::V32_AUTHORIZATION_WINDOW_INACTIVE"
+            exit 1
+          fi
+
+      - name: Install pinned token-validation dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3' \
+            'PyJWT[crypto]==2.14.0' \
+            'cryptography==50.0.1'
+
+      - name: Certify exact v32 plan before execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          PYTHONPATH=src:. python3 tests/contracts/validate_development_auth_plan_v32.py
+
+      - name: Execute one bounded synthetic token lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_v32_token_executor.py

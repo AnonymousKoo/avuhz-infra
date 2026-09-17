@@ -1,0 +1,179 @@
+{
+  "plan_id": "8a1300d3-4bfb-461c-90c4-a22a53a11647",
+  "plan_version": 1,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-17T20:45:00Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-18T15:00:00Z",
+    "expires_at": "2026-09-18T21:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v32-session-inspection-v1.step.01.inspect-session-state-read-only"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v32-session-inspection-v1.step.01.inspect-session-state-read-only",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.session-state",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:auth.sessions+auth.refresh_tokens",
+        "binding_state": "BOUND",
+        "exact_version": "inspection.v1",
+        "exact_digest": "sha256:831937f80dfefc4de6e57b814bf6a70de98e629262bdb10ddd08495401a630a6"
+      },
+      "operation": "provider.auth-session-state.inspect-read-only",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.lifecycle-completed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:45cddb8d3c0753f4b48e323e7983843f918b194f811b511848bd26f7908c6dc5"
+        }
+      ],
+      "expected_postcondition": "One independently authorized read-only inspection verifies the exact DEVELOPMENT AUTH project and supabase_read_only_user execution identity, counts all auth.sessions and auth.refresh_tokens rows, and classifies 0/0 as CLEAN_0_0 or binds every nonzero row to the canonical synthetic subject digest before recording a bounded nonzero state. No provider mutation or cleanup is attempted; malformed, failed, or identity-mismatched readback fails closed for owner review.",
+      "prohibited_actions": [
+        "approval.create",
+        "credential.create",
+        "credential.rotate",
+        "data.operation",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "n8n.operation",
+        "production.target",
+        "provider.mutation",
+        "render.operation",
+        "session.cleanup",
+        "session.delete",
+        "session.issue",
+        "staging.target",
+        "token.issue",
+        "v32.retry",
+        "v33.prepare"
+      ],
+      "stop_conditions": [
+        "approval.absent-or-invalid",
+        "authorization.window-inactive",
+        "credential.unavailable",
+        "identity.binding-mismatch",
+        "project.mismatch",
+        "provider-read.failed",
+        "read-only-identity.mismatch",
+        "response.malformed",
+        "scope.drift",
+        "unexpected.execution-artifact"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_PROVIDER_READ"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v32-session-inspection-v1.v32-failure-state",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:45cddb8d3c0753f4b48e323e7983843f918b194f811b511848bd26f7908c6dc5",
+            "exact_digest": "sha256:0b6c0ccecd33db56d5dad2a5753eee465ac13c0a2082cb3eea4116da47942d85"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-inspection-v1.expected-subject",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5",
+            "exact_digest": "sha256:9123b537af3bb3e2b543fd24a5510e30fd8f4f0ab27b8056421397ad0a9081a0"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-inspection-v1.provider-read-executor",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.read-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-inspection-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.session-state.inspected-read-only",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.session-state.inspected-read-only",
+          "established_binding_ids": [
+            "binding.development.auth.v32-session-inspection-v1.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "approval.create",
+    "batch.mutation",
+    "credential.create",
+    "credential.rotate",
+    "data.operation",
+    "hook.modify",
+    "identity.modify",
+    "n8n.operation",
+    "production.target",
+    "provider.mutation",
+    "render.operation",
+    "session.cleanup",
+    "session.delete",
+    "session.issue",
+    "staging.target",
+    "token.issue",
+    "v32.retry",
+    "v33.prepare"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "authorization.unbound",
+    "identity.binding-mismatch",
+    "provider-read.failed",
+    "read-only-identity.mismatch",
+    "response.malformed",
+    "security.validation.failed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:c397fc40fe5622047ab38d435ebad57f119a2b7882103ef0d175e39ee0d5bdf1"
+}

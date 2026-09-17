@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v2",
   "title": "Bounded Provider Change Authorization Plan v2",
-  "description": "Backward-compatible authorization-plan contract adding a DEVELOPMENT-only Supabase AUTH-admin ephemeral execution credential class whose material never enters plan, approval, progress, evidence, request, log, or agent-visible surfaces.",
+  "description": "Backward-compatible authorization-plan contract adding DEVELOPMENT-only Supabase AUTH-admin ephemeral and provider-read credential classes whose material never enters plan, approval, progress, evidence, request, log, or agent-visible surfaces.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -238,6 +238,106 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "steps": {
+            "contains": {
+              "properties": {
+                "credential_policy": {
+                  "properties": {
+                    "allowed_classes": {
+                      "contains": {
+                        "const": "SUPABASE_PROVIDER_READ"
+                      }
+                    }
+                  },
+                  "required": [
+                    "allowed_classes"
+                  ]
+                }
+              },
+              "required": [
+                "credential_policy"
+              ]
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "const": "DEVELOPMENT"
+          },
+          "target": {
+            "properties": {
+              "provider_reference": {
+                "const": "supabase"
+              },
+              "responsibility": {
+                "const": "AUTH"
+              }
+            }
+          },
+          "steps": {
+            "items": {
+              "if": {
+                "properties": {
+                  "credential_policy": {
+                    "properties": {
+                      "allowed_classes": {
+                        "contains": {
+                          "const": "SUPABASE_PROVIDER_READ"
+                        }
+                      }
+                    },
+                    "required": [
+                      "allowed_classes"
+                    ]
+                  }
+                },
+                "required": [
+                  "credential_policy"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "execution_class": {
+                    "const": "PROVIDER_READ"
+                  },
+                  "operation": {
+                    "const": "provider.auth-session-state.inspect-read-only"
+                  },
+                  "credential_policy": {
+                    "properties": {
+                      "permitted": {
+                        "const": true
+                      },
+                      "allowed_classes": {
+                        "const": [
+                          "SUPABASE_PROVIDER_READ"
+                        ]
+                      },
+                      "values_stored": {
+                        "const": false
+                      }
+                    }
+                  },
+                  "prohibited_actions": {
+                    "contains": {
+                      "const": "provider.mutation"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -306,7 +406,8 @@
               "MIGRATION_IDENTITY",
               "SYNTHETIC_IDENTITY",
               "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN",
-              "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+              "SUPABASE_AUTH_ADMIN_EPHEMERAL",
+              "SUPABASE_PROVIDER_READ"
             ]
           }
         },

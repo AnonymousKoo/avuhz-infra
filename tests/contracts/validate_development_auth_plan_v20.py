@@ -105,7 +105,10 @@ def main() -> int:
         "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN",
     ]
     current_classes = credential_classes(auth_plan_schema_v2)
-    assert current_classes == legacy_classes + [NEW_CREDENTIAL_CLASS]
+    assert current_classes == legacy_classes + [
+        NEW_CREDENTIAL_CLASS,
+        "SUPABASE_PROVIDER_READ",
+    ]
     for classes in (legacy_classes, current_classes):
         assert "SERVER_ADMIN_CREDENTIAL" not in classes
         assert "SERVICE_ROLE" not in classes

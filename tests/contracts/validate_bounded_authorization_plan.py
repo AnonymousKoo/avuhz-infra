@@ -82,6 +82,12 @@ V32_APPROVAL_PATH = (
 V32_APPROVAL_FILE_DIGEST = (
     "sha256:3347347132b5d60942f4e43aae3ec67da980d1b90a6c0e1554ef25dae065bf22"
 )
+V32_SESSION_INSPECTION_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-v32-session-inspection-v1.approval.json"
+)
+V32_SESSION_INSPECTION_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:e181dd2d193b9cb1fbb167387ff171080e1db58da95e2477f8bcaf77e8b52997"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -166,6 +172,7 @@ def main() -> int:
         V27_APPROVAL_PATH,
         V28_APPROVAL_PATH,
         V32_APPROVAL_PATH,
+        V32_SESSION_INSPECTION_V1_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
         DATA_V3_APPROVAL_PATH,
@@ -178,7 +185,7 @@ def main() -> int:
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22, optional exact v24, exact v25/v26/v27/v28, optional exact v31, exact v32, and DATA v1-v3 and DATA search-path-repair v1 approvals"
+            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22, optional exact v24, exact v25/v26/v27/v28, optional exact v31, exact v32, exact v32 session inspection v1, and DATA v1-v3 and DATA search-path-repair v1 approvals"
         )
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
@@ -204,6 +211,11 @@ def main() -> int:
         raise SystemExit("exact authorized v31 approval file digest mismatch")
     if file_digest(V32_APPROVAL_PATH) != V32_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v32 approval file digest mismatch")
+    if (
+        file_digest(V32_SESSION_INSPECTION_V1_APPROVAL_PATH)
+        != V32_SESSION_INSPECTION_V1_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("exact authorized v32 session inspection v1 approval file digest mismatch")
     if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
@@ -242,6 +254,7 @@ def main() -> int:
                     V28_APPROVAL_PATH,
                     V31_APPROVAL_PATH,
                     V32_APPROVAL_PATH,
+                    V32_SESSION_INSPECTION_V1_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
                     DATA_V3_APPROVAL_PATH,

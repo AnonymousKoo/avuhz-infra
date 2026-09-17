@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate pristine DEVELOPMENT AUTH v32 session-inspection v1 preparation."""
+"""Validate the exact approval and pristine DEVELOPMENT AUTH v32 inspection state."""
 from __future__ import annotations
 
 import copy
@@ -14,8 +14,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
     AuthorizationPlanError,
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -33,6 +35,7 @@ from avuhz_service.development_supabase_identity import (
 
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 PLAN_PATH = ROOT / "contracts/plans/v1/development-auth-v32-session-inspection-v1.plan.json"
+APPROVAL_PATH = ROOT / "contracts/plans/v1/development-auth-v32-session-inspection-v1.approval.json"
 PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-v32-session-inspection-v1.progress.json"
 V32_PROGRESS_PATH = ROOT / "contracts/plans/v1/development-auth-integration-v32.execution-progress.json"
 V32_FAILURE_PATH = ROOT / "contracts/plans/v1/development-auth-step2-v32-failure.evidence.json"
@@ -41,13 +44,18 @@ EXECUTOR_PATH = ROOT / "scripts/development_auth_v32_session_inspection_v1.py"
 LIFECYCLE_PATH = ROOT / "src/avuhz_engineering/development_auth_token_lifecycle.py"
 
 PLAN_ID = "8a1300d3-4bfb-461c-90c4-a22a53a11647"
+APPROVAL_ID = "bf911bca-3187-4fef-a828-24728a844a05"
 PROGRESS_ID = "3f12b9c0-b21a-430f-aeb6-ae4a5fc7b0aa"
 PLAN_DIGEST = "sha256:c397fc40fe5622047ab38d435ebad57f119a2b7882103ef0d175e39ee0d5bdf1"
+APPROVAL_DIGEST = "sha256:81f5e22a86183e95067bd55e93706aa7dbab2bf58af3db8ce3f57f972e245b5c"
 PROGRESS_DIGEST = "sha256:2d64cadde4b6b3686b13e00fd3d2fe2e92066d53ce2c51c0c27d56b0cb253d60"
 STEP_ID = "development.auth.v32-session-inspection-v1.step.01.inspect-session-state-read-only"
 V32_FAILURE_RAW_DIGEST = "sha256:45cddb8d3c0753f4b48e323e7983843f918b194f811b511848bd26f7908c6dc5"
 QUERY_DIGEST = "sha256:831937f80dfefc4de6e57b814bf6a70de98e629262bdb10ddd08495401a630a6"
 CREATED_AT = "2026-09-17T20:45:00Z"
+APPROVED_AT = "2026-09-17T21:13:41Z"
+WINDOW_START = "2026-09-18T15:00:00Z"
+WINDOW_END = "2026-09-18T21:00:00Z"
 
 
 def load(path: Path) -> dict:
@@ -73,17 +81,35 @@ def expect_plan_failure(plan: dict) -> None:
 
 def main() -> int:
     plan = load(PLAN_PATH)
+    approval = load(APPROVAL_PATH)
     progress = load(PROGRESS_PATH)
     v32_progress = load(V32_PROGRESS_PATH)
     v32_failure = load(V32_FAILURE_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
     validate_progress(plan, progress, SCHEMA_ROOT)
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
     assert plan["plan_digest"] == PLAN_DIGEST
     assert plan["definition_status"] == "READY_FOR_APPROVAL"
     assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
     assert plan["target"] == {
         "provider_class": "identity.provider",
         "provider_reference": "supabase",
@@ -167,11 +193,10 @@ def main() -> int:
     assert subject_binding["preapproval_value"]["value"] == expected_subject
     assert subject_binding["preapproval_value"]["exact_digest"] == canonical_digest(expected_subject)
 
-    approval_path = PLAN_PATH.with_name("development-auth-v32-session-inspection-v1.approval.json")
     execution_path = PLAN_PATH.with_name(
         "development-auth-v32-session-inspection-v1.execution-progress.json"
     )
-    assert not approval_path.exists()
+    assert APPROVAL_PATH.exists()
     assert not execution_path.exists()
     assert not list(PLAN_PATH.parent.glob("development-auth-v32-session-inspection-v1*.evidence.json"))
 
@@ -206,8 +231,8 @@ def main() -> int:
     expect_plan_failure(mixed_class)
 
     print(
-        "DEVELOPMENT_AUTH_V32_SESSION_INSPECTION_V1_PREPARED=PASS "
-        "(READY_FOR_APPROVAL; pristine/unapproved/unexecuted; one PROVIDER_READ step; "
+        "DEVELOPMENT_AUTH_V32_SESSION_INSPECTION_V1_APPROVED=PASS "
+        "(exact owner approval; pristine/unconsumed/unexecuted; one PROVIDER_READ step; "
         "existing provider-read credential name only; no mutation or cleanup path)"
     )
     return 0

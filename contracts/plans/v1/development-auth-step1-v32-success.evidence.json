@@ -1,0 +1,47 @@
+{
+  "evidence_type": "auth.synthetic-recovery-link.generated",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "e8cd574a-a532-4c95-ab5d-5c069c1bbb96",
+  "plan_version": 32,
+  "plan_digest": "sha256:c43b0b906bfb0c03e763d6cc5a13d47a900b40eb4db8fd904c799c524ec6c37c",
+  "step_id": "development.auth.v32.step.01.generate-existing-user-recovery-link",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "execution_observation": {
+    "workflow_run_id": 35240314854,
+    "execution_sha": "1fa628abba14acef4b58a1a983c95edafeac44a4",
+    "execution_class": "PROVIDER_MUTATION",
+    "provider_mutation_attempts": 1,
+    "recovery_link_generation_completed": true,
+    "existing_user_required": true,
+    "email_sent": false,
+    "step_2_lifecycle_reached": true
+  },
+  "verification_observation": {
+    "recovery_link_generation_verified": true,
+    "post_generation_session_count": 0,
+    "post_generation_refresh_token_count": 0,
+    "recovery_link_consumption_attempted_once": true
+  },
+  "authority_state": {
+    "step_1_authorization": "CONSUMED",
+    "step_1_authorization_consumed": true,
+    "retry_authorized": false
+  },
+  "security_state": {
+    "secret_material_recorded": false,
+    "token_material_recorded": false,
+    "recovery_link_material_recorded": false,
+    "raw_provider_response_recorded": false,
+    "pii_recorded": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "recorded_at": "2026-09-17T15:27:19Z"
+}

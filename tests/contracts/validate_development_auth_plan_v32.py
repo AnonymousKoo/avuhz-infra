@@ -33,6 +33,9 @@ V31_EXECUTION_PATH = BASE / "development-auth-integration-v31.execution-progress
 V31_FAILURE_PATH = BASE / "development-auth-step1-v31-failure.evidence.json"
 WORKFLOW_PATH = ROOT / ".github/workflows/development-auth-v32-token-validation.yml"
 EXECUTOR_PATH = ROOT / "scripts/development_auth_v32_token_executor.py"
+CORRECTED_LIFECYCLE_PATH = (
+    ROOT / "src/avuhz_engineering/development_auth_token_lifecycle.py"
+)
 
 PLAN_ID = "e8cd574a-a532-4c95-ab5d-5c069c1bbb96"
 PLAN_DIGEST = "sha256:c43b0b906bfb0c03e763d6cc5a13d47a900b40eb4db8fd904c799c524ec6c37c"
@@ -391,6 +394,33 @@ def main() -> int:
         "if lifecycle_authorized and access_token is not None",
     ):
         assert required in derived
+
+    # v32 is immutable historical evidence of the browser-oriented failure.
+    # The reusable forward-only lifecycle must instead follow the current
+    # Supabase direct verification contract and retain no redirect parser.
+    corrected_lifecycle = CORRECTED_LIFECYCLE_PATH.read_text(encoding="utf-8")
+    for required in (
+        'VERIFY_PATH = "/auth/v1/verify"',
+        'VERIFY_METHOD = "POST"',
+        'VERIFY_TYPE = "recovery"',
+        'payload.get("hashed_token")',
+        '"token_hash": credential._text()',
+        "parse_recovery_verification_response",
+        "SESSION_CLEANUP_VERIFIED",
+        "SESSION_CLEANUP_UNAVAILABLE",
+        "SESSION_STATE_UNVERIFIED",
+        "read_session_state",
+        "validate_development_synthetic_access_jwt",
+    ):
+        assert required in corrected_lifecycle
+    for prohibited in (
+        "get_redirect_without_following(",
+        "parse_session_redirect(",
+        "HTTPRedirectHandler",
+        "urllib.parse",
+        'emergency_cleanup = "NOT_NEEDED"',
+    ):
+        assert prohibited not in corrected_lifecycle
 
     for path in (
         BASE / "development-auth-step1-v32-preflight.evidence.json",

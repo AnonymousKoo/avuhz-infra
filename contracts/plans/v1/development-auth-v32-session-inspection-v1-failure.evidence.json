@@ -1,0 +1,71 @@
+{
+  "evidence_type": "auth.session-state.inspected-read-only",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "8a1300d3-4bfb-461c-90c4-a22a53a11647",
+  "plan_version": 1,
+  "plan_digest": "sha256:c397fc40fe5622047ab38d435ebad57f119a2b7882103ef0d175e39ee0d5bdf1",
+  "approval_id": "bf911bca-3187-4fef-a828-24728a844a05",
+  "approval_digest": "sha256:81f5e22a86183e95067bd55e93706aa7dbab2bf58af3db8ce3f57f972e245b5c",
+  "step_id": "development.auth.v32-session-inspection-v1.step.01.inspect-session-state-read-only",
+  "attempt": 1,
+  "outcome": "FAILED_UNVERIFIED",
+  "safe_error_code": "SESSION_INSPECTION_PROJECT_READ_FAILED",
+  "inspection_classification": "SESSION_STATE_UNVERIFIED",
+  "execution_observation": {
+    "workflow_run_id": 35370969272,
+    "execution_sha": "005e3d97dd31feb53a1314880a77c1fae96d569c",
+    "execution_class": "PROVIDER_READ",
+    "workflow_dispatch_attempts": 1,
+    "authority_validation_passed": true,
+    "provider_read_credential_present": true,
+    "executor_entered": true,
+    "provider_read_attempted": true,
+    "first_provider_operation": {
+      "method": "GET",
+      "endpoint": "https://api.supabase.com/v1/projects/pwlhruwutoitnieactol",
+      "attempted": true,
+      "succeeded": false
+    },
+    "sql_session_state_inspection_reached": false,
+    "auth_sessions_query_reached": false,
+    "auth_refresh_tokens_query_reached": false,
+    "expected_subject_binding_evaluated": false,
+    "cleanup_attempted": false,
+    "provider_mutation_attempted": false
+  },
+  "failure_observation": {
+    "exact_project_read_failure_cause": "UNDETERMINED_BY_SANITIZED_EXECUTOR",
+    "session_state": "SESSION_STATE_UNVERIFIED",
+    "refresh_token_state": "SESSION_STATE_UNVERIFIED",
+    "provider_session_refresh_state": "UNRESOLVED",
+    "session_count_established": false,
+    "session_count": null,
+    "refresh_token_count_established": false,
+    "refresh_token_count": null,
+    "expected_subject_binding_status": "NOT_EVALUATED",
+    "sql_session_state_inspection_executed": false
+  },
+  "authority_state": {
+    "inspection_authorization": "CONSUMED",
+    "authorization_consumed": true,
+    "retry_authorized": false
+  },
+  "security_state": {
+    "provider_mutation_attempted": false,
+    "cleanup_attempted": false,
+    "credential_material_recorded": false,
+    "secret_material_recorded": false,
+    "raw_provider_response_recorded": false,
+    "raw_provider_rows_recorded": false,
+    "pii_recorded": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "recorded_at": "2026-09-18T16:52:03Z"
+}

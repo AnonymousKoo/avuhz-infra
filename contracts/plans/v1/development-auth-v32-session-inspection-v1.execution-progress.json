@@ -1,0 +1,44 @@
+{
+  "progress_id": "3f12b9c0-b21a-430f-aeb6-ae4a5fc7b0aa",
+  "plan_id": "8a1300d3-4bfb-461c-90c4-a22a53a11647",
+  "plan_version": 1,
+  "plan_digest": "sha256:c397fc40fe5622047ab38d435ebad57f119a2b7882103ef0d175e39ee0d5bdf1",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v32-session-inspection-v1.step.01.inspect-session-state-read-only",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.session-state.inspected-read-only",
+          "evidence_reference": "github.actions.run.35370969272.step1.attempt1.failed-unverified",
+          "evidence_digest": "sha256:c48c892c69a447eefcc499cc1f3f19d27a5f659a6ca2e52a5152a34487c303d1",
+          "recorded_at": "2026-09-18T16:52:03Z"
+        }
+      ],
+      "observed_postcondition": "The authorized read-only inspection attempted the exact DEVELOPMENT AUTH project read once and failed with SESSION_INSPECTION_PROJECT_READ_FAILED before the SQL session-state inspection. No session or refresh-token count was established, expected-subject binding was not evaluated, and no provider mutation or cleanup occurred.",
+      "safe_error_code": "SESSION_INSPECTION_PROJECT_READ_FAILED",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v32-session-inspection-v1.provider-read-executor",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.read-executor-capability.observed",
+          "evidence_digest": "sha256:677d80d3bc0f8473f5406dad4e037f848cd03d8b6c9bcf6154e5838483a3bf8a",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:85643fa941b4c94bcbe3ca9b8394e4b384a7d69f6f14995a7505ac641c26d933",
+          "recorded_at": "2026-09-18T16:52:03Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-18T16:52:03Z",
+  "progress_digest": "sha256:ed7312e7a29f192a5f6f84c8f838c857391282af08c177e8011993e8d2a165d9"
+}

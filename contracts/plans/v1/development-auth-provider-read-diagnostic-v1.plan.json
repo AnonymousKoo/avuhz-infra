@@ -1,0 +1,171 @@
+{
+  "plan_id": "205c2cef-1b90-4346-b4eb-d19ded202d6a",
+  "plan_version": 1,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-18T17:59:10Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-19T15:00:00Z",
+    "expires_at": "2026-09-19T21:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.provider-read-diagnostic-v1.step.01.inspect-project-metadata-read-only"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.provider-read-diagnostic-v1.step.01.inspect-project-metadata-read-only",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "provider.project-metadata",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:project-metadata",
+        "binding_state": "BOUND",
+        "exact_version": "diagnostic.v1",
+        "exact_digest": "sha256:6a41a1173c187f3f058578bff9717093164b4647de4b72b7fd2c9ed016fffe96"
+      },
+      "operation": "provider.project-metadata.inspect-read-only",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.session-state.inspected-read-only",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:ebf71894e7a6c774df7f4800bace81a23dfd898b27be96f505402ab326f272e5"
+        }
+      ],
+      "expected_postcondition": "Exactly one Management API GET reads the exact DEVELOPMENT AUTH project metadata endpoint. A bounded HTTP 200 payload must match id, ref, and name exactly and yields PROJECT_READ_OK; any mismatch, provider rejection, transport failure, or invalid response fails closed with a fixed sanitized code. No second request, SQL/session inspection, provider mutation, cleanup, or raw provider response retention occurs.",
+      "prohibited_actions": [
+        "approval.create",
+        "credential.create",
+        "credential.rotate",
+        "data.operation",
+        "database.query",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "n8n.operation",
+        "production.target",
+        "provider.mutation",
+        "render.operation",
+        "session.cleanup",
+        "session.delete",
+        "session.inspect",
+        "session.issue",
+        "sql.execute",
+        "staging.target",
+        "token.issue",
+        "v32.retry",
+        "v33.prepare"
+      ],
+      "stop_conditions": [
+        "approval.absent-or-invalid",
+        "authorization.window-inactive",
+        "credential.unavailable",
+        "project.mismatch",
+        "provider-read.failed",
+        "response.malformed",
+        "scope.drift",
+        "unexpected.execution-artifact"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_PROVIDER_READ"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.provider-read-diagnostic-v1.prior-failure",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:ebf71894e7a6c774df7f4800bace81a23dfd898b27be96f505402ab326f272e5",
+            "exact_digest": "sha256:2d93e9825403e1cf508985185b19ed33469a6cd73f11a214fa9b99165c574164"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.provider-read-diagnostic-v1.provider-read-executor",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.read-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.provider-read-diagnostic-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-read-capability.diagnosed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-read-capability.diagnosed",
+          "established_binding_ids": [
+            "binding.development.auth.provider-read-diagnostic-v1.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "approval.create",
+    "batch.mutation",
+    "credential.create",
+    "credential.rotate",
+    "data.operation",
+    "database.query",
+    "hook.modify",
+    "identity.create",
+    "identity.delete",
+    "identity.modify",
+    "n8n.operation",
+    "production.target",
+    "provider.mutation",
+    "render.operation",
+    "session.cleanup",
+    "session.delete",
+    "session.inspect",
+    "session.issue",
+    "sql.execute",
+    "staging.target",
+    "token.issue",
+    "v32.retry",
+    "v33.prepare"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "authorization.unbound",
+    "project.mismatch",
+    "provider-read.failed",
+    "response.malformed",
+    "security.validation.failed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:e38f0eac3128511f3e3c2d3bd45278276a69fe1ce86801e93c2417264e411f1d"
+}

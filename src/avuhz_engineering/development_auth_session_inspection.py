@@ -7,13 +7,17 @@ returned, persisted, or represented here.
 
 The query uses Supabase's Management API read-only SQL endpoint and verifies
 ``current_user = 'supabase_read_only_user'``. Public contract evidence checked
-2026-09-17: Supabase Platform Access Control documents that Read-Only SQL Query
-Snippet activity runs as ``supabase_read_only_user``. The repository's prior
-D4C4D2C certification and AUTH preflight implementations establish the exact
-``POST /v1/projects/{ref}/database/query/read-only`` wire boundary.
+2026-09-18: the Management API introduction requires an access token in the
+``Authorization: Bearer <access_token>`` header; the Get project reference
+documents ``GET /v1/projects/{ref}``; and the read-only query reference
+documents ``POST /v1/projects/{ref}/database/query/read-only``. Supabase
+Platform Access Control documents that Read-Only SQL Query Snippet activity
+runs as ``supabase_read_only_user``.
 
 Authoritative sources:
 https://supabase.com/docs/reference/api/v1-read-only-query
+https://supabase.com/docs/reference/api/v1-get-project
+https://supabase.com/docs/reference/api/introduction
 https://supabase.com/docs/guides/platform/access-control
 
 The provider may return raw Auth subject UUIDs to this process only. They are
@@ -122,6 +126,24 @@ def _management_headers(read_token: str) -> dict[str, str]:
     }
 
 
+def _http_failure_code(failure_code_prefix: str, status: Any) -> str:
+    """Map only a bounded HTTP status class; never inspect response content."""
+
+    if status == 401:
+        suffix = "AUTHENTICATION_REJECTED"
+    elif status == 403:
+        suffix = "FORBIDDEN"
+    elif status == 404:
+        suffix = "NOT_FOUND"
+    elif status == 429:
+        suffix = "RATE_LIMITED"
+    elif isinstance(status, int) and 500 <= status <= 599:
+        suffix = "PROVIDER_FAILURE"
+    else:
+        suffix = "UNEXPECTED_STATUS"
+    return f"{failure_code_prefix}_{suffix}"
+
+
 def _request_json(
     url: str,
     *,
@@ -129,7 +151,7 @@ def _request_json(
     method: str = "GET",
     body: Mapping[str, Any] | None = None,
     accepted_statuses: tuple[int, ...],
-    failure_code: str,
+    failure_code_prefix: str,
     urlopen: Callable[..., Any],
 ) -> Any:
     encoded = None if body is None else json.dumps(dict(body), separators=(",", ":")).encode("utf-8")
@@ -144,21 +166,25 @@ def _request_json(
         try:
             with urlopen(request, timeout=30) as response:
                 if response.status not in accepted_statuses:
-                    _stop(failure_code)
+                    # A non-accepted response body can contain provider details
+                    # and credential-adjacent material. Classify by status only.
+                    _stop(_http_failure_code(failure_code_prefix, response.status))
                 raw.extend(response.read(MAX_PROVIDER_RESPONSE_BYTES + 1))
         except SafeInspectionStop:
             raise
-        except urllib.error.HTTPError:
-            # Never read an error body; provider payloads are not log material.
-            _stop(failure_code)
+        except urllib.error.HTTPError as exc:
+            # HTTPError is also a response-like body. Read only its integer code;
+            # never call read(), stringify it, or retain headers/reason/payload.
+            _stop(_http_failure_code(failure_code_prefix, exc.code))
         except Exception:
-            _stop(failure_code)
+            # Exception type/text can contain hosts, headers, or transport data.
+            _stop(f"{failure_code_prefix}_REQUEST_FAILED")
         if not raw or len(raw) > MAX_PROVIDER_RESPONSE_BYTES:
-            _stop("SESSION_INSPECTION_RESPONSE_INVALID")
+            _stop(f"{failure_code_prefix}_RESPONSE_INVALID")
         try:
             return json.loads(raw)
         except Exception:
-            _stop("SESSION_INSPECTION_RESPONSE_INVALID")
+            _stop(f"{failure_code_prefix}_RESPONSE_INVALID")
     finally:
         for index in range(len(raw)):
             raw[index] = 0
@@ -278,7 +304,7 @@ def inspect_development_auth_session_state(
         f"{MANAGEMENT_API_ORIGIN}/v1/projects/{DEVELOPMENT_AUTH_PROJECT_REF}",
         read_token=read_token,
         accepted_statuses=(200,),
-        failure_code="SESSION_INSPECTION_PROJECT_READ_FAILED",
+        failure_code_prefix="SESSION_INSPECTION_PROJECT_READ",
         urlopen=urlopen,
     )
     if (
@@ -295,7 +321,7 @@ def inspect_development_auth_session_state(
         method="POST",
         body={"query": SESSION_STATE_QUERY},
         accepted_statuses=(201,),
-        failure_code="SESSION_INSPECTION_READ_FAILED",
+        failure_code_prefix="SESSION_INSPECTION_READ",
         urlopen=urlopen,
     )
     return classify_session_state(

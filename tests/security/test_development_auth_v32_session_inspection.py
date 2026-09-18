@@ -6,7 +6,7 @@ import json
 import re
 import urllib.error
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from avuhz_engineering import development_auth_session_inspection as inspection
@@ -44,9 +44,16 @@ def _payload(*rows: dict) -> dict:
 
 
 class FakeResponse:
-    def __init__(self, status: int, payload: object) -> None:
+    def __init__(
+        self,
+        status: int,
+        payload: object | None = None,
+        *,
+        raw: bytes | None = None,
+    ) -> None:
         self.status = status
-        self._body = json.dumps(payload).encode("utf-8")
+        self._body = raw if raw is not None else json.dumps(payload).encode("utf-8")
+        self.read_calls = 0
 
     def __enter__(self) -> FakeResponse:
         return self
@@ -55,7 +62,20 @@ class FakeResponse:
         return None
 
     def read(self, limit: int = -1) -> bytes:
+        self.read_calls += 1
         return self._body if limit < 0 else self._body[:limit]
+
+
+class UnreadableErrorBody:
+    def __init__(self) -> None:
+        self.read_calls = 0
+
+    def read(self, limit: int = -1) -> bytes:
+        self.read_calls += 1
+        raise AssertionError("provider error body must never be read")
+
+    def close(self) -> None:
+        return None
 
 
 class DevelopmentAuthV32SessionInspectionTests(unittest.TestCase):
@@ -64,6 +84,147 @@ class DevelopmentAuthV32SessionInspectionTests(unittest.TestCase):
             _payload(*rows),
             expected_subject_digest=_digest(EXPECTED_SUBJECT),
         )
+
+    def project_payload(self) -> dict:
+        return {
+            "id": inspection.DEVELOPMENT_AUTH_PROJECT_REF,
+            "ref": inspection.DEVELOPMENT_AUTH_PROJECT_REF,
+            "name": "DEVELOPMENT AUTH",
+        }
+
+    def test_valid_project_response_reaches_read_only_sql(self) -> None:
+        responses = [
+            FakeResponse(200, self.project_payload()),
+            FakeResponse(201, _payload()),
+        ]
+        requests = []
+
+        def urlopen(request, timeout):
+            requests.append((request, timeout))
+            return responses.pop(0)
+
+        result = inspection.inspect_development_auth_session_state(
+            read_token="fixture-runtime-only-read-material",
+            expected_subject_digest=_digest(EXPECTED_SUBJECT),
+            urlopen=urlopen,
+        )
+        self.assertEqual(result.classification, inspection.InspectionClassification.CLEAN_0_0)
+        self.assertEqual([request.get_method() for request, _ in requests], ["GET", "POST"])
+
+    def test_project_http_statuses_have_bounded_safe_classifications(self) -> None:
+        cases = (
+            (401, "SESSION_INSPECTION_PROJECT_READ_AUTHENTICATION_REJECTED"),
+            (403, "SESSION_INSPECTION_PROJECT_READ_FORBIDDEN"),
+            (404, "SESSION_INSPECTION_PROJECT_READ_NOT_FOUND"),
+            (429, "SESSION_INSPECTION_PROJECT_READ_RATE_LIMITED"),
+            (500, "SESSION_INSPECTION_PROJECT_READ_PROVIDER_FAILURE"),
+            (503, "SESSION_INSPECTION_PROJECT_READ_PROVIDER_FAILURE"),
+            (418, "SESSION_INSPECTION_PROJECT_READ_UNEXPECTED_STATUS"),
+        )
+        for status, expected_code in cases:
+            with self.subTest(status=status):
+                response = FakeResponse(status, {"private_provider_body": "must-not-escape"})
+
+                with self.assertRaises(inspection.SafeInspectionStop) as raised:
+                    inspection.inspect_development_auth_session_state(
+                        read_token="fixture-runtime-only-read-material",
+                        expected_subject_digest=_digest(EXPECTED_SUBJECT),
+                        urlopen=lambda request, timeout: response,
+                    )
+
+                self.assertEqual(raised.exception.code, expected_code)
+                self.assertEqual(response.read_calls, 0)
+                self.assertNotIn("private_provider_body", repr(raised.exception))
+
+    def test_project_transport_failures_are_safely_collapsed(self) -> None:
+        failures = (
+            TimeoutError("private timeout details"),
+            urllib.error.URLError("private dns details"),
+            ConnectionError("private connection details"),
+        )
+        for failure in failures:
+            with self.subTest(failure_type=type(failure).__name__):
+                def urlopen(request, timeout):
+                    raise failure
+
+                with self.assertRaises(inspection.SafeInspectionStop) as raised:
+                    inspection.inspect_development_auth_session_state(
+                        read_token="fixture-runtime-only-read-material",
+                        expected_subject_digest=_digest(EXPECTED_SUBJECT),
+                        urlopen=urlopen,
+                    )
+
+                self.assertEqual(
+                    raised.exception.code,
+                    "SESSION_INSPECTION_PROJECT_READ_REQUEST_FAILED",
+                )
+                self.assertNotIn("private", repr(raised.exception))
+
+    def test_malformed_project_success_response_is_response_invalid(self) -> None:
+        response = FakeResponse(200, raw=b"{not-json")
+        with self.assertRaises(inspection.SafeInspectionStop) as raised:
+            inspection.inspect_development_auth_session_state(
+                read_token="fixture-runtime-only-read-material",
+                expected_subject_digest=_digest(EXPECTED_SUBJECT),
+                urlopen=lambda request, timeout: response,
+            )
+        self.assertEqual(
+            raised.exception.code,
+            "SESSION_INSPECTION_PROJECT_READ_RESPONSE_INVALID",
+        )
+        self.assertEqual(response.read_calls, 1)
+
+    def test_http_error_body_is_never_read_or_rendered(self) -> None:
+        body = UnreadableErrorBody()
+        error = urllib.error.HTTPError(
+            "https://api.supabase.com/v1/projects/fixture",
+            401,
+            "private provider reason",
+            {},
+            body,
+        )
+
+        def urlopen(request, timeout):
+            raise error
+
+        output = io.StringIO()
+        with (
+            redirect_stdout(output),
+            redirect_stderr(output),
+            self.assertRaises(inspection.SafeInspectionStop) as raised,
+        ):
+            inspection.inspect_development_auth_session_state(
+                read_token="fixture-runtime-only-read-material",
+                expected_subject_digest=_digest(EXPECTED_SUBJECT),
+                urlopen=urlopen,
+            )
+        self.assertEqual(
+            raised.exception.code,
+            "SESSION_INSPECTION_PROJECT_READ_AUTHENTICATION_REJECTED",
+        )
+        self.assertEqual(body.read_calls, 0)
+        self.assertEqual(output.getvalue(), "")
+        self.assertNotIn("private provider reason", repr(raised.exception))
+
+    def test_credential_never_appears_in_failure_surfaces(self) -> None:
+        credential = "fixture-runtime-only-read-material"
+
+        def urlopen(request, timeout):
+            raise urllib.error.URLError(f"transport included {credential}")
+
+        output = io.StringIO()
+        with (
+            redirect_stdout(output),
+            redirect_stderr(output),
+            self.assertRaises(inspection.SafeInspectionStop) as raised,
+        ):
+            inspection.inspect_development_auth_session_state(
+                read_token=credential,
+                expected_subject_digest=_digest(EXPECTED_SUBJECT),
+                urlopen=urlopen,
+            )
+        rendered = output.getvalue() + str(raised.exception) + repr(raised.exception)
+        self.assertNotIn(credential, rendered)
 
     def test_exact_zero_zero_is_clean(self) -> None:
         result = self.classify()
@@ -139,13 +300,50 @@ class DevelopmentAuthV32SessionInspectionTests(unittest.TestCase):
                 expected_subject_digest=_digest(EXPECTED_SUBJECT),
                 urlopen=urlopen,
             )
-        self.assertEqual(raised.exception.code, "SESSION_INSPECTION_READ_FAILED")
+        self.assertEqual(
+            raised.exception.code,
+            "SESSION_INSPECTION_READ_REQUEST_FAILED",
+        )
         self.assertEqual(output.getvalue(), "")
         self.assertNotIn("fixture provider payload", str(raised.exception))
         self.assertEqual(requests[0][0].get_method(), "GET")
         self.assertEqual(requests[1][0].get_method(), "POST")
         self.assertTrue(requests[1][0].full_url.endswith("/database/query/read-only"))
         self.assertEqual(json.loads(requests[1][0].data), {"query": inspection.SESSION_STATE_QUERY})
+
+    def test_read_only_sql_http_and_payload_failures_remain_fail_closed(self) -> None:
+        cases = (
+            (
+                FakeResponse(403, {"private_provider_body": "must-not-escape"}),
+                "SESSION_INSPECTION_READ_FORBIDDEN",
+                0,
+            ),
+            (
+                FakeResponse(201, raw=b"{not-json"),
+                "SESSION_INSPECTION_READ_RESPONSE_INVALID",
+                1,
+            ),
+        )
+        for sql_response, expected_code, expected_reads in cases:
+            with self.subTest(expected_code=expected_code):
+                responses = [
+                    FakeResponse(200, self.project_payload()),
+                    sql_response,
+                ]
+
+                with self.assertRaises(inspection.SafeInspectionStop) as raised:
+                    inspection.inspect_development_auth_session_state(
+                        read_token="fixture-runtime-only-read-material",
+                        expected_subject_digest=_digest(EXPECTED_SUBJECT),
+                        urlopen=lambda request, timeout: responses.pop(0),
+                    )
+
+                self.assertEqual(raised.exception.code, expected_code)
+                self.assertEqual(sql_response.read_calls, expected_reads)
+                self.assertEqual(
+                    raised.exception.classification,
+                    inspection.InspectionClassification.SESSION_STATE_UNVERIFIED,
+                )
 
     def test_sanitized_evidence_contains_no_subject_or_provider_payload(self) -> None:
         result = self.classify(_state("SESSION"), _state("REFRESH_TOKEN"))

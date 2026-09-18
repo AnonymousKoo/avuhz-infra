@@ -1,0 +1,94 @@
+name: DEVELOPMENT AUTH Provider Read Diagnostic v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DIAGNOSE_DEVELOPMENT_AUTH_PROVIDER_READ_V1 for this exact one-GET boundary
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-provider-read-diagnostic-v1
+  cancel-in-progress: false
+
+jobs:
+  diagnose-development-auth-provider-read:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+
+    env:
+      AVUHZ_EXPECTED_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: 205c2cef-1b90-4346-b4eb-d19ded202d6a
+      AVUHZ_PLAN_DIGEST: sha256:e38f0eac3128511f3e3c2d3bd45278276a69fe1ce86801e93c2417264e411f1d
+      AVUHZ_WINDOW_START: '2026-09-19T15:00:00Z'
+      AVUHZ_WINDOW_END: '2026-09-19T21:00:00Z'
+      AVUHZ_DIAGNOSTIC_CONFIRMATION: ${{ inputs.confirmation }}
+      AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify exact one-GET diagnostic authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::PROJECT_READ_MAIN_ONLY"
+            exit 1
+          fi
+          if [[ "${AVUHZ_DIAGNOSTIC_CONFIRMATION}" != "DIAGNOSE_DEVELOPMENT_AUTH_PROVIDER_READ_V1" ]]; then
+            echo "::error::PROJECT_READ_CONFIRMATION_MISMATCH"
+            exit 1
+          fi
+          if [[ -z "${AVUHZ_DEVELOPMENT_SUPABASE_PROVIDER_READ_TOKEN:-}" ]]; then
+            echo "::error::PROJECT_READ_CREDENTIAL_UNAVAILABLE"
+            exit 1
+          fi
+
+          approval_path="contracts/plans/v1/development-auth-provider-read-diagnostic-v1.approval.json"
+          if [[ ! -f "${approval_path}" ]]; then
+            echo "::error::PROJECT_READ_EXACT_OWNER_APPROVAL_ABSENT"
+            exit 1
+          fi
+          if [[ -e contracts/plans/v1/development-auth-provider-read-diagnostic-v1.execution-progress.json ]] \
+             || compgen -G 'contracts/plans/v1/development-auth-provider-read-diagnostic-v1*.evidence.json' >/dev/null; then
+            echo "::error::PROJECT_READ_EXECUTION_ARTIFACT_ALREADY_EXISTS"
+            exit 1
+          fi
+
+          now_epoch="$(date -u +%s)"
+          start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < start_epoch || now_epoch >= end_epoch )); then
+            echo "::error::PROJECT_READ_AUTHORIZATION_WINDOW_INACTIVE"
+            exit 1
+          fi
+
+      - name: Install pinned authorization dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3'
+
+      - name: Execute one bounded project metadata GET
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_provider_read_diagnostic_v1.py

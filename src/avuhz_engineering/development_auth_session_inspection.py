@@ -28,14 +28,14 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import json
 import re
-import urllib.error
 import urllib.request
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, NoReturn
+
+from avuhz_engineering.provider_read_http import request_json
 
 
 DEVELOPMENT_AUTH_PROJECT_REF = "pwlhruwutoitnieactol"
@@ -46,7 +46,6 @@ READ_ONLY_SQL_PATH = (
     f"/v1/projects/{DEVELOPMENT_AUTH_PROJECT_REF}/database/query/read-only"
 )
 EXPECTED_READ_ONLY_IDENTITY = "supabase_read_only_user"
-MAX_PROVIDER_RESPONSE_BYTES = 256 * 1024
 MAX_STATE_ROWS = 4096
 
 _CANONICAL_UUID = re.compile(
@@ -114,81 +113,6 @@ class SessionInspectionResult:
     session_count: int
     refresh_token_count: int
     expected_subject_binding_verified: bool | None
-
-
-def _management_headers(read_token: str) -> dict[str, str]:
-    if not isinstance(read_token, str) or not read_token:
-        _stop("SESSION_INSPECTION_CREDENTIAL_UNAVAILABLE")
-    return {
-        "Authorization": f"Bearer {read_token}",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-
-
-def _http_failure_code(failure_code_prefix: str, status: Any) -> str:
-    """Map only a bounded HTTP status class; never inspect response content."""
-
-    if status == 401:
-        suffix = "AUTHENTICATION_REJECTED"
-    elif status == 403:
-        suffix = "FORBIDDEN"
-    elif status == 404:
-        suffix = "NOT_FOUND"
-    elif status == 429:
-        suffix = "RATE_LIMITED"
-    elif isinstance(status, int) and 500 <= status <= 599:
-        suffix = "PROVIDER_FAILURE"
-    else:
-        suffix = "UNEXPECTED_STATUS"
-    return f"{failure_code_prefix}_{suffix}"
-
-
-def _request_json(
-    url: str,
-    *,
-    read_token: str,
-    method: str = "GET",
-    body: Mapping[str, Any] | None = None,
-    accepted_statuses: tuple[int, ...],
-    failure_code_prefix: str,
-    urlopen: Callable[..., Any],
-) -> Any:
-    encoded = None if body is None else json.dumps(dict(body), separators=(",", ":")).encode("utf-8")
-    request = urllib.request.Request(
-        url,
-        data=encoded,
-        method=method,
-        headers=_management_headers(read_token),
-    )
-    raw = bytearray()
-    try:
-        try:
-            with urlopen(request, timeout=30) as response:
-                if response.status not in accepted_statuses:
-                    # A non-accepted response body can contain provider details
-                    # and credential-adjacent material. Classify by status only.
-                    _stop(_http_failure_code(failure_code_prefix, response.status))
-                raw.extend(response.read(MAX_PROVIDER_RESPONSE_BYTES + 1))
-        except SafeInspectionStop:
-            raise
-        except urllib.error.HTTPError as exc:
-            # HTTPError is also a response-like body. Read only its integer code;
-            # never call read(), stringify it, or retain headers/reason/payload.
-            _stop(_http_failure_code(failure_code_prefix, exc.code))
-        except Exception:
-            # Exception type/text can contain hosts, headers, or transport data.
-            _stop(f"{failure_code_prefix}_REQUEST_FAILED")
-        if not raw or len(raw) > MAX_PROVIDER_RESPONSE_BYTES:
-            _stop(f"{failure_code_prefix}_RESPONSE_INVALID")
-        try:
-            return json.loads(raw)
-        except Exception:
-            _stop(f"{failure_code_prefix}_RESPONSE_INVALID")
-    finally:
-        for index in range(len(raw)):
-            raw[index] = 0
-        raw.clear()
 
 
 def _extract_state_rows(payload: Any) -> list[dict[str, Any]]:
@@ -300,11 +224,13 @@ def inspect_development_auth_session_state(
 ) -> SessionInspectionResult:
     """Perform target preflight and one read-only SQL inspection; never mutate."""
 
-    project = _request_json(
+    project = request_json(
         f"{MANAGEMENT_API_ORIGIN}/v1/projects/{DEVELOPMENT_AUTH_PROJECT_REF}",
         read_token=read_token,
         accepted_statuses=(200,),
         failure_code_prefix="SESSION_INSPECTION_PROJECT_READ",
+        credential_unavailable_code="SESSION_INSPECTION_CREDENTIAL_UNAVAILABLE",
+        stop=_stop,
         urlopen=urlopen,
     )
     if (
@@ -315,13 +241,15 @@ def inspect_development_auth_session_state(
     ):
         _stop("SESSION_INSPECTION_PROJECT_MISMATCH")
 
-    payload = _request_json(
+    payload = request_json(
         f"{MANAGEMENT_API_ORIGIN}{READ_ONLY_SQL_PATH}",
         read_token=read_token,
         method="POST",
         body={"query": SESSION_STATE_QUERY},
         accepted_statuses=(201,),
         failure_code_prefix="SESSION_INSPECTION_READ",
+        credential_unavailable_code="SESSION_INSPECTION_CREDENTIAL_UNAVAILABLE",
+        stop=_stop,
         urlopen=urlopen,
     )
     return classify_session_state(

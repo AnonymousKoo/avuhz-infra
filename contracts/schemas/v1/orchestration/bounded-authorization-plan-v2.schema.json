@@ -310,7 +310,10 @@
                     "const": "PROVIDER_READ"
                   },
                   "operation": {
-                    "const": "provider.auth-session-state.inspect-read-only"
+                    "enum": [
+                      "provider.auth-session-state.inspect-read-only",
+                      "provider.project-metadata.inspect-read-only"
+                    ]
                   },
                   "credential_policy": {
                     "properties": {

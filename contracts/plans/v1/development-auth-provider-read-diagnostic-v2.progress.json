@@ -1,0 +1,23 @@
+{
+  "progress_id": "ec9ed53b-d3ac-40da-a19e-01571defb01e",
+  "plan_id": "b6d86aea-a009-4080-a82c-8ace44b91f45",
+  "plan_version": 2,
+  "plan_digest": "sha256:e461550ca90b8ffbb38c8f8be0b73e767c57ead19aec23e3a8b4eaeccc938bba",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.provider-read-diagnostic-v2.step.01.inspect-project-metadata-read-only",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-19T19:15:53Z",
+  "progress_digest": "sha256:7e2c5396e878deb90988d39f46596b886de98bd7b98bec6ea49961bcd0c71ab0"
+}

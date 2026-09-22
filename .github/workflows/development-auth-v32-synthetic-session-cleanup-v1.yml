@@ -1,0 +1,107 @@
+name: DEVELOPMENT AUTH v32 Synthetic Session Cleanup v1 Step 2
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type REVOKE_V32_SYNTHETIC_SESSIONS_GLOBAL for exact Step 2 only
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-v32-synthetic-session-cleanup-v1-step2
+  cancel-in-progress: false
+
+jobs:
+  revoke-development-auth-synthetic-sessions:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+
+    env:
+      AVUHZ_EXPECTED_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: daa207fd-1426-455f-a921-1dc69d8f2d65
+      AVUHZ_PLAN_DIGEST: sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e
+      AVUHZ_WINDOW_START: '2026-09-23T15:00:00Z'
+      AVUHZ_WINDOW_END: '2026-09-23T21:00:00Z'
+      AVUHZ_CLEANUP_CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify exact dormant Step 2 authority surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "::error::SESSION_CLEANUP_MAIN_ONLY"
+            exit 1
+          fi
+          if [[ "${AVUHZ_CLEANUP_CONFIRMATION}" != "REVOKE_V32_SYNTHETIC_SESSIONS_GLOBAL" ]]; then
+            echo "::error::SESSION_CLEANUP_CONFIRMATION_MISMATCH"
+            exit 1
+          fi
+          if [[ "${AVUHZ_PLAN_ID}" != "daa207fd-1426-455f-a921-1dc69d8f2d65" ]] \
+             || [[ "${AVUHZ_PLAN_DIGEST}" != "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e" ]]; then
+            echo "::error::SESSION_CLEANUP_PLAN_BINDING_MISMATCH"
+            exit 1
+          fi
+
+          approval="contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v1.approval.json"
+          progress="contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v1.execution-progress.json"
+          evidence="contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v1-step1-success.evidence.json"
+          if [[ ! -f "${approval}" || ! -f "${progress}" || ! -f "${evidence}" ]]; then
+            echo "::error::SESSION_CLEANUP_STEP2_PREREQUISITE_ABSENT"
+            exit 1
+          fi
+          if compgen -G 'contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v1-step2-*.evidence.json' >/dev/null; then
+            echo "::error::SESSION_CLEANUP_STEP2_ALREADY_ATTEMPTED"
+            exit 1
+          fi
+
+          now_epoch="$(date -u +%s)"
+          start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < start_epoch || now_epoch >= end_epoch )); then
+            echo "::error::SESSION_CLEANUP_AUTHORIZATION_WINDOW_INACTIVE"
+            exit 1
+          fi
+
+      - name: Install pinned authorization and JWT dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3' \
+            'PyJWT[crypto]==2.14.0' \
+            'cryptography==50.0.1'
+
+      - name: Certify exact cleanup plan and executor surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          PYTHONPATH=src:. python3 tests/contracts/validate_development_auth_v32_synthetic_session_cleanup_v1.py --execution-surface-only
+
+      - name: Execute exact Step 2 once
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V1_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V1_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_v32_synthetic_session_cleanup_v1.py

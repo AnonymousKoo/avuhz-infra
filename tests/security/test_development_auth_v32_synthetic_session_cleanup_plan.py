@@ -21,7 +21,7 @@ class DevelopmentAuthV32SyntheticSessionCleanupPlanTests(unittest.TestCase):
             check=True,
         )
         self.assertIn(
-            "DEVELOPMENT AUTH v32 synthetic-session cleanup v1 preparation: VALID",
+            "DEVELOPMENT AUTH v32 synthetic-session cleanup v1 execution path: VALID",
             result.stdout,
         )
 

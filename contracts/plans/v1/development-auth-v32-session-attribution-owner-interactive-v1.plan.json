@@ -1,0 +1,231 @@
+{
+  "plan_id": "4962f8b6-dad1-45d3-b020-2d60d41409c3",
+  "plan_version": 1,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-21T23:55:49Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-22T15:00:00Z",
+    "expires_at": "2026-09-22T21:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v32-session-attribution-owner-interactive-v1.step.01.inspect-session-attribution-counts"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v32-session-attribution-owner-interactive-v1.step.01.inspect-session-attribution-counts",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.session-attribution-aggregate-counts",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:auth-session-attribution-counts",
+        "binding_state": "BOUND",
+        "exact_version": "owner-interactive.v1",
+        "exact_digest": "sha256:5f7de4d7bfce089165e5c2add5df702731b25f4342ace9a11a0bc717a52adcb5"
+      },
+      "operation": "provider.auth-session-state.attribute-owner-interactive-read-only",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-identity.created",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3a0f8c7211fffa"
+        },
+        {
+          "evidence_type": "auth.synthetic-identity.tenant-metadata.bound",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e"
+        },
+        {
+          "evidence_type": "auth.synthetic-session.lifecycle-completed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:45cddb8d3c0753f4b48e323e7983843f918b194f811b511848bd26f7908c6dc5"
+        }
+      ],
+      "expected_postcondition": "In the DEVELOPMENT AUTH Dashboard SQL Editor, run the one exact aggregate SELECT bound by resource digest. Return only session_count and synthetic_session_count. Classify 1/1 as SYNTHETIC_SESSION_ATTRIBUTED; session_count=0 as SESSION_DISAPPEARED_REVIEW_REQUIRED; every other combination as SESSION_ATTRIBUTION_MISMATCH_REVIEW_REQUIRED. No further SQL, raw rows, identifiers, refresh-token read, cleanup, or mutation is permitted.",
+      "prohibited_actions": [
+        "additional.sql.execute",
+        "approval.create",
+        "auth.refresh-tokens.query",
+        "auth.sessions.raw-row-query",
+        "auth.users.raw-row-query",
+        "credential.create",
+        "credential.persist",
+        "credential.rotate",
+        "data.operation",
+        "ddl.execute",
+        "delete.execute",
+        "hook.modify",
+        "insert.execute",
+        "n8n.operation",
+        "pii.return",
+        "production.target",
+        "provider.mutation",
+        "provider.subject.observe",
+        "raw-row.read",
+        "render.operation",
+        "session.cleanup",
+        "session.delete",
+        "session.issue",
+        "staging.target",
+        "synthetic-email.return",
+        "token.issue",
+        "token.value.observe",
+        "truncate.execute",
+        "update.execute",
+        "v32.retry",
+        "v33.prepare"
+      ],
+      "stop_conditions": [
+        "additional-sql.requested",
+        "authorization.window-inactive",
+        "count.invalid",
+        "owner-interactive-session.unavailable",
+        "pii.returned",
+        "project.mismatch",
+        "raw-row.returned",
+        "result-fields.mismatch",
+        "sql.text.mismatch",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v32-session-attribution-owner-interactive-v1.synthetic-identity",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:16fbd6f2b1b779a4879f9eca7b5469267822884740dab7a02d3a0f8c7211fffa",
+            "exact_digest": "sha256:32aac8ae3ca17655224c874274b11c74480fb3d8c617290b0eaf5a5aacc9b011"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-attribution-owner-interactive-v1.synthetic-tenant-binding",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e",
+            "exact_digest": "sha256:16751983b17d465a98096372475e8507153f44960ec0c3834bedf9a08782588e"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-attribution-owner-interactive-v1.v32-failure",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:45cddb8d3c0753f4b48e323e7983843f918b194f811b511848bd26f7908c6dc5",
+            "exact_digest": "sha256:0b6c0ccecd33db56d5dad2a5753eee465ac13c0a2082cb3eea4116da47942d85"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-attribution-owner-interactive-v1.dashboard-session-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-attribution-owner-interactive-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.session-attribution.owner-interactive-inspected",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.session-attribution.owner-interactive-inspected",
+          "established_binding_ids": [
+            "binding.development.auth.v32-session-attribution-owner-interactive-v1.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "additional.sql.execute",
+    "approval.create",
+    "auth.refresh-tokens.query",
+    "auth.sessions.raw-row-query",
+    "auth.users.raw-row-query",
+    "batch.mutation",
+    "credential.create",
+    "credential.persist",
+    "credential.rotate",
+    "data.operation",
+    "ddl.execute",
+    "delete.execute",
+    "hook.modify",
+    "insert.execute",
+    "n8n.operation",
+    "pii.return",
+    "production.target",
+    "provider.mutation",
+    "provider.subject.observe",
+    "raw-row.read",
+    "render.operation",
+    "session.cleanup",
+    "session.delete",
+    "session.issue",
+    "staging.target",
+    "synthetic-email.return",
+    "token.issue",
+    "token.value.observe",
+    "truncate.execute",
+    "update.execute",
+    "v32.retry",
+    "v33.prepare"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "authorization.unbound",
+    "count.invalid",
+    "pii.returned",
+    "raw-row.returned",
+    "result-fields.mismatch",
+    "security.validation.failed",
+    "sql.text.mismatch"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:6977cafc9894894dbb28e0f0f6c8fd3bcc609cdd014eba4144b1d335c4928c7a"
+}

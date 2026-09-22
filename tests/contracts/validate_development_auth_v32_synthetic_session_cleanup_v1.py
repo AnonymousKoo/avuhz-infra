@@ -12,8 +12,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -25,10 +27,15 @@ BASE = ROOT / "contracts/plans/v1"
 BOUNDARY = "development-auth-v32-synthetic-session-cleanup-v1"
 PLAN_PATH = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
+APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
 PLAN_ID = "daa207fd-1426-455f-a921-1dc69d8f2d65"
 PROGRESS_ID = "a75eec04-ffa1-4a49-9099-0f8a25d9e13b"
 PLAN_DIGEST = "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e"
 PROGRESS_DIGEST = "sha256:a3b0f0b477747af83a0cbe3b8aa660ff43d0258d763e0283c7877e129bf002c7"
+APPROVAL_ID = "7fa7cd4e-5448-4af3-9d29-4478a0c90cee"
+APPROVED_AT = "2026-09-22T20:20:21Z"
+APPROVAL_DIGEST = "sha256:bd9756345ccaa63f82dd6ec4d8398b90574d3ba5b4049d0e7ddab738fe92e09f"
+APPROVAL_FILE_DIGEST = "sha256:f73aa8bd87768cf944a266316ac2779ae7b7a9b9868ff331a73cabbe6d7aeaa8"
 PLAN_RAW_DIGEST = "sha256:6880d642628eab13c18cfa3ab6f3bd5f1f09af282f538659fa70644c9d1a5f41"
 PROGRESS_RAW_DIGEST = "sha256:d30e7dc67e3783e8ce59ae08e5fe2d9ba1c68dd381b76b772da7bb589f799de3"
 EXECUTOR_RAW_DIGEST = "sha256:a3e883ca5798bd60094181419c188a28f46cbcc8f648366e60cad29fa02fc7e4"
@@ -196,8 +203,11 @@ def assert_select_only(query: str) -> None:
 def main(*, execution_surface_only: bool = False) -> None:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-23T20:59:59Z")
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
@@ -213,6 +223,24 @@ def main(*, execution_surface_only: bool = False) -> None:
         "expires_at": WINDOW_END,
     }
     assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
+    assert APPROVED_AT < WINDOW_START
     assert len(plan["steps"]) == 3
 
     precheck, cleanup, verify = plan["steps"]
@@ -296,7 +324,6 @@ def main(*, execution_surface_only: bool = False) -> None:
     )
 
     if not execution_surface_only:
-        assert not (BASE / f"{BOUNDARY}.approval.json").exists()
         assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
         assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
     assert raw_digest(EXECUTOR_PATH) == EXECUTOR_RAW_DIGEST

@@ -1,0 +1,45 @@
+{
+  "progress_id": "a75eec04-ffa1-4a49-9099-0f8a25d9e13b",
+  "plan_id": "daa207fd-1426-455f-a921-1dc69d8f2d65",
+  "plan_version": 1,
+  "plan_digest": "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.01.verify-attributed-session-precondition",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.02.revoke-synthetic-sessions-global",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.03.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-22T15:40:34Z",
+  "progress_digest": "sha256:a3b0f0b477747af83a0cbe3b8aa660ff43d0258d763e0283c7877e129bf002c7"
+}

@@ -143,7 +143,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         response_payload["refresh_token"] = _memory_secret("refresh")
 
         def urlopen(request, timeout):
-            captured.extend((request, timeout))
+            captured.extend((request, timeout, bytes(request.data)))
             return FakeResponse(200, json.dumps(response_payload).encode("utf-8"))
 
         try:
@@ -161,7 +161,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         self.assertEqual(request.full_url, f"{DEVELOPMENT_AUTH_ISSUER}/verify")
         self.assertEqual(request.get_method(), "POST")
         self.assertEqual(captured[1], 30)
-        body = json.loads(request.data)
+        body = json.loads(captured[2])
         self.assertEqual(set(body), {"type", "token_hash"})
         self.assertEqual(body["type"], "recovery")
         self.assertEqual(result.token_type, "bearer")
@@ -169,6 +169,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         self.assertTrue(request.get_header("Authorization").startswith("Bearer "))
         self.assertEqual(request.get_header("Content-type"), "application/json")
         self.assertEqual(request.get_header("Accept"), "application/json")
+        self.assertEqual(request.data, bytearray())
         result.clear()
         self.assertTrue(result.is_cleared)
 
@@ -177,7 +178,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         response_payload = self.generate_fixture()
 
         def urlopen(request, timeout):
-            captured.extend((request, timeout))
+            captured.extend((request, timeout, bytes(request.data)))
             return FakeResponse(200, json.dumps(response_payload).encode("utf-8"))
 
         result = lifecycle.request_generate_recovery_credential(
@@ -198,13 +199,14 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         )
         self.assertEqual(request.get_method(), "POST")
         self.assertEqual(
-            json.loads(request.data),
+            json.loads(captured[2]),
             {
                 "type": "recovery",
                 "email": "synthetic-fixture@example.invalid",
             },
         )
-        self.assertNotIn("password", json.loads(request.data))
+        self.assertNotIn("password", json.loads(captured[2]))
+        self.assertEqual(request.data, bytearray())
         self.assertFalse(result.is_cleared)
         result.clear()
         self.assertTrue(result.is_cleared)
@@ -311,7 +313,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         access_token = _memory_secret("logout-access")
 
         def urlopen(request, timeout):
-            captured.extend((request, timeout))
+            captured.extend((request, timeout, bytes(request.data)))
             return FakeResponse(204)
 
         lifecycle.request_local_session_logout(
@@ -329,8 +331,67 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
             ),
         )
         self.assertEqual(request.get_method(), "POST")
-        self.assertEqual(json.loads(request.data), {})
+        self.assertEqual(json.loads(captured[2]), {})
+        self.assertEqual(request.data, bytearray())
         self.assertEqual(request.get_header("Authorization"), f"Bearer {access_token}")
+
+    def test_global_logout_uses_exact_scope_and_accepts_only_empty_204(self) -> None:
+        captured: list[object] = []
+        access_token = _memory_secret("global-logout-access")
+
+        def urlopen(request, timeout):
+            captured.extend((request, timeout, bytes(request.data)))
+            return FakeResponse(204)
+
+        lifecycle.request_global_session_logout(
+            project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
+            publishable_key=_memory_secret("publishable"),
+            bearer_token=access_token,
+            urlopen=urlopen,
+        )
+        request = captured[0]
+        self.assertEqual(
+            request.full_url,
+            (
+                f"https://{DEVELOPMENT_AUTH_PROJECT_REF}.supabase.co"
+                "/auth/v1/logout?scope=global"
+            ),
+        )
+        self.assertEqual(request.get_method(), "POST")
+        self.assertEqual(json.loads(captured[2]), {})
+        self.assertEqual(request.data, bytearray())
+        self.assertEqual(request.get_header("Authorization"), f"Bearer {access_token}")
+        self.assertEqual(len(captured), 3)
+
+    def test_subject_digest_binds_generated_id_for_direct_verification(self) -> None:
+        generated = self.generate_fixture()
+        generated["hashed_token"] = _memory_secret("subject-bound-recovery")
+        verified = self.verify_fixture()
+        verified["access_token"] = _memory_secret("subject-bound-access")
+        verified["refresh_token"] = _memory_secret("subject-bound-refresh")
+        credential = lifecycle.extract_recovery_verification_credential(
+            generated,
+            expected_user_id=None,
+            expected_subject_digest=_subject_digest(generated["id"]),
+        )
+
+        def urlopen(_request, timeout):
+            self.assertEqual(timeout, 30)
+            return FakeResponse(200, json.dumps(verified).encode("utf-8"))
+
+        try:
+            session = lifecycle.request_direct_recovery_verification(
+                project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
+                publishable_key=_memory_secret("publishable"),
+                credential=credential,
+                expected_user_id=None,
+                urlopen=urlopen,
+            )
+            session.clear()
+        finally:
+            credential.clear()
+        self.assertTrue(credential.is_cleared)
+        self.assertTrue(session.is_cleared)
 
     def test_uncaptured_access_token_with_session_has_no_invented_cleanup(self) -> None:
         generate = self.generate_fixture()

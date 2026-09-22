@@ -60,6 +60,7 @@ VERIFY_PATH = "/auth/v1/verify"
 VERIFY_METHOD = "POST"
 VERIFY_TYPE = "recovery"
 LOCAL_LOGOUT_PATH = "/auth/v1/logout?scope=local"
+GLOBAL_LOGOUT_PATH = "/auth/v1/logout?scope=global"
 MAX_PROVIDER_RESPONSE_BYTES = 256 * 1024
 
 _CANONICAL_UUID = re.compile(
@@ -111,26 +112,39 @@ def _stop(code: str) -> NoReturn:
 class RecoveryVerificationCredential:
     """One-time credential with a redacted representation and explicit clearing."""
 
-    __slots__ = ("_value",)
+    __slots__ = ("_user_id", "_value")
 
-    def __init__(self, value: str) -> None:
+    def __init__(self, value: str, *, user_id: str | None = None) -> None:
         if not isinstance(value, str) or not 16 <= len(value) <= 4096:
             _stop("RECOVERY_GENERATE_RESPONSE_SHAPE_INVALID")
+        if user_id is not None and (
+            not isinstance(user_id, str) or not _CANONICAL_UUID.fullmatch(user_id)
+        ):
+            _stop("RECOVERY_GENERATE_RESPONSE_SHAPE_INVALID")
         self._value = bytearray(value, "utf-8")
+        self._user_id = None if user_id is None else bytearray(user_id, "utf-8")
 
     def _text(self) -> str:
         if not self._value:
             _stop("RECOVERY_CREDENTIAL_UNAVAILABLE")
         return self._value.decode("utf-8")
 
+    def _user_id_text(self) -> str:
+        if not self._user_id:
+            _stop("EXPECTED_SYNTHETIC_IDENTITY_INVALID")
+        return self._user_id.decode("utf-8")
+
     @property
     def is_cleared(self) -> bool:
-        return not self._value
+        return not self._value and not self._user_id
 
     def clear(self) -> None:
-        for index in range(len(self._value)):
-            self._value[index] = 0
-        self._value.clear()
+        for value in (self._value, self._user_id):
+            if value is None:
+                continue
+            for index in range(len(value)):
+                value[index] = 0
+            value.clear()
 
     def __repr__(self) -> str:
         return "RecoveryVerificationCredential(<redacted>)"
@@ -269,7 +283,9 @@ def _post_json(
     accepted_statuses: tuple[int, ...] = (200,),
     urlopen: Callable[..., Any] = urllib.request.urlopen,
 ) -> dict[str, Any] | None:
-    encoded = json.dumps(dict(body), separators=(",", ":")).encode("utf-8")
+    encoded = bytearray(
+        json.dumps(dict(body), separators=(",", ":")).encode("utf-8")
+    )
     request = urllib.request.Request(
         url,
         data=encoded,
@@ -302,6 +318,9 @@ def _post_json(
             _stop(response_invalid_code)
         return payload
     finally:
+        for index in range(len(encoded)):
+            encoded[index] = 0
+        encoded.clear()
         for index in range(len(raw)):
             raw[index] = 0
         raw.clear()
@@ -312,7 +331,7 @@ def request_generate_recovery_credential(
     project_ref: str,
     admin_secret: str,
     existing_user_email: str,
-    expected_user_id: str,
+    expected_user_id: str | None,
     expected_subject_digest: str,
     urlopen: Callable[..., Any] = urllib.request.urlopen,
 ) -> RecoveryVerificationCredential:
@@ -347,14 +366,17 @@ def request_generate_recovery_credential(
 def extract_recovery_verification_credential(
     payload: Mapping[str, Any],
     *,
-    expected_user_id: str,
+    expected_user_id: str | None,
     expected_subject_digest: str,
 ) -> RecoveryVerificationCredential:
     """Extract only raw ``hashed_token`` for POST ``token_hash`` verification."""
 
     if not isinstance(payload, Mapping):
         _stop("RECOVERY_GENERATE_RESPONSE_SHAPE_INVALID")
-    if not isinstance(expected_user_id, str) or not _CANONICAL_UUID.fullmatch(expected_user_id):
+    if expected_user_id is not None and (
+        not isinstance(expected_user_id, str)
+        or not _CANONICAL_UUID.fullmatch(expected_user_id)
+    ):
         _stop("EXPECTED_SYNTHETIC_IDENTITY_INVALID")
     if (
         not isinstance(expected_subject_digest, str)
@@ -371,9 +393,12 @@ def extract_recovery_verification_credential(
     ):
         _stop("RECOVERY_GENERATE_RESPONSE_SHAPE_INVALID")
     digest = "sha256:" + hashlib.sha256(generated_id.encode("utf-8")).hexdigest()
-    if generated_id != expected_user_id or not hmac.compare_digest(digest, expected_subject_digest):
+    if (
+        (expected_user_id is not None and generated_id != expected_user_id)
+        or not hmac.compare_digest(digest, expected_subject_digest)
+    ):
         _stop("RECOVERY_GENERATE_IDENTITY_MISMATCH")
-    result = RecoveryVerificationCredential(credential)
+    result = RecoveryVerificationCredential(credential, user_id=generated_id)
     if isinstance(payload, dict):
         for field in ("action_link", "email_otp", "hashed_token"):
             if field in payload:
@@ -386,7 +411,7 @@ def request_direct_recovery_verification(
     project_ref: str,
     publishable_key: str,
     credential: RecoveryVerificationCredential,
-    expected_user_id: str,
+    expected_user_id: str | None,
     urlopen: Callable[..., Any] = urllib.request.urlopen,
 ) -> IssuedSession:
     """POST recovery verification and return only a redacted in-memory session."""
@@ -406,9 +431,14 @@ def request_direct_recovery_verification(
     if payload is None:
         _stop("RECOVERY_VERIFICATION_RESPONSE_INVALID")
     try:
+        bound_user_id = (
+            credential._user_id_text()
+            if expected_user_id is None
+            else expected_user_id
+        )
         return parse_recovery_verification_response(
             payload,
-            expected_user_id=expected_user_id,
+            expected_user_id=bound_user_id,
         )
     finally:
         payload["access_token"] = None
@@ -484,6 +514,35 @@ def request_local_session_logout(
     )
     if response not in (None, {}):
         _stop("LOCAL_SESSION_LOGOUT_RESPONSE_INVALID")
+
+
+def request_global_session_logout(
+    *,
+    project_ref: str,
+    publishable_key: str,
+    bearer_token: str,
+    urlopen: Callable[..., Any] = urllib.request.urlopen,
+) -> None:
+    """Revoke every session for the exact user authenticated by the JWT.
+
+    Supabase Auth documents ``global`` as revoking all refresh tokens/sessions
+    for the bearer user.  Acceptance is not cleanup verification; callers must
+    require an independent provider readback before claiming a clean state.
+    """
+
+    _validate_project_ref(project_ref)
+    response = _post_json(
+        f"https://{project_ref}.supabase.co{GLOBAL_LOGOUT_PATH}",
+        headers=_provider_headers(publishable_key, access_token=bearer_token),
+        body={},
+        provider_rejected_code="GLOBAL_SESSION_LOGOUT_PROVIDER_REJECTED",
+        request_failed_code="GLOBAL_SESSION_LOGOUT_REQUEST_FAILED",
+        response_invalid_code="GLOBAL_SESSION_LOGOUT_RESPONSE_INVALID",
+        accepted_statuses=(204,),
+        urlopen=urlopen,
+    )
+    if response is not None:
+        _stop("GLOBAL_SESSION_LOGOUT_RESPONSE_INVALID")
 
 
 def parse_provider_session_counts(

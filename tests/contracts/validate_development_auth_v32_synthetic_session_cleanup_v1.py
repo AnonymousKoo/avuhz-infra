@@ -29,6 +29,11 @@ PLAN_ID = "daa207fd-1426-455f-a921-1dc69d8f2d65"
 PROGRESS_ID = "a75eec04-ffa1-4a49-9099-0f8a25d9e13b"
 PLAN_DIGEST = "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e"
 PROGRESS_DIGEST = "sha256:a3b0f0b477747af83a0cbe3b8aa660ff43d0258d763e0283c7877e129bf002c7"
+PLAN_RAW_DIGEST = "sha256:6880d642628eab13c18cfa3ab6f3bd5f1f09af282f538659fa70644c9d1a5f41"
+PROGRESS_RAW_DIGEST = "sha256:d30e7dc67e3783e8ce59ae08e5fe2d9ba1c68dd381b76b772da7bb589f799de3"
+EXECUTOR_RAW_DIGEST = "sha256:a3e883ca5798bd60094181419c188a28f46cbcc8f648366e60cad29fa02fc7e4"
+WORKFLOW_RAW_DIGEST = "sha256:28f5b16586e64b1bad389a62c40e2172950e59f9814a3b0c0fe428800ebd929f"
+LIFECYCLE_RAW_DIGEST = "sha256:55503f13489944b0b4b51e3dc24875d5c6e83c69e8fc6a8aed6a03fdb0736749"
 CREATED_AT = "2026-09-22T15:40:34Z"
 WINDOW_START = "2026-09-23T15:00:00Z"
 WINDOW_END = "2026-09-23T21:00:00Z"
@@ -39,6 +44,14 @@ ATTRIBUTION_EVIDENCE_DIGEST = "sha256:87448d893e3d6f013cd6a20bdf05eef25b5d1c3425
 ATTRIBUTION_PROGRESS_DIGEST = "sha256:d97ded08e2e31417382392f99875956b8e75c496f3b5404470191dd13779ff76"
 ADMIN_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V1_EPHEMERAL"
 PUBLISHABLE_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY"
+CONFIRMATION = "REVOKE_V32_SYNTHETIC_SESSIONS_GLOBAL"
+STEP2_ID = (
+    "development.auth.v32-synthetic-session-cleanup-v1.step.02."
+    "revoke-synthetic-sessions-global"
+)
+EXECUTOR_PATH = ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v1.py"
+WORKFLOW_PATH = ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v1.yml"
+LIFECYCLE_PATH = ROOT / "src/avuhz_engineering/development_auth_token_lifecycle.py"
 
 PRECHECK_SQL = """select
   count(*) as session_count,
@@ -180,7 +193,7 @@ def assert_select_only(query: str) -> None:
         assert forbidden not in query.lower()
 
 
-def main() -> None:
+def main(*, execution_surface_only: bool = False) -> None:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     validate_plan(plan, SCHEMA_ROOT)
@@ -188,6 +201,8 @@ def main() -> None:
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
+    assert raw_digest(PLAN_PATH) == PLAN_RAW_DIGEST
+    assert raw_digest(PROGRESS_PATH) == PROGRESS_RAW_DIGEST
     assert plan["definition_status"] == "READY_FOR_APPROVAL"
     assert plan["environment"] == "DEVELOPMENT"
     assert plan["target"]["project_reference"] == PROJECT_REF
@@ -280,14 +295,48 @@ def main() -> None:
         for s in progress["step_states"]
     )
 
-    assert not (BASE / f"{BOUNDARY}.approval.json").exists()
-    assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
-    assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
-    assert not (ROOT / ".github/workflows" / f"{BOUNDARY}.yml").exists()
-    assert not (ROOT / "scripts" / f"{BOUNDARY.replace('-', '_')}.py").exists()
+    if not execution_surface_only:
+        assert not (BASE / f"{BOUNDARY}.approval.json").exists()
+        assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
+        assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
+    assert raw_digest(EXECUTOR_PATH) == EXECUTOR_RAW_DIGEST
+    assert raw_digest(WORKFLOW_PATH) == WORKFLOW_RAW_DIGEST
+    assert raw_digest(LIFECYCLE_PATH) == LIFECYCLE_RAW_DIGEST
 
-    print("DEVELOPMENT AUTH v32 synthetic-session cleanup v1 preparation: VALID")
+    executor_source = EXECUTOR_PATH.read_text(encoding="utf-8")
+    workflow_source = WORKFLOW_PATH.read_text(encoding="utf-8")
+    assert CONFIRMATION in executor_source and CONFIRMATION in workflow_source
+    assert STEP2_ID in executor_source
+    assert "request_generate_recovery_credential" in executor_source
+    assert "request_direct_recovery_verification" in executor_source
+    assert "validate_development_synthetic_access_jwt" in executor_source
+    assert "request_global_session_logout" in executor_source
+    assert executor_source.index("validate_jwt(session._access_text())") < executor_source.index(
+        "logout_global("
+    )
+    for prohibited in (
+        "/database/query", "delete from auth.sessions", "delete from auth.refresh_tokens",
+        "request_local_session_logout", "run_recovery_session_lifecycle",
+    ):
+        assert prohibited not in executor_source.lower()
+
+    assert "environment: development" in workflow_source
+    assert "if: github.ref == 'refs/heads/main'" in workflow_source
+    assert "permissions:\n  contents: read" in workflow_source
+    assert "persist-credentials: false" in workflow_source
+    assert "cancel-in-progress: false" in workflow_source
+    assert "SESSION_CLEANUP_STEP2_PREREQUISITE_ABSENT" in workflow_source
+    assert "SESSION_CLEANUP_AUTHORIZATION_WINDOW_INACTIVE" in workflow_source
+    assert workflow_source.count("scripts/development_auth_v32_synthetic_session_cleanup_v1.py") == 1
+    assert "auth.sessions" not in workflow_source
+    assert "auth.refresh_tokens" not in workflow_source
+    assert "/database/query" not in workflow_source
+    assert "workflow_call:" not in workflow_source
+    assert "schedule:" not in workflow_source
+    assert "push:" not in workflow_source
+
+    print("DEVELOPMENT AUTH v32 synthetic-session cleanup v1 execution path: VALID")
 
 
 if __name__ == "__main__":
-    main()
+    main(execution_surface_only="--execution-surface-only" in sys.argv[1:])

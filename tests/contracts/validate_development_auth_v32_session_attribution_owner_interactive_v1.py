@@ -12,8 +12,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -32,6 +34,10 @@ PLAN_ID = "4962f8b6-dad1-45d3-b020-2d60d41409c3"
 PROGRESS_ID = "4d4a2f69-78c6-4a33-b6ac-4a4b6e1d30f5"
 PLAN_DIGEST = "sha256:6977cafc9894894dbb28e0f0f6c8fd3bcc609cdd014eba4144b1d335c4928c7a"
 PROGRESS_DIGEST = "sha256:481bfb127db17518dafb21b780b6cf0904099a3e7c8420be8f3f141e8e03b027"
+APPROVAL_ID = "ef85b6ea-3b5d-44f4-bd04-0fd71a31a0ba"
+APPROVED_AT = "2026-09-22T00:17:58Z"
+APPROVAL_DIGEST = "sha256:df3964782c3c7c28b9b79b677aaa0fd9ec9b99f2377ac0ae296276b3b6c46c27"
+APPROVAL_FILE_DIGEST = "sha256:6fcc8148b7fcafec3213baf26240eeaa147bc4242bdf8653ca4425e9561f2755"
 CONTRACT_DIGEST = "sha256:5f7de4d7bfce089165e5c2add5df702731b25f4342ace9a11a0bc717a52adcb5"
 CREATED_AT = "2026-09-21T23:55:49Z"
 WINDOW_START = "2026-09-22T15:00:00Z"
@@ -130,9 +136,12 @@ def classify(session_count: int, synthetic_session_count: int) -> str:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-22T20:59:59Z")
     assert plan_digest(plan) == PLAN_DIGEST
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
@@ -145,6 +154,24 @@ def main() -> int:
         "starts_at": WINDOW_START,
         "expires_at": WINDOW_END,
     }
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
+    assert APPROVED_AT < WINDOW_START
     assert plan["target"] == {
         "provider_class": "identity.provider",
         "provider_reference": "supabase",
@@ -238,7 +265,6 @@ def main() -> int:
     ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
     assert state["evidence"] == []
 
-    assert not APPROVAL_PATH.exists()
     assert not EXECUTION_PATH.exists()
     assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
     assert not list((ROOT / ".github/workflows").glob(f"*{BOUNDARY}*"))
@@ -249,7 +275,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT AUTH owner-interactive v32 session attribution validation: "
-        "PASS (pristine, unapproved, unexecuted; one aggregate SELECT only)"
+        "PASS (exact approval recorded before effective time; pristine and "
+        "unexecuted; one aggregate SELECT only)"
     )
     return 0
 

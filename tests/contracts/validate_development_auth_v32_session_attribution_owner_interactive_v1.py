@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the pristine owner-interactive v32 session attribution boundary."""
+"""Validate the completed owner-interactive v32 session attribution boundary."""
 from __future__ import annotations
 
 import hashlib
@@ -13,8 +13,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
     approval_digest,
+    authorize_step,
     initial_progress,
     plan_digest,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -29,21 +31,27 @@ PLAN_PATH = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
 APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
 EXECUTION_PATH = BASE / f"{BOUNDARY}.execution-progress.json"
+SUCCESS_PATH = BASE / f"{BOUNDARY}-success.evidence.json"
 
 PLAN_ID = "4962f8b6-dad1-45d3-b020-2d60d41409c3"
 PROGRESS_ID = "4d4a2f69-78c6-4a33-b6ac-4a4b6e1d30f5"
 PLAN_DIGEST = "sha256:6977cafc9894894dbb28e0f0f6c8fd3bcc609cdd014eba4144b1d335c4928c7a"
-PROGRESS_DIGEST = "sha256:481bfb127db17518dafb21b780b6cf0904099a3e7c8420be8f3f141e8e03b027"
+PRISTINE_PROGRESS_DIGEST = "sha256:481bfb127db17518dafb21b780b6cf0904099a3e7c8420be8f3f141e8e03b027"
 APPROVAL_ID = "ef85b6ea-3b5d-44f4-bd04-0fd71a31a0ba"
 APPROVED_AT = "2026-09-22T00:17:58Z"
 APPROVAL_DIGEST = "sha256:df3964782c3c7c28b9b79b677aaa0fd9ec9b99f2377ac0ae296276b3b6c46c27"
 APPROVAL_FILE_DIGEST = "sha256:6fcc8148b7fcafec3213baf26240eeaa147bc4242bdf8653ca4425e9561f2755"
 CONTRACT_DIGEST = "sha256:5f7de4d7bfce089165e5c2add5df702731b25f4342ace9a11a0bc717a52adcb5"
 CREATED_AT = "2026-09-21T23:55:49Z"
+RECORDED_AT = "2026-09-22T15:14:29Z"
 WINDOW_START = "2026-09-22T15:00:00Z"
 WINDOW_END = "2026-09-22T21:00:00Z"
 PROJECT_REF = "pwlhruwutoitnieactol"
 SYNTHETIC_EMAIL = "avuhz-development-synthetic@example.invalid"
+AUTHORIZATION_OBSERVATION_DIGEST = "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
+RESULT_DIGEST = "sha256:a26c3a5b9033b6084f935ee2d75d47bd74a492a5b9c6eea3daee3d7adff5f745"
+SUCCESS_EVIDENCE_DIGEST = "sha256:87448d893e3d6f013cd6a20bdf05eef25b5d1c3425513377469c62eab40dffcc"
+COMPLETED_PROGRESS_DIGEST = "sha256:d97ded08e2e31417382392f99875956b8e75c496f3b5404470191dd13779ff76"
 STEP_ID = (
     "development.auth.v32-session-attribution-owner-interactive-v1.step.01."
     "inspect-session-attribution-counts"
@@ -137,6 +145,8 @@ def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
+    success = load(SUCCESS_PATH)
+    execution = load(EXECUTION_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
@@ -254,7 +264,7 @@ def main() -> int:
         PROGRESS_ID,
         CREATED_AT,
     )
-    assert progress["progress_digest"] == PROGRESS_DIGEST
+    assert progress["progress_digest"] == PRISTINE_PROGRESS_DIGEST
     assert progress["overall_state"] == "NOT_STARTED"
     state = progress["step_states"][0]
     assert (
@@ -265,8 +275,168 @@ def main() -> int:
     ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
     assert state["evidence"] == []
 
-    assert not EXECUTION_PATH.exists()
-    assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
+    authorization_observation = {
+        "interaction_surface": "supabase.dashboard.sql-editor",
+        "project_reference": PROJECT_REF,
+        "responsibility": "AUTH",
+        "approval_exact": True,
+        "authorization_window_execution_owner_confirmed": True,
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "credential_material_observed": False,
+    }
+    sanitized_result = {
+        "classification": "SYNTHETIC_SESSION_ATTRIBUTED",
+        "session_count": 1,
+        "synthetic_session_count": 1,
+    }
+    assert canonical_digest(authorization_observation) == AUTHORIZATION_OBSERVATION_DIGEST
+    assert canonical_digest(sanitized_result) == RESULT_DIGEST
+    assert raw_digest(SUCCESS_PATH) == SUCCESS_EVIDENCE_DIGEST
+    assert success["evidence_type"] == "auth.session-attribution.owner-interactive-inspected"
+    assert success["environment"] == "DEVELOPMENT"
+    assert success["responsibility"] == "AUTH"
+    assert success["project_reference"] == PROJECT_REF
+    assert success["plan_id"] == PLAN_ID and success["plan_digest"] == PLAN_DIGEST
+    assert success["approval_id"] == APPROVAL_ID
+    assert success["approval_digest"] == APPROVAL_DIGEST
+    assert success["step_id"] == STEP_ID and success["attempt"] == 1
+    assert success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert success["classification"] == "SYNTHETIC_SESSION_ATTRIBUTED"
+    assert success["authorization_observation"] == authorization_observation
+    assert success["authorization_observation_digest"] == AUTHORIZATION_OBSERVATION_DIGEST
+    assert success["sanitized_result"] == sanitized_result
+    assert success["result_digest"] == RESULT_DIGEST
+    assert success["record_basis"] == "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME"
+    assert success["recorded_at"] == RECORDED_AT
+    observed = success["execution_observation"]
+    assert observed == {
+        "execution_class": "PROVIDER_READ",
+        "execution_timestamp_retained": False,
+        "recorded_at_is_execution_timestamp": False,
+        "approved_aggregate_select_attempts": 1,
+        "additional_sql_executed": False,
+        "refresh_token_query_executed": False,
+        "provider_mutation_attempted": False,
+        "cleanup_attempted": False,
+    }
+    assert all(success["verification_observation"].values())
+    assert all(value is False for value in success["security_state"].values())
+    success_text = SUCCESS_PATH.read_text(encoding="utf-8")
+    assert SYNTHETIC_EMAIL not in success_text
+    for prohibited in (
+        '"refresh_token_count":',
+        '"session_id":',
+        '"user_id":',
+        '"access_token":',
+        '"refresh_token":',
+    ):
+        assert prohibited not in success_text
+
+    preflight_assertion = {
+        "binding_id": (
+            "binding.development.auth.v32-session-attribution-owner-interactive-v1."
+            "dashboard-session-preflight"
+        ),
+        "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+        "value_class": "CONFIGURATION_REFERENCE",
+        "source_step_id": None,
+        "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+        "evidence_digest": AUTHORIZATION_OBSERVATION_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": AUTHORIZATION_OBSERVATION_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }
+    request = {
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": PROJECT_REF,
+        "responsibility": "AUTH",
+        "issuer_reference": f"https://{PROJECT_REF}.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": STEP_ID,
+        "resource_reference": "supabase:pwlhruwutoitnieactol:auth-session-attribution-counts",
+        "resource_version": "owner-interactive.v1",
+        "resource_digest": CONTRACT_DIGEST,
+        "operation": "provider.auth-session-state.attribute-owner-interactive-read-only",
+        "execution_class": "PROVIDER_READ",
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "required_evidence": [
+            {"evidence_type": item["evidence_type"], "evidence_digest": item["exact_digest"]}
+            for item in step["required_evidence"]
+        ],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    authorized = authorize_step(
+        plan,
+        approval,
+        progress,
+        request,
+        SCHEMA_ROOT,
+        RECORDED_AT,
+        trusted_preflight_assertions=[preflight_assertion],
+    )
+    outcome_evidence = [{
+        "evidence_type": "auth.session-attribution.owner-interactive-inspected",
+        "evidence_reference": (
+            "provider.execution.v32-session-attribution-owner-interactive-v1."
+            "step1.attempt1.verified"
+        ),
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }]
+    produced_binding = {
+        "binding_id": (
+            "binding.development.auth.v32-session-attribution-owner-interactive-v1.result"
+        ),
+        "phase": "PRODUCED_BY_CURRENT_STEP",
+        "value_class": "CONTENT_DIGEST",
+        "source_step_id": None,
+        "evidence_type": "auth.session-attribution.owner-interactive-inspected",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": RESULT_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }
+    expected_execution = record_step_outcome(
+        plan,
+        approval,
+        authorized,
+        STEP_ID,
+        "SUCCEEDED",
+        "PASS",
+        outcome_evidence,
+        step["expected_postcondition"],
+        None,
+        SCHEMA_ROOT,
+        RECORDED_AT,
+        binding_assertions=[produced_binding],
+    )
+    validate_progress(plan, execution, SCHEMA_ROOT)
+    assert execution == expected_execution
+    assert execution["progress_digest"] == COMPLETED_PROGRESS_DIGEST
+    assert execution["overall_state"] == "COMPLETED"
+    execution_state = execution["step_states"][0]
+    assert (
+        execution_state["authorization_state"],
+        execution_state["execution_state"],
+        execution_state["verification_state"],
+        execution_state["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert execution_state["safe_error_code"] is None
+    assert execution_state["evidence"] == outcome_evidence
+    assert execution_state["binding_assertions"] == [preflight_assertion, produced_binding]
+
     assert not list((ROOT / ".github/workflows").glob(f"*{BOUNDARY}*"))
     assert not list((ROOT / "scripts").glob(f"*{BOUNDARY}*"))
 
@@ -275,8 +445,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT AUTH owner-interactive v32 session attribution validation: "
-        "PASS (exact approval recorded before effective time; pristine and "
-        "unexecuted; one aggregate SELECT only)"
+        "PASS (one aggregate SELECT recorded as 1/1; synthetic session attributed; "
+        "authorization consumed; no mutation or additional SQL)"
     )
     return 0
 

@@ -1,0 +1,63 @@
+{
+  "evidence_type": "auth.session-attribution.owner-interactive-inspected",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "4962f8b6-dad1-45d3-b020-2d60d41409c3",
+  "plan_version": 1,
+  "plan_digest": "sha256:6977cafc9894894dbb28e0f0f6c8fd3bcc609cdd014eba4144b1d335c4928c7a",
+  "approval_id": "ef85b6ea-3b5d-44f4-bd04-0fd71a31a0ba",
+  "approval_digest": "sha256:df3964782c3c7c28b9b79b677aaa0fd9ec9b99f2377ac0ae296276b3b6c46c27",
+  "step_id": "development.auth.v32-session-attribution-owner-interactive-v1.step.01.inspect-session-attribution-counts",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "SYNTHETIC_SESSION_ATTRIBUTED",
+  "authorization_observation": {
+    "interaction_surface": "supabase.dashboard.sql-editor",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "approval_exact": true,
+    "authorization_window_execution_owner_confirmed": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "credential_material_observed": false
+  },
+  "authorization_observation_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+  "execution_observation": {
+    "execution_class": "PROVIDER_READ",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_aggregate_select_attempts": 1,
+    "additional_sql_executed": false,
+    "refresh_token_query_executed": false,
+    "provider_mutation_attempted": false,
+    "cleanup_attempted": false
+  },
+  "sanitized_result": {
+    "classification": "SYNTHETIC_SESSION_ATTRIBUTED",
+    "session_count": 1,
+    "synthetic_session_count": 1
+  },
+  "result_digest": "sha256:a26c3a5b9033b6084f935ee2d75d47bd74a492a5b9c6eea3daee3d7adff5f745",
+  "verification_observation": {
+    "result_fields_exact": true,
+    "aggregate_only": true,
+    "synthetic_session_attributed": true,
+    "postcondition_verified": true
+  },
+  "security_state": {
+    "raw_rows_returned": false,
+    "raw_rows_retained": false,
+    "session_ids_returned": false,
+    "user_ids_returned": false,
+    "token_values_returned": false,
+    "credential_material_observed": false,
+    "pii_retained": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-09-22T15:14:29Z"
+}

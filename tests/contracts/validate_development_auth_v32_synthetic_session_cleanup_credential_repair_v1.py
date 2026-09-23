@@ -13,8 +13,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -26,12 +28,17 @@ BASE = ROOT / "contracts/plans/v1"
 BOUNDARY = "development-auth-v32-synthetic-session-cleanup-credential-repair-v1"
 PLAN_PATH = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
+APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
 PLAN_ID = "0224c4fb-845c-4627-b48f-252ec954283c"
 PROGRESS_ID = "764ab6f1-e189-499a-9bb3-b1a7bcf6e52f"
 PLAN_DIGEST = "sha256:57b26eefa9ca294a4dff95d617a50c3e46d0cdaab1cf1862c1d1239d042babcb"
 PROGRESS_DIGEST = "sha256:027a7aaed6577ac0fccb97f225ebfdbecebb72224f3186ac82057459fd72e08e"
 PLAN_RAW_DIGEST = "sha256:a9bfe2e9ba4969877b115ba30f69b43f9144541741da09f6e331a815d294f21a"
 PROGRESS_RAW_DIGEST = "sha256:a2806d69ce3b598d45cf439931b94e58b8d6d1827f565bf7cc7964966ef78952"
+APPROVAL_ID = "f0b629ae-22c4-4e6f-bcf9-ac563761cd65"
+APPROVED_AT = "2026-09-23T19:48:02Z"
+APPROVAL_DIGEST = "sha256:a15a0e53e35a8aea7a6cf7bb6fe766ecba67777c7b702148c3dbc92dba63eb33"
+APPROVAL_RAW_DIGEST = "sha256:c904810ac2187895ff5f4d3464bc5e8b906a3cb031daa05cf97ade9dddd36a53"
 PRIOR_FAILURE_DIGEST = "sha256:3c41820fdcafa1adf2afe8653a1a3d1ba7561ab049cbc0ca84b370f78f9d4867"
 PRIOR_STOPPED_PROGRESS_DIGEST = "sha256:a8344c793b45ea0d05024cd259ec11c58437f7db51c590d2cfccf5c8e8d11f2b"
 PROJECT = "pwlhruwutoitnieactol"
@@ -129,13 +136,30 @@ def raw_digest(path: Path) -> str:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
     assert raw_digest(PLAN_PATH) == PLAN_RAW_DIGEST
     assert raw_digest(PROGRESS_PATH) == PROGRESS_RAW_DIGEST
+    assert approval["approval_id"] == APPROVAL_ID
+    assert approval["plan_id"] == PLAN_ID
+    assert approval["plan_version"] == plan["plan_version"]
+    assert approval["plan_digest"] == PLAN_DIGEST
+    assert approval["owner_identity"] == "github:AnonymousKoo"
+    assert approval["decision"] == "APPROVE"
+    assert approval["environment"] == "DEVELOPMENT"
+    assert approval["effective_at"] == WINDOW_START
+    assert approval["expires_at"] == WINDOW_END
+    assert approval["approved_at"] == APPROVED_AT < WINDOW_START
+    assert approval["status"] == "ACTIVE"
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
+    if APPROVAL_RAW_DIGEST:
+        assert raw_digest(APPROVAL_PATH) == APPROVAL_RAW_DIGEST
     assert plan["definition_status"] == "READY_FOR_APPROVAL"
     assert plan["environment"] == "DEVELOPMENT"
     assert plan["target"]["provider_reference"] == "supabase"
@@ -236,7 +260,6 @@ def main() -> int:
     assert "provider.contact" in retire["prohibited_actions"]
     assert "provider.mutation" in retire["prohibited_actions"]
 
-    assert not (BASE / f"{BOUNDARY}.approval.json").exists()
     assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
     assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
     assert not list(BASE.glob("*synthetic-session-cleanup-v2*.plan.json"))
@@ -251,7 +274,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT AUTH cleanup credential-repair v1: PASS "
-        "(pristine/unapproved/unexecuted; four separately authorized ordered steps; "
+        "(exact approval; pristine/unexecuted; four separately authorized ordered steps; "
         "new v2 binding reference only; retirement obligation sealed last)"
     )
     return 0

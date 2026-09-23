@@ -17,6 +17,7 @@ VALIDATOR = (
     "validate_development_auth_v32_synthetic_session_cleanup_credential_repair_v1.py"
 )
 SECRET_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
+APPROVAL = BASE / f"{BOUNDARY}.approval.json"
 
 
 class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
@@ -27,6 +28,21 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("cleanup credential-repair v1: PASS", result.stdout)
+
+    def test_exact_approval_exists_without_execution_authority_consumption(self) -> None:
+        approval = json.loads(APPROVAL.read_text(encoding="utf-8"))
+        progress = json.loads(PROGRESS.read_text(encoding="utf-8"))
+        self.assertEqual(approval["decision"], "APPROVE")
+        self.assertEqual(approval["authority_scope"], "EXACT_PLAN_ONLY")
+        self.assertEqual(approval["environment"], "DEVELOPMENT")
+        plan = json.loads(PLAN.read_text(encoding="utf-8"))
+        self.assertEqual(approval["plan_id"], plan["plan_id"])
+        self.assertEqual(progress["overall_state"], "NOT_STARTED")
+        self.assertTrue(
+            all(not state["authorization_consumed"] for state in progress["step_states"])
+        )
+        self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
+        self.assertFalse(list(BASE.glob(f"{BOUNDARY}*.evidence.json")))
 
     def test_only_reference_name_and_no_credential_material_is_retained(self) -> None:
         text = PLAN.read_text(encoding="utf-8") + PROGRESS.read_text(encoding="utf-8")
@@ -60,7 +76,6 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         )
         self.assertIn("cleanup-v2.prepare", plan["prohibited_actions"])
         self.assertIn("cleanup.execute", plan["prohibited_actions"])
-        self.assertFalse((BASE / f"{BOUNDARY}.approval.json").exists())
         self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
 
 

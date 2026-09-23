@@ -3,8 +3,8 @@
   "plan_id": "daa207fd-1426-455f-a921-1dc69d8f2d65",
   "plan_version": 1,
   "plan_digest": "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e",
-  "record_version": 3,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "STOPPED",
   "step_states": [
     {
       "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.01.verify-attributed-session-precondition",
@@ -53,18 +53,52 @@
     },
     {
       "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.02.revoke-synthetic-sessions-global",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
-      "binding_assertions": []
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "evidence_reference": "github.actions.run.35889261882.step2.attempt1.failed-unavailable",
+          "evidence_digest": "sha256:3c41820fdcafa1adf2afe8653a1a3d1ba7561ab049cbc0ca84b370f78f9d4867",
+          "recorded_at": "2026-09-23T16:35:04Z"
+        }
+      ],
+      "observed_postcondition": "Step 2 stopped before provider contact with SESSION_CLEANUP_ADMIN_CREDENTIAL_UNAVAILABLE. Recovery generation, recovery verification, temporary-session issuance, JWT validation, global logout, provider mutation, SQL, and Step 3 were not reached; cleanup remains unverified and retry is unauthorized.",
+      "safe_error_code": "SESSION_CLEANUP_ADMIN_CREDENTIAL_UNAVAILABLE",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v32-synthetic-session-cleanup-v1.precleanup-state",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.01.verify-attributed-session-precondition",
+          "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+          "evidence_digest": "sha256:09aea4f1b717b3471f7c0c5265a301c36b7ca8f7d82b7ca49ace0577bb0222bb",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1",
+          "recorded_at": "2026-09-23T16:35:04Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v32-synthetic-session-cleanup-v1.cleanup-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:414e02c7cac3f2d83d8a4591d2fc2eeb92abada5ca8e82abcd1cfe229854f141",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9fa6fd7d168f957f957d3bfac3e33d9b371910ae86067ec4d75e85d109ffb95d",
+          "recorded_at": "2026-09-23T16:35:04Z"
+        }
+      ]
     },
     {
       "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.03.verify-zero-session-refresh-state",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -74,6 +108,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-09-23T15:10:34Z",
-  "progress_digest": "sha256:9224aebcb9e1dbcf5e80885530592e83bf2f57ac917904210a927f9b03f9a22b"
+  "updated_at": "2026-09-23T16:35:04Z",
+  "progress_digest": "sha256:a8344c793b45ea0d05024cd259ec11c58437f7db51c590d2cfccf5c8e8d11f2b"
 }

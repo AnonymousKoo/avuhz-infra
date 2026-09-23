@@ -32,6 +32,7 @@ PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
 APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
 EXECUTION_PROGRESS_PATH = BASE / f"{BOUNDARY}.execution-progress.json"
 STEP1_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step1-success.evidence.json"
+STEP2_FAILURE_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step2-failure.evidence.json"
 PLAN_ID = "daa207fd-1426-455f-a921-1dc69d8f2d65"
 PROGRESS_ID = "a75eec04-ffa1-4a49-9099-0f8a25d9e13b"
 PLAN_DIGEST = "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e"
@@ -46,10 +47,15 @@ EXECUTOR_RAW_DIGEST = "sha256:a3e883ca5798bd60094181419c188a28f46cbcc8f648366e60
 WORKFLOW_RAW_DIGEST = "sha256:28f5b16586e64b1bad389a62c40e2172950e59f9814a3b0c0fe428800ebd929f"
 LIFECYCLE_RAW_DIGEST = "sha256:55503f13489944b0b4b51e3dc24875d5c6e83c69e8fc6a8aed6a03fdb0736749"
 STEP1_EVIDENCE_DIGEST = "sha256:09aea4f1b717b3471f7c0c5265a301c36b7ca8f7d82b7ca49ace0577bb0222bb"
-EXECUTION_PROGRESS_DIGEST = "sha256:9224aebcb9e1dbcf5e80885530592e83bf2f57ac917904210a927f9b03f9a22b"
+STEP2_FAILURE_EVIDENCE_DIGEST = "sha256:3c41820fdcafa1adf2afe8653a1a3d1ba7561ab049cbc0ca84b370f78f9d4867"
+EXECUTION_PROGRESS_DIGEST = "sha256:a8344c793b45ea0d05024cd259ec11c58437f7db51c590d2cfccf5c8e8d11f2b"
 AUTHORIZATION_OBSERVATION_DIGEST = "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
 RESULT_DIGEST = "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1"
 RECORDED_AT = "2026-09-23T15:10:34Z"
+STEP2_RECORDED_AT = "2026-09-23T16:35:04Z"
+STEP2_WORKFLOW_RUN_ID = 35889261882
+STEP2_EXECUTION_SHA = "048fe887ef8f9c0f32b8e6d6b59fcd83605f3711"
+STEP2_SAFE_ERROR = "SESSION_CLEANUP_ADMIN_CREDENTIAL_UNAVAILABLE"
 CREATED_AT = "2026-09-22T15:40:34Z"
 WINDOW_START = "2026-09-23T15:00:00Z"
 WINDOW_END = "2026-09-23T21:00:00Z"
@@ -219,6 +225,7 @@ def main(*, execution_surface_only: bool = False) -> None:
     approval = load(APPROVAL_PATH)
     execution = load(EXECUTION_PROGRESS_PATH)
     step1_evidence = load(STEP1_EVIDENCE_PATH)
+    step2_failure_evidence = load(STEP2_FAILURE_EVIDENCE_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
     validate_progress(plan, execution, SCHEMA_ROOT)
@@ -393,6 +400,84 @@ def main(*, execution_surface_only: bool = False) -> None:
     ):
         assert prohibited not in evidence_text
 
+    assert raw_digest(STEP2_FAILURE_EVIDENCE_PATH) == STEP2_FAILURE_EVIDENCE_DIGEST
+    assert step2_failure_evidence["evidence_type"] == (
+        "auth.synthetic-session.global-revocation.accepted"
+    )
+    assert step2_failure_evidence["environment"] == "DEVELOPMENT"
+    assert step2_failure_evidence["responsibility"] == "AUTH"
+    assert step2_failure_evidence["project_reference"] == PROJECT_REF
+    assert step2_failure_evidence["plan_id"] == PLAN_ID
+    assert step2_failure_evidence["plan_digest"] == PLAN_DIGEST
+    assert step2_failure_evidence["approval_id"] == APPROVAL_ID
+    assert step2_failure_evidence["approval_digest"] == APPROVAL_DIGEST
+    assert step2_failure_evidence["step_id"] == STEP2_ID
+    assert step2_failure_evidence["attempt"] == 1
+    assert step2_failure_evidence["outcome"] == "FAILED_UNVERIFIED"
+    assert step2_failure_evidence["safe_error_code"] == STEP2_SAFE_ERROR
+    assert step2_failure_evidence["classification"] == "SESSION_STATE_UNVERIFIED"
+    observation = step2_failure_evidence["execution_observation"]
+    assert observation == {
+        "workflow_run_id": STEP2_WORKFLOW_RUN_ID,
+        "execution_sha": STEP2_EXECUTION_SHA,
+        "execution_class": "PROVIDER_MUTATION",
+        "workflow_dispatch_attempts": 1,
+        "canonical_main_binding_passed": True,
+        "dispatch_confirmation_passed": True,
+        "plan_binding_passed": True,
+        "step1_evidence_prerequisite_passed": True,
+        "authorization_window_check_passed": True,
+        "execution_surface_validator_passed": True,
+        "executor_entered": True,
+        "recovery_credential_generation_attempted": False,
+        "recovery_verification_attempted": False,
+        "temporary_auth_session_issued": False,
+        "jwt_validation_reached": False,
+        "global_logout_attempted": False,
+        "provider_contact_attempted": False,
+        "provider_mutation_attempted": False,
+        "step3_executed": False,
+        "sql_executed": False,
+    }
+    assert step2_failure_evidence["runtime_binding_observation"] == {
+        "admin_credential_reference": ADMIN_REFERENCE,
+        "admin_credential_status": "UNAVAILABLE_OR_INVALID",
+        "publishable_configuration_reference": PUBLISHABLE_REFERENCE,
+        "publishable_configuration_status": "PRESENT",
+        "credential_values_observed": False,
+        "credential_digests_recorded": False,
+    }
+    assert step2_failure_evidence["failure_observation"] == {
+        "session_state": "SESSION_STATE_UNVERIFIED",
+        "cleanup_verified": False,
+        "step3_readback_required": True,
+        "provider_cleanup_reached": False,
+    }
+    assert step2_failure_evidence["authority_state"] == {
+        "step2_authorization": "CONSUMED",
+        "authorization_consumed": True,
+        "retry_authorized": False,
+        "step3_authorization": "BLOCKED",
+    }
+    assert step2_failure_evidence["credential_material_retained"] is False
+    assert step2_failure_evidence["pii_retained"] is False
+    assert all(value is False for value in step2_failure_evidence["security_state"].values())
+    assert step2_failure_evidence["execution_time_source"] == (
+        "GITHUB_ACTIONS_RUN_METADATA"
+    )
+    assert step2_failure_evidence["record_basis"] == (
+        "GITHUB_ACTIONS_SANITIZED_EXECUTION_OUTCOME"
+    )
+    assert step2_failure_evidence["recorded_at"] == STEP2_RECORDED_AT
+    failure_text = STEP2_FAILURE_EVIDENCE_PATH.read_text(encoding="utf-8")
+    assert SYNTHETIC_EMAIL not in failure_text
+    for prohibited in (
+        '"access_token":', '"refresh_token":', '"token_hash":',
+        '"hashed_token":', '"session_id":', '"user_id":',
+        '"email":', '"provider_response":', '"credential_digest":',
+    ):
+        assert prohibited not in failure_text
+
     preflight_assertion = {
         "binding_id": (
             "binding.development.auth.v32-synthetic-session-cleanup-v1."
@@ -465,14 +550,107 @@ def main(*, execution_surface_only: bool = False) -> None:
         "value_digest": RESULT_DIGEST,
         "recorded_at": RECORDED_AT,
     }
-    expected_execution = record_step_outcome(
+    step1_execution = record_step_outcome(
         plan, approval, authorized, STEP1_ID, "SUCCEEDED", "PASS",
         outcome_evidence, precheck["expected_postcondition"], None,
         SCHEMA_ROOT, RECORDED_AT, binding_assertions=[produced_binding],
     )
+    capability_config = {
+        "executor_reference": (
+            "github-actions.development-auth-v32-synthetic-session-cleanup-v1"
+        ),
+        "environment": "development",
+        "project_reference": PROJECT_REF,
+        "step_id": STEP2_ID,
+        "operation": cleanup["operation"],
+        "credential_class": "SUPABASE_AUTH_ADMIN_EPHEMERAL",
+        "admin_binding_name": ADMIN_REFERENCE,
+        "publishable_binding_name": PUBLISHABLE_REFERENCE,
+        "executor_source_digest": EXECUTOR_RAW_DIGEST,
+    }
+    capability_config_digest = canonical_digest(capability_config)
+    capability_evidence = {
+        "evidence_type": "auth.admin-executor-capability.observed",
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": PROJECT_REF,
+        "responsibility": "AUTH",
+        "plan_id": PLAN_ID,
+        "step_id": STEP2_ID,
+        "configuration_digest": capability_config_digest,
+        "credential_material_observed": False,
+        "provider_contact_attempted": False,
+    }
+    capability_assertion = {
+        "binding_id": (
+            "binding.development.auth.v32-synthetic-session-cleanup-v1."
+            "cleanup-executor-capability"
+        ),
+        "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+        "value_class": "CONFIGURATION_REFERENCE",
+        "source_step_id": None,
+        "evidence_type": "auth.admin-executor-capability.observed",
+        "evidence_digest": canonical_digest(capability_evidence),
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": capability_config_digest,
+        "recorded_at": STEP2_RECORDED_AT,
+    }
+    step2_request = {
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": PROJECT_REF,
+        "responsibility": "AUTH",
+        "issuer_reference": f"https://{PROJECT_REF}.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": STEP2_ID,
+        "resource_reference": cleanup["resource"]["resource_reference"],
+        "resource_version": cleanup["resource"]["exact_version"],
+        "resource_digest": cleanup["resource"]["exact_digest"],
+        "operation": cleanup["operation"],
+        "execution_class": "PROVIDER_MUTATION",
+        "credential_class": "SUPABASE_AUTH_ADMIN_EPHEMERAL",
+        "required_evidence": [{
+            "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+            "evidence_digest": STEP1_EVIDENCE_DIGEST,
+        }],
+        "prior_evidence_digests": [STEP1_EVIDENCE_DIGEST],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    step2_authorized = authorize_step(
+        plan, approval, step1_execution, step2_request, SCHEMA_ROOT,
+        STEP2_RECORDED_AT, trusted_preflight_assertions=[capability_assertion],
+    )
+    step2_outcome_evidence = [{
+        "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+        "evidence_reference": (
+            "github.actions.run.35889261882.step2.attempt1.failed-unavailable"
+        ),
+        "evidence_digest": STEP2_FAILURE_EVIDENCE_DIGEST,
+        "recorded_at": STEP2_RECORDED_AT,
+    }]
+    failure_postcondition = (
+        "Step 2 stopped before provider contact with "
+        "SESSION_CLEANUP_ADMIN_CREDENTIAL_UNAVAILABLE. Recovery generation, "
+        "recovery verification, temporary-session issuance, JWT validation, "
+        "global logout, provider mutation, SQL, and Step 3 were not reached; "
+        "cleanup remains unverified and retry is unauthorized."
+    )
+    expected_execution = record_step_outcome(
+        plan, approval, step2_authorized, STEP2_ID, "FAILED", "FAIL",
+        step2_outcome_evidence, failure_postcondition, STEP2_SAFE_ERROR,
+        SCHEMA_ROOT, STEP2_RECORDED_AT, binding_assertions=[],
+    )
     assert execution == expected_execution
     assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
-    assert execution["overall_state"] == "IN_PROGRESS"
+    assert execution["overall_state"] == "STOPPED"
     first, second, third = execution["step_states"]
     assert (
         first["authorization_state"], first["execution_state"],
@@ -481,12 +659,21 @@ def main(*, execution_surface_only: bool = False) -> None:
     ) == ("CONSUMED", "SUCCEEDED", "PASS", True, None)
     assert first["evidence"] == outcome_evidence
     assert first["binding_assertions"] == [preflight_assertion, produced_binding]
-    for pending in (second, third):
-        assert (
-            pending["authorization_state"], pending["execution_state"],
-            pending["verification_state"], pending["authorization_consumed"],
-            pending["evidence"], pending["binding_assertions"],
-        ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False, [], [])
+    assert (
+        second["authorization_state"], second["execution_state"],
+        second["verification_state"], second["authorization_consumed"],
+        second["safe_error_code"],
+    ) == ("CONSUMED", "FAILED", "FAIL", True, STEP2_SAFE_ERROR)
+    assert second["evidence"] == step2_outcome_evidence
+    assert second["binding_assertions"] == [
+        step2_authorized["step_states"][1]["binding_assertions"][0],
+        capability_assertion,
+    ]
+    assert (
+        third["authorization_state"], third["execution_state"],
+        third["verification_state"], third["authorization_consumed"],
+        third["evidence"], third["binding_assertions"],
+    ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False, [], [])
     assert raw_digest(EXECUTOR_PATH) == EXECUTOR_RAW_DIGEST
     assert raw_digest(WORKFLOW_PATH) == WORKFLOW_RAW_DIGEST
     assert raw_digest(LIFECYCLE_PATH) == LIFECYCLE_RAW_DIGEST

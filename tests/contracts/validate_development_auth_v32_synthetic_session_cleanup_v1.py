@@ -13,8 +13,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
     approval_digest,
+    authorize_step,
     initial_progress,
     plan_digest,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -28,6 +30,8 @@ BOUNDARY = "development-auth-v32-synthetic-session-cleanup-v1"
 PLAN_PATH = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
 APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
+EXECUTION_PROGRESS_PATH = BASE / f"{BOUNDARY}.execution-progress.json"
+STEP1_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step1-success.evidence.json"
 PLAN_ID = "daa207fd-1426-455f-a921-1dc69d8f2d65"
 PROGRESS_ID = "a75eec04-ffa1-4a49-9099-0f8a25d9e13b"
 PLAN_DIGEST = "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e"
@@ -41,6 +45,11 @@ PROGRESS_RAW_DIGEST = "sha256:d30e7dc67e3783e8ce59ae08e5fe2d9ba1c68dd381b76b772d
 EXECUTOR_RAW_DIGEST = "sha256:a3e883ca5798bd60094181419c188a28f46cbcc8f648366e60cad29fa02fc7e4"
 WORKFLOW_RAW_DIGEST = "sha256:28f5b16586e64b1bad389a62c40e2172950e59f9814a3b0c0fe428800ebd929f"
 LIFECYCLE_RAW_DIGEST = "sha256:55503f13489944b0b4b51e3dc24875d5c6e83c69e8fc6a8aed6a03fdb0736749"
+STEP1_EVIDENCE_DIGEST = "sha256:09aea4f1b717b3471f7c0c5265a301c36b7ca8f7d82b7ca49ace0577bb0222bb"
+EXECUTION_PROGRESS_DIGEST = "sha256:9224aebcb9e1dbcf5e80885530592e83bf2f57ac917904210a927f9b03f9a22b"
+AUTHORIZATION_OBSERVATION_DIGEST = "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
+RESULT_DIGEST = "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1"
+RECORDED_AT = "2026-09-23T15:10:34Z"
 CREATED_AT = "2026-09-22T15:40:34Z"
 WINDOW_START = "2026-09-23T15:00:00Z"
 WINDOW_END = "2026-09-23T21:00:00Z"
@@ -52,6 +61,10 @@ ATTRIBUTION_PROGRESS_DIGEST = "sha256:d97ded08e2e31417382392f99875956b8e75c496f3
 ADMIN_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V1_EPHEMERAL"
 PUBLISHABLE_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY"
 CONFIRMATION = "REVOKE_V32_SYNTHETIC_SESSIONS_GLOBAL"
+STEP1_ID = (
+    "development.auth.v32-synthetic-session-cleanup-v1.step.01."
+    "verify-attributed-session-precondition"
+)
 STEP2_ID = (
     "development.auth.v32-synthetic-session-cleanup-v1.step.02."
     "revoke-synthetic-sessions-global"
@@ -204,8 +217,11 @@ def main(*, execution_surface_only: bool = False) -> None:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
+    execution = load(EXECUTION_PROGRESS_PATH)
+    step1_evidence = load(STEP1_EVIDENCE_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_progress(plan, execution, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
     validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-23T20:59:59Z")
 
@@ -323,9 +339,154 @@ def main(*, execution_surface_only: bool = False) -> None:
         for s in progress["step_states"]
     )
 
-    if not execution_surface_only:
-        assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
-        assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
+    assert raw_digest(STEP1_EVIDENCE_PATH) == STEP1_EVIDENCE_DIGEST
+    assert step1_evidence["evidence_type"] == (
+        "auth.synthetic-session.precleanup-attribution.verified"
+    )
+    assert step1_evidence["environment"] == "DEVELOPMENT"
+    assert step1_evidence["responsibility"] == "AUTH"
+    assert step1_evidence["project_reference"] == PROJECT_REF
+    assert step1_evidence["plan_id"] == PLAN_ID
+    assert step1_evidence["plan_digest"] == PLAN_DIGEST
+    assert step1_evidence["approval_id"] == APPROVAL_ID
+    assert step1_evidence["approval_digest"] == APPROVAL_DIGEST
+    assert step1_evidence["step_id"] == STEP1_ID
+    assert step1_evidence["attempt"] == 1
+    assert step1_evidence["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step1_evidence["classification"] == (
+        "PRE_CLEANUP_SYNTHETIC_SESSION_CONFIRMED"
+    )
+    assert step1_evidence["sanitized_result"] == {
+        "session_count": 1,
+        "synthetic_session_count": 1,
+    }
+    assert canonical_digest(step1_evidence["sanitized_result"]) == RESULT_DIGEST
+    assert step1_evidence["authorization_observation_digest"] == (
+        AUTHORIZATION_OBSERVATION_DIGEST
+    )
+    assert step1_evidence["execution_observation"] == {
+        "execution_class": "PROVIDER_READ",
+        "execution_timestamp_retained": False,
+        "recorded_at_is_execution_timestamp": False,
+        "approved_aggregate_select_attempts": 1,
+        "additional_sql_executed": False,
+        "refresh_token_query_executed": False,
+        "provider_mutation_attempted": False,
+        "step2_executed": False,
+        "step3_executed": False,
+        "cleanup_attempted": False,
+    }
+    assert step1_evidence["provider_mutation_attempted"] is False
+    assert step1_evidence["credential_material_retained"] is False
+    assert step1_evidence["pii_retained"] is False
+    assert all(step1_evidence["verification_observation"].values())
+    assert all(value is False for value in step1_evidence["security_state"].values())
+    assert step1_evidence["record_basis"] == (
+        "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME"
+    )
+    assert step1_evidence["recorded_at"] == RECORDED_AT
+    evidence_text = STEP1_EVIDENCE_PATH.read_text(encoding="utf-8")
+    assert SYNTHETIC_EMAIL not in evidence_text
+    for prohibited in (
+        '"refresh_token_count":', '"session_id":', '"user_id":',
+        '"access_token":', '"refresh_token":',
+    ):
+        assert prohibited not in evidence_text
+
+    preflight_assertion = {
+        "binding_id": (
+            "binding.development.auth.v32-synthetic-session-cleanup-v1."
+            "dashboard-precleanup-read"
+        ),
+        "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+        "value_class": "CONFIGURATION_REFERENCE",
+        "source_step_id": None,
+        "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+        "evidence_digest": AUTHORIZATION_OBSERVATION_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": AUTHORIZATION_OBSERVATION_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }
+    request = {
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": PROJECT_REF,
+        "responsibility": "AUTH",
+        "issuer_reference": f"https://{PROJECT_REF}.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": STEP1_ID,
+        "resource_reference": precheck["resource"]["resource_reference"],
+        "resource_version": precheck["resource"]["exact_version"],
+        "resource_digest": precheck["resource"]["exact_digest"],
+        "operation": precheck["operation"],
+        "execution_class": "PROVIDER_READ",
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "required_evidence": [{
+            "evidence_type": "auth.session-attribution.owner-interactive-inspected",
+            "evidence_digest": ATTRIBUTION_EVIDENCE_DIGEST,
+        }],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    authorized = authorize_step(
+        plan, approval, progress, request, SCHEMA_ROOT, RECORDED_AT,
+        trusted_preflight_assertions=[preflight_assertion],
+    )
+    outcome_evidence = [{
+        "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+        "evidence_reference": (
+            "provider.execution.v32-synthetic-session-cleanup-v1."
+            "step1.attempt1.verified"
+        ),
+        "evidence_digest": STEP1_EVIDENCE_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }]
+    produced_binding = {
+        "binding_id": (
+            "binding.development.auth.v32-synthetic-session-cleanup-v1."
+            "precleanup-state"
+        ),
+        "phase": "PRODUCED_BY_CURRENT_STEP",
+        "value_class": "CONTENT_DIGEST",
+        "source_step_id": None,
+        "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+        "evidence_digest": STEP1_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": RESULT_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }
+    expected_execution = record_step_outcome(
+        plan, approval, authorized, STEP1_ID, "SUCCEEDED", "PASS",
+        outcome_evidence, precheck["expected_postcondition"], None,
+        SCHEMA_ROOT, RECORDED_AT, binding_assertions=[produced_binding],
+    )
+    assert execution == expected_execution
+    assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    assert execution["overall_state"] == "IN_PROGRESS"
+    first, second, third = execution["step_states"]
+    assert (
+        first["authorization_state"], first["execution_state"],
+        first["verification_state"], first["authorization_consumed"],
+        first["safe_error_code"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True, None)
+    assert first["evidence"] == outcome_evidence
+    assert first["binding_assertions"] == [preflight_assertion, produced_binding]
+    for pending in (second, third):
+        assert (
+            pending["authorization_state"], pending["execution_state"],
+            pending["verification_state"], pending["authorization_consumed"],
+            pending["evidence"], pending["binding_assertions"],
+        ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False, [], [])
     assert raw_digest(EXECUTOR_PATH) == EXECUTOR_RAW_DIGEST
     assert raw_digest(WORKFLOW_PATH) == WORKFLOW_RAW_DIGEST
     assert raw_digest(LIFECYCLE_PATH) == LIFECYCLE_RAW_DIGEST

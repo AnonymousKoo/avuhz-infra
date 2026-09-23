@@ -1,0 +1,67 @@
+{
+  "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "daa207fd-1426-455f-a921-1dc69d8f2d65",
+  "plan_version": 1,
+  "plan_digest": "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e",
+  "approval_id": "7fa7cd4e-5448-4af3-9d29-4478a0c90cee",
+  "approval_digest": "sha256:bd9756345ccaa63f82dd6ec4d8398b90574d3ba5b4049d0e7ddab738fe92e09f",
+  "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.01.verify-attributed-session-precondition",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "PRE_CLEANUP_SYNTHETIC_SESSION_CONFIRMED",
+  "authorization_observation": {
+    "interaction_surface": "supabase.dashboard.sql-editor",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "approval_exact": true,
+    "authorization_window_execution_owner_confirmed": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "credential_material_observed": false
+  },
+  "authorization_observation_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+  "execution_observation": {
+    "execution_class": "PROVIDER_READ",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_aggregate_select_attempts": 1,
+    "additional_sql_executed": false,
+    "refresh_token_query_executed": false,
+    "provider_mutation_attempted": false,
+    "step2_executed": false,
+    "step3_executed": false,
+    "cleanup_attempted": false
+  },
+  "sanitized_result": {
+    "session_count": 1,
+    "synthetic_session_count": 1
+  },
+  "result_digest": "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1",
+  "verification_observation": {
+    "result_fields_exact": true,
+    "aggregate_only": true,
+    "precleanup_synthetic_session_confirmed": true,
+    "postcondition_verified": true
+  },
+  "provider_mutation_attempted": false,
+  "credential_material_retained": false,
+  "pii_retained": false,
+  "security_state": {
+    "raw_rows_returned": false,
+    "raw_rows_retained": false,
+    "session_ids_returned": false,
+    "user_ids_returned": false,
+    "token_values_returned": false,
+    "credential_material_observed": false,
+    "pii_retained": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-09-23T15:10:34Z"
+}

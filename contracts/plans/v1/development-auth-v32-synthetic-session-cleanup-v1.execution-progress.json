@@ -1,0 +1,79 @@
+{
+  "progress_id": "a75eec04-ffa1-4a49-9099-0f8a25d9e13b",
+  "plan_id": "daa207fd-1426-455f-a921-1dc69d8f2d65",
+  "plan_version": 1,
+  "plan_digest": "sha256:19bc9c0182da26f3a4b56339f70211966aaa74957c910d5a5830f0f26d1a832e",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.01.verify-attributed-session-precondition",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+          "evidence_reference": "provider.execution.v32-synthetic-session-cleanup-v1.step1.attempt1.verified",
+          "evidence_digest": "sha256:09aea4f1b717b3471f7c0c5265a301c36b7ca8f7d82b7ca49ace0577bb0222bb",
+          "recorded_at": "2026-09-23T15:10:34Z"
+        }
+      ],
+      "observed_postcondition": "One exact aggregate SELECT in the DEVELOPMENT AUTH Dashboard SQL Editor returns only session_count=1 and synthetic_session_count=1, establishing PRE_CLEANUP_SYNTHETIC_SESSION_CONFIRMED. Any other result stops before recovery verification, session issuance, or cleanup.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v32-synthetic-session-cleanup-v1.dashboard-precleanup-read",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "evidence_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "recorded_at": "2026-09-23T15:10:34Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v32-synthetic-session-cleanup-v1.precleanup-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+          "evidence_digest": "sha256:09aea4f1b717b3471f7c0c5265a301c36b7ca8f7d82b7ca49ace0577bb0222bb",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1",
+          "recorded_at": "2026-09-23T15:10:34Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.02.revoke-synthetic-sessions-global",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v1.step.03.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-23T15:10:34Z",
+  "progress_digest": "sha256:9224aebcb9e1dbcf5e80885530592e83bf2f57ac917904210a927f9b03f9a22b"
+}

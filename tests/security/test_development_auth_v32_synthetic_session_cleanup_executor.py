@@ -160,8 +160,9 @@ class DevelopmentAuthV32SyntheticSessionCleanupExecutorTests(unittest.TestCase):
         self.assertTrue(credential.is_cleared)
         self.assertTrue(session.is_cleared)
 
-    def test_missing_future_authority_fails_before_secret_resolution(self) -> None:
+    def test_confirmation_mismatch_fails_before_secret_resolution(self) -> None:
         environment = GuardedEnvironment()
+        environment["AVUHZ_CLEANUP_CONFIRMATION"] = "INVALID_CONFIRMATION"
         output = io.StringIO()
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
             result = executor.main(environment)
@@ -169,6 +170,7 @@ class DevelopmentAuthV32SyntheticSessionCleanupExecutorTests(unittest.TestCase):
         self.assertFalse(environment.secret_read_attempted)
         payload = json.loads(output.getvalue())
         self.assertEqual(payload["classification"], "SESSION_STATE_UNVERIFIED")
+        self.assertEqual(payload["safe_error_code"], "SESSION_CLEANUP_CONFIRMATION_MISMATCH")
         self.assertFalse(payload["cleanup_verified"])
         self.assertFalse(payload["retry_authorized"])
 

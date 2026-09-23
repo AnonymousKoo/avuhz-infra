@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class DevelopmentAuthV32SyntheticSessionCleanupPlanTests(unittest.TestCase):
-    def test_preparation_is_pristine_and_fail_closed(self) -> None:
+    def test_recorded_step1_is_valid_and_pending_cleanup_remains_fail_closed(self) -> None:
         result = subprocess.run(
             [
                 "python3",

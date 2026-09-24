@@ -20,6 +20,7 @@ SECRET_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL
 APPROVAL = BASE / f"{BOUNDARY}.approval.json"
 STEP1_EVIDENCE = BASE / f"{BOUNDARY}-step1-success.evidence.json"
 STEP2_EVIDENCE = BASE / f"{BOUNDARY}-step2-success.evidence.json"
+STEP3_EVIDENCE = BASE / f"{BOUNDARY}-step3-success.evidence.json"
 EXECUTION_PROGRESS = BASE / f"{BOUNDARY}.execution-progress.json"
 
 
@@ -32,7 +33,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("cleanup credential-repair v1: PASS", result.stdout)
 
-    def test_steps1_and2_are_consumed_and_later_steps_remain_unconsumed(self) -> None:
+    def test_steps1_through3_are_consumed_and_step4_remains_unconsumed(self) -> None:
         approval = json.loads(APPROVAL.read_text(encoding="utf-8"))
         progress = json.loads(EXECUTION_PROGRESS.read_text(encoding="utf-8"))
         self.assertEqual(approval["decision"], "APPROVE")
@@ -58,8 +59,14 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
             ),
             ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1),
         )
+        third = progress["step_states"][2]
         self.assertEqual(
-            progress["step_states"][2]["authorization_state"], "PENDING"
+            (
+                third["authorization_state"], third["execution_state"],
+                third["verification_state"], third["authorization_consumed"],
+                third["safe_error_code"], len(third["evidence"]),
+            ),
+            ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1),
         )
         self.assertTrue(
             all(
@@ -67,7 +74,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
                 and state["execution_state"] == "NOT_STARTED"
                 and state["verification_state"] == "NOT_STARTED"
                 and not state["authorization_consumed"]
-                for state in progress["step_states"][2:]
+                for state in progress["step_states"][3:]
             )
         )
         self.assertFalse(list(BASE.glob("*synthetic-session-cleanup-v2*.plan.json")))
@@ -77,6 +84,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
             path.read_text(encoding="utf-8")
             for path in (
                 PLAN, PROGRESS, APPROVAL, STEP1_EVIDENCE, STEP2_EVIDENCE,
+                STEP3_EVIDENCE,
                 EXECUTION_PROGRESS,
             )
         )
@@ -107,6 +115,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         progress = json.loads(EXECUTION_PROGRESS.read_text(encoding="utf-8"))
         self.assertEqual(len(progress["step_states"][0]["evidence"]), 1)
         self.assertEqual(len(progress["step_states"][1]["evidence"]), 1)
+        self.assertEqual(len(progress["step_states"][2]["evidence"]), 1)
         self.assertEqual(
             [state["step_id"] for state in progress["step_states"]],
             [step["step_id"] for step in plan["steps"]],
@@ -132,6 +141,35 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertFalse(evidence["credential_material_digest_recorded"])
         self.assertFalse(evidence["security_state"]["github_secret_mutation_during_recording"])
         self.assertFalse(evidence["execution_observation"]["step3_executed"])
+        self.assertFalse(evidence["execution_observation"]["step4_executed"])
+
+    def test_step3_evidence_is_exact_presence_only_and_read_only(self) -> None:
+        evidence = json.loads(STEP3_EVIDENCE.read_text(encoding="utf-8"))
+        self.assertEqual(
+            evidence["evidence_type"], "auth.cleanup-admin-github-binding.verified"
+        )
+        self.assertEqual(
+            evidence["classification"], "CLEANUP_CREDENTIAL_BINDING_PRESENT"
+        )
+        self.assertEqual(
+            evidence["sanitized_result"],
+            {
+                "classification": "CLEANUP_CREDENTIAL_BINDING_PRESENT",
+                "repository": "AnonymousKoo/avuhz-infra",
+                "environment": "development",
+                "secret_reference": SECRET_REFERENCE,
+                "exact_reference_present": True,
+                "value_read": False,
+                "value_returned": False,
+                "other_secret_changes": False,
+            },
+        )
+        self.assertFalse(evidence["provider_mutation_attempted"])
+        self.assertFalse(evidence["execution_observation"]["secret_value_requested"])
+        self.assertFalse(evidence["execution_observation"]["secret_value_returned"])
+        self.assertFalse(evidence["execution_observation"]["secret_value_read"])
+        self.assertFalse(evidence["execution_observation"]["secret_value_hashed"])
+        self.assertFalse(evidence["execution_observation"]["github_secret_mutation_attempted"])
         self.assertFalse(evidence["execution_observation"]["step4_executed"])
 
 

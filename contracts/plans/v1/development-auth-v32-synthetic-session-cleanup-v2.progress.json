@@ -1,0 +1,45 @@
+{
+  "overall_state": "NOT_STARTED",
+  "plan_digest": "sha256:4afea8848bc07967d93be6905b142d6d6c995cd43f204a610c439c0efee50df3",
+  "plan_id": "55b1ac96-b338-4821-bcb3-02f4ab1a0958",
+  "plan_version": 2,
+  "progress_digest": "sha256:eba7fe63e59cda2b30d074eedbd2455c69a182d5ee7d1824aa212c9065d57caa",
+  "progress_id": "dd04fc49-cd7a-49f2-bc99-2df8b949e70b",
+  "record_version": 1,
+  "step_states": [
+    {
+      "authorization_consumed": false,
+      "authorization_state": "PENDING",
+      "binding_assertions": [],
+      "evidence": [],
+      "execution_state": "NOT_STARTED",
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.01.verify-current-attributed-session-precondition",
+      "verification_state": "NOT_STARTED"
+    },
+    {
+      "authorization_consumed": false,
+      "authorization_state": "PENDING",
+      "binding_assertions": [],
+      "evidence": [],
+      "execution_state": "NOT_STARTED",
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.02.revoke-synthetic-sessions-global",
+      "verification_state": "NOT_STARTED"
+    },
+    {
+      "authorization_consumed": false,
+      "authorization_state": "PENDING",
+      "binding_assertions": [],
+      "evidence": [],
+      "execution_state": "NOT_STARTED",
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.03.verify-zero-session-refresh-state",
+      "verification_state": "NOT_STARTED"
+    }
+  ],
+  "updated_at": "2026-09-24T20:17:04Z"
+}

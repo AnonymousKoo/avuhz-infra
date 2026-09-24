@@ -19,6 +19,7 @@ VALIDATOR = (
 SECRET_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
 APPROVAL = BASE / f"{BOUNDARY}.approval.json"
 STEP1_EVIDENCE = BASE / f"{BOUNDARY}-step1-success.evidence.json"
+STEP2_EVIDENCE = BASE / f"{BOUNDARY}-step2-success.evidence.json"
 EXECUTION_PROGRESS = BASE / f"{BOUNDARY}.execution-progress.json"
 
 
@@ -31,7 +32,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("cleanup credential-repair v1: PASS", result.stdout)
 
-    def test_step1_is_consumed_and_later_steps_remain_unconsumed(self) -> None:
+    def test_steps1_and2_are_consumed_and_later_steps_remain_unconsumed(self) -> None:
         approval = json.loads(APPROVAL.read_text(encoding="utf-8"))
         progress = json.loads(EXECUTION_PROGRESS.read_text(encoding="utf-8"))
         self.assertEqual(approval["decision"], "APPROVE")
@@ -48,13 +49,25 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
             ),
             ("CONSUMED", "SUCCEEDED", "PASS", True),
         )
+        second = progress["step_states"][1]
+        self.assertEqual(
+            (
+                second["authorization_state"], second["execution_state"],
+                second["verification_state"], second["authorization_consumed"],
+                second["safe_error_code"], len(second["evidence"]),
+            ),
+            ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1),
+        )
+        self.assertEqual(
+            progress["step_states"][2]["authorization_state"], "PENDING"
+        )
         self.assertTrue(
             all(
                 state["authorization_state"] == "PENDING"
                 and state["execution_state"] == "NOT_STARTED"
                 and state["verification_state"] == "NOT_STARTED"
                 and not state["authorization_consumed"]
-                for state in progress["step_states"][1:]
+                for state in progress["step_states"][2:]
             )
         )
         self.assertFalse(list(BASE.glob("*synthetic-session-cleanup-v2*.plan.json")))
@@ -62,7 +75,10 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
     def test_only_reference_name_and_no_credential_material_is_retained(self) -> None:
         text = "".join(
             path.read_text(encoding="utf-8")
-            for path in (PLAN, PROGRESS, APPROVAL, STEP1_EVIDENCE, EXECUTION_PROGRESS)
+            for path in (
+                PLAN, PROGRESS, APPROVAL, STEP1_EVIDENCE, STEP2_EVIDENCE,
+                EXECUTION_PROGRESS,
+            )
         )
         self.assertIn(SECRET_REFERENCE, text)
         self.assertIsNone(re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", text))
@@ -90,6 +106,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertEqual(len(plan["steps"]), 4)
         progress = json.loads(EXECUTION_PROGRESS.read_text(encoding="utf-8"))
         self.assertEqual(len(progress["step_states"][0]["evidence"]), 1)
+        self.assertEqual(len(progress["step_states"][1]["evidence"]), 1)
         self.assertEqual(
             [state["step_id"] for state in progress["step_states"]],
             [step["step_id"] for step in plan["steps"]],
@@ -97,6 +114,25 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertIn("cleanup-v2.prepare", plan["prohibited_actions"])
         self.assertIn("cleanup.execute", plan["prohibited_actions"])
         self.assertTrue(EXECUTION_PROGRESS.exists())
+
+    def test_step2_evidence_contains_only_the_nonsecret_binding_reference(self) -> None:
+        evidence = json.loads(STEP2_EVIDENCE.read_text(encoding="utf-8"))
+        self.assertEqual(
+            evidence["evidence_type"], "auth.cleanup-admin-github-binding.created"
+        )
+        self.assertEqual(
+            evidence["classification"], "CLEANUP_CREDENTIAL_BINDING_CREATED"
+        )
+        self.assertEqual(
+            evidence["sanitized_result"]["resource_reference"],
+            "github:AnonymousKoo/avuhz-infra:environment:development:secret:"
+            + SECRET_REFERENCE,
+        )
+        self.assertFalse(evidence["credential_material_retained"])
+        self.assertFalse(evidence["credential_material_digest_recorded"])
+        self.assertFalse(evidence["security_state"]["github_secret_mutation_during_recording"])
+        self.assertFalse(evidence["execution_observation"]["step3_executed"])
+        self.assertFalse(evidence["execution_observation"]["step4_executed"])
 
 
 if __name__ == "__main__":

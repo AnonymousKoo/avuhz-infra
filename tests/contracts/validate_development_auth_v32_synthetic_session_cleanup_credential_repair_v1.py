@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the consumed Step 1 outcome for the DEVELOPMENT AUTH credential-repair boundary."""
+"""Validate the consumed Step 1 and Step 2 outcomes for DEVELOPMENT AUTH credential repair."""
 from __future__ import annotations
 
 import hashlib
@@ -43,11 +43,16 @@ APPROVED_AT = "2026-09-23T19:48:02Z"
 APPROVAL_DIGEST = "sha256:a15a0e53e35a8aea7a6cf7bb6fe766ecba67777c7b702148c3dbc92dba63eb33"
 APPROVAL_RAW_DIGEST = "sha256:c904810ac2187895ff5f4d3464bc5e8b906a3cb031daa05cf97ade9dddd36a53"
 STEP1_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step1-success.evidence.json"
+STEP2_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step2-success.evidence.json"
 EXECUTION_PROGRESS_PATH = BASE / f"{BOUNDARY}.execution-progress.json"
 STEP1_ID = "development.auth.v32-synthetic-session-cleanup-credential-repair-v1.step.01.create-dedicated-cleanup-secret-key"
 STEP1_EVIDENCE_DIGEST = "sha256:29fa0e715118b6cb70d6c08b28466b79407319bc5177947851b87b86c10dc47d"
-EXECUTION_PROGRESS_DIGEST = "sha256:7588aa0e94eba118ab8fafcdf51472edc3cb0667a90c373ddb1f75bba1065ceb"
+EXECUTION_PROGRESS_DIGEST = "sha256:2efd6ac08c2a9a7ba1166bedff03c39375c87bd4408aceac082b753f016e9209"
+STEP1_PROGRESS_DIGEST = "sha256:7588aa0e94eba118ab8fafcdf51472edc3cb0667a90c373ddb1f75bba1065ceb"
 RECORDED_AT = "2026-09-24T16:35:39Z"
+STEP2_RECORDED_AT = "2026-09-24T17:07:52Z"
+STEP2_ID = "development.auth.v32-synthetic-session-cleanup-credential-repair-v1.step.02.bind-dedicated-key-to-github-development"
+STEP2_EVIDENCE_DIGEST = "sha256:de7daf8b0c913f713225d292adae404bc877b298368c9fbedc5e451f6190e574"
 PRIOR_FAILURE_DIGEST = "sha256:3c41820fdcafa1adf2afe8653a1a3d1ba7561ab049cbc0ca84b370f78f9d4867"
 PRIOR_STOPPED_PROGRESS_DIGEST = "sha256:a8344c793b45ea0d05024cd259ec11c58437f7db51c590d2cfccf5c8e8d11f2b"
 PROJECT = "pwlhruwutoitnieactol"
@@ -140,6 +145,106 @@ def load(path: Path) -> dict:
 
 def raw_digest(path: Path) -> str:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def expected_step2_progress(
+    plan: dict, approval: dict, step1_progress: dict, evidence: dict
+) -> dict:
+    step = plan["steps"][1]
+    observation_digest = canonical_digest(evidence["authorization_observation"])
+    preflight_declaration = next(
+        declaration
+        for declaration in step["binding_declarations"]
+        if declaration["phase"] == "RESOLVED_BY_STEP_PREFLIGHT"
+    )
+    preflight_assertion = {
+        "binding_id": preflight_declaration["binding_id"],
+        "phase": preflight_declaration["phase"],
+        "value_class": preflight_declaration["value_class"],
+        "source_step_id": preflight_declaration["source_step_id"],
+        "evidence_type": preflight_declaration["evidence_type"],
+        "evidence_digest": observation_digest,
+        "digest_policy": preflight_declaration["digest_policy"],
+        "persistence_policy": preflight_declaration["persistence_policy"],
+        "sanitized_value": None,
+        "value_digest": observation_digest,
+        "recorded_at": STEP2_RECORDED_AT,
+    }
+    request = {
+        "plan_id": plan["plan_id"],
+        "plan_version": plan["plan_version"],
+        "plan_digest": plan["plan_digest"],
+        "environment": plan["environment"],
+        "provider_reference": plan["target"]["provider_reference"],
+        "project_reference": plan["target"]["project_reference"],
+        "responsibility": plan["target"]["responsibility"],
+        "issuer_reference": plan["target"]["issuer_reference"],
+        "audience_reference": plan["target"]["audience_reference"],
+        "step_id": step["step_id"],
+        "resource_reference": step["resource"]["resource_reference"],
+        "resource_version": step["resource"]["exact_version"],
+        "resource_digest": step["resource"]["exact_digest"],
+        "operation": step["operation"],
+        "execution_class": step["execution_class"],
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "required_evidence": [{
+            "evidence_type": "auth.cleanup-admin-credential.created",
+            "evidence_digest": STEP1_EVIDENCE_DIGEST,
+        }],
+        "prior_evidence_digests": [STEP1_EVIDENCE_DIGEST],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    authorized = authorize_step(
+        plan,
+        approval,
+        step1_progress,
+        request,
+        SCHEMA_ROOT,
+        STEP2_RECORDED_AT,
+        trusted_preflight_assertions=[preflight_assertion],
+    )
+    evidence_digest = raw_digest(STEP2_EVIDENCE_PATH)
+    outcome_evidence = [{
+        "evidence_type": evidence["evidence_type"],
+        "evidence_reference": STEP2_EVIDENCE_PATH.name,
+        "evidence_digest": evidence_digest,
+        "recorded_at": STEP2_RECORDED_AT,
+    }]
+    produced_declaration = next(
+        declaration
+        for declaration in step["binding_declarations"]
+        if declaration["phase"] == "PRODUCED_BY_CURRENT_STEP"
+    )
+    produced_assertion = {
+        "binding_id": produced_declaration["binding_id"],
+        "phase": produced_declaration["phase"],
+        "value_class": produced_declaration["value_class"],
+        "source_step_id": produced_declaration["source_step_id"],
+        "evidence_type": produced_declaration["evidence_type"],
+        "evidence_digest": evidence_digest,
+        "digest_policy": produced_declaration["digest_policy"],
+        "persistence_policy": produced_declaration["persistence_policy"],
+        "sanitized_value": None,
+        "value_digest": step["resource"]["exact_digest"],
+        "recorded_at": STEP2_RECORDED_AT,
+    }
+    return record_step_outcome(
+        plan,
+        approval,
+        authorized,
+        STEP2_ID,
+        "SUCCEEDED",
+        "PASS",
+        outcome_evidence,
+        step["expected_postcondition"],
+        None,
+        SCHEMA_ROOT,
+        STEP2_RECORDED_AT,
+        binding_assertions=[produced_assertion],
+    )
 
 
 def expected_step1_progress(
@@ -250,6 +355,7 @@ def main() -> int:
     progress = load(PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
     evidence = load(STEP1_EVIDENCE_PATH)
+    step2_evidence = load(STEP2_EVIDENCE_PATH)
     execution_progress = load(EXECUTION_PROGRESS_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
@@ -414,10 +520,15 @@ def main() -> int:
     assert evidence["pii_retained"] is False
     assert evidence["record_basis"] == "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME"
     assert evidence["recorded_at"] == RECORDED_AT
-    assert execution_progress == expected_step1_progress(
+    step1_execution_progress = expected_step1_progress(
         plan, approval, progress, evidence
     )
+    assert step1_execution_progress["progress_digest"] == STEP1_PROGRESS_DIGEST
+    assert execution_progress == expected_step2_progress(
+        plan, approval, step1_execution_progress, step2_evidence
+    )
     validate_progress(plan, execution_progress, SCHEMA_ROOT)
+    assert raw_digest(STEP2_EVIDENCE_PATH) == STEP2_EVIDENCE_DIGEST
     assert execution_progress["progress_digest"] == EXECUTION_PROGRESS_DIGEST == progress_digest(
         execution_progress
     )
@@ -429,7 +540,17 @@ def main() -> int:
         first["safe_error_code"], len(first["evidence"]),
     ) == ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1)
     assert [item["evidence_digest"] for item in first["evidence"]] == [STEP1_EVIDENCE_DIGEST]
-    for state in (second, third, fourth):
+    assert (
+        second["authorization_state"], second["execution_state"],
+        second["verification_state"], second["authorization_consumed"],
+        second["safe_error_code"], len(second["evidence"]),
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1)
+    assert [item["evidence_digest"] for item in second["evidence"]] == [STEP2_EVIDENCE_DIGEST]
+    assert len(second["binding_assertions"]) == 3
+    assert second["binding_assertions"][0]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
+    assert second["binding_assertions"][1]["evidence_type"] == "auth.cleanup-github-binding-owner-session.observed"
+    assert second["binding_assertions"][2]["evidence_type"] == "auth.cleanup-admin-github-binding.created"
+    for state in (third, fourth):
         assert (
             state["authorization_state"], state["execution_state"],
             state["verification_state"], state["authorization_consumed"],
@@ -454,13 +575,80 @@ def main() -> int:
     assert "provider.contact" in retire["prohibited_actions"]
     assert "provider.mutation" in retire["prohibited_actions"]
 
+    expected_reference = (
+        "github:AnonymousKoo/avuhz-infra:environment:development:secret:" + SECRET_REFERENCE
+    )
+    assert step2_evidence["evidence_type"] == "auth.cleanup-admin-github-binding.created"
+    assert step2_evidence["environment"] == "DEVELOPMENT"
+    assert step2_evidence["responsibility"] == "AUTH"
+    assert step2_evidence["provider_reference"] == "github"
+    assert step2_evidence["project_reference"] == PROJECT
+    assert step2_evidence["repository"] == "AnonymousKoo/avuhz-infra"
+    assert step2_evidence["environment_reference"] == "development"
+    assert step2_evidence["plan_id"] == PLAN_ID and step2_evidence["plan_digest"] == PLAN_DIGEST
+    assert step2_evidence["approval_id"] == APPROVAL_ID
+    assert step2_evidence["approval_digest"] == APPROVAL_DIGEST
+    assert step2_evidence["step_id"] == STEP2_ID
+    assert step2_evidence["attempt"] == 1
+    assert step2_evidence["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step2_evidence["classification"] == "CLEANUP_CREDENTIAL_BINDING_CREATED"
+    assert step2_evidence["authorization_observation_digest"] == canonical_digest(
+        step2_evidence["authorization_observation"]
+    )
+    assert step2_evidence["authorization_observation"] == {
+        "interaction_surface": "github.environment.development.secrets",
+        "repository": "AnonymousKoo/avuhz-infra",
+        "environment": "development",
+        "resource_reference": expected_reference,
+        "approval_exact": True,
+        "authorization_window_execution_owner_confirmed": True,
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "credential_material_exposed_to_agent": False,
+    }
+    expected_step2_result = {
+        "classification": "CLEANUP_CREDENTIAL_BINDING_CREATED",
+        "resource_reference": expected_reference,
+        "repository": "AnonymousKoo/avuhz-infra",
+        "environment": "development",
+        "binding_created": True,
+        "source_credential_reference": "supabase:" + PROJECT + ":secret-key:cleanup-v2-ephemeral",
+    }
+    assert step2_evidence["sanitized_result"] == expected_step2_result
+    assert step2_evidence["result_digest"] == canonical_digest(expected_step2_result)
+    assert step2_evidence["configuration_reference_digest"] == bind["resource"]["exact_digest"]
+    assert step2_evidence["execution_observation"] == {
+        "execution_class": "PROVIDER_MUTATION",
+        "execution_timestamp_retained": False,
+        "recorded_at_is_execution_timestamp": False,
+        "exact_github_binding_execution_timestamp_available": False,
+        "github_environment_secret_binding_mutation_attempts": 1,
+        "exact_binding_created": True,
+        "other_github_secret_mutations": False,
+        "step3_executed": False,
+        "step4_executed": False,
+        "cleanup_v2_prepared": False,
+        "supabase_contact_or_mutation": False,
+        "sql_executed": False,
+        "session_issued": False,
+        "logout_attempted": False,
+        "token_issued": False,
+    }
+    assert step2_evidence["provider_mutation_attempted"] is True
+    assert step2_evidence["credential_material_retained"] is False
+    assert step2_evidence["credential_material_digest_recorded"] is False
+    assert step2_evidence["pii_retained"] is False
+    assert step2_evidence["record_basis"] == "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME"
+    assert step2_evidence["recorded_at"] == STEP2_RECORDED_AT
+    assert step2_evidence["security_state"]["github_secret_mutation_during_recording"] is False
+    assert step2_evidence["security_state"]["only_exact_approved_binding_changed"] is True
+
     assert not list(BASE.glob("*synthetic-session-cleanup-v2*.plan.json"))
 
     text = "".join(
         path.read_text(encoding="utf-8")
         for path in (
             PLAN_PATH, PROGRESS_PATH, APPROVAL_PATH,
-            STEP1_EVIDENCE_PATH, EXECUTION_PROGRESS_PATH,
+            STEP1_EVIDENCE_PATH, STEP2_EVIDENCE_PATH, EXECUTION_PROGRESS_PATH,
         )
     )
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", text) is None
@@ -472,7 +660,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT AUTH cleanup credential-repair v1: PASS "
-        "(Step 1 consumed/succeeded/pass; Steps 2-4 pending; no credential material retained; "
+        "(Steps 1-2 consumed/succeeded/pass; Steps 3-4 pending; no credential material retained; "
         "new v2 binding reference only; retirement obligation sealed last)"
     )
     return 0

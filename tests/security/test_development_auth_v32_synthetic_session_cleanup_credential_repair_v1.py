@@ -78,7 +78,11 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
             ),
             ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1),
         )
-        self.assertFalse(list(BASE.glob("*synthetic-session-cleanup-v2*.plan.json")))
+        cleanup_v2 = BASE / "development-auth-v32-synthetic-session-cleanup-v2"
+        self.assertTrue(cleanup_v2.with_suffix(".plan.json").is_file())
+        self.assertTrue(cleanup_v2.with_suffix(".progress.json").is_file())
+        self.assertFalse(cleanup_v2.with_suffix(".approval.json").exists())
+        self.assertFalse(cleanup_v2.with_suffix(".execution-progress.json").exists())
 
     def test_only_reference_name_and_no_credential_material_is_retained(self) -> None:
         text = "".join(

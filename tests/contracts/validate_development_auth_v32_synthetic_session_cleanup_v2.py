@@ -369,8 +369,8 @@ def main() -> int:
     assert not APPROVAL_PATH.exists()
     assert not EXECUTION_PROGRESS_PATH.exists()
     assert not list(BASE.glob(EVIDENCE_GLOB))
-    assert not EXECUTOR_PATH.exists()
-    assert not WORKFLOW_PATH.exists()
+    assert EXECUTOR_PATH.is_file()
+    assert WORKFLOW_PATH.is_file()
 
     serialized = json.dumps({"plan": plan, "progress": progress}, sort_keys=True)
     assert DATA_PROJECT not in serialized

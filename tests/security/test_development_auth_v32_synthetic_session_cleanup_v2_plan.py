@@ -19,7 +19,7 @@ class DevelopmentAuthV32SyntheticSessionCleanupV2PlanTests(unittest.TestCase):
         self.plan = json.loads((BASE / f"{BOUNDARY}.plan.json").read_text())
         self.progress = json.loads((BASE / f"{BOUNDARY}.progress.json").read_text())
 
-    def test_pristine_exact_three_step_boundary_has_no_execution_surface(self) -> None:
+    def test_pristine_exact_three_step_boundary_has_only_dormant_step2_surface(self) -> None:
         self.assertEqual(len(self.plan["steps"]), 3)
         self.assertEqual(self.plan["environment"], "DEVELOPMENT")
         self.assertEqual(self.plan["target"]["responsibility"], "AUTH")
@@ -41,8 +41,9 @@ class DevelopmentAuthV32SyntheticSessionCleanupV2PlanTests(unittest.TestCase):
         self.assertFalse((BASE / f"{BOUNDARY}.approval.json").exists())
         self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
         self.assertEqual(list(BASE.glob(f"{BOUNDARY}*.evidence.json")), [])
-        self.assertFalse((ROOT / f"scripts/{BOUNDARY.replace('-', '_')}.py").exists())
-        self.assertFalse((ROOT / f".github/workflows/{BOUNDARY}.yml").exists())
+        self.assertTrue((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v2.py").is_file())
+        self.assertTrue((ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v2.yml").is_file())
+        self.assertFalse((ROOT / f"scripts/{BOUNDARY.replace('-', '_')}_v1.py").exists())
 
     def test_only_the_two_exact_owner_interactive_sql_contracts_are_present(self) -> None:
         step1, step2, step3 = self.plan["steps"]

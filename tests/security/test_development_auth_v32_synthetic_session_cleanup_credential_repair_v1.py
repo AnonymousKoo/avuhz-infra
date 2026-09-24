@@ -21,6 +21,7 @@ APPROVAL = BASE / f"{BOUNDARY}.approval.json"
 STEP1_EVIDENCE = BASE / f"{BOUNDARY}-step1-success.evidence.json"
 STEP2_EVIDENCE = BASE / f"{BOUNDARY}-step2-success.evidence.json"
 STEP3_EVIDENCE = BASE / f"{BOUNDARY}-step3-success.evidence.json"
+STEP4_EVIDENCE = BASE / f"{BOUNDARY}-step4-success.evidence.json"
 EXECUTION_PROGRESS = BASE / f"{BOUNDARY}.execution-progress.json"
 
 
@@ -33,7 +34,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("cleanup credential-repair v1: PASS", result.stdout)
 
-    def test_steps1_through3_are_consumed_and_step4_remains_unconsumed(self) -> None:
+    def test_all_four_steps_are_consumed_and_repair_boundary_is_completed(self) -> None:
         approval = json.loads(APPROVAL.read_text(encoding="utf-8"))
         progress = json.loads(EXECUTION_PROGRESS.read_text(encoding="utf-8"))
         self.assertEqual(approval["decision"], "APPROVE")
@@ -41,7 +42,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertEqual(approval["environment"], "DEVELOPMENT")
         plan = json.loads(PLAN.read_text(encoding="utf-8"))
         self.assertEqual(approval["plan_id"], plan["plan_id"])
-        self.assertEqual(progress["overall_state"], "IN_PROGRESS")
+        self.assertEqual(progress["overall_state"], "COMPLETED")
         first = progress["step_states"][0]
         self.assertEqual(
             (
@@ -68,14 +69,14 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
             ),
             ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1),
         )
-        self.assertTrue(
-            all(
-                state["authorization_state"] == "PENDING"
-                and state["execution_state"] == "NOT_STARTED"
-                and state["verification_state"] == "NOT_STARTED"
-                and not state["authorization_consumed"]
-                for state in progress["step_states"][3:]
-            )
+        fourth = progress["step_states"][3]
+        self.assertEqual(
+            (
+                fourth["authorization_state"], fourth["execution_state"],
+                fourth["verification_state"], fourth["authorization_consumed"],
+                fourth["safe_error_code"], len(fourth["evidence"]),
+            ),
+            ("CONSUMED", "SUCCEEDED", "PASS", True, None, 1),
         )
         self.assertFalse(list(BASE.glob("*synthetic-session-cleanup-v2*.plan.json")))
 
@@ -84,7 +85,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
             path.read_text(encoding="utf-8")
             for path in (
                 PLAN, PROGRESS, APPROVAL, STEP1_EVIDENCE, STEP2_EVIDENCE,
-                STEP3_EVIDENCE,
+                STEP3_EVIDENCE, STEP4_EVIDENCE,
                 EXECUTION_PROGRESS,
             )
         )
@@ -116,6 +117,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertEqual(len(progress["step_states"][0]["evidence"]), 1)
         self.assertEqual(len(progress["step_states"][1]["evidence"]), 1)
         self.assertEqual(len(progress["step_states"][2]["evidence"]), 1)
+        self.assertEqual(len(progress["step_states"][3]["evidence"]), 1)
         self.assertEqual(
             [state["step_id"] for state in progress["step_states"]],
             [step["step_id"] for step in plan["steps"]],
@@ -142,6 +144,32 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertFalse(evidence["security_state"]["github_secret_mutation_during_recording"])
         self.assertFalse(evidence["execution_observation"]["step3_executed"])
         self.assertFalse(evidence["execution_observation"]["step4_executed"])
+
+    def test_step4_seals_only_future_retirement_obligation(self) -> None:
+        evidence = json.loads(STEP4_EVIDENCE.read_text(encoding="utf-8"))
+        self.assertEqual(
+            evidence["evidence_type"], "auth.cleanup-admin-retirement.required"
+        )
+        self.assertEqual(
+            evidence["classification"], "CLEANUP_CREDENTIAL_RETIREMENT_REQUIRED"
+        )
+        result = evidence["sanitized_result"]
+        self.assertTrue(result["fresh_exact_retirement_approval_required"])
+        self.assertFalse(result["retirement_performed"])
+        self.assertFalse(result["provider_contact_attempted"])
+        self.assertEqual(
+            result["ordered_retirement_resources"],
+            ["supabase-secret-api-key", "github-development-environment-secret-binding"],
+        )
+        self.assertEqual(
+            result["independent_absence_verification_required"],
+            ["provider-key-absent", "github-binding-absent"],
+        )
+        self.assertFalse(evidence["provider_mutation_attempted"])
+        self.assertFalse(evidence["execution_observation"]["credential_value_accessed"])
+        self.assertFalse(evidence["execution_observation"]["supabase_key_deletion_attempted"])
+        self.assertFalse(evidence["execution_observation"]["github_secret_deletion_attempted"])
+        self.assertFalse(evidence["execution_observation"]["fresh_retirement_authority_created"])
 
     def test_step3_evidence_is_exact_presence_only_and_read_only(self) -> None:
         evidence = json.loads(STEP3_EVIDENCE.read_text(encoding="utf-8"))

@@ -114,7 +114,7 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertFalse(evidence["security_state"]["credential_value_provided_to_agent"])
         self.assertFalse(evidence["security_state"]["github_secret_mutated"])
 
-    def test_steps_are_independent_and_cleanup_v2_is_unreachable(self) -> None:
+    def test_repair_authority_remains_independent_and_prohibits_cleanup_execution(self) -> None:
         plan = json.loads(PLAN.read_text(encoding="utf-8"))
         self.assertEqual(len(plan["steps"]), 4)
         progress = json.loads(EXECUTION_PROGRESS.read_text(encoding="utf-8"))

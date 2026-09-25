@@ -13,9 +13,10 @@ Public contract evidence checked 2026-09-17:
 * auth-js ``verifyOtp`` posts to ``/verify`` and applies ``_sessionResponse``.
 * Supabase Auth ``VerifyParams`` accepts exactly ``type`` plus ``token_hash`` for
   that POST; ``verifyPost`` returns ``AccessTokenResponse`` as JSON.
-* ``AccessTokenResponse`` has top-level access/refresh tokens, token type,
-  expiry fields, and user.  auth-js recognizes a session from those top-level
-  fields rather than from a redirect fragment.
+* auth-js declares ``Session.expires_at`` optional and recognizes a raw session
+  from ``access_token``, ``refresh_token``, and ``expires_in``; its response
+  transformer supports user data under ``user`` or on the top-level object.
+  These shapes are parsed as direct JSON only, never from redirect fragments.
 
 Authoritative sources:
 https://github.com/supabase/auth-js/blob/master/src/lib/types.ts
@@ -168,7 +169,7 @@ class IssuedSession:
         access_token: str,
         refresh_token: str,
         expires_in: int,
-        expires_at: int,
+        expires_at: int | None,
         token_type: str,
         user_id: str,
     ) -> None:
@@ -459,8 +460,21 @@ def parse_recovery_verification_response(
     token_type = payload.get("token_type")
     expires_in = payload.get("expires_in")
     expires_at = payload.get("expires_at")
+    user_present = "user" in payload
     user = payload.get("user")
-    user_id = user.get("id") if isinstance(user, Mapping) else None
+    nested_user_id = user.get("id") if isinstance(user, Mapping) else None
+    top_level_user_id = payload.get("id")
+    if user_present and not isinstance(user, Mapping):
+        _stop("RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID")
+    if user_present and not isinstance(nested_user_id, str):
+        _stop("RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID")
+    if user_present and "id" in payload:
+        if (
+            not isinstance(top_level_user_id, str)
+            or top_level_user_id != nested_user_id
+        ):
+            _stop("RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID")
+    user_id = nested_user_id if user_present else top_level_user_id
     if (
         not isinstance(access_token, str)
         or not 32 <= len(access_token) <= 16384
@@ -469,12 +483,14 @@ def parse_recovery_verification_response(
         or token_type != "bearer"
         or isinstance(expires_in, bool)
         or not isinstance(expires_in, int)
-        or not 1 <= expires_in <= 3600
+        or expires_in <= 0
         or isinstance(expires_at, bool)
-        or not isinstance(expires_at, int)
-        or expires_at <= 0
+        or (expires_at is not None and not isinstance(expires_at, int))
+        or (isinstance(expires_at, int) and expires_at <= 0)
         or not isinstance(user_id, str)
         or not _CANONICAL_UUID.fullmatch(user_id)
+        or not isinstance(expected_user_id, str)
+        or not _CANONICAL_UUID.fullmatch(expected_user_id)
         or user_id != expected_user_id
     ):
         _stop("RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID")

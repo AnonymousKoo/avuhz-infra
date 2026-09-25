@@ -65,6 +65,7 @@ REPAIR_STEP3_EVIDENCE = "sha256:a431c44cac5069898b98784c82244f3b9335f124ee348666
 RETIREMENT_EVIDENCE = "sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f"
 PRIOR_CLEANUP_V1_PROGRESS = "sha256:a8344c793b45ea0d05024cd259ec11c58437f7db51c590d2cfccf5c8e8d11f2b"
 LIFECYCLE_RAW_DIGEST = "sha256:55503f13489944b0b4b51e3dc24875d5c6e83c69e8fc6a8aed6a03fdb0736749"
+CORRECTED_LIFECYCLE_RAW_DIGEST = "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5"
 ATTRIBUTION_EVIDENCE = "sha256:87448d893e3d6f013cd6a20bdf05eef25b5d1c3425513377469c62eab40dffcc"
 STEP1_ID = "development.auth.v32-synthetic-session-cleanup-v2.step.01.verify-current-attributed-session-precondition"
 STEP2_ID = "development.auth.v32-synthetic-session-cleanup-v2.step.02.revoke-synthetic-sessions-global"
@@ -257,7 +258,9 @@ def main() -> int:
     assert "SESSION_CLEANUP_VERIFIED" in verify["expected_postcondition"]
     assert "SESSION_CLEANUP_NOT_VERIFIED" in verify["expected_postcondition"]
     assert "SESSION_STATE_UNVERIFIED" in verify["expected_postcondition"]
-    assert raw_digest(LIFECYCLE_PATH) == LIFECYCLE_RAW_DIGEST
+    # The immutable v2 plan/executor remain bound to the original primitive;
+    # the corrected shared parser is for a fresh forward-only continuation.
+    assert raw_digest(LIFECYCLE_PATH) == CORRECTED_LIFECYCLE_RAW_DIGEST
     assert plan["steps"][0]["required_evidence"] == [{
         "evidence_type": "auth.session-attribution.owner-interactive-inspected",
         "source_step_id": None,

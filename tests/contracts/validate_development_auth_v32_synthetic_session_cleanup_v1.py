@@ -46,6 +46,7 @@ PROGRESS_RAW_DIGEST = "sha256:d30e7dc67e3783e8ce59ae08e5fe2d9ba1c68dd381b76b772d
 EXECUTOR_RAW_DIGEST = "sha256:a3e883ca5798bd60094181419c188a28f46cbcc8f648366e60cad29fa02fc7e4"
 WORKFLOW_RAW_DIGEST = "sha256:28f5b16586e64b1bad389a62c40e2172950e59f9814a3b0c0fe428800ebd929f"
 LIFECYCLE_RAW_DIGEST = "sha256:55503f13489944b0b4b51e3dc24875d5c6e83c69e8fc6a8aed6a03fdb0736749"
+CORRECTED_LIFECYCLE_RAW_DIGEST = "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5"
 STEP1_EVIDENCE_DIGEST = "sha256:09aea4f1b717b3471f7c0c5265a301c36b7ca8f7d82b7ca49ace0577bb0222bb"
 STEP2_FAILURE_EVIDENCE_DIGEST = "sha256:3c41820fdcafa1adf2afe8653a1a3d1ba7561ab049cbc0ca84b370f78f9d4867"
 EXECUTION_PROGRESS_DIGEST = "sha256:a8344c793b45ea0d05024cd259ec11c58437f7db51c590d2cfccf5c8e8d11f2b"
@@ -676,7 +677,9 @@ def main(*, execution_surface_only: bool = False) -> None:
     ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False, [], [])
     assert raw_digest(EXECUTOR_PATH) == EXECUTOR_RAW_DIGEST
     assert raw_digest(WORKFLOW_PATH) == WORKFLOW_RAW_DIGEST
-    assert raw_digest(LIFECYCLE_PATH) == LIFECYCLE_RAW_DIGEST
+    # The stopped v1 history is immutable; this shared primitive now carries
+    # the separately reviewed forward compatibility correction.
+    assert raw_digest(LIFECYCLE_PATH) == CORRECTED_LIFECYCLE_RAW_DIGEST
 
     executor_source = EXECUTOR_PATH.read_text(encoding="utf-8")
     workflow_source = WORKFLOW_PATH.read_text(encoding="utf-8")

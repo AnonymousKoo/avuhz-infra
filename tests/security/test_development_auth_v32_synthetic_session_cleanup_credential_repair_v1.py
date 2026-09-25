@@ -85,10 +85,27 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         self.assertEqual(cleanup_v2_approval["approval_id"], "431aa7e7-1436-4f26-9330-9688921b5552")
         self.assertEqual(cleanup_v2_approval["authority_scope"], "EXACT_PLAN_ONLY")
         cleanup_v2_execution = json.loads(cleanup_v2.with_suffix(".execution-progress.json").read_text())
-        self.assertEqual(cleanup_v2_execution["overall_state"], "IN_PROGRESS")
+        self.assertEqual(cleanup_v2_execution["overall_state"], "STOPPED")
         self.assertEqual(cleanup_v2_execution["step_states"][0]["execution_state"], "SUCCEEDED")
-        self.assertFalse(cleanup_v2_execution["step_states"][1]["authorization_consumed"])
-        self.assertFalse(cleanup_v2_execution["step_states"][2]["authorization_consumed"])
+        self.assertEqual(
+            (
+                cleanup_v2_execution["step_states"][1]["authorization_state"],
+                cleanup_v2_execution["step_states"][1]["execution_state"],
+                cleanup_v2_execution["step_states"][1]["verification_state"],
+                cleanup_v2_execution["step_states"][1]["authorization_consumed"],
+                cleanup_v2_execution["step_states"][1]["safe_error_code"],
+            ),
+            ("CONSUMED", "FAILED", "FAIL", True, "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID"),
+        )
+        self.assertEqual(
+            (
+                cleanup_v2_execution["step_states"][2]["authorization_state"],
+                cleanup_v2_execution["step_states"][2]["execution_state"],
+                cleanup_v2_execution["step_states"][2]["verification_state"],
+                cleanup_v2_execution["step_states"][2]["authorization_consumed"],
+            ),
+            ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False),
+        )
 
     def test_only_reference_name_and_no_credential_material_is_retained(self) -> None:
         text = "".join(

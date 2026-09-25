@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the pristine forward-only DEVELOPMENT AUTH cleanup-v2 boundary."""
+"""Validate the consumed/failed Step 2 DEVELOPMENT AUTH cleanup-v2 outcome."""
 from __future__ import annotations
 
 import hashlib
@@ -24,6 +24,9 @@ from avuhz_engineering.authorization_plan import (  # noqa: E402
 )
 from avuhz_runtime.implementation_handoff import canonical_digest  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "scripts"))
+import development_auth_v32_synthetic_session_cleanup_v2 as cleanup_executor  # noqa: E402
+
 
 BASE = ROOT / "contracts/plans/v1"
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
@@ -34,6 +37,7 @@ APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
 EXECUTION_PROGRESS_PATH = BASE / f"{BOUNDARY}.execution-progress.json"
 EVIDENCE_GLOB = f"{BOUNDARY}*.evidence.json"
 STEP1_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step1-success.evidence.json"
+STEP2_FAILURE_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step2-failure.evidence.json"
 EXECUTOR_PATH = ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v2.py"
 WORKFLOW_PATH = ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v2.yml"
 LIFECYCLE_PATH = ROOT / "src/avuhz_engineering/development_auth_token_lifecycle.py"
@@ -72,7 +76,13 @@ RECORDED_AT = "2026-09-25T15:37:24Z"
 STEP1_EVIDENCE_DIGEST = "sha256:7c8d3d35862eb2762dbab39eac0f2252e501c5115298c4e7202db2ecc3ca2829"
 AUTHORIZATION_OBSERVATION_DIGEST = "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
 RESULT_DIGEST = "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1"
-EXECUTION_PROGRESS_DIGEST = "sha256:b44bd2dd931f2d20c43e669065ef397c6f5b09ccc6de4f2d211891316d75152b"
+EXECUTION_PROGRESS_DIGEST = "sha256:a942c1fa84f32e96619f916c1686ccb8d8ec1a6f3dd7393a0fa6cc992f167468"
+STEP2_FAILURE_EVIDENCE_DIGEST = "sha256:8344c3e26c26f464bcefa880251ac7619bfc6087a8a17e9c0987db4a843191eb"
+STEP2_RUN_ID = 36157829108
+STEP2_EXECUTION_SHA = "626443fb76be6130e026fc5717ef6a95f688f2ab"
+STEP2_EXECUTION_AT = "2026-09-25T15:59:22Z"
+STEP2_RECORDED_AT = "2026-09-25T17:59:52Z"
+STEP2_SAFE_ERROR = "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID"
 ATTRIBUTION_EVIDENCE_DIGEST = "sha256:87448d893e3d6f013cd6a20bdf05eef25b5d1c3425513377469c62eab40dffcc"
 
 PRECHECK_SQL = """select
@@ -541,16 +551,138 @@ def main() -> int:
         "value_digest": RESULT_DIGEST,
         "recorded_at": RECORDED_AT,
     }
-    expected_execution = record_step_outcome(
+    expected_step1_execution = record_step_outcome(
         plan, approval, authorized, STEP1_ID, "SUCCEEDED", "PASS",
         outcome_evidence, step["expected_postcondition"], None,
         SCHEMA_ROOT, RECORDED_AT, binding_assertions=[produced_binding],
+    )
+
+    step2_evidence = load(STEP2_FAILURE_EVIDENCE_PATH)
+    assert raw_digest(STEP2_FAILURE_EVIDENCE_PATH) == STEP2_FAILURE_EVIDENCE_DIGEST
+    assert step2_evidence["evidence_type"] == cleanup["produced_evidence"][0]["evidence_type"]
+    assert step2_evidence["environment"] == "DEVELOPMENT"
+    assert step2_evidence["responsibility"] == "AUTH"
+    assert step2_evidence["provider_reference"] == "supabase"
+    assert step2_evidence["project_reference"] == PROJECT
+    assert step2_evidence["plan_id"] == PLAN_ID
+    assert step2_evidence["plan_version"] == 2
+    assert step2_evidence["plan_digest"] == PLAN_DIGEST
+    assert step2_evidence["approval_id"] == APPROVAL_ID
+    assert step2_evidence["approval_digest"] == APPROVAL_DIGEST
+    assert step2_evidence["step_id"] == STEP2_ID
+    assert step2_evidence["attempt"] == 1
+    assert step2_evidence["outcome"] == "FAILED_UNVERIFIED"
+    assert step2_evidence["safe_error_code"] == STEP2_SAFE_ERROR
+    assert step2_evidence["classification"] == "SESSION_STATE_UNVERIFIED"
+    assert step2_evidence["required_evidence"] == [
+        {"evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+         "evidence_digest": STEP1_EVIDENCE_DIGEST},
+        {"evidence_type": "auth.cleanup-admin-credential.created",
+         "evidence_digest": REPAIR_STEP1_EVIDENCE},
+        {"evidence_type": "auth.cleanup-admin-github-binding.created",
+         "evidence_digest": REPAIR_STEP2_EVIDENCE},
+        {"evidence_type": "auth.cleanup-admin-github-binding.verified",
+         "evidence_digest": REPAIR_STEP3_EVIDENCE},
+        {"evidence_type": "auth.cleanup-admin-retirement.required",
+         "evidence_digest": RETIREMENT_EVIDENCE},
+        {"evidence_type": "authorization-plan.execution-progress",
+         "evidence_digest": REPAIR_PROGRESS_DIGEST},
+    ]
+    assert step2_evidence["configuration_reference_bindings"] == {
+        "admin_credential_reference": ADMIN_REFERENCE,
+        "publishable_configuration_reference": PUBLISHABLE_REFERENCE,
+    }
+    assert step2_evidence["execution_observation"] == {
+        "workflow_run_id": STEP2_RUN_ID,
+        "execution_sha": STEP2_EXECUTION_SHA,
+        "workflow_event": "workflow_dispatch",
+        "run_number": 1,
+        "run_attempt": 1,
+        "conclusion": "failure",
+        "workflow_started_at": STEP2_EXECUTION_AT,
+        "execution_class": "PROVIDER_MUTATION",
+        "canonical_main_binding_passed": True,
+        "dispatch_confirmation_passed": True,
+        "plan_binding_passed": True,
+        "authorization_window_check_passed": True,
+        "approval_prerequisite_passed": True,
+        "step1_evidence_prerequisite_passed": True,
+        "execution_surface_validator_passed": True,
+        "authorization_preflight_passed_before_runtime_secret_resolution": True,
+        "executor_entered": True,
+        "runtime_secret_resolution_occurred": True,
+        "recovery_credential_generation_attempted": True,
+        "recovery_generation_completed_sufficient_to_advance": True,
+        "direct_recovery_verification_attempted": True,
+        "verification_response_shape_valid": False,
+        "temporary_session_state": "UNVERIFIED",
+        "jwt_validation_reached": False,
+        "global_logout_attempted": False,
+        "global_logout_accepted": False,
+        "step3_executed": False,
+        "sql_executed": False,
+        "retry_occurred": False,
+        "provider_contact_attempted": True,
+        "provider_mutation_attempted": True,
+    }
+    assert step2_evidence["failure_observation"] == {
+        "session_state": "SESSION_STATE_UNVERIFIED",
+        "cleanup_verified": False,
+        "step3_readback_required": True,
+        "temporary_session_existence_verified": False,
+        "session_revocation_request_accepted": False,
+        "retry_authorized": False,
+    }
+    assert step2_evidence["authority_state"] == {
+        "step2_authorization": "CONSUMED",
+        "authorization_consumed": True,
+        "retry_authorized": False,
+        "step3_authorization": "BLOCKED",
+    }
+    assert step2_evidence["credential_material_retained"] is False
+    assert step2_evidence["pii_retained"] is False
+    assert all(value is False for value in step2_evidence["security_state"].values())
+    assert step2_evidence["execution_time_source"] == "GITHUB_ACTIONS_RUN_METADATA"
+    assert step2_evidence["record_basis"] == "GITHUB_ACTIONS_SANITIZED_EXECUTION_OUTCOME"
+    assert step2_evidence["recorded_at"] == STEP2_RECORDED_AT
+    failure_text = STEP2_FAILURE_EVIDENCE_PATH.read_text(encoding="utf-8")
+    assert SYNTHETIC_EMAIL not in failure_text
+    for prohibited in (
+        '"access_token"', '"refresh_token"', '"token_hash"',
+        '"hashed_token"', '"session_id"', '"user_id"', '"email"',
+        '"provider_response"', '"credential_digest"',
+    ):
+        assert prohibited not in failure_text.lower()
+
+    step2_outcome_evidence = [{
+        "evidence_type": step2_evidence["evidence_type"],
+        "evidence_reference": (
+            "github.actions.run.36157829108.step2.attempt1.failed-response-shape-invalid"
+        ),
+        "evidence_digest": STEP2_FAILURE_EVIDENCE_DIGEST,
+        "recorded_at": STEP2_RECORDED_AT,
+    }]
+    authorized_step2 = authorize_step(
+        plan, approval, expected_step1_execution, cleanup_executor._request_for(
+            plan, expected_step1_execution
+        ), SCHEMA_ROOT, STEP2_EXECUTION_AT,
+        trusted_preflight_assertions=[
+            cleanup_executor._capability_assertion(STEP2_EXECUTION_AT)
+        ],
+    )
+    expected_execution = record_step_outcome(
+        plan, approval, authorized_step2, STEP2_ID, "FAILED", "FAIL",
+        step2_outcome_evidence,
+        "Direct recovery verification response failed canonical response-shape validation. "
+        "Whether a temporary session was created is unverified; JWT validation, global "
+        "logout, SQL, and Step 3 were not reached. Cleanup is unverified and retry is unauthorized.",
+        STEP2_SAFE_ERROR, SCHEMA_ROOT, STEP2_RECORDED_AT, binding_assertions=[],
     )
     execution = load(EXECUTION_PROGRESS_PATH)
     validate_progress(plan, execution, SCHEMA_ROOT)
     assert execution == expected_execution
     assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
-    assert execution["overall_state"] == "IN_PROGRESS"
+    assert execution["overall_state"] == "STOPPED"
     first, second, third = execution["step_states"]
     assert (
         first["authorization_state"], first["execution_state"],
@@ -561,14 +693,26 @@ def main() -> int:
         "CONSUMED", "SUCCEEDED", "PASS", True, None, outcome_evidence,
         [preflight_assertion, produced_binding],
     )
-    assert all(
-        (state["authorization_state"], state["execution_state"],
-         state["verification_state"], state["authorization_consumed"],
-         state["evidence"], state["binding_assertions"])
-        == ("PENDING", "NOT_STARTED", "NOT_STARTED", False, [], [])
-        for state in (second, third)
+    assert (
+        second["authorization_state"], second["execution_state"],
+        second["verification_state"], second["authorization_consumed"],
+        second["safe_error_code"], second["evidence"],
+    ) == (
+        "CONSUMED", "FAILED", "FAIL", True, STEP2_SAFE_ERROR,
+        step2_outcome_evidence,
     )
-    assert [path.name for path in BASE.glob(EVIDENCE_GLOB)] == [STEP1_EVIDENCE_PATH.name]
+    assert [assertion["binding_id"] for assertion in second["binding_assertions"]] == [
+        "binding.development.auth.cleanup-v2.precleanup-state",
+        "binding.development.auth.cleanup-v2.admin-executor-capability",
+    ]
+    assert (
+        third["authorization_state"], third["execution_state"],
+        third["verification_state"], third["authorization_consumed"],
+        third["evidence"], third["binding_assertions"],
+    ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False, [], [])
+    assert [path.name for path in BASE.glob(EVIDENCE_GLOB)] == [
+        STEP1_EVIDENCE_PATH.name, STEP2_FAILURE_EVIDENCE_PATH.name,
+    ]
     assert EXECUTOR_PATH.is_file()
     assert WORKFLOW_PATH.is_file()
 
@@ -584,7 +728,8 @@ def main() -> int:
         assert field not in serialized.lower()
     for prohibited in ("v31.retry", "v32.retry", "v33.prepare", "cleanup-v1.retry"):
         assert prohibited in plan["prohibited_actions"]
-    print("DEVELOPMENT AUTH synthetic-session cleanup v2: PASS (Step 1 consumed/succeeded/pass; Steps 2-3 pending)")
+    assert STEP2_RUN_ID == 36157829108
+    print("DEVELOPMENT AUTH synthetic-session cleanup v2: PASS (Step 1 succeeded; Step 2 consumed/failed; Step 3 blocked; retry unauthorized)")
     return 0
 
 

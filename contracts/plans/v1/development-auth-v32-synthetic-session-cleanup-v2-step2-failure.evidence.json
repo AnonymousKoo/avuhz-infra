@@ -1,0 +1,114 @@
+{
+  "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "55b1ac96-b338-4821-bcb3-02f4ab1a0958",
+  "plan_version": 2,
+  "plan_digest": "sha256:4afea8848bc07967d93be6905b142d6d6c995cd43f204a610c439c0efee50df3",
+  "approval_id": "431aa7e7-1436-4f26-9330-9688921b5552",
+  "approval_digest": "sha256:ae964dec7d057008adbf113e217bcfb22741a372d42d13bd1a6202ccd0ed2fed",
+  "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.02.revoke-synthetic-sessions-global",
+  "attempt": 1,
+  "outcome": "FAILED_UNVERIFIED",
+  "safe_error_code": "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+  "classification": "SESSION_STATE_UNVERIFIED",
+  "required_evidence": [
+    {
+      "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+      "evidence_digest": "sha256:7c8d3d35862eb2762dbab39eac0f2252e501c5115298c4e7202db2ecc3ca2829"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-credential.created",
+      "evidence_digest": "sha256:29fa0e715118b6cb70d6c08b28466b79407319bc5177947851b87b86c10dc47d"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-github-binding.created",
+      "evidence_digest": "sha256:de7daf8b0c913f713225d292adae404bc877b298368c9fbedc5e451f6190e574"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-github-binding.verified",
+      "evidence_digest": "sha256:a431c44cac5069898b98784c82244f3b9335f124ee348666da0bb83894f3fce9"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-retirement.required",
+      "evidence_digest": "sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f"
+    },
+    {
+      "evidence_type": "authorization-plan.execution-progress",
+      "evidence_digest": "sha256:6d4e4d5473a50790e1c6db4df50e4428fda37dc9988b4bf44ddb145955b6e2f9"
+    }
+  ],
+  "configuration_reference_bindings": {
+    "admin_credential_reference": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL",
+    "publishable_configuration_reference": "AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY"
+  },
+  "execution_observation": {
+    "workflow_run_id": 36157829108,
+    "execution_sha": "626443fb76be6130e026fc5717ef6a95f688f2ab",
+    "workflow_event": "workflow_dispatch",
+    "run_number": 1,
+    "run_attempt": 1,
+    "conclusion": "failure",
+    "workflow_started_at": "2026-09-25T15:59:22Z",
+    "execution_class": "PROVIDER_MUTATION",
+    "canonical_main_binding_passed": true,
+    "dispatch_confirmation_passed": true,
+    "plan_binding_passed": true,
+    "authorization_window_check_passed": true,
+    "approval_prerequisite_passed": true,
+    "step1_evidence_prerequisite_passed": true,
+    "execution_surface_validator_passed": true,
+    "authorization_preflight_passed_before_runtime_secret_resolution": true,
+    "executor_entered": true,
+    "runtime_secret_resolution_occurred": true,
+    "recovery_credential_generation_attempted": true,
+    "recovery_generation_completed_sufficient_to_advance": true,
+    "direct_recovery_verification_attempted": true,
+    "verification_response_shape_valid": false,
+    "temporary_session_state": "UNVERIFIED",
+    "jwt_validation_reached": false,
+    "global_logout_attempted": false,
+    "global_logout_accepted": false,
+    "step3_executed": false,
+    "sql_executed": false,
+    "retry_occurred": false,
+    "provider_contact_attempted": true,
+    "provider_mutation_attempted": true
+  },
+  "failure_observation": {
+    "session_state": "SESSION_STATE_UNVERIFIED",
+    "cleanup_verified": false,
+    "step3_readback_required": true,
+    "temporary_session_existence_verified": false,
+    "session_revocation_request_accepted": false,
+    "retry_authorized": false
+  },
+  "authority_state": {
+    "step2_authorization": "CONSUMED",
+    "authorization_consumed": true,
+    "retry_authorized": false,
+    "step3_authorization": "BLOCKED"
+  },
+  "credential_material_retained": false,
+  "pii_retained": false,
+  "security_state": {
+    "secret_material_recorded": false,
+    "credential_material_recorded": false,
+    "credential_digest_recorded": false,
+    "token_material_recorded": false,
+    "recovery_material_recorded": false,
+    "raw_provider_response_recorded": false,
+    "raw_provider_rows_recorded": false,
+    "pii_recorded": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "execution_time_source": "GITHUB_ACTIONS_RUN_METADATA",
+  "record_basis": "GITHUB_ACTIONS_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-09-25T17:59:52Z"
+}

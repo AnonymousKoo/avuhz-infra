@@ -968,10 +968,21 @@ def main() -> int:
     assert (BASE / "development-auth-v32-synthetic-session-cleanup-v2.progress.json").is_file()
     assert (BASE / "development-auth-v32-synthetic-session-cleanup-v2.approval.json").is_file()
     cleanup_v2_execution = load(BASE / "development-auth-v32-synthetic-session-cleanup-v2.execution-progress.json")
-    assert cleanup_v2_execution["overall_state"] == "IN_PROGRESS"
+    assert cleanup_v2_execution["overall_state"] == "STOPPED"
     assert cleanup_v2_execution["step_states"][0]["execution_state"] == "SUCCEEDED"
-    assert cleanup_v2_execution["step_states"][1]["authorization_state"] == "PENDING"
-    assert cleanup_v2_execution["step_states"][2]["authorization_state"] == "PENDING"
+    cleanup_v2_step2, cleanup_v2_step3 = cleanup_v2_execution["step_states"][1:]
+    assert (
+        cleanup_v2_step2["authorization_state"], cleanup_v2_step2["execution_state"],
+        cleanup_v2_step2["verification_state"], cleanup_v2_step2["authorization_consumed"],
+        cleanup_v2_step2["safe_error_code"], len(cleanup_v2_step2["evidence"]),
+    ) == (
+        "CONSUMED", "FAILED", "FAIL", True,
+        "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID", 1,
+    )
+    assert (
+        cleanup_v2_step3["authorization_state"], cleanup_v2_step3["execution_state"],
+        cleanup_v2_step3["verification_state"], cleanup_v2_step3["authorization_consumed"],
+    ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False)
 
     text = "".join(
         path.read_text(encoding="utf-8")

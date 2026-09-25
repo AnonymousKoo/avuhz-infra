@@ -1,0 +1,79 @@
+{
+  "overall_state": "IN_PROGRESS",
+  "plan_digest": "sha256:4afea8848bc07967d93be6905b142d6d6c995cd43f204a610c439c0efee50df3",
+  "plan_id": "55b1ac96-b338-4821-bcb3-02f4ab1a0958",
+  "plan_version": 2,
+  "progress_digest": "sha256:b44bd2dd931f2d20c43e669065ef397c6f5b09ccc6de4f2d211891316d75152b",
+  "progress_id": "dd04fc49-cd7a-49f2-bc99-2df8b949e70b",
+  "record_version": 3,
+  "step_states": [
+    {
+      "authorization_consumed": true,
+      "authorization_state": "CONSUMED",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.cleanup-v2.dashboard-precleanup-read",
+          "digest_policy": "REQUIRED",
+          "evidence_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "persistence_policy": "DIGEST_ONLY",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "recorded_at": "2026-09-25T15:37:24Z",
+          "sanitized_value": null,
+          "source_step_id": null,
+          "value_class": "CONFIGURATION_REFERENCE",
+          "value_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v2.precleanup-state",
+          "digest_policy": "REQUIRED",
+          "evidence_digest": "sha256:7c8d3d35862eb2762dbab39eac0f2252e501c5115298c4e7202db2ecc3ca2829",
+          "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+          "persistence_policy": "DIGEST_ONLY",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "recorded_at": "2026-09-25T15:37:24Z",
+          "sanitized_value": null,
+          "source_step_id": null,
+          "value_class": "CONTENT_DIGEST",
+          "value_digest": "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1"
+        }
+      ],
+      "evidence": [
+        {
+          "evidence_digest": "sha256:7c8d3d35862eb2762dbab39eac0f2252e501c5115298c4e7202db2ecc3ca2829",
+          "evidence_reference": "provider.execution.v32-synthetic-session-cleanup-v2.step1.attempt1.verified",
+          "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+          "recorded_at": "2026-09-25T15:37:24Z"
+        }
+      ],
+      "execution_state": "SUCCEEDED",
+      "observed_postcondition": "select\n  count(*) as session_count,\n  count(*) filter (\n    where u.email = 'avuhz-development-synthetic@example.invalid'\n  ) as synthetic_session_count\nfrom auth.sessions as s\nleft join auth.users as u on u.id = s.user_id; Exactly one query; only session_count and synthetic_session_count; require 1/1 for PRE_CLEANUP_SYNTHETIC_SESSION_CONFIRMED, else STOP before Step 2. This fresh read, not cleanup-v1 evidence, is the current precondition.",
+      "safe_error_code": null,
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.01.verify-current-attributed-session-precondition",
+      "verification_state": "PASS"
+    },
+    {
+      "authorization_consumed": false,
+      "authorization_state": "PENDING",
+      "binding_assertions": [],
+      "evidence": [],
+      "execution_state": "NOT_STARTED",
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.02.revoke-synthetic-sessions-global",
+      "verification_state": "NOT_STARTED"
+    },
+    {
+      "authorization_consumed": false,
+      "authorization_state": "PENDING",
+      "binding_assertions": [],
+      "evidence": [],
+      "execution_state": "NOT_STARTED",
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.03.verify-zero-session-refresh-state",
+      "verification_state": "NOT_STARTED"
+    }
+  ],
+  "updated_at": "2026-09-25T15:37:24Z"
+}

@@ -1,0 +1,78 @@
+{
+  "evidence_type": "auth.synthetic-session.precleanup-attribution.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "55b1ac96-b338-4821-bcb3-02f4ab1a0958",
+  "plan_version": 2,
+  "plan_digest": "sha256:4afea8848bc07967d93be6905b142d6d6c995cd43f204a610c439c0efee50df3",
+  "approval_id": "431aa7e7-1436-4f26-9330-9688921b5552",
+  "approval_digest": "sha256:ae964dec7d057008adbf113e217bcfb22741a372d42d13bd1a6202ccd0ed2fed",
+  "step_id": "development.auth.v32-synthetic-session-cleanup-v2.step.01.verify-current-attributed-session-precondition",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "PRE_CLEANUP_SYNTHETIC_SESSION_CONFIRMED",
+  "required_evidence": [
+    {
+      "evidence_type": "auth.session-attribution.owner-interactive-inspected",
+      "evidence_digest": "sha256:87448d893e3d6f013cd6a20bdf05eef25b5d1c3425513377469c62eab40dffcc"
+    }
+  ],
+  "preapproval_binding": {
+    "binding_id": "binding.development.auth.cleanup-v2.canonical-identity-attribution",
+    "value": "sha256:87448d893e3d6f013cd6a20bdf05eef25b5d1c3425513377469c62eab40dffcc",
+    "exact_digest": "sha256:75efe20819f355582c956eb11a96e3e1048af3333afed9e26ea68fe84116b150"
+  },
+  "authorization_observation": {
+    "interaction_surface": "supabase.dashboard.sql-editor",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "approval_exact": true,
+    "authorization_window_execution_owner_confirmed": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "credential_material_observed": false
+  },
+  "authorization_observation_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+  "execution_observation": {
+    "execution_class": "PROVIDER_READ",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_aggregate_select_attempts": 1,
+    "additional_sql_executed": false,
+    "refresh_token_query_executed": false,
+    "provider_mutation_attempted": false,
+    "step2_executed": false,
+    "step3_executed": false,
+    "cleanup_attempted": false
+  },
+  "sanitized_result": {
+    "session_count": 1,
+    "synthetic_session_count": 1
+  },
+  "result_digest": "sha256:b497350a172d97da3dd97943d7f0fdc114440db50a006bd8dd804753249d84d1",
+  "verification_observation": {
+    "result_fields_exact": true,
+    "aggregate_only": true,
+    "precleanup_synthetic_session_confirmed": true,
+    "postcondition_verified": true
+  },
+  "provider_mutation_attempted": false,
+  "credential_material_retained": false,
+  "pii_retained": false,
+  "security_state": {
+    "raw_rows_returned": false,
+    "raw_rows_retained": false,
+    "session_ids_returned": false,
+    "user_ids_returned": false,
+    "token_values_returned": false,
+    "credential_material_observed": false,
+    "pii_retained": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-09-25T15:37:24Z"
+}

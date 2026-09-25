@@ -12,7 +12,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import approval_digest
+from avuhz_engineering.authorization_plan import approval_digest, progress_digest
 
 BASE = ROOT / "contracts/plans/v1"
 BOUNDARY = "development-auth-v32-synthetic-session-cleanup-v2"
@@ -26,6 +26,8 @@ PROGRESS_DIGEST = "sha256:eba7fe63e59cda2b30d074eedbd2455c69a182d5ee7d1824aa212c
 APPROVED_AT = "2026-09-25T09:27:17Z"
 WINDOW_START = "2026-09-25T15:00:00Z"
 WINDOW_END = "2026-09-25T21:00:00Z"
+STEP1_EVIDENCE_DIGEST = "sha256:7c8d3d35862eb2762dbab39eac0f2252e501c5115298c4e7202db2ecc3ca2829"
+EXECUTION_PROGRESS_DIGEST = "sha256:b44bd2dd931f2d20c43e669065ef397c6f5b09ccc6de4f2d211891316d75152b"
 
 
 class DevelopmentAuthV32SyntheticSessionCleanupV2PlanTests(unittest.TestCase):
@@ -33,7 +35,7 @@ class DevelopmentAuthV32SyntheticSessionCleanupV2PlanTests(unittest.TestCase):
         self.plan = json.loads((BASE / f"{BOUNDARY}.plan.json").read_text())
         self.progress = json.loads((BASE / f"{BOUNDARY}.progress.json").read_text())
 
-    def test_approved_exact_three_step_boundary_remains_unexecuted(self) -> None:
+    def test_step1_is_consumed_and_steps2_3_remain_unexecuted(self) -> None:
         approval_path = BASE / f"{BOUNDARY}.approval.json"
         approval = json.loads(approval_path.read_text())
         self.assertEqual(approval, {
@@ -79,8 +81,50 @@ class DevelopmentAuthV32SyntheticSessionCleanupV2PlanTests(unittest.TestCase):
             self.assertEqual(step["verification_state"], "NOT_STARTED")
             self.assertFalse(step["authorization_consumed"])
             self.assertEqual(step["evidence"], [])
-        self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
-        self.assertEqual(list(BASE.glob(f"{BOUNDARY}*.evidence.json")), [])
+        self.assertEqual(list(BASE.glob(f"{BOUNDARY}*.evidence.json")), [
+            BASE / f"{BOUNDARY}-step1-success.evidence.json"
+        ])
+        evidence = json.loads((BASE / f"{BOUNDARY}-step1-success.evidence.json").read_text())
+        self.assertEqual(evidence["evidence_type"], "auth.synthetic-session.precleanup-attribution.verified")
+        self.assertEqual(evidence["step_id"], self.plan["ordered_step_ids"][0])
+        self.assertEqual(evidence["classification"], "PRE_CLEANUP_SYNTHETIC_SESSION_CONFIRMED")
+        self.assertEqual(evidence["sanitized_result"], {"session_count": 1, "synthetic_session_count": 1})
+        self.assertEqual(evidence["recorded_at"], "2026-09-25T15:37:24Z")
+        self.assertFalse(evidence["execution_observation"]["execution_timestamp_retained"])
+        self.assertFalse(evidence["execution_observation"]["recorded_at_is_execution_timestamp"])
+        self.assertFalse(evidence["execution_observation"]["refresh_token_query_executed"])
+        self.assertFalse(evidence["execution_observation"]["additional_sql_executed"])
+        self.assertFalse(evidence["provider_mutation_attempted"])
+        self.assertFalse(evidence["credential_material_retained"])
+        self.assertFalse(evidence["pii_retained"])
+        self.assertFalse(evidence["security_state"]["raw_rows_retained"])
+        self.assertEqual("sha256:" + hashlib.sha256((BASE / f"{BOUNDARY}-step1-success.evidence.json").read_bytes()).hexdigest(), STEP1_EVIDENCE_DIGEST)
+        evidence_text = json.dumps(evidence, sort_keys=True).lower()
+        for forbidden in ('"session_id"', '"user_id"', '"email"', '"provider_payload"', '"access_token"', '"refresh_token"', '"secret_value"'):
+            self.assertNotIn(forbidden, evidence_text)
+
+        execution = json.loads((BASE / f"{BOUNDARY}.execution-progress.json").read_text())
+        self.assertEqual(execution["progress_digest"], EXECUTION_PROGRESS_DIGEST)
+        self.assertEqual(progress_digest(execution), EXECUTION_PROGRESS_DIGEST)
+        self.assertEqual(execution["overall_state"], "IN_PROGRESS")
+        first, second, third = execution["step_states"]
+        self.assertEqual(
+            (first["authorization_state"], first["execution_state"], first["verification_state"], first["authorization_consumed"]),
+            ("CONSUMED", "SUCCEEDED", "PASS", True),
+        )
+        self.assertEqual(
+            [assertion["binding_id"] for assertion in first["binding_assertions"]],
+            [
+                "binding.development.auth.cleanup-v2.dashboard-precleanup-read",
+                "binding.development.auth.cleanup-v2.precleanup-state",
+            ],
+        )
+        for state in (second, third):
+            self.assertEqual(
+                (state["authorization_state"], state["execution_state"], state["verification_state"], state["authorization_consumed"]),
+                ("PENDING", "NOT_STARTED", "NOT_STARTED", False),
+            )
+            self.assertEqual(state["evidence"], [])
         self.assertTrue((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v2.py").is_file())
         self.assertTrue((ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v2.yml").is_file())
         self.assertFalse((ROOT / f"scripts/{BOUNDARY.replace('-', '_')}_v1.py").exists())

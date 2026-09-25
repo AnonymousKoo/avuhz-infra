@@ -967,7 +967,11 @@ def main() -> int:
     assert cleanup_v2.is_file()
     assert (BASE / "development-auth-v32-synthetic-session-cleanup-v2.progress.json").is_file()
     assert (BASE / "development-auth-v32-synthetic-session-cleanup-v2.approval.json").is_file()
-    assert not (BASE / "development-auth-v32-synthetic-session-cleanup-v2.execution-progress.json").exists()
+    cleanup_v2_execution = load(BASE / "development-auth-v32-synthetic-session-cleanup-v2.execution-progress.json")
+    assert cleanup_v2_execution["overall_state"] == "IN_PROGRESS"
+    assert cleanup_v2_execution["step_states"][0]["execution_state"] == "SUCCEEDED"
+    assert cleanup_v2_execution["step_states"][1]["authorization_state"] == "PENDING"
+    assert cleanup_v2_execution["step_states"][2]["authorization_state"] == "PENDING"
 
     text = "".join(
         path.read_text(encoding="utf-8")

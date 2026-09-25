@@ -1,0 +1,209 @@
+{
+  "plan_id": "8f9c771e-6dde-4bc8-bc20-8605c8b05c36",
+  "plan_version": 1,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-25T19:26:17Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-26T15:00:00Z",
+    "expires_at": "2026-09-26T21:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v32-session-state-rebaseline-owner-interactive-v1.step.01.inspect-session-refresh-aggregate"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v32-session-state-rebaseline-owner-interactive-v1.step.01.inspect-session-refresh-aggregate",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.session-refresh-aggregate-rebaseline",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:auth-session-refresh-rebaseline",
+        "binding_state": "BOUND",
+        "exact_version": "owner-interactive.v1",
+        "exact_digest": "sha256:095900c5eb2498b92672c0d4eef4905b6d0c9d8e5232ae3ae20d0f0fee58b7d0"
+      },
+      "operation": "provider.auth-session-state.rebaseline-owner-interactive-read-only",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:8344c3e26c26f464bcefa880251ac7619bfc6087a8a17e9c0987db4a843191eb"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:a942c1fa84f32e96619f916c1686ccb8d8ec1a6f3dd7393a0fa6cc992f167468"
+        }
+      ],
+      "expected_postcondition": "In the DEVELOPMENT AUTH Dashboard SQL Editor, execute exactly the one aggregate SELECT bound by this resource. Return only non-negative integer session_count and refresh_token_count. Classify exact 0/0 as SESSION_CLEANUP_ALREADY_VERIFIED; any nonzero value as SESSION_CLEANUP_REQUIRED (read only; a separate exact plan is required before any mutation); malformed, unavailable, or ambiguous results as SESSION_STATE_UNVERIFIED and stop. No follow-up SQL or other action is authorized by this plan.",
+      "prohibited_actions": [
+        "additional.sql.execute",
+        "approval.create",
+        "auth.sessions.raw-row-query",
+        "auth.refresh-tokens.raw-row-query",
+        "auth.users.query",
+        "credential.create",
+        "credential.persist",
+        "credential.rotate",
+        "data.operation",
+        "ddl.execute",
+        "delete.execute",
+        "hook.modify",
+        "insert.execute",
+        "n8n.operation",
+        "pii.return",
+        "production.target",
+        "provider.mutation",
+        "raw-row.read",
+        "render.operation",
+        "session.cleanup",
+        "session.delete",
+        "session.issue",
+        "staging.target",
+        "token.issue",
+        "truncate.execute",
+        "update.execute",
+        "v32.retry",
+        "cleanup-v1.retry",
+        "cleanup-v2.retry",
+        "v33.prepare"
+      ],
+      "stop_conditions": [
+        "additional-sql.requested",
+        "authorization.window-inactive",
+        "count.invalid",
+        "owner-interactive-session.unavailable",
+        "pii.returned",
+        "project.mismatch",
+        "raw-row.returned",
+        "result-fields.mismatch",
+        "sql.text.mismatch",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.v2-failure",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:8344c3e26c26f464bcefa880251ac7619bfc6087a8a17e9c0987db4a843191eb",
+            "exact_digest": "sha256:65c740bcfe31a84dc2dfec7a838f93560e1f43bf2ba07d39f8d5f5611982e40b"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.v2-stopped-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:a942c1fa84f32e96619f916c1686ccb8d8ec1a6f3dd7393a0fa6cc992f167468",
+            "exact_digest": "sha256:849b5a939ddaec0722ef8fd1488e9ca96f3049261a67d79a1fbfc07ea0d28798"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.dashboard-session-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+          "established_binding_ids": [
+            "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "additional.sql.execute",
+    "approval.create",
+    "auth.sessions.raw-row-query",
+    "auth.refresh-tokens.raw-row-query",
+    "auth.users.query",
+    "credential.create",
+    "credential.persist",
+    "credential.rotate",
+    "data.operation",
+    "ddl.execute",
+    "delete.execute",
+    "hook.modify",
+    "insert.execute",
+    "n8n.operation",
+    "pii.return",
+    "production.target",
+    "provider.mutation",
+    "raw-row.read",
+    "render.operation",
+    "session.cleanup",
+    "session.delete",
+    "session.issue",
+    "staging.target",
+    "token.issue",
+    "truncate.execute",
+    "update.execute",
+    "v32.retry",
+    "cleanup-v1.retry",
+    "cleanup-v2.retry",
+    "v33.prepare"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "authorization.unbound",
+    "count.invalid",
+    "pii.returned",
+    "raw-row.returned",
+    "result-fields.mismatch",
+    "security.validation.failed",
+    "sql.text.mismatch"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:01610fb22d4755dcb175d37b1c8cd1985ba5c89aa5aca568ab23591de0502e70"
+}

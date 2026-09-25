@@ -966,7 +966,7 @@ def main() -> int:
     cleanup_v2 = BASE / "development-auth-v32-synthetic-session-cleanup-v2.plan.json"
     assert cleanup_v2.is_file()
     assert (BASE / "development-auth-v32-synthetic-session-cleanup-v2.progress.json").is_file()
-    assert not (BASE / "development-auth-v32-synthetic-session-cleanup-v2.approval.json").exists()
+    assert (BASE / "development-auth-v32-synthetic-session-cleanup-v2.approval.json").is_file()
     assert not (BASE / "development-auth-v32-synthetic-session-cleanup-v2.execution-progress.json").exists()
 
     text = "".join(

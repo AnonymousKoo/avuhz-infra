@@ -81,9 +81,6 @@ def main() -> int:
     assert "_validate_invocation" in executor
     assert 'env.get("GITHUB_RUN_NUMBER") != "1"' in executor
     assert 'env.get("GITHUB_RUN_ATTEMPT") != "1"' in executor
-    assert not (BASE / "development-auth-v32-synthetic-session-cleanup-v2.approval.json").exists()
-    assert not (BASE / "development-auth-v32-synthetic-session-cleanup-v2.execution-progress.json").exists()
-    assert not list(BASE.glob("development-auth-v32-synthetic-session-cleanup-v2*.evidence.json"))
     print("DEVELOPMENT AUTH cleanup-v2 Step 2 execution surface: PASS (pinned, dormant, exact plan/window, fail-closed preflight)")
     return 0
 

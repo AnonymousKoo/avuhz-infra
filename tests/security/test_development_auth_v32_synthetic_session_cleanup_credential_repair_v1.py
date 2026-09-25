@@ -81,7 +81,9 @@ class DevelopmentAuthCleanupCredentialRepairV1SecurityTests(unittest.TestCase):
         cleanup_v2 = BASE / "development-auth-v32-synthetic-session-cleanup-v2"
         self.assertTrue(cleanup_v2.with_suffix(".plan.json").is_file())
         self.assertTrue(cleanup_v2.with_suffix(".progress.json").is_file())
-        self.assertFalse(cleanup_v2.with_suffix(".approval.json").exists())
+        cleanup_v2_approval = json.loads(cleanup_v2.with_suffix(".approval.json").read_text())
+        self.assertEqual(cleanup_v2_approval["approval_id"], "431aa7e7-1436-4f26-9330-9688921b5552")
+        self.assertEqual(cleanup_v2_approval["authority_scope"], "EXACT_PLAN_ONLY")
         self.assertFalse(cleanup_v2.with_suffix(".execution-progress.json").exists())
 
     def test_only_reference_name_and_no_credential_material_is_retained(self) -> None:

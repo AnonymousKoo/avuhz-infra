@@ -13,8 +13,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -60,6 +62,9 @@ ATTRIBUTION_EVIDENCE = "sha256:87448d893e3d6f013cd6a20bdf05eef25b5d1c34255133774
 STEP1_ID = "development.auth.v32-synthetic-session-cleanup-v2.step.01.verify-current-attributed-session-precondition"
 STEP2_ID = "development.auth.v32-synthetic-session-cleanup-v2.step.02.revoke-synthetic-sessions-global"
 STEP3_ID = "development.auth.v32-synthetic-session-cleanup-v2.step.03.verify-zero-session-refresh-state"
+APPROVAL_ID = "431aa7e7-1436-4f26-9330-9688921b5552"
+APPROVAL_DIGEST = "sha256:ae964dec7d057008adbf113e217bcfb22741a372d42d13bd1a6202ccd0ed2fed"
+APPROVED_AT = "2026-09-25T09:27:17Z"
 
 PRECHECK_SQL = """select
   count(*) as session_count,
@@ -366,13 +371,31 @@ def main() -> int:
         == ("PENDING", "NOT_STARTED", "NOT_STARTED", False, [], [])
         for s in progress["step_states"]
     )
-    assert not APPROVAL_PATH.exists()
+    approval = load(APPROVAL_PATH)
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 2,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert APPROVED_AT < WINDOW_START
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
     assert not EXECUTION_PROGRESS_PATH.exists()
     assert not list(BASE.glob(EVIDENCE_GLOB))
     assert EXECUTOR_PATH.is_file()
     assert WORKFLOW_PATH.is_file()
 
-    serialized = json.dumps({"plan": plan, "progress": progress}, sort_keys=True)
+    serialized = json.dumps({"plan": plan, "progress": progress, "approval": approval}, sort_keys=True)
     assert DATA_PROJECT not in serialized
     assert ADMIN_REFERENCE in serialized
     assert PUBLISHABLE_REFERENCE in serialized
@@ -384,7 +407,7 @@ def main() -> int:
         assert field not in serialized.lower()
     for prohibited in ("v31.retry", "v32.retry", "v33.prepare", "cleanup-v1.retry"):
         assert prohibited in plan["prohibited_actions"]
-    print("DEVELOPMENT AUTH synthetic-session cleanup v2: PASS (three-step plan, exact external bindings, pristine/unapproved/unexecuted)")
+    print("DEVELOPMENT AUTH synthetic-session cleanup v2: PASS (exact approval, pristine/unexecuted)")
     return 0
 
 

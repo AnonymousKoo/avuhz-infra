@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import json
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from avuhz_engineering.authorization_plan import approval_digest  # noqa: E402
+
 PLAN = ROOT / "contracts/plans/v1/development-auth-v32-session-state-rebaseline-owner-interactive-v1.plan.json"
+APPROVAL = ROOT / "contracts/plans/v1/development-auth-v32-session-state-rebaseline-owner-interactive-v1.approval.json"
+PROGRESS = ROOT / "contracts/plans/v1/development-auth-v32-session-state-rebaseline-owner-interactive-v1.progress.json"
 EXPECTED_QUERY = """select
   (select count(*) from auth.sessions) as session_count,
   (select count(*) from auth.refresh_tokens) as refresh_token_count;"""
@@ -15,7 +22,29 @@ EXPECTED_FIELDS = ["session_count", "refresh_token_count"]
 class SessionStateRebaselineBoundarySecurityTests(unittest.TestCase):
     def setUp(self) -> None:
         self.plan = json.loads(PLAN.read_text(encoding="utf-8"))
+        self.approval = json.loads(APPROVAL.read_text(encoding="utf-8"))
+        self.progress = json.loads(PROGRESS.read_text(encoding="utf-8"))
         self.step = self.plan["steps"][0]
+
+    def test_exact_approval_does_not_consume_or_execute_step(self) -> None:
+        self.assertEqual(self.approval["approval_id"], "064ad292-040f-4d62-8ee8-ddfb4d671591")
+        self.assertEqual(self.approval["plan_id"], self.plan["plan_id"])
+        self.assertEqual(self.approval["plan_digest"], self.plan["plan_digest"])
+        self.assertEqual(self.approval["owner_identity"], "github:AnonymousKoo")
+        self.assertEqual(self.approval["authority_scope"], "EXACT_PLAN_ONLY")
+        self.assertEqual(
+            approval_digest(self.approval),
+            "sha256:2091cd66308b04938564eac9d879c53701177fb1e3a20fa9422fe73ec7211061",
+        )
+        self.assertEqual(self.progress["overall_state"], "NOT_STARTED")
+        state = self.progress["step_states"][0]
+        self.assertEqual(
+            (state["authorization_state"], state["execution_state"],
+             state["verification_state"], state["authorization_consumed"]),
+            ("PENDING", "NOT_STARTED", "NOT_STARTED", False),
+        )
+        self.assertEqual(state["evidence"], [])
+        self.assertEqual(state["binding_assertions"], [])
 
     def test_exact_single_aggregate_query_and_bounded_results(self) -> None:
         self.assertEqual(EXPECTED_QUERY.count(";"), 1)

@@ -97,6 +97,12 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
             expected_user_id=payload["user"]["id"],
         )
 
+    def valid_session_payload(self) -> dict:
+        payload = self.verify_fixture()
+        payload["access_token"] = _memory_secret("access")
+        payload["refresh_token"] = _memory_secret("refresh")
+        return payload
+
     def assert_safe_stop(
         self,
         expected: str,
@@ -135,25 +141,35 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
 
     def test_direct_recovery_verification_uses_exact_wire_contract(self) -> None:
         captured: list[object] = []
-        credential = lifecycle.RecoveryVerificationCredential(
-            _memory_secret("direct-verification")
-        )
+        recovery_token_hash = _memory_secret("direct-verification")
+        credential = lifecycle.RecoveryVerificationCredential(recovery_token_hash)
         response_payload = self.verify_fixture()
         response_payload["access_token"] = _memory_secret("access")
         response_payload["refresh_token"] = _memory_secret("refresh")
+        parsed_payloads: list[dict] = []
+        parse_response = lifecycle.parse_recovery_verification_response
+
+        def capture_parse(payload, *, expected_user_id):
+            parsed_payloads.append(payload)
+            return parse_response(payload, expected_user_id=expected_user_id)
 
         def urlopen(request, timeout):
             captured.extend((request, timeout, bytes(request.data)))
             return FakeResponse(200, json.dumps(response_payload).encode("utf-8"))
 
         try:
-            result = lifecycle.request_direct_recovery_verification(
-                project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
-                publishable_key=_memory_secret("publishable"),
-                credential=credential,
-                expected_user_id=response_payload["user"]["id"],
-                urlopen=urlopen,
-            )
+            with patch.object(
+                lifecycle,
+                "parse_recovery_verification_response",
+                side_effect=capture_parse,
+            ):
+                result = lifecycle.request_direct_recovery_verification(
+                    project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
+                    publishable_key=_memory_secret("publishable"),
+                    credential=credential,
+                    expected_user_id=response_payload["user"]["id"],
+                    urlopen=urlopen,
+                )
         finally:
             credential.clear()
 
@@ -164,12 +180,15 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         body = json.loads(captured[2])
         self.assertEqual(set(body), {"type", "token_hash"})
         self.assertEqual(body["type"], "recovery")
+        self.assertEqual(body["token_hash"], recovery_token_hash)
         self.assertEqual(result.token_type, "bearer")
         self.assertIsNotNone(request.get_header("Apikey"))
         self.assertTrue(request.get_header("Authorization").startswith("Bearer "))
         self.assertEqual(request.get_header("Content-type"), "application/json")
         self.assertEqual(request.get_header("Accept"), "application/json")
         self.assertEqual(request.data, bytearray())
+        self.assertIsNone(parsed_payloads[0]["access_token"])
+        self.assertIsNone(parsed_payloads[0]["refresh_token"])
         result.clear()
         self.assertTrue(result.is_cleared)
 
@@ -212,9 +231,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         self.assertTrue(result.is_cleared)
 
     def test_exact_raw_session_response_is_parsed(self) -> None:
-        payload = self.verify_fixture()
-        payload["access_token"] = _memory_secret("access")
-        payload["refresh_token"] = _memory_secret("refresh")
+        payload = self.valid_session_payload()
         session = lifecycle.parse_recovery_verification_response(
             payload,
             expected_user_id=payload["user"]["id"],
@@ -230,9 +247,67 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         self.assertTrue(session.is_cleared)
         self.assertNotIn(_memory_secret("access"), repr(session))
 
-    def test_malformed_verification_response_fails_closed(self) -> None:
-        payload = self.verify_fixture()
+    def test_missing_expires_at_is_accepted_without_synthesis(self) -> None:
+        payload = self.valid_session_payload()
         payload.pop("expires_at")
+        session = lifecycle.parse_recovery_verification_response(
+            payload, expected_user_id=payload["user"]["id"]
+        )
+        try:
+            self.assertIsNone(session.expires_at)
+        finally:
+            session.clear()
+
+    def test_null_expires_at_is_accepted(self) -> None:
+        payload = self.valid_session_payload()
+        payload["expires_at"] = None
+        session = lifecycle.parse_recovery_verification_response(
+            payload, expected_user_id=payload["user"]["id"]
+        )
+        try:
+            self.assertIsNone(session.expires_at)
+        finally:
+            session.clear()
+
+    def test_expires_in_above_previous_cap_is_accepted(self) -> None:
+        payload = self.valid_session_payload()
+        payload["expires_in"] = 7200
+        session = lifecycle.parse_recovery_verification_response(
+            payload, expected_user_id=payload["user"]["id"]
+        )
+        try:
+            self.assertEqual(session.expires_in, 7200)
+        finally:
+            session.clear()
+
+    def test_top_level_user_id_is_accepted_when_nested_user_is_absent(self) -> None:
+        payload = self.valid_session_payload()
+        user_id = payload["user"].pop("id")
+        payload.pop("user")
+        payload["id"] = user_id
+        session = lifecycle.parse_recovery_verification_response(
+            payload, expected_user_id=user_id
+        )
+        try:
+            self.assertEqual(session.user_id, user_id)
+        finally:
+            session.clear()
+
+    def test_matching_nested_and_top_level_ids_are_accepted(self) -> None:
+        payload = self.valid_session_payload()
+        user_id = payload["user"]["id"]
+        payload["id"] = user_id
+        session = lifecycle.parse_recovery_verification_response(
+            payload, expected_user_id=user_id
+        )
+        try:
+            self.assertEqual(session.user_id, user_id)
+        finally:
+            session.clear()
+
+    def test_conflicting_nested_and_top_level_ids_fail_closed(self) -> None:
+        payload = self.valid_session_payload()
+        payload["id"] = "22222222-2222-4222-8222-222222222222"
         self.assert_safe_stop(
             "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
             lambda: lifecycle.parse_recovery_verification_response(
@@ -240,6 +315,73 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
                 expected_user_id=payload["user"]["id"],
             ),
         )
+
+    def test_missing_both_identity_shapes_fails_closed(self) -> None:
+        payload = self.valid_session_payload()
+        payload.pop("user")
+        self.assert_safe_stop(
+            "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+            lambda: lifecycle.parse_recovery_verification_response(
+                payload, expected_user_id="11111111-1111-4111-8111-111111111111"
+            ),
+        )
+
+    def test_malformed_nested_identity_fails_closed_even_with_top_level_id(self) -> None:
+        payload = self.valid_session_payload()
+        payload["user"]["id"] = "not-a-uuid"
+        payload["id"] = "11111111-1111-4111-8111-111111111111"
+        self.assert_safe_stop(
+            "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+            lambda: lifecycle.parse_recovery_verification_response(
+                payload, expected_user_id="11111111-1111-4111-8111-111111111111"
+            ),
+        )
+
+    def test_expected_user_mismatch_fails_closed(self) -> None:
+        payload = self.valid_session_payload()
+        self.assert_safe_stop(
+            "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+            lambda: lifecycle.parse_recovery_verification_response(
+                payload, expected_user_id="22222222-2222-4222-8222-222222222222"
+            ),
+        )
+
+    def test_invalid_session_fields_fail_closed(self) -> None:
+        cases = (
+            ("missing access", lambda p: p.pop("access_token")),
+            ("missing refresh", lambda p: p.pop("refresh_token")),
+            ("non-bearer", lambda p: p.__setitem__("token_type", "mac")),
+            ("zero expiry", lambda p: p.__setitem__("expires_in", 0)),
+            ("negative expiry", lambda p: p.__setitem__("expires_in", -1)),
+            ("boolean expiry", lambda p: p.__setitem__("expires_in", True)),
+            ("string expiry", lambda p: p.__setitem__("expires_in", "3600")),
+            ("malformed expires_at", lambda p: p.__setitem__("expires_at", "later")),
+            ("zero expires_at", lambda p: p.__setitem__("expires_at", 0)),
+            ("boolean expires_at", lambda p: p.__setitem__("expires_at", True)),
+        )
+        for label, mutate in cases:
+            with self.subTest(label=label):
+                payload = self.valid_session_payload()
+                mutate(payload)
+                self.assert_safe_stop(
+                    "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+                    lambda payload=payload: lifecycle.parse_recovery_verification_response(
+                        payload,
+                        expected_user_id="11111111-1111-4111-8111-111111111111",
+                    ),
+                )
+
+    def test_parser_does_not_make_provider_or_network_calls(self) -> None:
+        payload = self.valid_session_payload()
+        with patch.object(
+            lifecycle.urllib.request,
+            "urlopen",
+            side_effect=AssertionError("parser must remain local"),
+        ):
+            session = lifecycle.parse_recovery_verification_response(
+                payload, expected_user_id=payload["user"]["id"]
+            )
+        session.clear()
 
     def test_verification_provider_rejection_does_not_read_response_body(self) -> None:
         error_body = io.BytesIO(_memory_secret("provider-body").encode("utf-8"))
@@ -397,7 +539,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         generate = self.generate_fixture()
         generate["hashed_token"] = _memory_secret("uncaptured-credential")
         malformed = self.verify_fixture()
-        malformed.pop("expires_at")
+        malformed.pop("access_token")
         logout_calls: list[str] = []
 
         self.assert_safe_stop(
@@ -562,7 +704,7 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         malformed = self.verify_fixture()
         malformed["access_token"] = access_material
         malformed["refresh_token"] = refresh_material
-        malformed.pop("expires_at")
+        malformed["expires_at"] = "invalid-expiry"
         output = io.StringIO()
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
             error = self.assert_safe_stop(

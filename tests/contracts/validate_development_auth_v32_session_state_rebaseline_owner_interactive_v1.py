@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the pristine, owner-interactive AUTH state-rebaseline boundary."""
+"""Validate the approved, unexecuted owner-interactive AUTH rebaseline."""
 from __future__ import annotations
 
 import hashlib
@@ -11,8 +11,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -29,6 +31,11 @@ PLAN_ID = "8f9c771e-6dde-4bc8-bc20-8605c8b05c36"
 PROGRESS_ID = "2e120dc3-91a9-485d-ad61-34d04dd201c5"
 PLAN_DIGEST = "sha256:01610fb22d4755dcb175d37b1c8cd1985ba5c89aa5aca568ab23591de0502e70"
 PROGRESS_DIGEST = "sha256:359b388f93fb075d738c85e8995b6ec8559879f4be696a1e3eda2d5e30f52e2c"
+PROGRESS_FILE_DIGEST = "sha256:ed17d3ac7e03dc8263970d9bbe962a93b0fb69d2e3b9175b833dea0d1353ca53"
+APPROVAL_ID = "064ad292-040f-4d62-8ee8-ddfb4d671591"
+APPROVED_AT = "2026-09-25T20:53:38Z"
+APPROVAL_DIGEST = "sha256:2091cd66308b04938564eac9d879c53701177fb1e3a20fa9422fe73ec7211061"
+APPROVAL_FILE_DIGEST = "sha256:9973a0880bba000298b3f87b21118bb35e4411161d5c96291619100acec46a60"
 CREATED_AT = "2026-09-25T19:26:17Z"
 WINDOW_START = "2026-09-26T15:00:00Z"
 WINDOW_END = "2026-09-26T21:00:00Z"
@@ -83,8 +90,11 @@ def raw_digest(path: Path) -> str:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-09-26T20:59:59Z")
 
     assert plan_digest(plan) == PLAN_DIGEST
     assert plan["plan_id"] == PLAN_ID
@@ -106,6 +116,24 @@ def main() -> int:
         "issuer_reference": f"https://{PROJECT_REF}.supabase.co/auth/v1",
         "audience_reference": "audience.avuhz.command-service.development",
     }
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW_START
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_FILE_DIGEST
     assert plan["ordered_step_ids"] == [STEP_ID]
     assert len(plan["steps"]) == 1
     step = plan["steps"][0]
@@ -169,6 +197,7 @@ def main() -> int:
 
     assert progress == initial_progress(plan, SCHEMA_ROOT, PROGRESS_ID, CREATED_AT)
     assert progress["progress_digest"] == PROGRESS_DIGEST
+    assert raw_digest(PROGRESS_PATH) == PROGRESS_FILE_DIGEST
     assert progress["overall_state"] == "NOT_STARTED"
     state = progress["step_states"][0]
     assert (
@@ -179,7 +208,6 @@ def main() -> int:
     ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
     assert state["evidence"] == []
 
-    assert not APPROVAL_PATH.exists()
     assert not EXECUTION_PATH.exists()
     assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
     assert not list((ROOT / ".github/workflows").glob(f"*{BOUNDARY}*"))
@@ -193,8 +221,8 @@ def main() -> int:
     assert prior_progress["overall_state"] == "STOPPED"
 
     print(
-        "DEVELOPMENT AUTH v32 session-state rebaseline plan: PASS "
-        "(pristine, unapproved, unexecuted; one aggregate read only)"
+        "DEVELOPMENT AUTH v32 session-state rebaseline approval: PASS "
+        "(exact plan approved; pristine and unexecuted; one aggregate read only)"
     )
     return 0
 

@@ -76,6 +76,8 @@ This map is derived from the current repository tree:
 - agent rules: `AGENTS.md`
 - current build/readiness truth: `docs/current-build-state.md`
 - ordered roadmap: `docs/roadmap.md`
+- Codex parallel-agent operating model: `docs/codex-operating-model.md`
+- repo-scoped Codex skills: `.agents/skills/`
 - runtime/service/worker code: `src/avuhz_runtime/`, `src/avuhz_service/`, `src/avuhz_worker/`
 - contract schemas: `contracts/schemas/v1/`
 - bounded authorization plans/evidence: `contracts/plans/v1/`

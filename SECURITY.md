@@ -25,7 +25,7 @@ A plan, PR approval, green CI run, provider login, or successful prior step does
 
 ## 3. No hardcoded credentials or secret material
 
-Never commit or persist passwords, API keys, access/refresh tokens, bearer tokens, authenticated connection strings, provider cookies, private keys, raw credential payloads, or reversible secret-derived material in code, workflow JSON, configs, docs, plans, evidence, logs, fixtures, or generated artifacts.
+Never commit or persist passwords, API keys, access/refresh tokens, bearer tokens, authenticated URLs or connection strings, provider cookies, private keys, raw credential payloads, or reversible secret-derived material in source code, workflow JSON, configs, tests, docs, plans, evidence, logs, fixtures, generated artifacts, or any other committed file.
 
 Repository evidence:
 
@@ -74,13 +74,13 @@ Do not place full email addresses, phone numbers, names, provider response bodie
 
 ## 7. Stop on credential exposure, RLS gaps, or PII leaks
 
-If a proposed or existing change would expose credential material, bypass tenant RLS, widen an ACL unexpectedly, mix AUTH and DATA responsibilities, or leak unnecessary PII: stop immediately, identify the exact exposure, and do not continue until it is resolved or separately authorized with an approved remediation plan.
+If a proposed or existing change would expose credential material, persist a secret, create or reveal an RLS gap, widen an ACL unexpectedly, mix AUTH and DATA responsibilities, leak unnecessary PII, or introduce unexpected elevated authority: **STOP**. Identify the exact resource and exposure, preserve evidence without retaining the sensitive material, and do not continue until the issue is resolved or a separately approved remediation boundary exists.
 
 ## 8. Provider and authority changes are separately gated
 
 Repository state is not provider authority. Before any remote mutation, require the exact bounded authorization, active time window if applicable, fresh preflight, exact target match, expected credential class, and explicit verification/evidence step.
 
-Never reuse consumed or expired authority. In current AUTH history, v28 is completed and consumed; it grants no further provider authority. v27 remains historical/unconsumed after the dashboard-bundle mismatch and must not be repurposed for a different action.
+Never reuse consumed, expired, stopped, superseded, or narrower authority. In current AUTH history, v28 is completed and consumed; it grants no further provider authority. v27 remains historical/unconsumed after the dashboard-bundle mismatch and must not be repurposed for a different action. Read `docs/current-build-state.md` and the latest exact execution/progress evidence before acting; version summaries in this file are not authority.
 
 Synthetic-token issuance, hosted AUTH wiring, hosted DATA wiring, Render changes, n8n integration, communications providers, billing providers, staging, and production are distinct resource boundaries.
 

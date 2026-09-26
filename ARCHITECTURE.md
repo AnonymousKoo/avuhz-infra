@@ -4,7 +4,7 @@ Avuhz is a multi-tenant, API-first business operating-system control plane. This
 
 ## Control-plane law
 
-Shared infrastructure belongs in Avuhz. Verticals such as roofing/home services, security/VerifiedPost, real estate/mortgage, or any future domain are thin domain logic on top of the shared backbone.
+Shared infrastructure belongs in Avuhz. Verticals such as roofing, home services, security/VerifiedPost, real estate/mortgage, Sekinfra, or any future domain are thin domain logic on top of the shared backbone.
 
 **Hard constraint:** no vertical may implement its own billing, authentication, tenant-authority, or automation infrastructure. Verticals may define domain contracts, policy, and lifecycle logic, but billing, auth, tenant isolation, and orchestration must remain shared Avuhz services.
 
@@ -23,7 +23,9 @@ AUTH v21 created exactly one passwordless synthetic DEVELOPMENT Auth identity; A
 
 RBAC/ABAC is implemented as trusted server-side policy, not as caller-supplied role claims. `TrustedExecutionContext` carries principal, caller type, tenant, organization, capabilities, authority roles, environment, audience, and authentication strength; `GuardPipeline` evaluates those attributes before command execution. Caller JWT payload fields do not independently grant Avuhz authority.
 
-Current hosted limitation: `src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver`. The provider-specific verifier exists and is tested, but the hosted DEVELOPMENT service has not yet injected it. One short-lived synthetic-token end-to-end validation is also still not complete.
+There is no canonical Avuhz user-directory or organization-directory table in the 16-table DATA migration. Users are currently external AUTH identities resolved into a trusted principal. Tenant authority is carried as one canonical tenant UUID in provider-controlled AUTH metadata, checked against one server-owned allowlist entry, propagated as `TrustedExecutionContext.tenant_id`, and rebound transaction-locally for DATA RLS. `organization_id` exists in the trusted context model, but the current synthetic DEVELOPMENT resolver does not implement an organization membership directory or organization-admin model.
+
+Current hosted limitation: `src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver`. The provider-specific verifier exists and is tested, but the hosted DEVELOPMENT service has not yet injected it. One short-lived synthetic-token end-to-end validation is also still not complete. The latest bounded DEVELOPMENT AUTH evidence reports two sessions and two refresh tokens and classifies the state as `SESSION_CLEANUP_REQUIRED`; cleanup v3 is prepared but unapproved and unexecuted. This unresolved state blocks hosted identity and DATA wiring.
 
 ## 2. Event-driven workflow / orchestration engine
 
@@ -78,6 +80,15 @@ The service is a Python WSGI command/query API. `src/avuhz_service/application.p
 
 Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jsonschema`. The repository also pins the Supabase CLI for local/provider artifact work. A DEVELOPMENT Render service is recorded in canonical state, but readiness remains intentionally fail-closed until hosted AUTH and DATA adapters are injected and independently verified.
 
+## Provider boundaries and readiness
+
+- Supabase DEVELOPMENT AUTH is project `pwlhruwutoitnieactol`; Supabase DEVELOPMENT DATA is project `gnuqaefotwgkwurjpyik`. Registration and repository evidence do not grant new provider read or mutation authority.
+- `supabase/provider-artifacts/development-auth/` and `supabase/provider-artifacts/development-data/` are separate, allowlisted provider-artifact surfaces. AUTH-specific SQL is deliberately excluded from the automatic migration chain.
+- `supabase/config.toml` is local configuration, not proof that a hosted service or Edge Function is deployed. Its permissive local network defaults and enabled local components are not production network policy.
+- A DEVELOPMENT Render service and bounded historical health evidence are recorded in `docs/current-build-state.md`; liveness can pass while readiness remains `503` because the hosted provider adapters are unavailable.
+- AUTH v28 and DATA v3 are completed provider-foundation evidence, not reusable authority. The active cleanup need, hosted adapter work, any Render change, n8n, communications, billing, staging, and production are distinct boundaries requiring their own authorization.
+- Current platform production readiness is `NOT_READY`; `READY_FOR_PHASE6` is `NO`.
+
 ## Repository resource map
 
 - Root architecture context: `ARCHITECTURE.md`
@@ -92,6 +103,7 @@ Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jso
 - Preserved legacy schema inventory: `supabase/inventory/current_public_schema.sql`
 - Local Supabase configuration: `supabase/config.toml`
 - Tests and security gates: `tests/`, `scripts/check-baseline.sh`, `.semgrep.yml`, `security/forbidden-path-patterns.txt`
+- CI workflow definitions: `.github/workflows/`
 - n8n workflow exports: **none present**
 - Supabase Edge Functions: **none present**; `edge_runtime` is enabled in local config, but no function source directory exists
 - Dashboard/frontend application code: **none present**
@@ -99,7 +111,9 @@ Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jso
 ## Known Gaps
 
 - End-to-end issuance and local validation of one short-lived synthetic DEVELOPMENT token is not complete.
+- DEVELOPMENT AUTH currently has two sessions and two refresh tokens; cleanup is required, cleanup v3 has no approval or execution authority, and the dedicated credential-retirement obligation remains outstanding after cleanup completes or permanently stops.
 - Hosted DEVELOPMENT identity and DATA adapters are not wired; `/health/ready` therefore remains intentionally unavailable.
+- No canonical Avuhz user directory, organization directory, membership model, or organization-admin authority model is implemented in the 16-table DATA schema.
 - No canonical n8n workflow exports or deployed n8n integration are present.
 - No shared communications provider adapter or SPF/DKIM/DMARC deployment configuration is implemented here.
 - No shared Stripe billing/usage-metering engine is implemented here.

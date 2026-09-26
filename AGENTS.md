@@ -59,11 +59,12 @@ Shared primitives that are required but not yet implemented here—n8n orchestra
 
 When repository narratives disagree, resolve them in this order:
 
-1. current deployed/provider evidence and latest bounded execution progress;
-2. current code, canonical migrations, and provider artifacts;
-3. `ARCHITECTURE.md` and `SECURITY.md`;
-4. `docs/current-build-state.md` and `docs/roadmap.md`;
-5. older design/history documents under `docs/`.
+1. current deployed/provider evidence;
+2. latest exact execution/progress evidence for the resource;
+3. current code, canonical migrations, and provider artifacts;
+4. `ARCHITECTURE.md` and `SECURITY.md`;
+5. `docs/current-build-state.md` and `docs/roadmap.md`;
+6. older design/history documents under `docs/`.
 
 Do not revive expired, consumed, superseded, or narrower historical authority because an older document still mentions it.
 
@@ -86,6 +87,7 @@ This map is derived from the current repository tree:
 - preserved legacy schema inventory: `supabase/inventory/current_public_schema.sql`
 - local Supabase config: `supabase/config.toml`
 - repository tests/gates: `tests/`, `scripts/check-baseline.sh`, `.semgrep.yml`, `security/forbidden-path-patterns.txt`
+- CI workflow definitions: `.github/workflows/`
 - n8n workflow exports: **none currently present**; no canonical workflow-export path exists yet, and current forbidden-path rules reject `n8n-workflows/` and `.n8n/`
 - Supabase Edge Function source: **none currently present**; local `edge_runtime` configuration does not mean an Edge Function is implemented
 - dashboard/frontend application code: **none currently present**

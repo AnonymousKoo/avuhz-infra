@@ -1,0 +1,57 @@
+{
+  "progress_id": "2e120dc3-91a9-485d-ad61-34d04dd201c5",
+  "plan_id": "8f9c771e-6dde-4bc8-bc20-8605c8b05c36",
+  "plan_version": 1,
+  "plan_digest": "sha256:01610fb22d4755dcb175d37b1c8cd1985ba5c89aa5aca568ab23591de0502e70",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v32-session-state-rebaseline-owner-interactive-v1.step.01.inspect-session-refresh-aggregate",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+          "evidence_reference": "provider.execution.v32-session-state-rebaseline-owner-interactive-v1.step1.attempt1.verified",
+          "evidence_digest": "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43",
+          "recorded_at": "2026-09-26T15:07:51Z"
+        }
+      ],
+      "observed_postcondition": "In the DEVELOPMENT AUTH Dashboard SQL Editor, execute exactly the one aggregate SELECT bound by this resource. Return only non-negative integer session_count and refresh_token_count. Classify exact 0/0 as SESSION_CLEANUP_ALREADY_VERIFIED; any nonzero value as SESSION_CLEANUP_REQUIRED (read only; a separate exact plan is required before any mutation); malformed, unavailable, or ambiguous results as SESSION_STATE_UNVERIFIED and stop. No follow-up SQL or other action is authorized by this plan.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.dashboard-session-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "evidence_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "recorded_at": "2026-09-26T15:07:51Z"
+        },
+        {
+          "binding_id": "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+          "evidence_digest": "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:8e6a983f5dd1e48410cb00d13d104ba867d1647a014340a9b9e6fb35e4b514db",
+          "recorded_at": "2026-09-26T15:07:51Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-26T15:07:51Z",
+  "progress_digest": "sha256:68178521cb34199e2ab27fe7c48948df78e3846f0dba918f17b59ed920a51104"
+}

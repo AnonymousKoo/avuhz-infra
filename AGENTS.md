@@ -92,18 +92,21 @@ Do not guess missing paths. If a future task introduces one of these absent reso
 
 ## Current DEVELOPMENT boundary
 
-Current canonical identity foundation is through AUTH v28:
+Do not hardcode a current AUTH/DATA version into agent instructions. That state changes more frequently than this operating file should.
 
-- v21: one passwordless synthetic DEVELOPMENT Auth identity created and verified;
-- v24: canonical tenant metadata bound in provider-controlled `app_metadata`;
-- v26: exactly one server-owned read-only allowlist tuple bound locally;
-- v28: the exact hosted Custom Access Token hook bundle enabled and verified; v28 authority is consumed.
+Before work that depends on current DEVELOPMENT status, read `docs/current-build-state.md` and the latest bounded execution/progress evidence for that exact resource. Use `docs/roadmap.md` only for sequence, not as proof that a provider action occurred.
 
-DEVELOPMENT DATA v3 is complete and verifies the 16-table authoritative `avuhz_*` surface, tenant RLS, narrow command-service grants, and sealed migration authority.
+DEVELOPMENT AUTH and DATA remain separate projects and responsibilities. Never reuse an expired, consumed, stopped, superseded, or narrower historical authorization for a later action.
 
-The hosted DEVELOPMENT runtime is still deliberately fail-closed: `src/avuhz_service/development.py` injects neither the real hosted identity resolver nor a real hosted DATA UnitOfWork. One short-lived synthetic-token validation, hosted AUTH wiring, hosted DATA wiring, readiness promotion, DEVELOPMENT operational hardening, staging, and production gates remain later boundaries.
+## Parallel Codex execution
 
-Do not reuse v27 or consumed v28 authority for those later actions.
+For milestone-sized repository work, use the operating model in `docs/codex-operating-model.md`.
+
+Parallelize only independent repository-local lanes with non-overlapping file/resource ownership. Prefer isolated worktrees or subagents for implementation, independent review, and readiness analysis when that reduces elapsed time without creating conflicting authority.
+
+External/provider authority remains single-writer. Never run parallel provider mutations, secret operations, deployments, or bounded approval-window actions against the same resource. A review agent may inspect those changes but must remain read-only unless separately authorized.
+
+Repo-scoped reusable Codex workflows live under `.agents/skills/`. Use the milestone-orchestrator skill for safe decomposition and the change-review skill for an independent pre-integration review.
 
 ## Work discipline
 

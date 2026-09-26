@@ -6,6 +6,7 @@ Canonical project controls:
 
 - [Architecture source of truth](ARCHITECTURE.md)
 - [Agent rules](AGENTS.md)
+- [Codex operating model](docs/codex-operating-model.md)
 - [Security model](SECURITY.md)
 - [Current build state](docs/current-build-state.md)
 - [Roadmap](docs/roadmap.md)

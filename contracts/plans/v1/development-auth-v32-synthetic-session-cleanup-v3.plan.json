@@ -1,0 +1,461 @@
+{
+  "plan_id": "8e6fc27a-9b2d-4a38-b6a8-5104446fe694",
+  "plan_version": 3,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-26T15:24:31Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-27T15:00:00Z",
+    "expires_at": "2026-09-27T21:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.auth.v32-synthetic-session-cleanup-v3.step.01.revoke-synthetic-sessions-global",
+    "development.auth.v32-synthetic-session-cleanup-v3.step.02.verify-zero-session-refresh-state"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v3.step.01.revoke-synthetic-sessions-global",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.synthetic-session-provider-native-cleanup",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:synthetic-session-global-logout",
+        "binding_state": "BOUND",
+        "exact_version": "cleanup.v3",
+        "exact_digest": "sha256:e52196c15636ee7dd8781f68404f03f092c85f86cf4fa2ca402809a51fc255df"
+      },
+      "operation": "provider.auth-session.recover-once-validate-and-logout-global",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:68178521cb34199e2ab27fe7c48948df78e3846f0dba918f17b59ed920a51104"
+        },
+        {
+          "evidence_type": "auth.cleanup-admin-credential.created",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:29fa0e715118b6cb70d6c08b28466b79407319bc5177947851b87b86c10dc47d"
+        },
+        {
+          "evidence_type": "auth.cleanup-admin-github-binding.created",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:de7daf8b0c913f713225d292adae404bc877b298368c9fbedc5e451f6190e574"
+        },
+        {
+          "evidence_type": "auth.cleanup-admin-github-binding.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:a431c44cac5069898b98784c82244f3b9335f124ee348666da0bb83894f3fce9"
+        },
+        {
+          "evidence_type": "auth.cleanup-admin-retirement.required",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:6d4e4d5473a50790e1c6db4df50e4428fda37dc9988b4bf44ddb145955b6e2f9"
+        }
+      ],
+      "expected_postcondition": "Fresh rebaseline is 2 sessions / 2 refresh tokens: SESSION_CLEANUP_REQUIRED. For the existing synthetic identity only, generate and directly verify one recovery credential with the corrected lifecycle, validate the DEVELOPMENT JWT, then POST global logout exactly once. Allow at most one new temporary session and make no total-count-one assumption before logout. Success is only SESSION_REVOCATION_REQUEST_ACCEPTED; cleanup remains unverified until Step 2 proves 0/0. No retry or retirement.",
+      "prohibited_actions": [
+        "additional.session.issue",
+        "auth.refresh-tokens.delete-sql",
+        "auth.sessions.delete-sql",
+        "cleanup-v1.retry",
+        "cleanup-v2.retry",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "credential.rotate",
+        "data.operation",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "n8n.operation",
+        "production.target",
+        "raw-provider-payload.persist",
+        "render.operation",
+        "run-recovery-session-lifecycle.use",
+        "service-role.use",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.persist",
+        "v33.prepare"
+      ],
+      "stop_conditions": [
+        "admin-credential.unavailable",
+        "authorization.window-inactive",
+        "corrected-lifecycle.digest-mismatch",
+        "credential-repair.binding-mismatch",
+        "global-logout.failed",
+        "identity.subject-mismatch",
+        "jwt.policy-mismatch",
+        "rebaseline.evidence-mismatch",
+        "recovery-generation.failed",
+        "recovery-verification.failed",
+        "retirement-obligation.missing",
+        "scope.drift",
+        "target.mismatch",
+        "token-material.persisted"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+        ],
+        "values_stored": false,
+        "ephemeral_handling": {
+          "material_source": "APPROVED_ENVIRONMENT_SECRET_BOUNDARY",
+          "material_residency": "SERVER_EXECUTOR_MEMORY_ONLY",
+          "control_plane_visibility": "CLASS_LABEL_ONLY",
+          "material_digest": "PROHIBITED",
+          "persistence": "PROHIBITED",
+          "logging": "PROHIBITED",
+          "return_policy": "PROHIBITED",
+          "proof_policy": "NON_SECRET_EXECUTOR_CAPABILITY_ATTESTATION"
+        }
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.rebaseline-evidence",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43",
+            "exact_digest": "sha256:02655e52e1db5dc85c95ffe6d79c5bb7b7464f1a0bcb6b99300345ea7261f91e"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.rebaseline-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:68178521cb34199e2ab27fe7c48948df78e3846f0dba918f17b59ed920a51104",
+            "exact_digest": "sha256:0046effed3e0ac7dd03c26175c73a3fc89d9d9b95a0ac2b6a0a27b8f82251e68"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.v2-failure-evidence",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:8344c3e26c26f464bcefa880251ac7619bfc6087a8a17e9c0987db4a843191eb",
+            "exact_digest": "sha256:65c740bcfe31a84dc2dfec7a838f93560e1f43bf2ba07d39f8d5f5611982e40b"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.v2-stopped-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:a942c1fa84f32e96619f916c1686ccb8d8ec1a6f3dd7393a0fa6cc992f167468",
+            "exact_digest": "sha256:849b5a939ddaec0722ef8fd1488e9ca96f3049261a67d79a1fbfc07ea0d28798"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.corrected-lifecycle",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5",
+            "exact_digest": "sha256:e8ae269e12a87701da0c16a31bcf67fb0a8760dc9aebe075087e8a27d4d3114b"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.admin-credential-reference",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL",
+            "exact_digest": "sha256:43f4f6a8b36338371564fa38fb4867b285cf18313cdc440e09111d10d5d79294"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.publishable-configuration-reference",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY",
+            "exact_digest": "sha256:87a6f3ef3e187b78df6a4e3501d7069b1b92f8c61f9f7de20f2ecc0b7f869ab3"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.credential-repair-completed-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:6d4e4d5473a50790e1c6db4df50e4428fda37dc9988b4bf44ddb145955b6e2f9",
+            "exact_digest": "sha256:cd165f15d488ca774207a33ef022cc49bb261520dfe637ca8ed9d24f9187aa76"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.retirement-obligation",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f",
+            "exact_digest": "sha256:a25eff4ef693438ccce60f436e384814c961ff4c0bbdfd05a262227eb6ec6d92"
+          }
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.revocation-request",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "established_binding_ids": [
+            "binding.development.auth.cleanup-v3.revocation-request"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v3.step.02.verify-zero-session-refresh-state",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "auth.session-refresh-zero-verification",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:session-refresh-zero-verification",
+        "binding_state": "BOUND",
+        "exact_version": "cleanup.v3",
+        "exact_digest": "sha256:46edd30c7cdabb207be82334ac439f5d22e9fd5b9dac3d1d34a0704e3d4b239e"
+      },
+      "operation": "provider.auth-session-state.verify-zero-owner-interactive-read-only",
+      "dependency_step_ids": [
+        "development.auth.v32-synthetic-session-cleanup-v3.step.01.revoke-synthetic-sessions-global"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "source_step_id": "development.auth.v32-synthetic-session-cleanup-v3.step.01.revoke-synthetic-sessions-global",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "select\n  (select count(*) from auth.sessions) as session_count,\n  (select count(*) from auth.refresh_tokens) as refresh_token_count; Exactly one query; only session_count and refresh_token_count. Require exact 0/0 for SESSION_CLEANUP_VERIFIED; any nonzero result is SESSION_CLEANUP_NOT_VERIFIED; unavailable, malformed, or ambiguous results are SESSION_STATE_UNVERIFIED. No raw rows, identifiers, PII, extra SQL, or mutation.",
+      "prohibited_actions": [
+        "additional.sql.execute",
+        "auth.users.query",
+        "auth.sessions.raw-row-query",
+        "auth.refresh-tokens.raw-row-query",
+        "credential.create",
+        "credential.persist",
+        "credential.rotate",
+        "data.operation",
+        "ddl.execute",
+        "delete.execute",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "insert.execute",
+        "n8n.operation",
+        "pii.return",
+        "production.target",
+        "provider.mutation",
+        "raw-row.read",
+        "render.operation",
+        "session.cleanup",
+        "session.issue",
+        "staging.target",
+        "token.issue",
+        "truncate.execute",
+        "update.execute",
+        "cleanup-v1.retry",
+        "cleanup-v2.retry",
+        "v31.retry",
+        "v32.retry",
+        "v33.prepare"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "count.invalid",
+        "owner-interactive-session.unavailable",
+        "project.mismatch",
+        "raw-row.returned",
+        "readback.failed",
+        "result-fields.mismatch",
+        "sql.text.mismatch",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.revocation-request",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.v32-synthetic-session-cleanup-v3.step.01.revoke-synthetic-sessions-global",
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.dashboard-postcleanup-read",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.cleanup-v3.cleanup-verification",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-session.cleanup.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.cleanup.verified",
+          "established_binding_ids": [
+            "binding.development.auth.cleanup-v3.cleanup-verification"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "additional.sql.execute",
+    "additional.session.issue",
+    "auth.sessions.delete-sql",
+    "auth.refresh-tokens.delete-sql",
+    "cleanup-v1.retry",
+    "cleanup-v2.retry",
+    "credential.copy",
+    "credential.create",
+    "credential.digest",
+    "credential.export",
+    "credential.expose",
+    "credential.log",
+    "credential.persist",
+    "credential.return",
+    "credential.rotate",
+    "data.operation",
+    "delete.execute",
+    "hook.modify",
+    "identity.create",
+    "identity.delete",
+    "identity.modify",
+    "n8n.operation",
+    "pii.return",
+    "production.target",
+    "raw-provider-payload.persist",
+    "raw-row.read",
+    "render.operation",
+    "run-recovery-session-lifecycle.use",
+    "service-role.use",
+    "staging.target",
+    "token.persist",
+    "v33.prepare"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "corrected-lifecycle.digest-mismatch",
+    "credential-repair.binding-mismatch",
+    "evidence.missing",
+    "rebaseline.evidence-mismatch",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:7621cb349e26c106fba7941f82088c669ddb0512bfd6a3c6a2bcb16c5fcc04b8"
+}

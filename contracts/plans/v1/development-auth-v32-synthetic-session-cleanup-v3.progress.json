@@ -1,0 +1,34 @@
+{
+  "progress_id": "082d092e-9750-4a7a-99ea-16efea0ce13b",
+  "plan_id": "8e6fc27a-9b2d-4a38-b6a8-5104446fe694",
+  "plan_version": 3,
+  "plan_digest": "sha256:7621cb349e26c106fba7941f82088c669ddb0512bfd6a3c6a2bcb16c5fcc04b8",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v3.step.01.revoke-synthetic-sessions-global",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v3.step.02.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-26T15:24:31Z",
+  "progress_digest": "sha256:cf4b76e32638bb92ab188ef511ed48632720fd060073be735797b6852bbba40d"
+}

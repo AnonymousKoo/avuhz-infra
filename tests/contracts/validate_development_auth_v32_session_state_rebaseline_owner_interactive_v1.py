@@ -12,8 +12,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
     approval_digest,
+    authorize_step,
     initial_progress,
     plan_digest,
+    record_step_outcome,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -27,6 +29,7 @@ PLAN_PATH = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
 APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
 EXECUTION_PATH = BASE / f"{BOUNDARY}.execution-progress.json"
+SUCCESS_PATH = BASE / f"{BOUNDARY}-step1-success.evidence.json"
 PLAN_ID = "8f9c771e-6dde-4bc8-bc20-8605c8b05c36"
 PROGRESS_ID = "2e120dc3-91a9-485d-ad61-34d04dd201c5"
 PLAN_DIGEST = "sha256:01610fb22d4755dcb175d37b1c8cd1985ba5c89aa5aca568ab23591de0502e70"
@@ -36,6 +39,20 @@ APPROVAL_ID = "064ad292-040f-4d62-8ee8-ddfb4d671591"
 APPROVED_AT = "2026-09-25T20:53:38Z"
 APPROVAL_DIGEST = "sha256:2091cd66308b04938564eac9d879c53701177fb1e3a20fa9422fe73ec7211061"
 APPROVAL_FILE_DIGEST = "sha256:9973a0880bba000298b3f87b21118bb35e4411161d5c96291619100acec46a60"
+RECORDED_AT = "2026-09-26T15:07:51Z"
+AUTHORIZATION_OBSERVATION_DIGEST = (
+    "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
+)
+RESULT_DIGEST = "sha256:8e6a983f5dd1e48410cb00d13d104ba867d1647a014340a9b9e6fb35e4b514db"
+SUCCESS_EVIDENCE_DIGEST = (
+    "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43"
+)
+COMPLETED_PROGRESS_DIGEST = (
+    "sha256:68178521cb34199e2ab27fe7c48948df78e3846f0dba918f17b59ed920a51104"
+)
+EXECUTION_FILE_DIGEST = (
+    "sha256:35637f1e6cb1bc184148c4a0240f52396de4b60cd692b51dfed4d6bfaf2f1c75"
+)
 CREATED_AT = "2026-09-25T19:26:17Z"
 WINDOW_START = "2026-09-26T15:00:00Z"
 WINDOW_END = "2026-09-26T21:00:00Z"
@@ -91,6 +108,8 @@ def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
+    success = load(SUCCESS_PATH)
+    execution = load(EXECUTION_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
@@ -208,8 +227,162 @@ def main() -> int:
     ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
     assert state["evidence"] == []
 
-    assert not EXECUTION_PATH.exists()
-    assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
+    authorization_observation = {
+        "interaction_surface": "supabase.dashboard.sql-editor",
+        "project_reference": PROJECT_REF,
+        "responsibility": "AUTH",
+        "approval_exact": True,
+        "authorization_window_execution_owner_confirmed": True,
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "credential_material_observed": False,
+    }
+    sanitized_result = {
+        "classification": "SESSION_CLEANUP_REQUIRED",
+        "session_count": 2,
+        "refresh_token_count": 2,
+    }
+    assert canonical_digest(authorization_observation) == AUTHORIZATION_OBSERVATION_DIGEST
+    assert canonical_digest(sanitized_result) == RESULT_DIGEST
+    assert raw_digest(SUCCESS_PATH) == SUCCESS_EVIDENCE_DIGEST
+    assert success["evidence_type"] == "auth.session-state.owner-interactive-rebaselined"
+    assert success["environment"] == "DEVELOPMENT"
+    assert success["responsibility"] == "AUTH"
+    assert success["project_reference"] == PROJECT_REF
+    assert success["plan_id"] == PLAN_ID and success["plan_digest"] == PLAN_DIGEST
+    assert success["approval_id"] == APPROVAL_ID
+    assert success["approval_digest"] == APPROVAL_DIGEST
+    assert success["step_id"] == STEP_ID and success["attempt"] == 1
+    assert success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert success["classification"] == "SESSION_CLEANUP_REQUIRED"
+    assert success["authorization_observation"] == authorization_observation
+    assert success["authorization_observation_digest"] == AUTHORIZATION_OBSERVATION_DIGEST
+    assert success["sanitized_result"] == sanitized_result
+    assert success["result_digest"] == RESULT_DIGEST
+    assert success["record_basis"] == "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME"
+    assert success["recorded_at"] == RECORDED_AT
+    assert success["execution_observation"] == {
+        "execution_class": "PROVIDER_READ",
+        "execution_timestamp_retained": False,
+        "recorded_at_is_execution_timestamp": False,
+        "approved_aggregate_select_attempts": 1,
+        "additional_sql_executed": False,
+        "provider_mutation_attempted": False,
+    }
+    assert success["verification_observation"] == {
+        "result_fields_exact": True,
+        "aggregate_only": True,
+        "nonzero_state_verified": True,
+        "causal_attribution_established": False,
+        "postcondition_verified": True,
+    }
+    assert all(value is False for value in success["security_state"].values())
+
+    preflight_assertion = {
+        "binding_id": (
+            "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1."
+            "dashboard-session-preflight"
+        ),
+        "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+        "value_class": "CONFIGURATION_REFERENCE",
+        "source_step_id": None,
+        "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+        "evidence_digest": AUTHORIZATION_OBSERVATION_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": AUTHORIZATION_OBSERVATION_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }
+    request = {
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "environment": "DEVELOPMENT",
+        "provider_reference": "supabase",
+        "project_reference": PROJECT_REF,
+        "responsibility": "AUTH",
+        "issuer_reference": f"https://{PROJECT_REF}.supabase.co/auth/v1",
+        "audience_reference": "audience.avuhz.command-service.development",
+        "step_id": STEP_ID,
+        "resource_reference": "supabase:pwlhruwutoitnieactol:auth-session-refresh-rebaseline",
+        "resource_version": "owner-interactive.v1",
+        "resource_digest": RESOURCE_DIGEST,
+        "operation": "provider.auth-session-state.rebaseline-owner-interactive-read-only",
+        "execution_class": "PROVIDER_READ",
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "required_evidence": [
+            {"evidence_type": item["evidence_type"], "evidence_digest": item["exact_digest"]}
+            for item in step["required_evidence"]
+        ],
+        "prior_evidence_digests": [],
+        "unexpected_remote_state": False,
+        "extra_privileges": False,
+        "unauthorized_migration_surface": False,
+        "scope_expansion": False,
+    }
+    authorized = authorize_step(
+        plan,
+        approval,
+        progress,
+        request,
+        SCHEMA_ROOT,
+        RECORDED_AT,
+        trusted_preflight_assertions=[preflight_assertion],
+    )
+    outcome_evidence = [{
+        "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+        "evidence_reference": (
+            "provider.execution.v32-session-state-rebaseline-owner-interactive-v1."
+            "step1.attempt1.verified"
+        ),
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }]
+    produced_binding = {
+        "binding_id": (
+            "binding.development.auth.v32-session-state-rebaseline-owner-interactive-v1.result"
+        ),
+        "phase": "PRODUCED_BY_CURRENT_STEP",
+        "value_class": "CONTENT_DIGEST",
+        "source_step_id": None,
+        "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "digest_policy": "REQUIRED",
+        "persistence_policy": "DIGEST_ONLY",
+        "sanitized_value": None,
+        "value_digest": RESULT_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }
+    expected_execution = record_step_outcome(
+        plan,
+        approval,
+        authorized,
+        STEP_ID,
+        "SUCCEEDED",
+        "PASS",
+        outcome_evidence,
+        step["expected_postcondition"],
+        None,
+        SCHEMA_ROOT,
+        RECORDED_AT,
+        binding_assertions=[produced_binding],
+    )
+    validate_progress(plan, execution, SCHEMA_ROOT)
+    assert execution == expected_execution
+    assert execution["progress_digest"] == COMPLETED_PROGRESS_DIGEST
+    assert raw_digest(EXECUTION_PATH) == EXECUTION_FILE_DIGEST
+    assert execution["overall_state"] == "COMPLETED"
+    execution_state = execution["step_states"][0]
+    assert (
+        execution_state["authorization_state"],
+        execution_state["execution_state"],
+        execution_state["verification_state"],
+        execution_state["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert execution_state["safe_error_code"] is None
+    assert execution_state["evidence"] == outcome_evidence
+    assert execution_state["binding_assertions"] == [preflight_assertion, produced_binding]
+
     assert not list((ROOT / ".github/workflows").glob(f"*{BOUNDARY}*"))
     assert not list((ROOT / "scripts").glob(f"*{BOUNDARY}*"))
     for filename, digest in HISTORICAL_FILES.items():
@@ -221,8 +394,8 @@ def main() -> int:
     assert prior_progress["overall_state"] == "STOPPED"
 
     print(
-        "DEVELOPMENT AUTH v32 session-state rebaseline approval: PASS "
-        "(exact plan approved; pristine and unexecuted; one aggregate read only)"
+        "DEVELOPMENT AUTH v32 session-state rebaseline outcome: PASS "
+        "(2/2 nonzero state verified; completed and consumed; cleanup still separate)"
     )
     return 0
 

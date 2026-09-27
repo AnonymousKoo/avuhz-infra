@@ -12,8 +12,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -24,6 +26,7 @@ SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 BOUNDARY = "development-auth-v32-synthetic-session-cleanup-v4"
 PLAN_PATH = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
+APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
 PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
 PLAN_ID = "59bc509b-e2ce-4c27-9245-f9910f77f7c8"
@@ -35,6 +38,10 @@ PROGRESS_RAW_DIGEST = "sha256:f6c74639f40137bb282090fc0e8e9349774d6aa7efeae79137
 CREATED_AT = "2026-09-27T15:22:38Z"
 WINDOW_START = "2026-09-27T18:00:00Z"
 WINDOW_END = "2026-09-28T00:00:00Z"
+APPROVAL_ID = "60426d08-8e65-4325-8536-b5cd488ad4c7"
+APPROVAL_DIGEST = "sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c204797a34ccb"
+APPROVED_AT = "2026-09-27T15:37:24Z"
+APPROVAL_RAW_DIGEST = "sha256:22cb5f5577df8a93ce90940d76503cf4f5250d71db886e600d5b32c2d0c64e5a"
 STEP1_ID = "development.auth.v32-synthetic-session-cleanup-v4.step.01.revoke-synthetic-sessions-global"
 STEP2_ID = "development.auth.v32-synthetic-session-cleanup-v4.step.02.verify-zero-session-refresh-state"
 ADMIN_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
@@ -158,8 +165,10 @@ def verify_contract() -> dict:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 4
@@ -223,7 +232,24 @@ def main() -> int:
         assert state["evidence"] == []
         assert state["binding_assertions"] == []
 
-    assert not (BASE / f"{BOUNDARY}.approval.json").exists()
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 4,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert APPROVED_AT < WINDOW_START
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert raw_digest(APPROVAL_PATH) == APPROVAL_RAW_DIGEST
     assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
     assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
     assert not (ROOT / f"scripts/development_auth_v32_synthetic_session_cleanup_v4.py").exists()
@@ -257,8 +283,8 @@ def main() -> int:
         assert forbidden not in lowered
 
     print(
-        "DEVELOPMENT AUTH v32 synthetic-session cleanup-v4 prep: PASS "
-        "(2/2 rebaseline bound; corrected lifecycle pinned; no execution authority)"
+        "DEVELOPMENT AUTH v32 synthetic-session cleanup-v4: PASS "
+        "(exact pre-window approval; pristine/unexecuted; no step execution authority)"
     )
     return 0
 

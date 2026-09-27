@@ -26,6 +26,8 @@ PUBLISHABLE_ENV = "AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY"
 LIFECYCLE_DIGEST = "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5"
 EXECUTOR_DIGEST = "sha256:928de66010139c1cc072744eb2117cd55eac9ff72d649a6cd7810ee6f368c02f"
 WORKFLOW_DIGEST = "sha256:0fa8016a9ffbe509d94be703a4ee0df954df7a8f092cfd3d395c6af583ef3d92"
+STEP1_FAILURE_EVIDENCE_DIGEST = "sha256:20eeef255707908c3cf991a6e44fdc5facd957953a7d7989105a57ee538c2861"
+EXECUTION_PROGRESS_DIGEST = "sha256:ffd70c3a4aaa8e9c9cc3002faff84393d0022b262e270cbea9019fdf94c895a2"
 
 
 def digest(path: Path) -> str:
@@ -36,6 +38,11 @@ def main() -> int:
     plan = json.loads(PLAN.read_text(encoding="utf-8"))
     approval = json.loads(APPROVAL.read_text(encoding="utf-8"))
     progress = json.loads(PROGRESS.read_text(encoding="utf-8"))
+    execution_progress = json.loads(
+        (BASE / "development-auth-v32-synthetic-session-cleanup-v4.execution-progress.json").read_text(encoding="utf-8")
+    )
+    failure_evidence_path = BASE / "development-auth-v32-synthetic-session-cleanup-v4-step1-failure.evidence.json"
+    failure_evidence = json.loads(failure_evidence_path.read_text(encoding="utf-8"))
     executor = EXECUTOR.read_text(encoding="utf-8")
     workflow = WORKFLOW.read_text(encoding="utf-8")
 
@@ -49,8 +56,23 @@ def main() -> int:
     assert plan["authorization_window"]["expires_at"] == WINDOW[1]
     assert progress["overall_state"] == "NOT_STARTED"
     assert all(not s["authorization_consumed"] for s in progress["step_states"])
-    assert not (BASE / "development-auth-v32-synthetic-session-cleanup-v4.execution-progress.json").exists()
-    assert not list(BASE.glob("development-auth-v32-synthetic-session-cleanup-v4-step1-*.evidence.json"))
+    assert execution_progress["overall_state"] == "STOPPED"
+    assert execution_progress["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    first, second = execution_progress["step_states"]
+    assert (first["authorization_state"], first["execution_state"], first["verification_state"], first["authorization_consumed"]) == (
+        "CONSUMED", "FAILED", "FAIL", True
+    )
+    assert first["safe_error_code"] == "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID"
+    assert second["authorization_state"] == "BLOCKED"
+    assert second["execution_state"] == "NOT_STARTED"
+    assert second["authorization_consumed"] is False
+    assert digest(failure_evidence_path) == STEP1_FAILURE_EVIDENCE_DIGEST
+    assert failure_evidence["outcome"] == "FAILED_UNVERIFIED"
+    assert failure_evidence["classification"] == "SESSION_STATE_UNVERIFIED"
+    assert failure_evidence["execution_observation"]["workflow_run_id"] == 36343787695
+    assert failure_evidence["execution_observation"]["global_logout_attempted"] is False
+    assert failure_evidence["execution_observation"]["sql_executed"] is False
+    assert failure_evidence["failure_observation"]["retry_authorized"] is False
 
     assert "cleanup.v4" in executor and PLAN_ID in executor and PLAN_DIGEST in executor
     assert APPROVAL_ID in executor and APPROVAL_DIGEST in executor
@@ -91,7 +113,7 @@ def main() -> int:
     assert f"${{{{ secrets.{PUBLISHABLE_ENV} }}}}" in workflow
     assert workflow.index("Validate exact approval and Step 1 authority before secret resolution") < workflow.index("Execute exact Step 1 once")
     assert "--preflight-only" in workflow
-    print("DEVELOPMENT AUTH cleanup-v4 Step 1 execution surface: PASS (pinned, single-attempt, exact plan/approval/window, fail-closed preflight)")
+    print("DEVELOPMENT AUTH cleanup-v4 Step 1 execution surface: PASS (single attempt consumed/failed closed; no retry; Step 2 blocked)")
     return 0
 
 

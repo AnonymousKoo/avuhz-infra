@@ -29,12 +29,20 @@ APPROVAL_DIGEST = "sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c20
 APPROVED_AT = "2026-09-27T15:37:24Z"
 WINDOW_START = "2026-09-27T18:00:00Z"
 WINDOW_END = "2026-09-28T00:00:00Z"
+STEP1_FAILURE_EVIDENCE_DIGEST = "sha256:20eeef255707908c3cf991a6e44fdc5facd957953a7d7989105a57ee538c2861"
+EXECUTION_PROGRESS_DIGEST = "sha256:ffd70c3a4aaa8e9c9cc3002faff84393d0022b262e270cbea9019fdf94c895a2"
 
 
 class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
     def setUp(self) -> None:
         self.plan = json.loads(PLAN.read_text(encoding="utf-8"))
         self.progress = json.loads(PROGRESS.read_text(encoding="utf-8"))
+        self.execution_progress = json.loads(
+            (BASE / f"{BOUNDARY}.execution-progress.json").read_text(encoding="utf-8")
+        )
+        self.failure_evidence = json.loads(
+            (BASE / f"{BOUNDARY}-step1-failure.evidence.json").read_text(encoding="utf-8")
+        )
         self.cleanup, self.verify = self.plan["steps"]
 
     def test_preparation_is_two_steps_and_grants_no_current_authority(self) -> None:
@@ -67,8 +75,20 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         })
         self.assertEqual(approval_digest(approval), APPROVAL_DIGEST)
         self.assertLess(APPROVED_AT, WINDOW_START)
-        self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
-        self.assertEqual(list(BASE.glob(f"{BOUNDARY}*.evidence.json")), [])
+        self.assertEqual(self.execution_progress["overall_state"], "STOPPED")
+        self.assertEqual(self.execution_progress["progress_digest"], EXECUTION_PROGRESS_DIGEST)
+        first, second = self.execution_progress["step_states"]
+        self.assertEqual(
+            (first["authorization_state"], first["execution_state"], first["verification_state"], first["authorization_consumed"]),
+            ("CONSUMED", "FAILED", "FAIL", True),
+        )
+        self.assertEqual(first["safe_error_code"], "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID")
+        self.assertEqual(first["evidence"][0]["evidence_digest"], STEP1_FAILURE_EVIDENCE_DIGEST)
+        self.assertEqual(second["authorization_state"], "BLOCKED")
+        self.assertFalse(second["authorization_consumed"])
+        self.assertEqual(self.failure_evidence["outcome"], "FAILED_UNVERIFIED")
+        self.assertEqual(self.failure_evidence["classification"], "SESSION_STATE_UNVERIFIED")
+        self.assertFalse(self.failure_evidence["failure_observation"]["retry_authorized"])
 
     def test_mutation_is_bound_to_rebaseline_corrected_lifecycle_and_retirement(self) -> None:
         serialized = json.dumps(self.cleanup, sort_keys=True)
@@ -105,11 +125,19 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
         self.assertEqual(digest, LIFECYCLE)
 
-    def test_step1_execution_surface_is_pinned_but_unexecuted(self) -> None:
+    def test_step1_execution_surface_is_pinned_and_consumed_once(self) -> None:
         self.assertTrue((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").is_file())
         self.assertTrue((ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v4-step1.yml").is_file())
-        self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
-        self.assertEqual(list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json")), [])
+        evidence_paths = list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json"))
+        self.assertEqual(evidence_paths, [BASE / f"{BOUNDARY}-step1-failure.evidence.json"])
+        self.assertEqual(self.failure_evidence["execution_observation"]["workflow_run_id"], 36343787695)
+        self.assertEqual(self.failure_evidence["execution_observation"]["run_number"], 1)
+        self.assertEqual(self.failure_evidence["execution_observation"]["run_attempt"], 1)
+        self.assertTrue(self.failure_evidence["execution_observation"]["provider_mutation_attempted"])
+        self.assertFalse(self.failure_evidence["execution_observation"]["global_logout_attempted"])
+        self.assertFalse(self.failure_evidence["execution_observation"]["sql_executed"])
+        self.assertFalse(self.failure_evidence["credential_material_retained"])
+        self.assertFalse(self.failure_evidence["pii_retained"])
 
 
 if __name__ == "__main__":

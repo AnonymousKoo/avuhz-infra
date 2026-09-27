@@ -105,9 +105,11 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
         self.assertEqual(digest, LIFECYCLE)
 
-    def test_no_execution_surface_exists_yet(self) -> None:
-        self.assertFalse((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").exists())
-        self.assertFalse((ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v4.yml").exists())
+    def test_step1_execution_surface_is_pinned_but_unexecuted(self) -> None:
+        self.assertTrue((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").is_file())
+        self.assertTrue((ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v4-step1.yml").is_file())
+        self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
+        self.assertEqual(list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json")), [])
 
 
 if __name__ == "__main__":

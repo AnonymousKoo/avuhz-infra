@@ -251,9 +251,9 @@ def main() -> int:
     assert approval_digest(approval) == APPROVAL_DIGEST
     assert raw_digest(APPROVAL_PATH) == APPROVAL_RAW_DIGEST
     assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
-    assert not list(BASE.glob(f"{BOUNDARY}*.evidence.json"))
-    assert not (ROOT / f"scripts/development_auth_v32_synthetic_session_cleanup_v4.py").exists()
-    assert not (ROOT / f".github/workflows/development-auth-v32-synthetic-session-cleanup-v4.yml").exists()
+    assert not list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json"))
+    assert (ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").is_file()
+    assert (ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v4-step1.yml").is_file()
 
     assert raw_digest(ROOT / "src/avuhz_engineering/development_auth_token_lifecycle.py") == LIFECYCLE
     rebaseline = load(BASE / "development-auth-v32-session-state-rebaseline-owner-interactive-v1-step1-success.evidence.json")
@@ -284,7 +284,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT AUTH v32 synthetic-session cleanup-v4: PASS "
-        "(exact pre-window approval; pristine/unexecuted; no step execution authority)"
+        "(exact pre-window approval; pinned Step 1 surface; pristine/unexecuted until explicit dispatch)"
     )
     return 0
 

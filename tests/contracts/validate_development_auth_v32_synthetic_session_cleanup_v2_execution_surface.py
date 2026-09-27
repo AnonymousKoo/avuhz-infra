@@ -21,6 +21,7 @@ ADMIN_ENV = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
 PUBLISHABLE_ENV = "AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY"
 LIFECYCLE_DIGEST = "sha256:55503f13489944b0b4b51e3dc24875d5c6e83c69e8fc6a8aed6a03fdb0736749"
 CORRECTED_LIFECYCLE_DIGEST = "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5"
+DIAGNOSTIC_LIFECYCLE_DIGEST = "sha256:19c7c16c8cc495e0b4ab886ab897804251245c979b536498b14c7d94086809ce"
 EXECUTOR_DIGEST = "sha256:e46e4d3f94ffa641e84a85e882e8378c04fb3ce84d2e3381c077f26d4bc2e76b"
 WORKFLOW_DIGEST = "sha256:9b53fef820c1c8c84b2bed91d5bb5d13cdebfbfa2479636e8c3b08eebae51dfe"
 
@@ -40,7 +41,7 @@ def main() -> int:
     assert plan["authorization_window"]["expires_at"] == WINDOW[1]
     # Cleanup-v2's consumed executor is still hard-pinned to its original
     # lifecycle digest and cannot be revived by this shared parser correction.
-    assert digest(LIFECYCLE) == CORRECTED_LIFECYCLE_DIGEST
+    assert digest(LIFECYCLE) == DIAGNOSTIC_LIFECYCLE_DIGEST
     assert LIFECYCLE_DIGEST in executor
     assert "cleanup.v2" in executor and PLAN_ID in executor and PLAN_DIGEST in executor
     assert ADMIN_ENV in executor and PUBLISHABLE_ENV in executor

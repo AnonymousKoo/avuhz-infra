@@ -18,6 +18,8 @@ PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
 PLAN = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS = BASE / f"{BOUNDARY}.progress.json"
+EXECUTION_PROGRESS = BASE / f"{BOUNDARY}.execution-progress.json"
+FAILURE_EVIDENCE = BASE / f"{BOUNDARY}-step1-failure.evidence.json"
 LIFECYCLE = "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5"
 V3_PLAN = "sha256:7621cb349e26c106fba7941f82088c669ddb0512bfd6a3c6a2bcb16c5fcc04b8"
 V3_PROGRESS = "sha256:cf4b76e32638bb92ab188ef511ed48632720fd060073be735797b6852bbba40d"
@@ -36,6 +38,8 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         self.plan = json.loads(PLAN.read_text(encoding="utf-8"))
         self.progress = json.loads(PROGRESS.read_text(encoding="utf-8"))
         self.cleanup, self.verify = self.plan["steps"]
+        self.execution_progress = json.loads(EXECUTION_PROGRESS.read_text(encoding="utf-8"))
+        self.failure_evidence = json.loads(FAILURE_EVIDENCE.read_text(encoding="utf-8"))
 
     def test_preparation_is_two_steps_and_grants_no_current_authority(self) -> None:
         self.assertEqual(self.plan["definition_status"], "READY_FOR_APPROVAL")
@@ -67,8 +71,11 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         })
         self.assertEqual(approval_digest(approval), APPROVAL_DIGEST)
         self.assertLess(APPROVED_AT, WINDOW_START)
-        self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
-        self.assertEqual(list(BASE.glob(f"{BOUNDARY}*.evidence.json")), [])
+        self.assertEqual(self.execution_progress["overall_state"], "STOPPED")
+        self.assertTrue(self.execution_progress["step_states"][0]["authorization_consumed"])
+        self.assertEqual(self.execution_progress["step_states"][0]["safe_error_code"], "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID")
+        self.assertEqual(self.execution_progress["step_states"][1]["authorization_state"], "BLOCKED")
+        self.assertFalse(self.failure_evidence["failure_observation"]["retry_authorized"])
 
     def test_mutation_is_bound_to_rebaseline_corrected_lifecycle_and_retirement(self) -> None:
         serialized = json.dumps(self.cleanup, sort_keys=True)
@@ -105,11 +112,19 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
         self.assertEqual(digest, LIFECYCLE)
 
-    def test_step1_execution_surface_is_pinned_but_unexecuted(self) -> None:
+    def test_step1_execution_surface_is_pinned_consumed_and_nonretryable(self) -> None:
         self.assertTrue((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").is_file())
         self.assertTrue((ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v4-step1.yml").is_file())
-        self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
-        self.assertEqual(list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json")), [])
+        self.assertTrue(EXECUTION_PROGRESS.is_file())
+        self.assertTrue(FAILURE_EVIDENCE.is_file())
+        first, second = self.execution_progress["step_states"]
+        self.assertEqual((first["authorization_state"], first["execution_state"], first["verification_state"]), ("CONSUMED", "FAILED", "FAIL"))
+        self.assertEqual((second["authorization_state"], second["execution_state"]), ("BLOCKED", "NOT_STARTED"))
+        self.assertEqual(self.failure_evidence["execution_observation"]["workflow_run_id"], 36343787695)
+        self.assertTrue(self.failure_evidence["execution_observation"]["provider_mutation_attempted"])
+        self.assertEqual(self.failure_evidence["replay_guard_observation"]["workflow_run_id"], 36343810352)
+        self.assertTrue(self.failure_evidence["replay_guard_observation"]["blocked_before_secret_resolution"])
+        self.assertFalse(self.failure_evidence["replay_guard_observation"]["provider_contact_attempted"])
 
 
 if __name__ == "__main__":

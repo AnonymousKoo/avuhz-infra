@@ -15,6 +15,7 @@ from avuhz_engineering.authorization_plan import (  # noqa: E402
     approval_digest,
     initial_progress,
     plan_digest,
+    progress_digest,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -27,6 +28,8 @@ BOUNDARY = "development-auth-v32-synthetic-session-cleanup-v4"
 PLAN_PATH = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS_PATH = BASE / f"{BOUNDARY}.progress.json"
 APPROVAL_PATH = BASE / f"{BOUNDARY}.approval.json"
+EXECUTION_PROGRESS_PATH = BASE / f"{BOUNDARY}.execution-progress.json"
+FAILURE_EVIDENCE_PATH = BASE / f"{BOUNDARY}-step1-failure.evidence.json"
 PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
 PLAN_ID = "59bc509b-e2ce-4c27-9245-f9910f77f7c8"
@@ -42,6 +45,13 @@ APPROVAL_ID = "60426d08-8e65-4325-8536-b5cd488ad4c7"
 APPROVAL_DIGEST = "sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c204797a34ccb"
 APPROVED_AT = "2026-09-27T15:37:24Z"
 APPROVAL_RAW_DIGEST = "sha256:22cb5f5577df8a93ce90940d76503cf4f5250d71db886e600d5b32c2d0c64e5a"
+EXECUTION_PROGRESS_DIGEST = "sha256:6a4a98913c7d7c0490fcc1c03f6b5a8b599ad29c1c2c7284ef58145128cbdb41"
+EXECUTION_PROGRESS_RAW_DIGEST = "sha256:9242d3e97e9f0b74824f4074c84c8e94f0501b876fce56efb4fa3400f3c74015"
+FAILURE_EVIDENCE_DIGEST = "sha256:60f2bc12d01f788a32dfef1ff274172ffe3148dfd23c0b903f9a1fb52a88d50d"
+OUTCOME_RECORDED_AT = "2026-09-27T19:22:59Z"
+AUTHORIZATION_OBSERVED_AT = "2026-09-27T19:17:19Z"
+STEP1_RUN_ID = 36343787695
+REPLAY_RUN_ID = 36343810352
 STEP1_ID = "development.auth.v32-synthetic-session-cleanup-v4.step.01.revoke-synthetic-sessions-global"
 STEP2_ID = "development.auth.v32-synthetic-session-cleanup-v4.step.02.verify-zero-session-refresh-state"
 ADMIN_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
@@ -166,9 +176,12 @@ def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
+    execution_progress = load(EXECUTION_PROGRESS_PATH)
+    failure_evidence = load(FAILURE_EVIDENCE_PATH)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
+    validate_progress(plan, execution_progress, SCHEMA_ROOT)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 4
@@ -250,8 +263,38 @@ def main() -> int:
     assert APPROVED_AT < WINDOW_START
     assert approval_digest(approval) == APPROVAL_DIGEST
     assert raw_digest(APPROVAL_PATH) == APPROVAL_RAW_DIGEST
-    assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
-    assert not list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json"))
+    assert raw_digest(EXECUTION_PROGRESS_PATH) == EXECUTION_PROGRESS_RAW_DIGEST
+    assert raw_digest(FAILURE_EVIDENCE_PATH) == FAILURE_EVIDENCE_DIGEST
+    assert execution_progress["progress_digest"] == EXECUTION_PROGRESS_DIGEST == progress_digest(execution_progress)
+    assert execution_progress["record_version"] == 3
+    assert execution_progress["overall_state"] == "STOPPED"
+    first, second = execution_progress["step_states"]
+    assert (first["authorization_state"], first["execution_state"], first["verification_state"], first["authorization_consumed"]) == ("CONSUMED", "FAILED", "FAIL", True)
+    assert first["safe_error_code"] == "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID"
+    assert len(first["evidence"]) == 1 and first["evidence"][0]["evidence_digest"] == FAILURE_EVIDENCE_DIGEST
+    assert len(first["binding_assertions"]) == 1
+    assert first["binding_assertions"][0]["binding_id"] == "binding.development.auth.cleanup-v4.admin-executor-capability"
+    assert first["binding_assertions"][0]["recorded_at"] == AUTHORIZATION_OBSERVED_AT
+    assert (second["authorization_state"], second["execution_state"], second["verification_state"], second["authorization_consumed"]) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False)
+    assert execution_progress["updated_at"] == OUTCOME_RECORDED_AT
+    assert failure_evidence["outcome"] == "FAILED_UNVERIFIED"
+    assert failure_evidence["classification"] == "SESSION_STATE_UNVERIFIED"
+    assert failure_evidence["safe_error_code"] == "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID"
+    assert failure_evidence["execution_observation"]["workflow_run_id"] == STEP1_RUN_ID
+    assert failure_evidence["execution_observation"]["run_number"] == 1
+    assert failure_evidence["execution_observation"]["provider_mutation_attempted"] is True
+    assert failure_evidence["execution_observation"]["direct_recovery_verification_attempted"] is True
+    assert failure_evidence["execution_observation"]["verification_response_shape_valid"] is False
+    assert failure_evidence["execution_observation"]["jwt_validation_reached"] is False
+    assert failure_evidence["execution_observation"]["global_logout_attempted"] is False
+    assert failure_evidence["replay_guard_observation"]["workflow_run_id"] == REPLAY_RUN_ID
+    assert failure_evidence["replay_guard_observation"]["safe_error_code"] == "SESSION_CLEANUP_V4_REPLAY_PROHIBITED"
+    assert failure_evidence["replay_guard_observation"]["blocked_before_secret_resolution"] is True
+    assert failure_evidence["replay_guard_observation"]["provider_contact_attempted"] is False
+    assert failure_evidence["failure_observation"]["retry_authorized"] is False
+    assert failure_evidence["failure_observation"]["step2_authorization"] == "BLOCKED"
+    assert failure_evidence["credential_material_retained"] is False
+    assert failure_evidence["pii_retained"] is False
     assert (ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").is_file()
     assert (ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v4-step1.yml").is_file()
 
@@ -277,14 +320,14 @@ def main() -> int:
     assert cleanup_v2["progress_digest"] == V2_STOPPED_PROGRESS
     assert raw_digest(BASE / "development-auth-v32-synthetic-session-cleanup-v2-step2-failure.evidence.json") == V2_FAILURE_EVIDENCE
 
-    lowered = serialized.lower()
+    lowered = (serialized + json.dumps(execution_progress, sort_keys=True) + json.dumps(failure_evidence, sort_keys=True)).lower()
     assert re.search(r"sb_secret_[a-z0-9._-]{8,}", lowered) is None
     for forbidden in ('"secret_value"', '"credential_value"', '"access_token"', '"refresh_token"'):
         assert forbidden not in lowered
 
     print(
         "DEVELOPMENT AUTH v32 synthetic-session cleanup-v4: PASS "
-        "(exact pre-window approval; pinned Step 1 surface; pristine/unexecuted until explicit dispatch)"
+        "(Step 1 consumed/failed fail-closed; Step 2 blocked; no retry or cleanup claim)"
     )
     return 0
 

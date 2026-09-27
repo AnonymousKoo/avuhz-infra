@@ -1,0 +1,177 @@
+{
+  "plan_id": "e18e04fa-03e5-402d-8e41-3e8e916095d4",
+  "plan_version": 1,
+  "plan_digest": "sha256:e5bb429506d0cca9ae7d27578a1518a30a055a971983672b6f4e7ea097ccce65",
+  "definition_status": "DRAFT_BLOCKED",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-28T00:00:00Z",
+  "authorization_window": {
+    "binding_state": "UNRESOLVED_BLOCKER",
+    "starts_at": null,
+    "expires_at": null
+  },
+  "ordered_step_ids": [
+    "development.auth.recovery-shape-diagnostic-v1.step.01.inspect-sanitized-shape-once"
+  ],
+  "steps": [
+    {
+      "step_id": "development.auth.recovery-shape-diagnostic-v1.step.01.inspect-sanitized-shape-once",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.recovery-verification-shape-diagnostic",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:recovery-verification-shape-diagnostic",
+        "binding_state": "BOUND",
+        "exact_version": "diagnostic.v1",
+        "exact_digest": "sha256:19c7c16c8cc495e0b4ab886ab897804251245c979b536498b14c7d94086809ce"
+      },
+      "operation": "provider.auth-recovery-verification.inspect-sanitized-shape-once",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.cleanup-v4.failure.observed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:8344c3e26c26f464bcefa880251ac7619bfc6087a8a17e9c0987db4a843191eb"
+        }
+      ],
+      "expected_postcondition": "Exactly one DEVELOPMENT AUTH recovery generation and direct recovery verification attempt classified only into fixed sanitized structural labels; no raw provider payload, token, UUID, email, arbitrary provider key, cleanup, logout, retry, or continuation retained or performed.",
+      "prohibited_actions": [
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "credential.rotate",
+        "data.operation",
+        "global-logout.execute",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "n8n.operation",
+        "pii.return",
+        "production.target",
+        "provider.retry",
+        "raw-provider-payload.persist",
+        "render.operation",
+        "session.cleanup",
+        "staging.target",
+        "token.persist"
+      ],
+      "stop_conditions": [
+        "admin-credential.unavailable",
+        "authorization.window-inactive",
+        "diagnostic-primitive.digest-mismatch",
+        "identity.subject-mismatch",
+        "recovery-generation.failed",
+        "recovery-verification.failed",
+        "sanitized-classifier.failed",
+        "scope.drift",
+        "target.mismatch",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+        ],
+        "values_stored": false,
+        "ephemeral_handling": {
+          "material_source": "APPROVED_ENVIRONMENT_SECRET_BOUNDARY",
+          "material_residency": "SERVER_EXECUTOR_MEMORY_ONLY",
+          "control_plane_visibility": "CLASS_LABEL_ONLY",
+          "material_digest": "PROHIBITED",
+          "persistence": "PROHIBITED",
+          "logging": "PROHIBITED",
+          "return_policy": "PROHIBITED",
+          "proof_policy": "NON_SECRET_EXECUTOR_CAPABILITY_ATTESTATION"
+        }
+      },
+      "unresolved_bindings": [
+        "binding.development.auth.recovery-shape-diagnostic-v1.admin-credential-reference"
+      ],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.auth.recovery-shape-diagnostic-v1.admin-credential-reference",
+          "phase": "UNRESOLVED_BLOCKER",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "PROHIBITED",
+          "persistence_policy": "PROHIBITED"
+        },
+        {
+          "binding_id": "binding.development.auth.recovery-shape-diagnostic-v1.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.auth.recovery-shape-diagnostic-v1.sanitized-shape",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.recovery-verification.sanitized-shape.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.recovery-verification.sanitized-shape.observed",
+          "established_binding_ids": [
+            "binding.development.auth.recovery-shape-diagnostic-v1.sanitized-shape"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "credential.copy",
+    "credential.create",
+    "credential.digest",
+    "credential.export",
+    "credential.expose",
+    "credential.log",
+    "credential.persist",
+    "credential.return",
+    "credential.rotate",
+    "data.operation",
+    "global-logout.execute",
+    "n8n.operation",
+    "pii.return",
+    "production.target",
+    "provider.retry",
+    "raw-provider-payload.persist",
+    "render.operation",
+    "session.cleanup",
+    "staging.target",
+    "token.persist"
+  ],
+  "stop_conditions": [
+    "authorization.window-unresolved",
+    "credential-reference.unresolved",
+    "scope.drift",
+    "target.drift",
+    "outcome.ambiguous"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

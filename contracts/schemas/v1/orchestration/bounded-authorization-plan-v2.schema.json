@@ -134,15 +134,51 @@
           },
           "prohibited_actions": {
             "allOf": [
-              {"contains": {"const": "credential.persist"}},
-              {"contains": {"const": "credential.expose"}},
-              {"contains": {"const": "credential.log"}},
-              {"contains": {"const": "credential.return"}},
-              {"contains": {"const": "credential.digest"}},
-              {"contains": {"const": "credential.copy"}},
-              {"contains": {"const": "credential.create"}},
-              {"contains": {"const": "credential.rotate"}},
-              {"contains": {"const": "credential.export"}}
+              {
+                "contains": {
+                  "const": "credential.persist"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.expose"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.log"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.return"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.digest"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.copy"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.create"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.rotate"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.export"
+                }
+              }
             ]
           },
           "steps": {
@@ -176,15 +212,51 @@
                   },
                   "prohibited_actions": {
                     "allOf": [
-                      {"contains": {"const": "credential.persist"}},
-                      {"contains": {"const": "credential.expose"}},
-                      {"contains": {"const": "credential.log"}},
-                      {"contains": {"const": "credential.return"}},
-                      {"contains": {"const": "credential.digest"}},
-                      {"contains": {"const": "credential.copy"}},
-                      {"contains": {"const": "credential.create"}},
-                      {"contains": {"const": "credential.rotate"}},
-                      {"contains": {"const": "credential.export"}}
+                      {
+                        "contains": {
+                          "const": "credential.persist"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.expose"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.log"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.return"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.digest"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.copy"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.create"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.rotate"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.export"
+                        }
+                      }
                     ]
                   },
                   "binding_declarations": {
@@ -334,6 +406,132 @@
                     "contains": {
                       "const": "provider.mutation"
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "steps": {
+            "contains": {
+              "properties": {
+                "operation": {
+                  "const": "provider.auth-recovery-verification.inspect-sanitized-shape-once"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "const": "DEVELOPMENT"
+          },
+          "target": {
+            "properties": {
+              "provider_reference": {
+                "const": "supabase"
+              },
+              "responsibility": {
+                "const": "AUTH"
+              }
+            }
+          },
+          "steps": {
+            "items": {
+              "if": {
+                "properties": {
+                  "operation": {
+                    "const": "provider.auth-recovery-verification.inspect-sanitized-shape-once"
+                  }
+                },
+                "required": [
+                  "operation"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "execution_class": {
+                    "const": "PROVIDER_MUTATION"
+                  },
+                  "credential_policy": {
+                    "properties": {
+                      "permitted": {
+                        "const": true
+                      },
+                      "allowed_classes": {
+                        "const": [
+                          "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+                        ]
+                      },
+                      "values_stored": {
+                        "const": false
+                      }
+                    }
+                  },
+                  "prohibited_actions": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "session.cleanup"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "global-logout.execute"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "provider.retry"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "raw-provider-payload.persist"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "token.persist"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "pii.return"
+                        }
+                      }
+                    ]
+                  },
+                  "produced_evidence": {
+                    "contains": {
+                      "properties": {
+                        "evidence_type": {
+                          "const": "auth.recovery-verification.sanitized-shape.observed"
+                        },
+                        "digest_policy": {
+                          "const": "REQUIRED"
+                        }
+                      },
+                      "required": [
+                        "evidence_type",
+                        "digest_policy"
+                      ]
+                    },
+                    "minContains": 1,
+                    "maxContains": 1
                   }
                 }
               }

@@ -1,0 +1,122 @@
+name: DEVELOPMENT AUTH v32 Synthetic Session Cleanup v4 Step 1
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type REVOKE_V32_SYNTHETIC_SESSIONS_GLOBAL_V4_STEP1 for exact Step 1 only
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-v32-synthetic-session-cleanup-v4-step1
+  cancel-in-progress: false
+
+jobs:
+  revoke-development-auth-synthetic-sessions:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+
+    env:
+      AVUHZ_EXPECTED_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: 59bc509b-e2ce-4c27-9245-f9910f77f7c8
+      AVUHZ_PLAN_DIGEST: sha256:b0a44c88963f7a1f57cd33eb798e67986dc8aabb82baeef825b2d561cedbc173
+      AVUHZ_APPROVAL_ID: 60426d08-8e65-4325-8536-b5cd488ad4c7
+      AVUHZ_APPROVAL_DIGEST: sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c204797a34ccb
+      AVUHZ_WINDOW_START: '2026-09-27T18:00:00Z'
+      AVUHZ_WINDOW_END: '2026-09-28T00:00:00Z'
+      AVUHZ_CLEANUP_CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify main-only dispatch and exact Step 1 binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]] || [[ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]]; then
+            echo "::error::SESSION_CLEANUP_V4_MAIN_ONLY"
+            exit 1
+          fi
+          if [[ "${GITHUB_RUN_NUMBER}" != "1" ]] || [[ "${GITHUB_RUN_ATTEMPT}" != "1" ]]; then
+            echo "::error::SESSION_CLEANUP_V4_REPLAY_PROHIBITED"
+            exit 1
+          fi
+          if [[ "${AVUHZ_CLEANUP_CONFIRMATION}" != "REVOKE_V32_SYNTHETIC_SESSIONS_GLOBAL_V4_STEP1" ]]; then
+            echo "::error::SESSION_CLEANUP_V4_CONFIRMATION_MISMATCH"
+            exit 1
+          fi
+          if [[ "${AVUHZ_EXPECTED_PROJECT_REF}" != "pwlhruwutoitnieactol" ]] \
+             || [[ "${AVUHZ_PLAN_ID}" != "59bc509b-e2ce-4c27-9245-f9910f77f7c8" ]] \
+             || [[ "${AVUHZ_PLAN_DIGEST}" != "sha256:b0a44c88963f7a1f57cd33eb798e67986dc8aabb82baeef825b2d561cedbc173" ]] \
+             || [[ "${AVUHZ_APPROVAL_ID}" != "60426d08-8e65-4325-8536-b5cd488ad4c7" ]] \
+             || [[ "${AVUHZ_APPROVAL_DIGEST}" != "sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c204797a34ccb" ]] \
+             || [[ "${AVUHZ_WINDOW_START}" != "2026-09-27T18:00:00Z" ]] \
+             || [[ "${AVUHZ_WINDOW_END}" != "2026-09-28T00:00:00Z" ]]; then
+            echo "::error::SESSION_CLEANUP_V4_PLAN_BINDING_MISMATCH"
+            exit 1
+          fi
+          if [[ ! -f contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v4.approval.json ]]; then
+            echo "::error::SESSION_CLEANUP_V4_APPROVAL_ABSENT"
+            exit 1
+          fi
+          if [[ -f contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v4.execution-progress.json ]] \
+             || compgen -G 'contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v4-step1-*.evidence.json' >/dev/null; then
+            echo "::error::SESSION_CLEANUP_V4_STEP1_ALREADY_ATTEMPTED"
+            exit 1
+          fi
+          now_epoch="$(date -u +%s)"
+          start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < start_epoch || now_epoch >= end_epoch )); then
+            echo "::error::SESSION_CLEANUP_V4_AUTHORIZATION_WINDOW_INACTIVE"
+            exit 1
+          fi
+
+      - name: Install pinned authorization and JWT dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3' \
+            'PyJWT[crypto]==2.14.0' \
+            'cryptography==50.0.1'
+
+      - name: Validate exact v4 Step 1 execution surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          PYTHONPATH=src:. python3 tests/contracts/validate_development_auth_v32_synthetic_session_cleanup_v4_execution_surface.py
+
+      - name: Validate exact approval and Step 1 authority before secret resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_v32_synthetic_session_cleanup_v4.py --preflight-only
+
+      - name: Execute exact Step 1 once
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_v32_synthetic_session_cleanup_v4.py

@@ -15,6 +15,7 @@ from avuhz_engineering.authorization_plan import (  # noqa: E402
     approval_digest,
     initial_progress,
     plan_digest,
+    progress_digest,
     validate_approval,
     validate_plan,
     validate_progress,
@@ -42,6 +43,9 @@ APPROVAL_ID = "60426d08-8e65-4325-8536-b5cd488ad4c7"
 APPROVAL_DIGEST = "sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c204797a34ccb"
 APPROVED_AT = "2026-09-27T15:37:24Z"
 APPROVAL_RAW_DIGEST = "sha256:22cb5f5577df8a93ce90940d76503cf4f5250d71db886e600d5b32c2d0c64e5a"
+STEP1_FAILURE_EVIDENCE_DIGEST = "sha256:20eeef255707908c3cf991a6e44fdc5facd957953a7d7989105a57ee538c2861"
+EXECUTION_PROGRESS_DIGEST = "sha256:ffd70c3a4aaa8e9c9cc3002faff84393d0022b262e270cbea9019fdf94c895a2"
+EXECUTION_PROGRESS_RAW_DIGEST = "sha256:60a5081a3a833d95ccb6a242690f4c6d88c4d4bf16ca5e4572fa4b2b31276e57"
 STEP1_ID = "development.auth.v32-synthetic-session-cleanup-v4.step.01.revoke-synthetic-sessions-global"
 STEP2_ID = "development.auth.v32-synthetic-session-cleanup-v4.step.02.verify-zero-session-refresh-state"
 ADMIN_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
@@ -166,8 +170,13 @@ def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
+    execution_progress_path = BASE / f"{BOUNDARY}.execution-progress.json"
+    failure_evidence_path = BASE / f"{BOUNDARY}-step1-failure.evidence.json"
+    execution_progress = load(execution_progress_path)
+    failure_evidence = load(failure_evidence_path)
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_progress(plan, execution_progress, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, WINDOW_START)
 
     assert plan["plan_id"] == PLAN_ID
@@ -250,8 +259,42 @@ def main() -> int:
     assert APPROVED_AT < WINDOW_START
     assert approval_digest(approval) == APPROVAL_DIGEST
     assert raw_digest(APPROVAL_PATH) == APPROVAL_RAW_DIGEST
-    assert not (BASE / f"{BOUNDARY}.execution-progress.json").exists()
-    assert not list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json"))
+    assert execution_progress["overall_state"] == "STOPPED"
+    assert execution_progress["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    assert progress_digest(execution_progress) == EXECUTION_PROGRESS_DIGEST
+    assert raw_digest(execution_progress_path) == EXECUTION_PROGRESS_RAW_DIGEST
+    first, second = execution_progress["step_states"]
+    assert (
+        first["authorization_state"],
+        first["execution_state"],
+        first["verification_state"],
+        first["authorization_consumed"],
+        first["safe_error_code"],
+    ) == (
+        "CONSUMED",
+        "FAILED",
+        "FAIL",
+        True,
+        "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+    )
+    assert len(first["evidence"]) == 1
+    assert first["evidence"][0]["evidence_digest"] == STEP1_FAILURE_EVIDENCE_DIGEST
+    assert second["authorization_state"] == "BLOCKED"
+    assert second["execution_state"] == "NOT_STARTED"
+    assert second["verification_state"] == "NOT_STARTED"
+    assert second["authorization_consumed"] is False
+    assert failure_evidence["outcome"] == "FAILED_UNVERIFIED"
+    assert failure_evidence["classification"] == "SESSION_STATE_UNVERIFIED"
+    assert failure_evidence["safe_error_code"] == "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID"
+    assert failure_evidence["execution_observation"]["workflow_run_id"] == 36343787695
+    assert failure_evidence["execution_observation"]["execution_sha"] == "b1df22e699f99b6c7461375159666d8210d1d88d"
+    assert failure_evidence["execution_observation"]["provider_mutation_attempted"] is True
+    assert failure_evidence["execution_observation"]["global_logout_attempted"] is False
+    assert failure_evidence["execution_observation"]["sql_executed"] is False
+    assert failure_evidence["failure_observation"]["cleanup_verified"] is False
+    assert failure_evidence["failure_observation"]["retry_authorized"] is False
+    assert raw_digest(failure_evidence_path) == STEP1_FAILURE_EVIDENCE_DIGEST
+    assert list(BASE.glob(f"{BOUNDARY}-step1-*.evidence.json")) == [failure_evidence_path]
     assert (ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").is_file()
     assert (ROOT / ".github/workflows/development-auth-v32-synthetic-session-cleanup-v4-step1.yml").is_file()
 

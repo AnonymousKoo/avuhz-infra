@@ -115,6 +115,12 @@ V32_SYNTHETIC_SESSION_CLEANUP_V2_APPROVAL_PATH = (
 V32_SYNTHETIC_SESSION_CLEANUP_V2_APPROVAL_FILE_DIGEST = (
     "sha256:b33723376547c4d47e7ecc6a7fedcbecca9944b8578aeeb11978624912f42ddc"
 )
+V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-v32-synthetic-session-cleanup-v4.approval.json"
+)
+V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_FILE_DIGEST = (
+    "sha256:22cb5f5577df8a93ce90940d76503cf4f5250d71db886e600d5b32c2d0c64e5a"
+)
 V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH = (
     ROOT
     / "contracts/plans/v1/development-auth-v32-session-state-rebaseline-owner-interactive-v1.approval.json"
@@ -211,6 +217,7 @@ def main() -> int:
         V32_SYNTHETIC_SESSION_CLEANUP_V1_APPROVAL_PATH,
         V32_CREDENTIAL_REPAIR_V1_APPROVAL_PATH,
         V32_SYNTHETIC_SESSION_CLEANUP_V2_APPROVAL_PATH,
+        V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
         V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
@@ -282,6 +289,11 @@ def main() -> int:
     ):
         raise SystemExit("exact authorized v32 synthetic-session cleanup v2 approval file digest mismatch")
     if (
+        file_digest(V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH)
+        != V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("exact authorized v32 synthetic-session cleanup v4 approval file digest mismatch")
+    if (
         file_digest(V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH)
         != V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_FILE_DIGEST
     ):
@@ -329,6 +341,7 @@ def main() -> int:
                     V32_SYNTHETIC_SESSION_CLEANUP_V1_APPROVAL_PATH,
                     V32_CREDENTIAL_REPAIR_V1_APPROVAL_PATH,
                     V32_SYNTHETIC_SESSION_CLEANUP_V2_APPROVAL_PATH,
+                    V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
                     V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,

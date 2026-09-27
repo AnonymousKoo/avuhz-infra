@@ -6,6 +6,11 @@ import re
 import unittest
 from pathlib import Path
 
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from avuhz_engineering.authorization_plan import approval_digest
+
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / "contracts/plans/v1"
 BOUNDARY = "development-auth-v32-synthetic-session-cleanup-v4"
@@ -19,6 +24,11 @@ V3_PROGRESS = "sha256:cf4b76e32638bb92ab188ef511ed48632720fd060073be735797b6852b
 REBASELINE_EVIDENCE = "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43"
 RETIREMENT = "sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f"
 ADMIN_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
+APPROVAL_ID = "60426d08-8e65-4325-8536-b5cd488ad4c7"
+APPROVAL_DIGEST = "sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c204797a34ccb"
+APPROVED_AT = "2026-09-27T15:37:24Z"
+WINDOW_START = "2026-09-27T18:00:00Z"
+WINDOW_END = "2026-09-28T00:00:00Z"
 
 
 class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
@@ -39,7 +49,24 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         for state in self.progress["step_states"]:
             self.assertEqual((state["authorization_state"], state["execution_state"], state["verification_state"]), ("PENDING", "NOT_STARTED", "NOT_STARTED"))
             self.assertFalse(state["authorization_consumed"])
-        self.assertFalse((BASE / f"{BOUNDARY}.approval.json").exists())
+        approval = json.loads((BASE / f"{BOUNDARY}.approval.json").read_text())
+        self.assertEqual(approval, {
+            "approval_id": APPROVAL_ID,
+            "plan_id": self.plan["plan_id"],
+            "plan_version": 4,
+            "plan_digest": self.plan["plan_digest"],
+            "owner_identity": "github:AnonymousKoo",
+            "decision": "APPROVE",
+            "environment": "DEVELOPMENT",
+            "effective_at": WINDOW_START,
+            "expires_at": WINDOW_END,
+            "approved_at": APPROVED_AT,
+            "status": "ACTIVE",
+            "authority_scope": "EXACT_PLAN_ONLY",
+            "approval_digest": APPROVAL_DIGEST,
+        })
+        self.assertEqual(approval_digest(approval), APPROVAL_DIGEST)
+        self.assertLess(APPROVED_AT, WINDOW_START)
         self.assertFalse((BASE / f"{BOUNDARY}.execution-progress.json").exists())
         self.assertEqual(list(BASE.glob(f"{BOUNDARY}*.evidence.json")), [])
 

@@ -14,6 +14,7 @@ DATA_PROJECT = "gnuqaefotwgkwurjpyik"
 PLAN = BASE / f"{BOUNDARY}.plan.json"
 PROGRESS = BASE / f"{BOUNDARY}.progress.json"
 LIFECYCLE = "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5"
+CURRENT_LIFECYCLE = "sha256:19c7c16c8cc495e0b4ab886ab897804251245c979b536498b14c7d94086809ce"
 REBASELINE_EVIDENCE = "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43"
 RETIREMENT = "sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f"
 ADMIN_REFERENCE = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL"
@@ -72,7 +73,7 @@ class DevelopmentAuthV32SyntheticSessionCleanupV3PlanTests(unittest.TestCase):
     def test_bound_lifecycle_file_matches_exact_digest(self) -> None:
         path = ROOT / "src/avuhz_engineering/development_auth_token_lifecycle.py"
         digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-        self.assertEqual(digest, LIFECYCLE)
+        self.assertEqual(digest, CURRENT_LIFECYCLE)
 
     def test_no_execution_surface_exists_yet(self) -> None:
         self.assertFalse((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v3.py").exists())

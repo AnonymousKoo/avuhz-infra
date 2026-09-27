@@ -747,5 +747,51 @@ class DevelopmentAuthDirectRecoveryLifecycleTests(unittest.TestCase):
         )
 
 
+
+    def test_recovery_verification_shape_classifier_emits_only_fixed_metadata(self) -> None:
+        payload = self.valid_session_payload()
+        access_secret = _memory_secret("access-classifier")
+        refresh_secret = _memory_secret("refresh-classifier")
+        payload["access_token"] = access_secret
+        payload["refresh_token"] = refresh_secret
+        payload["user"]["email"] = "synthetic-fixture@example.invalid"
+
+        result = lifecycle.classify_recovery_verification_response_shape(payload)
+
+        self.assertEqual(result["payload"], "mapping")
+        self.assertEqual(result["access_token"], "str")
+        self.assertEqual(result["refresh_token"], "str")
+        self.assertEqual(result["token_type"], "str")
+        self.assertEqual(result["expires_in"], "int")
+        self.assertEqual(result["expires_at"], "int")
+        self.assertEqual(result["user"], "mapping")
+        self.assertEqual(result["nested_user_id"], "str")
+        self.assertEqual(result["top_level_id"], "absent")
+        self.assertEqual(result["identity_layout"], "nested")
+        serialized = json.dumps(result, sort_keys=True)
+        self.assertNotIn(access_secret, serialized)
+        self.assertNotIn(refresh_secret, serialized)
+        self.assertNotIn(payload["user"]["id"], serialized)
+        self.assertNotIn(payload["user"]["email"], serialized)
+
+    def test_recovery_verification_shape_classifier_distinguishes_safe_variants(self) -> None:
+        payload = self.valid_session_payload()
+        user_id = payload["user"]["id"]
+        payload["id"] = user_id
+        payload["expires_at"] = None
+
+        result = lifecycle.classify_recovery_verification_response_shape(payload)
+
+        self.assertEqual(result["identity_layout"], "nested_and_top_level")
+        self.assertEqual(result["nested_user_id"], "str")
+        self.assertEqual(result["top_level_id"], "str")
+        self.assertEqual(result["expires_at"], "null")
+
+    def test_recovery_verification_shape_classifier_handles_non_mapping_without_values(self) -> None:
+        self.assertEqual(
+            lifecycle.classify_recovery_verification_response_shape(["secret-value"]),
+            {"payload": "list"},
+        )
+
 if __name__ == "__main__":
     unittest.main()

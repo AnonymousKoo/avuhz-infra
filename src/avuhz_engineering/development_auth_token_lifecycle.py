@@ -446,6 +446,56 @@ def request_direct_recovery_verification(
         payload["refresh_token"] = None
 
 
+
+def classify_recovery_verification_response_shape(payload: Mapping[str, Any]) -> dict[str, str]:
+    """Return fixed, non-secret structural metadata for Auth verification diagnostics."""
+
+    def kind(value: Any) -> str:
+        if value is None:
+            return "null"
+        if isinstance(value, bool):
+            return "bool"
+        if isinstance(value, int):
+            return "int"
+        if isinstance(value, str):
+            return "str"
+        if isinstance(value, Mapping):
+            return "mapping"
+        if isinstance(value, list):
+            return "list"
+        return "other"
+
+    if not isinstance(payload, Mapping):
+        return {"payload": kind(payload)}
+
+    user_present = "user" in payload
+    user = payload.get("user")
+    nested_id_present = isinstance(user, Mapping) and "id" in user
+    top_level_id_present = "id" in payload
+    if user_present and nested_id_present and top_level_id_present:
+        identity_layout = "nested_and_top_level"
+    elif user_present and nested_id_present:
+        identity_layout = "nested"
+    elif top_level_id_present:
+        identity_layout = "top_level"
+    elif user_present:
+        identity_layout = "user_without_id"
+    else:
+        identity_layout = "absent"
+
+    return {
+        "payload": "mapping",
+        "access_token": kind(payload.get("access_token")) if "access_token" in payload else "absent",
+        "refresh_token": kind(payload.get("refresh_token")) if "refresh_token" in payload else "absent",
+        "token_type": kind(payload.get("token_type")) if "token_type" in payload else "absent",
+        "expires_in": kind(payload.get("expires_in")) if "expires_in" in payload else "absent",
+        "expires_at": kind(payload.get("expires_at")) if "expires_at" in payload else "absent",
+        "user": kind(user) if user_present else "absent",
+        "nested_user_id": kind(user.get("id")) if nested_id_present else "absent",
+        "top_level_id": kind(payload.get("id")) if top_level_id_present else "absent",
+        "identity_layout": identity_layout,
+    }
+
 def parse_recovery_verification_response(
     payload: Mapping[str, Any],
     *,

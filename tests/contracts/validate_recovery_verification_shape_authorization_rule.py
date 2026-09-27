@@ -15,7 +15,7 @@ from tests.contracts.validate_supabase_auth_admin_credential_model import plan a
 SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 OPERATION = "provider.auth-recovery-verification.inspect-sanitized-shape-once"
 EVIDENCE = "auth.recovery-verification.sanitized-shape.observed"
-REQUIRED = {
+DIGEST_A = "sha256:" + "a" * 64\nHANDLING = {\n    "material_source": "APPROVED_ENVIRONMENT_SECRET_BOUNDARY",\n    "material_residency": "SERVER_EXECUTOR_MEMORY_ONLY",\n    "control_plane_visibility": "CLASS_LABEL_ONLY",\n    "material_digest": "PROHIBITED",\n    "persistence": "PROHIBITED",\n    "logging": "PROHIBITED",\n    "return_policy": "PROHIBITED",\n    "proof_policy": "NON_SECRET_EXECUTOR_CAPABILITY_ATTESTATION",\n}\nADMIN_PROHIBITIONS = {\n    "credential.persist", "credential.expose", "credential.log", "credential.return",\n    "credential.digest", "credential.copy", "credential.create", "credential.rotate",\n    "credential.export",\n}\nREQUIRED = {
     "session.cleanup",
     "global-logout.execute",
     "provider.retry",

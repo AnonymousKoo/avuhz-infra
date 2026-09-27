@@ -1,0 +1,119 @@
+{
+  "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "59bc509b-e2ce-4c27-9245-f9910f77f7c8",
+  "plan_version": 4,
+  "plan_digest": "sha256:b0a44c88963f7a1f57cd33eb798e67986dc8aabb82baeef825b2d561cedbc173",
+  "approval_id": "60426d08-8e65-4325-8536-b5cd488ad4c7",
+  "approval_digest": "sha256:9f466b15b64a23914c4474c2af77a139632a30f5644d5bb5079c204797a34ccb",
+  "step_id": "development.auth.v32-synthetic-session-cleanup-v4.step.01.revoke-synthetic-sessions-global",
+  "attempt": 1,
+  "outcome": "FAILED_UNVERIFIED",
+  "safe_error_code": "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+  "classification": "SESSION_STATE_UNVERIFIED",
+  "required_evidence": [
+    {
+      "evidence_type": "auth.session-state.owner-interactive-rebaselined",
+      "evidence_digest": "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43"
+    },
+    {
+      "evidence_type": "authorization-plan.execution-progress",
+      "evidence_digest": "sha256:68178521cb34199e2ab27fe7c48948df78e3846f0dba918f17b59ed920a51104"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-credential.created",
+      "evidence_digest": "sha256:29fa0e715118b6cb70d6c08b28466b79407319bc5177947851b87b86c10dc47d"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-github-binding.created",
+      "evidence_digest": "sha256:de7daf8b0c913f713225d292adae404bc877b298368c9fbedc5e451f6190e574"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-github-binding.verified",
+      "evidence_digest": "sha256:a431c44cac5069898b98784c82244f3b9335f124ee348666da0bb83894f3fce9"
+    },
+    {
+      "evidence_type": "auth.cleanup-admin-retirement.required",
+      "evidence_digest": "sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f"
+    },
+    {
+      "evidence_type": "authorization-plan.execution-progress",
+      "evidence_digest": "sha256:6d4e4d5473a50790e1c6db4df50e4428fda37dc9988b4bf44ddb145955b6e2f9"
+    }
+  ],
+  "configuration_reference_bindings": {
+    "admin_credential_reference": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL",
+    "publishable_configuration_reference": "AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY"
+  },
+  "execution_observation": {
+    "workflow_run_id": 36343787695,
+    "execution_sha": "b1df22e699f99b6c7461375159666d8210d1d88d",
+    "workflow_event": "workflow_dispatch",
+    "run_number": 1,
+    "run_attempt": 1,
+    "conclusion": "failure",
+    "workflow_started_at": "2026-09-27T19:17:06Z",
+    "workflow_updated_at": "2026-09-27T19:17:23Z",
+    "authorization_preflight_passed_at": "2026-09-27T19:17:19Z",
+    "execution_class": "PROVIDER_MUTATION",
+    "canonical_main_binding_passed": true,
+    "dispatch_confirmation_passed": true,
+    "plan_binding_passed": true,
+    "approval_binding_passed": true,
+    "authorization_window_check_passed": true,
+    "execution_surface_validator_passed": true,
+    "authorization_preflight_passed_before_runtime_secret_resolution": true,
+    "executor_entered": true,
+    "runtime_secret_resolution_occurred": true,
+    "recovery_credential_generation_attempted": true,
+    "recovery_generation_completed_sufficient_to_advance": true,
+    "direct_recovery_verification_attempted": true,
+    "verification_response_shape_valid": false,
+    "temporary_session_state": "UNVERIFIED",
+    "jwt_validation_reached": false,
+    "global_logout_attempted": false,
+    "global_logout_accepted": false,
+    "step2_executed": false,
+    "sql_executed": false,
+    "retry_occurred": false,
+    "provider_contact_attempted": true,
+    "provider_mutation_attempted": true
+  },
+  "failure_observation": {
+    "session_state": "SESSION_STATE_UNVERIFIED",
+    "cleanup_verified": false,
+    "step2_readback_required": true,
+    "temporary_session_existence_verified": false,
+    "session_revocation_request_accepted": false,
+    "retry_authorized": false
+  },
+  "authority_state": {
+    "step1_authorization": "CONSUMED",
+    "authorization_consumed": true,
+    "retry_authorized": false,
+    "step2_authorization": "BLOCKED"
+  },
+  "credential_material_retained": false,
+  "pii_retained": false,
+  "security_state": {
+    "secret_material_recorded": false,
+    "credential_material_recorded": false,
+    "credential_digest_recorded": false,
+    "token_material_recorded": false,
+    "recovery_material_recorded": false,
+    "raw_provider_response_recorded": false,
+    "raw_provider_rows_recorded": false,
+    "pii_recorded": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "execution_time_source": "GITHUB_ACTIONS_RUN_METADATA",
+  "record_basis": "GITHUB_ACTIONS_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-09-27T19:25:44Z"
+}

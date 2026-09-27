@@ -327,7 +327,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT AUTH v32 synthetic-session cleanup-v4: PASS "
-        "(exact pre-window approval; pinned Step 1 surface; pristine/unexecuted until explicit dispatch)"
+        "(Step 1 consumed/failed closed; Step 2 blocked; no retry authority)"
     )
     return 0
 

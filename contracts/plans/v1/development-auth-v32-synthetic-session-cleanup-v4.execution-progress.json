@@ -1,0 +1,55 @@
+{
+  "progress_id": "fb742c12-03f2-4829-b748-7440ba19df8b",
+  "plan_id": "59bc509b-e2ce-4c27-9245-f9910f77f7c8",
+  "plan_version": 4,
+  "plan_digest": "sha256:b0a44c88963f7a1f57cd33eb798e67986dc8aabb82baeef825b2d561cedbc173",
+  "record_version": 2,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v4.step.01.revoke-synthetic-sessions-global",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "evidence_reference": "github.actions.run.36343787695.step1.attempt1.failed-response-shape-invalid",
+          "evidence_digest": "sha256:20eeef255707908c3cf991a6e44fdc5facd957953a7d7989105a57ee538c2861",
+          "recorded_at": "2026-09-27T19:25:44Z"
+        }
+      ],
+      "observed_postcondition": "Direct recovery verification response failed canonical response-shape validation after recovery generation advanced to verification. Whether a temporary session was created is unverified; JWT validation, global logout, SQL, and Step 2 were not reached. Cleanup is unverified and retry is unauthorized.",
+      "safe_error_code": "RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.cleanup-v4.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:114da719e5ba04258e56fb6b86d5e6d80f7d23b7997583f54aff0cc8f6c48da2",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:3cc5c566707bf5f2945cf6e5658f5337d3649722c82caec4db5babf83faee4ee",
+          "recorded_at": "2026-09-27T19:17:19Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.v32-synthetic-session-cleanup-v4.step.02.verify-zero-session-refresh-state",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-27T19:25:44Z",
+  "progress_digest": "sha256:ffd70c3a4aaa8e9c9cc3002faff84393d0022b262e270cbea9019fdf94c895a2"
+}

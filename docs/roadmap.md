@@ -53,8 +53,10 @@ Ordered milestones from the separation checkpoint:
       - Execute AUTH v31 Step 1 — STOPPED / CONSUMED; one provider mutation attempt ended with `V31_RECOVERY_LINK_GENERATION_FAILED`, provider outcome `AMBIGUOUS`, exact historical response classification `UNKNOWN`, Steps 2-3 blocked/unconsumed, retry unauthorized.
       - Correct the direct Auth HTTP response parser/classification defect — COMPLETE through PR #110; historical v31 outcome remains ambiguous.
       - Prepare forward-only AUTH v32 with the corrected parser and existing v32 secret referenced by name only — COMPLETE AS REPOSITORY-LOCAL PREPARATION; plan `e8cd574a-a532-4c95-ab5d-5c069c1bbb96`, digest `sha256:c43b0b906bfb0c03e763d6cc5a13d47a900b40eb4db8fd904c799c524ec6c37c`, window `2026-09-17T15:00:00Z` through `2026-09-17T21:00:00Z`; pristine/unapproved/unexecuted, no provider contact or secret use.
-      - Create the separate exact AUTH v32 owner approval — NEXT; no v32 provider action is authorized by preparation.
-      - Execute and record one short-lived synthetic token lifecycle under exact v32 authority — NOT STARTED
+      - Historical AUTH v32 owner approval/execution — COMPLETE AS HISTORICAL STOPPED PATH; v32 is consumed/non-retryable and must not be reused.
+      - Complete the forward-only repaired recovery lifecycle and prove zero provider session/refresh state — COMPLETE; canonical repaired lifecycle v2 ended `COMPLETED` with exact aggregate readback `session_count=0` and `refresh_token_count=0` (`SESSION_CLEANUP_VERIFIED`).
+      - Retire the dedicated repaired-lifecycle cleanup credential and exact GitHub environment binding — COMPLETE; both references independently verified absent and retirement progress is `COMPLETED`.
+      - Prepare any further synthetic-token validation only as a NEW forward-only authorization boundary; no historical v31/v32/cleanup authority is reusable — NEXT
       - Wire the hosted DEVELOPMENT trusted-identity adapter — NOT STARTED
       - Wire the hosted DEVELOPMENT DATA adapter with least privilege — NOT STARTED
       - Promote hosted readiness only after both dependencies verify independently — NOT STARTED

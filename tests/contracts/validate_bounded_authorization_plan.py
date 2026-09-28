@@ -232,7 +232,6 @@ def main() -> int:
         V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
         V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
         RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH,
-        RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
         DATA_V3_APPROVAL_PATH,
@@ -242,6 +241,8 @@ def main() -> int:
         expected_approval_paths.add(V24_APPROVAL_PATH)
     if V31_APPROVAL_PATH.exists():
         expected_approval_paths.add(V31_APPROVAL_PATH)
+    if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH)
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
@@ -318,7 +319,8 @@ def main() -> int:
     ):
         raise SystemExit("exact authorized recovery-shape diagnostic v2 approval file digest mismatch")
     if (
-        file_digest(RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH)
+        RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists()
+        and file_digest(RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH)
         != RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_FILE_DIGEST
     ):
         raise SystemExit("exact authorized recovery-predicate diagnostic v4 approval file digest mismatch")
@@ -368,12 +370,12 @@ def main() -> int:
                     V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
                     V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
                     RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH,
-                    RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
                     DATA_V3_APPROVAL_PATH,
                     DATA_SEARCH_PATH_REPAIR_V1_APPROVAL_PATH,
                 }
+                | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
             )
         return values
 

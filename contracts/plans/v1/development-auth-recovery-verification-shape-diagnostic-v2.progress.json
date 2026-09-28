@@ -3,21 +3,68 @@
   "plan_id": "750bb51d-91c0-4d49-9584-d8d37081c46a",
   "plan_version": 2,
   "plan_digest": "sha256:c66c6d7e805b50042c911f25829b523a47d149815fed5231d84ca0d817d03875",
-  "record_version": 1,
-  "overall_state": "NOT_STARTED",
+  "record_version": 2,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development.auth.recovery-shape-diagnostic-v2.step.01.inspect-sanitized-shape-once",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.recovery-verification.sanitized-shape.observed",
+          "evidence_reference": "github.actions.run.36368143375.recovery-shape-diagnostic-v2.attempt1.verified",
+          "evidence_digest": "sha256:47648dff2309903a6966539857735a3d612d6087589a3f85d83b1db12592d68a",
+          "recorded_at": "2026-09-28T02:00:49Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one DEVELOPMENT AUTH recovery generation and direct recovery verification attempt completed. Only fixed sanitized structural labels were retained: mapping payload, nested user identity, absent top-level id, string token fields, and integer expiry fields; no credential material or PII was retained. No retry, logout, or cleanup was performed.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.recovery-shape-diagnostic-v2.admin-credential-reference",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "evidence_digest": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:c20b536febc80e21684d5e1e2fc1eb040e6eca48019ca8afda568c4f9fa0cbb3",
+          "recorded_at": "2026-09-28T02:00:49Z"
+        },
+        {
+          "binding_id": "binding.development.auth.recovery-shape-diagnostic-v2.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:c4971d605879c29482608f697b06e378bf9c6cc284131714973ca3db7a349f01",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:c4971d605879c29482608f697b06e378bf9c6cc284131714973ca3db7a349f01",
+          "recorded_at": "2026-09-28T02:00:49Z"
+        },
+        {
+          "binding_id": "binding.development.auth.recovery-shape-diagnostic-v2.sanitized-shape",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.recovery-verification.sanitized-shape.observed",
+          "evidence_digest": "sha256:47648dff2309903a6966539857735a3d612d6087589a3f85d83b1db12592d68a",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:47648dff2309903a6966539857735a3d612d6087589a3f85d83b1db12592d68a",
+          "recorded_at": "2026-09-28T02:00:49Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-28T01:01:00Z",
-  "progress_digest": "sha256:206859bebc5d4feb8f14e76581c16ebb558ad06782b8d422b0da911b4814b5cb"
+  "updated_at": "2026-09-28T02:00:49Z",
+  "progress_digest": "sha256:6c018cbee1ba6bbc084f8b2dad46435456a88a6e4c0d28245bd136c32046fa40"
 }

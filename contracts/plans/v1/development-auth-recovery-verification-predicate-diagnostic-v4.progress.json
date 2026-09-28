@@ -20,7 +20,7 @@
           "recorded_at": "2026-09-28T15:01:16Z"
         }
       ],
-      "observed_postcondition": "Exactly one DEVELOPMENT AUTH recovery generation and direct recovery verification attempt completed. The canonical parser predicates were evaluated in memory and only fixed pass/fail labels were retained; refresh_token_length was the sole failing predicate. No raw payload, token value or length, UUID, email, arbitrary provider key, credential material, session material, or PII was retained. No retry, logout, cleanup, parser modification, or continuation was performed.",
+      "observed_postcondition": "Exactly one fresh DEVELOPMENT AUTH recovery generation and direct verification attempt is evaluated in memory against the canonical parser predicates. Retain only fixed predicate names with pass/fail labels; retain no raw payload, token value or length, UUID, email, arbitrary provider key, credential material, session material, or PII. No retry, logout, cleanup, parser modification, or continuation is performed.",
       "safe_error_code": null,
       "binding_assertions": [
         {
@@ -53,5 +53,5 @@
     }
   ],
   "updated_at": "2026-09-28T15:01:16Z",
-  "progress_digest": "sha256:7a9e921136e93c3905624033f135049cf37483c5a37ba41d414868840a88a0e2"
+  "progress_digest": "sha256:c05233df4d594db8110652de7e64ad8281daf76494758e64fec7f124e5fcce7f"
 }

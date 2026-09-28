@@ -1,0 +1,103 @@
+name: DEVELOPMENT AUTH Recovery Predicate Diagnostic v4
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type INSPECT_DEVELOPMENT_AUTH_RECOVERY_PREDICATES_V4_ONCE for the exact diagnostic attempt
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-recovery-predicate-diagnostic-v4
+  cancel-in-progress: false
+
+jobs:
+  inspect-recovery-verification-predicates:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+
+    env:
+      AVUHZ_EXPECTED_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: 6fffde6e-7615-4abc-bfd7-b588d52de3fb
+      AVUHZ_PLAN_DIGEST: sha256:d2f0d33de434329de0b2345bf60813e3a15ad22eac3d10664f8e66742b688819
+      AVUHZ_APPROVAL_ID: 42897137-14e0-40e9-8af2-7baff56754a8
+      AVUHZ_APPROVAL_DIGEST: sha256:350529296bcf4484b5d63e0bc92fb4edc6e56199b82ab960b07ceb0ef8a120e2
+      AVUHZ_WINDOW_START: '2026-09-28T15:00:00Z'
+      AVUHZ_WINDOW_END: '2026-09-28T21:00:00Z'
+      AVUHZ_RECOVERY_PREDICATE_DIAGNOSTIC_CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify main-only dispatch and exact diagnostic binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]] || [[ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]]; then
+            echo "::error::RECOVERY_PREDICATE_DIAGNOSTIC_V4_MAIN_ONLY"
+            exit 1
+          fi
+          if [[ "${GITHUB_RUN_ATTEMPT}" != "1" ]]; then
+            echo "::error::RECOVERY_PREDICATE_DIAGNOSTIC_V4_REPLAY_PROHIBITED"
+            exit 1
+          fi
+          if [[ "${AVUHZ_RECOVERY_PREDICATE_DIAGNOSTIC_CONFIRMATION}" != "INSPECT_DEVELOPMENT_AUTH_RECOVERY_PREDICATES_V4_ONCE" ]]; then
+            echo "::error::RECOVERY_PREDICATE_DIAGNOSTIC_V4_CONFIRMATION_MISMATCH"
+            exit 1
+          fi
+          if [[ "${AVUHZ_EXPECTED_PROJECT_REF}" != "pwlhruwutoitnieactol" ]] \
+             || [[ "${AVUHZ_PLAN_ID}" != "6fffde6e-7615-4abc-bfd7-b588d52de3fb" ]] \
+             || [[ "${AVUHZ_PLAN_DIGEST}" != "sha256:d2f0d33de434329de0b2345bf60813e3a15ad22eac3d10664f8e66742b688819" ]] \
+             || [[ "${AVUHZ_APPROVAL_ID}" != "42897137-14e0-40e9-8af2-7baff56754a8" ]] \
+             || [[ "${AVUHZ_APPROVAL_DIGEST}" != "sha256:350529296bcf4484b5d63e0bc92fb4edc6e56199b82ab960b07ceb0ef8a120e2" ]] \
+             || [[ "${AVUHZ_WINDOW_START}" != "2026-09-28T15:00:00Z" ]] \
+             || [[ "${AVUHZ_WINDOW_END}" != "2026-09-28T21:00:00Z" ]]; then
+            echo "::error::RECOVERY_PREDICATE_DIAGNOSTIC_V4_PLAN_BINDING_MISMATCH"
+            exit 1
+          fi
+          now_epoch="$(date -u +%s)"
+          start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < start_epoch || now_epoch >= end_epoch )); then
+            echo "::error::RECOVERY_PREDICATE_DIAGNOSTIC_V4_AUTHORIZATION_WINDOW_INACTIVE"
+            exit 1
+          fi
+
+      - name: Install pinned authorization dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 -m pip install --disable-pip-version-check --no-input 'jsonschema==4.10.3'
+
+      - name: Validate exact authority before secret resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_recovery_verification_predicate_diagnostic_v4.py --preflight-only
+
+      - name: Execute exact predicate diagnostic once
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_AUTH_RECOVERY_PREDICATE_DIAGNOSTIC_V4_ADMIN_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_AUTH_RECOVERY_PREDICATE_DIAGNOSTIC_V4_ADMIN_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_recovery_verification_predicate_diagnostic_v4.py

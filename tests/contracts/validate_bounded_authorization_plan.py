@@ -140,6 +140,9 @@ RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH = (
 RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_FILE_DIGEST = (
     "sha256:8d72236c3410bb191df3e462f2c0d71b31bf71422272bf8d3968e2df6d8968b5"
 )
+REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-repaired-recovery-lifecycle-v1.approval.json"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -243,6 +246,8 @@ def main() -> int:
         expected_approval_paths.add(V31_APPROVAL_PATH)
     if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists():
         expected_approval_paths.add(RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH)
+    if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH)
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
@@ -376,6 +381,7 @@ def main() -> int:
                     DATA_SEARCH_PATH_REPAIR_V1_APPROVAL_PATH,
                 }
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
+                | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())
             )
         return values
 

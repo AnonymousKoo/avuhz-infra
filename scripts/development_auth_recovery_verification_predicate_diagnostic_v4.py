@@ -22,7 +22,7 @@ from avuhz_engineering.authorization_plan import (
 )
 from avuhz_engineering.development_auth_token_lifecycle import (
     RecoveryVerificationCredential, SafeLifecycleStop, VERIFY_PATH, VERIFY_TYPE,
-    _post_json, _provider_headers, 
+    _post_json, _provider_headers,
     request_generate_recovery_credential,
 )
 from avuhz_engineering.development_auth_recovery_verification_diagnostic import classify_recovery_verification_parser_predicates

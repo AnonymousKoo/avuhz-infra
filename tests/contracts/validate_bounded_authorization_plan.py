@@ -134,6 +134,12 @@ RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH = (
 RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_FILE_DIGEST = (
     "sha256:d5f1826c95a6c01a7c1fa542eaeec6b165e0e14b64648a56867030b1c1c79d8c"
 )
+RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-recovery-verification-predicate-diagnostic-v4.approval.json"
+)
+RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_FILE_DIGEST = (
+    "sha256:8d72236c3410bb191df3e462f2c0d71b31bf71422272bf8d3968e2df6d8968b5"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -226,6 +232,7 @@ def main() -> int:
         V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
         V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
         RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH,
+        RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
         DATA_V3_APPROVAL_PATH,
@@ -310,6 +317,11 @@ def main() -> int:
         != RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_FILE_DIGEST
     ):
         raise SystemExit("exact authorized recovery-shape diagnostic v2 approval file digest mismatch")
+    if (
+        file_digest(RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH)
+        != RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("exact authorized recovery-predicate diagnostic v4 approval file digest mismatch")
     if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
@@ -356,6 +368,7 @@ def main() -> int:
                     V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
                     V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
                     RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH,
+                    RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
                     DATA_V3_APPROVAL_PATH,

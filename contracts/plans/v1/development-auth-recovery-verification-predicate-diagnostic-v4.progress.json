@@ -3,21 +3,55 @@
   "plan_id": "6fffde6e-7615-4abc-bfd7-b588d52de3fb",
   "plan_version": 4,
   "plan_digest": "sha256:d2f0d33de434329de0b2345bf60813e3a15ad22eac3d10664f8e66742b688819",
-  "record_version": 1,
-  "overall_state": "NOT_STARTED",
+  "record_version": 2,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development.auth.recovery-predicate-diagnostic-v1.step.01.inspect-parser-predicates-once",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.recovery-verification.sanitized-predicates.observed",
+          "evidence_reference": "github.actions.run.36440353921.recovery-predicate-diagnostic-v4.attempt1.verified",
+          "evidence_digest": "sha256:43f25a485bc89bc432d89dc397df8e459630af59d2c894cd4b841359b903c7d0",
+          "recorded_at": "2026-09-28T15:01:16Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one fresh DEVELOPMENT AUTH recovery generation and direct verification attempt is evaluated in memory against the canonical parser predicates. Retain only fixed predicate names with pass/fail labels; retain no raw payload, token value or length, UUID, email, arbitrary provider key, credential material, session material, or PII. No retry, logout, cleanup, parser modification, or continuation is performed.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.recovery-predicate-diagnostic-v1.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:40d02be2246e0009788fa95d86a9aaa22392d938776f220a0ae21d0c5ba49278",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:620a9db8bc6ff23f72ce7af019edd02703d57404f0e5972e43cf5bcd491b1b19",
+          "recorded_at": "2026-09-28T15:01:16Z"
+        },
+        {
+          "binding_id": "binding.development.auth.recovery-predicate-diagnostic-v1.sanitized-predicates",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.recovery-verification.sanitized-predicates.observed",
+          "evidence_digest": "sha256:43f25a485bc89bc432d89dc397df8e459630af59d2c894cd4b841359b903c7d0",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:43f25a485bc89bc432d89dc397df8e459630af59d2c894cd4b841359b903c7d0",
+          "recorded_at": "2026-09-28T15:01:16Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-28T13:55:10Z",
-  "progress_digest": "sha256:2d9656bac635069de986d9e8b191567b2e4074d3002505de1afb94c0256ba9e0"
+  "updated_at": "2026-09-28T15:01:16Z",
+  "progress_digest": "sha256:c05233df4d594db8110652de7e64ad8281daf76494758e64fec7f124e5fcce7f"
 }

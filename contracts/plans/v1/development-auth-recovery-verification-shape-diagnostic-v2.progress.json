@@ -1,0 +1,23 @@
+{
+  "progress_id": "21a9e38a-fcd2-4408-b93b-20ec2cbeef09",
+  "plan_id": "750bb51d-91c0-4d49-9584-d8d37081c46a",
+  "plan_version": 2,
+  "plan_digest": "sha256:c66c6d7e805b50042c911f25829b523a47d149815fed5231d84ca0d817d03875",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.recovery-shape-diagnostic-v2.step.01.inspect-sanitized-shape-once",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-28T01:01:00Z",
+  "progress_digest": "sha256:206859bebc5d4feb8f14e76581c16ebb558ad06782b8d422b0da911b4814b5cb"
+}

@@ -529,7 +529,7 @@ def parse_recovery_verification_response(
         not isinstance(access_token, str)
         or not 32 <= len(access_token) <= 16384
         or not isinstance(refresh_token, str)
-        or not 16 <= len(refresh_token) <= 4096
+        or not 1 <= len(refresh_token) <= 4096
         or token_type != "bearer"
         or isinstance(expires_in, bool)
         or not isinstance(expires_in, int)

@@ -31,6 +31,24 @@ def test_all_current_parser_predicates_pass_for_synthetic_valid_shape() -> None:
     assert set(result.values()) == {"pass"}
 
 
+def test_classifier_accepts_nonempty_short_refresh_token() -> None:
+    payload = _payload()
+    payload["refresh_token"] = "r"
+    result = classify_recovery_verification_parser_predicates(
+        payload, expected_user_id=USER_ID
+    )
+    assert result["refresh_token_length"] == "pass"
+
+
+def test_classifier_rejects_empty_refresh_token() -> None:
+    payload = _payload()
+    payload["refresh_token"] = ""
+    result = classify_recovery_verification_parser_predicates(
+        payload, expected_user_id=USER_ID
+    )
+    assert result["refresh_token_length"] == "fail"
+
+
 def test_classifier_identifies_value_level_failures_without_returning_values() -> None:
     payload = _payload()
     payload["token_type"] = "unexpected-secret-type"

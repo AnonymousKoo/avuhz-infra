@@ -1,0 +1,55 @@
+{
+  "progress_id": "554e42fb-59cc-42f1-bca5-a5985fe0d1cd",
+  "plan_id": "cdcda5de-5934-42f9-ba7c-e02eaa0d0fe6",
+  "plan_version": 2,
+  "plan_digest": "sha256:7619a172fc3eca6a861567ebf9a0f6746d91c0ca6e69e348d5f4b07263cdeea3",
+  "record_version": 2,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development.auth.repaired-recovery-lifecycle-v2.step.01.recover-validate-and-logout-global",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PENDING",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.repaired-recovery-lifecycle-v2.step1.session-revocation-request-accepted",
+          "evidence_reference": "development-auth-repaired-recovery-lifecycle-v2-step1-success.evidence.json",
+          "evidence_digest": "sha256:29ab57348cfe5ecb8f281d49d0c7875dc526f4be5a941f5ddc1a208ed85e898c",
+          "recorded_at": "2026-09-28T20:20:49Z"
+        }
+      ],
+      "observed_postcondition": "One temporary synthetic session was issued, its JWT validated, and global logout was accepted. Credential material and PII were not retained. Cleanup is not yet verified; exact Step 2 aggregate readback is required and no retry is authorized.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.repaired-recovery-lifecycle-v2.step1-revocation-request",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.repaired-recovery-lifecycle-v2.step1.session-revocation-request-accepted",
+          "evidence_digest": "sha256:29ab57348cfe5ecb8f281d49d0c7875dc526f4be5a941f5ddc1a208ed85e898c",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:29ab57348cfe5ecb8f281d49d0c7875dc526f4be5a941f5ddc1a208ed85e898c",
+          "recorded_at": "2026-09-28T20:20:49Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.repaired-recovery-lifecycle-v2.step.02.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-28T20:27:11Z",
+  "progress_digest": "sha256:3d83506a17acbbc021e6a4338024851ea4a287c770962fc9ebf14a71d62d14ef"
+}

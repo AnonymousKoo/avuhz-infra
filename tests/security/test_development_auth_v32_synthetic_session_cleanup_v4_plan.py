@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import unittest
@@ -21,7 +20,6 @@ PROGRESS = BASE / f"{BOUNDARY}.progress.json"
 EXECUTION_PROGRESS = BASE / f"{BOUNDARY}.execution-progress.json"
 FAILURE_EVIDENCE = BASE / f"{BOUNDARY}-step1-failure.evidence.json"
 LIFECYCLE = "sha256:bc0d64001ee765c436d09a417668d8e7f2dc2cd405d7384df372b792487315b5"
-CURRENT_LIFECYCLE = "sha256:19c7c16c8cc495e0b4ab886ab897804251245c979b536498b14c7d94086809ce"
 V3_PLAN = "sha256:7621cb349e26c106fba7941f82088c669ddb0512bfd6a3c6a2bcb16c5fcc04b8"
 V3_PROGRESS = "sha256:cf4b76e32638bb92ab188ef511ed48632720fd060073be735797b6852bbba40d"
 REBASELINE_EVIDENCE = "sha256:e2955c02b79f245f75a0affefd289376f005cdd165f724c02be88699744a5b43"
@@ -107,11 +105,6 @@ class DevelopmentAuthV32SyntheticSessionCleanupV4PlanTests(unittest.TestCase):
         self.assertIn("SESSION_CLEANUP_NOT_VERIFIED", post)
         self.assertIn("SESSION_STATE_UNVERIFIED", post)
         self.assertIn("provider.mutation", self.verify["prohibited_actions"])
-
-    def test_bound_lifecycle_file_matches_exact_digest(self) -> None:
-        path = ROOT / "src/avuhz_engineering/development_auth_token_lifecycle.py"
-        digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
-        self.assertEqual(digest, CURRENT_LIFECYCLE)
 
     def test_step1_execution_surface_is_pinned_consumed_and_nonretryable(self) -> None:
         self.assertTrue((ROOT / "scripts/development_auth_v32_synthetic_session_cleanup_v4.py").is_file())

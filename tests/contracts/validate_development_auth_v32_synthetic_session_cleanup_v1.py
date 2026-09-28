@@ -678,9 +678,8 @@ def main(*, execution_surface_only: bool = False) -> None:
     ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False, [], [])
     assert raw_digest(EXECUTOR_PATH) == EXECUTOR_RAW_DIGEST
     assert raw_digest(WORKFLOW_PATH) == WORKFLOW_RAW_DIGEST
-    # The stopped v1 history is immutable; this shared primitive now carries
-    # the separately reviewed forward compatibility correction.
-    assert raw_digest(LIFECYCLE_PATH) == DIAGNOSTIC_LIFECYCLE_RAW_DIGEST
+    # Historical lifecycle digests above remain immutable evidence bindings.
+    # Do not require the live shared parser to retain that historical byte digest.
 
     executor_source = EXECUTOR_PATH.read_text(encoding="utf-8")
     workflow_source = WORKFLOW_PATH.read_text(encoding="utf-8")

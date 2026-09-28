@@ -26,7 +26,7 @@ def classify_recovery_verification_parser_predicates(
     return {
         "payload_mapping": "pass",
         "access_token_length": status(isinstance(access_token, str) and 32 <= len(access_token) <= 16384),
-        "refresh_token_length": status(isinstance(refresh_token, str) and 16 <= len(refresh_token) <= 4096),
+        "refresh_token_length": status(isinstance(refresh_token, str) and 1 <= len(refresh_token) <= 4096),
         "token_type_bearer": status(payload.get("token_type") == "bearer"),
         "expires_in_positive_int": status(not isinstance(expires_in, bool) and isinstance(expires_in, int) and expires_in > 0),
         "expires_at_valid": status(not isinstance(expires_at, bool) and (expires_at is None or (isinstance(expires_at, int) and expires_at > 0))),

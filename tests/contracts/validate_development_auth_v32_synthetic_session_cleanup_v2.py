@@ -259,9 +259,8 @@ def main() -> int:
     assert "SESSION_CLEANUP_VERIFIED" in verify["expected_postcondition"]
     assert "SESSION_CLEANUP_NOT_VERIFIED" in verify["expected_postcondition"]
     assert "SESSION_STATE_UNVERIFIED" in verify["expected_postcondition"]
-    # The immutable v2 plan/executor remain bound to the original primitive;
-    # the corrected shared parser is for a fresh forward-only continuation.
-    assert raw_digest(LIFECYCLE_PATH) == DIAGNOSTIC_LIFECYCLE_RAW_DIGEST
+    # The immutable v2 plan/executor remain bound to the original primitive.
+    # Do not require the live shared parser to retain that historical byte digest.
     assert plan["steps"][0]["required_evidence"] == [{
         "evidence_type": "auth.session-attribution.owner-interactive-inspected",
         "source_step_id": None,

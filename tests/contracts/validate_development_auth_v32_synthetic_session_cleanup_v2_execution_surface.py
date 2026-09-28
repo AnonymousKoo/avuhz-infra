@@ -39,9 +39,9 @@ def main() -> int:
     assert plan["plan_id"] == PLAN_ID and plan["plan_digest"] == PLAN_DIGEST
     assert plan["authorization_window"]["starts_at"] == WINDOW[0]
     assert plan["authorization_window"]["expires_at"] == WINDOW[1]
-    # Cleanup-v2's consumed executor is still hard-pinned to its original
-    # lifecycle digest and cannot be revived by this shared parser correction.
-    assert digest(LIFECYCLE) == DIAGNOSTIC_LIFECYCLE_DIGEST
+    # Cleanup-v2's consumed executor remains hard-pinned to its original
+    # lifecycle digest through the immutable executor binding below. The live
+    # shared parser may advance without reviving that consumed execution.
     assert LIFECYCLE_DIGEST in executor
     assert "cleanup.v2" in executor and PLAN_ID in executor and PLAN_DIGEST in executor
     assert ADMIN_ENV in executor and PUBLISHABLE_ENV in executor

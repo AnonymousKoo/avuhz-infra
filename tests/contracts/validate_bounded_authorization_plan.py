@@ -128,6 +128,12 @@ V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH = (
 V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_FILE_DIGEST = (
     "sha256:9973a0880bba000298b3f87b21118bb35e4411161d5c96291619100acec46a60"
 )
+RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-recovery-verification-shape-diagnostic-v2.approval.json"
+)
+RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_FILE_DIGEST = (
+    "sha256:d5f1826c95a6c01a7c1fa542eaeec6b165e0e14b64648a56867030b1c1c79d8c"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -219,6 +225,7 @@ def main() -> int:
         V32_SYNTHETIC_SESSION_CLEANUP_V2_APPROVAL_PATH,
         V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
         V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
+        RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH,
         DATA_V1_APPROVAL_PATH,
         DATA_V2_APPROVAL_PATH,
         DATA_V3_APPROVAL_PATH,
@@ -298,6 +305,11 @@ def main() -> int:
         != V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_FILE_DIGEST
     ):
         raise SystemExit("exact authorized v32 session-state rebaseline v1 approval file digest mismatch")
+    if (
+        file_digest(RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH)
+        != RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("exact authorized recovery-shape diagnostic v2 approval file digest mismatch")
     if file_digest(DATA_V1_APPROVAL_PATH) != DATA_V1_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact canonical DEVELOPMENT DATA v1 approval file digest mismatch")
     if file_digest(DATA_V2_APPROVAL_PATH) != DATA_V2_APPROVAL_FILE_DIGEST:
@@ -343,6 +355,7 @@ def main() -> int:
                     V32_SYNTHETIC_SESSION_CLEANUP_V2_APPROVAL_PATH,
                     V32_SYNTHETIC_SESSION_CLEANUP_V4_APPROVAL_PATH,
                     V32_SESSION_STATE_REBASELINE_OWNER_INTERACTIVE_V1_APPROVAL_PATH,
+                    RECOVERY_SHAPE_DIAGNOSTIC_V2_APPROVAL_PATH,
                     DATA_V1_APPROVAL_PATH,
                     DATA_V2_APPROVAL_PATH,
                     DATA_V3_APPROVAL_PATH,

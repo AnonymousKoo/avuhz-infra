@@ -1,0 +1,127 @@
+name: DEVELOPMENT AUTH Repaired Recovery Lifecycle v2 Step 1
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN_REPAIRED_RECOVERY_LIFECYCLE_V2_STEP1 for exact Step 1 only
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-repaired-recovery-lifecycle-v2-step1
+  cancel-in-progress: false
+
+jobs:
+  run-development-auth-repaired-recovery-lifecycle:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+
+    env:
+      AVUHZ_EXPECTED_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: cdcda5de-5934-42f9-ba7c-e02eaa0d0fe6
+      AVUHZ_PLAN_DIGEST: sha256:7619a172fc3eca6a861567ebf9a0f6746d91c0ca6e69e348d5f4b07263cdeea3
+      AVUHZ_APPROVAL_ID: 8dd2aa60-91a4-4357-914e-638cf6320a59
+      AVUHZ_APPROVAL_DIGEST: sha256:6154faa69e435d0ce9c03f6463a0709d014932e5794dbd5d0e988e0a94d7da62
+      AVUHZ_WINDOW_START: '2026-09-28T16:30:00Z'
+      AVUHZ_WINDOW_END: '2026-09-28T22:30:00Z'
+      AVUHZ_CLEANUP_CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify main-only dispatch and exact Step 1 binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]] || [[ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]]; then
+            echo "::error::REPAIRED_LIFECYCLE_V2_MAIN_ONLY"
+            exit 1
+          fi
+          if [[ "${GITHUB_RUN_NUMBER}" != "1" ]] || [[ "${GITHUB_RUN_ATTEMPT}" != "1" ]]; then
+            echo "::error::REPAIRED_LIFECYCLE_V2_REPLAY_PROHIBITED"
+            exit 1
+          fi
+          if [[ "${AVUHZ_CLEANUP_CONFIRMATION}" != "RUN_REPAIRED_RECOVERY_LIFECYCLE_V2_STEP1" ]]; then
+            echo "::error::REPAIRED_LIFECYCLE_V2_CONFIRMATION_MISMATCH"
+            exit 1
+          fi
+          if [[ "${AVUHZ_EXPECTED_PROJECT_REF}" != "pwlhruwutoitnieactol" ]] \
+             || [[ "${AVUHZ_PLAN_ID}" != "cdcda5de-5934-42f9-ba7c-e02eaa0d0fe6" ]] \
+             || [[ "${AVUHZ_PLAN_DIGEST}" != "sha256:7619a172fc3eca6a861567ebf9a0f6746d91c0ca6e69e348d5f4b07263cdeea3" ]] \
+             || [[ "${AVUHZ_APPROVAL_ID}" != "8dd2aa60-91a4-4357-914e-638cf6320a59" ]] \
+             || [[ "${AVUHZ_APPROVAL_DIGEST}" != "sha256:6154faa69e435d0ce9c03f6463a0709d014932e5794dbd5d0e988e0a94d7da62" ]] \
+             || [[ "${AVUHZ_WINDOW_START}" != "2026-09-28T16:30:00Z" ]] \
+             || [[ "${AVUHZ_WINDOW_END}" != "2026-09-28T22:30:00Z" ]]; then
+            echo "::error::REPAIRED_LIFECYCLE_V2_PLAN_BINDING_MISMATCH"
+            exit 1
+          fi
+          if [[ ! -f contracts/plans/v1/development-auth-repaired-recovery-lifecycle-v2.approval.json ]]; then
+            echo "::error::REPAIRED_LIFECYCLE_V2_APPROVAL_ABSENT"
+            exit 1
+          fi
+          if [[ -f contracts/plans/v1/development-auth-repaired-recovery-lifecycle-v2.execution-progress.json ]] \
+             || compgen -G 'contracts/plans/v1/development-auth-repaired-recovery-lifecycle-v2-step1-*.evidence.json' >/dev/null; then
+            echo "::error::REPAIRED_LIFECYCLE_V2_STEP1_ALREADY_ATTEMPTED"
+            exit 1
+          fi
+          now_epoch="$(date -u +%s)"
+          start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < start_epoch || now_epoch >= end_epoch )); then
+            echo "::error::REPAIRED_LIFECYCLE_V2_AUTHORIZATION_WINDOW_INACTIVE"
+            exit 1
+          fi
+
+      - name: Install pinned authorization and JWT dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3' \
+            'PyJWT[crypto]==2.14.0' \
+            'cryptography==50.0.1'
+
+      - name: Validate exact v2 Step 1 executor source binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          expected="6563ccbb7ee47353fce3d2cdc5d66d8b5336c567384c11b0d536d565e5987acd"
+          actual="$(sha256sum scripts/development_auth_repaired_recovery_lifecycle_v2_step1.py | awk '{print $1}')"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "::error::REPAIRED_LIFECYCLE_V2_EXECUTOR_DIGEST_MISMATCH"
+            exit 1
+          fi
+
+      - name: Validate exact approval and Step 1 authority before secret resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_repaired_recovery_lifecycle_v2_step1.py --preflight-only
+
+      - name: Execute exact Step 1 once
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_repaired_recovery_lifecycle_v2_step1.py

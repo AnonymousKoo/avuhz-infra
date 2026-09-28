@@ -1,0 +1,23 @@
+{
+  "progress_id": "e9015a73-c2f3-467b-943b-7f4d9ec2585f",
+  "plan_id": "6fffde6e-7615-4abc-bfd7-b588d52de3fb",
+  "plan_version": 4,
+  "plan_digest": "sha256:d2f0d33de434329de0b2345bf60813e3a15ad22eac3d10664f8e66742b688819",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.recovery-predicate-diagnostic-v1.step.01.inspect-parser-predicates-once",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-28T13:55:10Z",
+  "progress_digest": "sha256:2d9656bac635069de986d9e8b191567b2e4074d3002505de1afb94c0256ba9e0"
+}

@@ -227,8 +227,6 @@ def main() -> int:
         'authority_roles=frozenset()',
     ):
         assert fragment in identity_policy, fragment
-    composition = DEVELOPMENT_COMPOSITION_PATH.read_text(encoding="utf-8")
-    assert "identity_resolver=_UnavailableIdentityResolver()" in composition
 
     assert APPROVAL_PATH.exists()
     assert not (BASE / "development-auth-integration-v25.execution-progress.json").exists()

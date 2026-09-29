@@ -1,0 +1,34 @@
+{
+  "progress_id": "594277b5-7446-4605-a3da-d370a53a4b66",
+  "plan_id": "bce0d3e5-f975-4991-8f29-f9cfce7684a1",
+  "plan_version": 3,
+  "plan_digest": "sha256:c6a454343d64d1aee30293776b6ec94385c7890a691e3b5c2af8f8497ba165ad",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.synthetic-token-validation-v3.step.01.recover-validate-and-logout-global",
+      "authorization_state": "PENDING",
+      "authorization_consumed": false,
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.auth.synthetic-token-validation-v3.step.02.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "authorization_consumed": false,
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-29T15:48:24Z",
+  "progress_digest": "sha256:ef83dc55a7e9e566dded581a410b1cc96b162ed2226b894a29f4d6ba05fa39e3"
+}

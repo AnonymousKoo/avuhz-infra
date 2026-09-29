@@ -11,6 +11,8 @@ import urllib.request
 from pathlib import Path
 from unittest.mock import patch
 
+from jwt import PyJWKClient
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -93,7 +95,8 @@ class DevelopmentServiceTests(unittest.TestCase):
         self.assertNotIn("LocalIdentityResolver", development_source)
         self.assertNotIn("StaticTrustedIdentityResolver", development_source)
 
-    def test_unconfigured_dependencies_allow_health_but_deny_readiness_and_routes(self):
+    @patch.object(PyJWKClient, "__init__", return_value=None)
+    def test_identity_is_composed_but_data_keeps_readiness_fail_closed(self, _jwk_init):
         app = create_development_application(DevelopmentServiceSettings.from_environment(environment()))
         for path, expected in (("/health/startup", "started"), ("/health/live", "alive")):
             status, value, headers = call(app, "GET", path)
@@ -102,7 +105,7 @@ class DevelopmentServiceTests(unittest.TestCase):
         status, value, _ = call(app, "GET", "/health/ready")
         self.assertEqual((status, value), (503, {
             "status": "not_ready",
-            "checks": {"configuration": "ready", "data": "unavailable", "identity": "unavailable"},
+            "checks": {"configuration": "ready", "data": "unavailable", "identity": "ready"},
         }))
         self.assertEqual(call(app, "POST", "/v1/commands", {})[:2], (401, {"error": "trusted_identity_required"}))
         self.assertEqual(call(app, "POST", "/v1/queries", {})[:2], (401, {"error": "trusted_identity_required"}))

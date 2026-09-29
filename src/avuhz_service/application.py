@@ -21,6 +21,7 @@ from avuhz_runtime.phase5d_qa_result import QAResultReadService
 MAX_REQUEST_BYTES = 1024 * 1024
 QUERY_READ_CAPABILITY = "engagement:read"
 _SAFE_CHECK_NAME = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
+_BEARER_SCHEME = "Bearer "
 
 
 class ReadinessProbe(Protocol):
@@ -179,7 +180,7 @@ class AvuhzApplication:
         if method != "POST":
             raise RequestError(405, "method_not_allowed")
         request = self._json_request(environ)
-        context = self.identity_resolver.resolve(environ.get("avuhz.trusted_identity"))
+        context = self.identity_resolver.resolve(self._authenticated_identity(environ))
         if path == "/v1/commands":
             result = self.command_executor.execute(request, context)
             statuses = {"ACCEPTED": 202, "DUPLICATE": 200, "CONFLICT": 409,
@@ -203,6 +204,18 @@ class AvuhzApplication:
             checks[name] = "ready" if available else "unavailable"
             ready = ready and available
         return (200 if ready else 503), {"status": "ready" if ready else "not_ready", "checks": checks}
+
+    @staticmethod
+    def _authenticated_identity(environ):
+        authorization = environ.get("HTTP_AUTHORIZATION")
+        if authorization is None:
+            return environ.get("avuhz.trusted_identity")
+        if not isinstance(authorization, str) or not authorization.startswith(_BEARER_SCHEME):
+            raise PermissionError("trusted identity is required")
+        token = authorization[len(_BEARER_SCHEME):]
+        if not token or token != token.strip() or " " in token or len(token) > 16384:
+            raise PermissionError("trusted identity is required")
+        return token
 
     @staticmethod
     def _json_request(environ):

@@ -101,17 +101,32 @@ class _UnavailableUnitOfWork:
 
 
 def create_development_application(settings: DevelopmentServiceSettings):
+    # Imports are local because these provider adapters bind back to the exact
+    # DEVELOPMENT constants defined by this module.
+    from .development_identity import DevelopmentTrustedIdentityResolver
+    from .development_supabase_identity import (
+        DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
+        DevelopmentSupabaseIdentityVerifier,
+    )
+    from .development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
+
     # Settings bind this composition to approved non-secret DEVELOPMENT references.
-    # Provider adapters are deliberately not created here.
+    # Identity verification is read-only; DATA remains deliberately unavailable.
     store = _UnavailableStore()
+    identity_resolver = DevelopmentTrustedIdentityResolver(
+        DevelopmentSupabaseIdentityVerifier(
+            DevelopmentSupabaseEs256JwtVerifier(),
+            allowlist=DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
+        )
+    )
     return create_service_application(
         store=store,
         uow_factory=_UnavailableUnitOfWork,
-        identity_resolver=_UnavailableIdentityResolver(),
+        identity_resolver=identity_resolver,
         readiness_probes={
             "configuration": _ConfiguredProbe(),
             "data": _UnavailableProbe(),
-            "identity": _UnavailableProbe(),
+            "identity": _ConfiguredProbe(),
         },
     )
 

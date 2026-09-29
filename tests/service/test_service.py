@@ -113,6 +113,32 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(call(app, "GET", "/v1/commands")[0], 405)
         self.assertEqual(call(app, "POST", "/v1/mutations", {})[0], 404)
 
+    def test_http_bearer_ingress_is_bounded_and_passes_only_opaque_token(self):
+        class CapturingResolver:
+            def __init__(self): self.values = []
+            def resolve(self, value):
+                self.values.append(value)
+                raise PermissionError("stop after ingress")
+
+        resolver = CapturingResolver()
+        app = AvuhzApplication(object(), object(), resolver, {"data": ReadyProbe()})
+        bearer = "synthetic.jwt." + ("x" * 64)
+        status, value, _ = call(
+            app, "POST", "/v1/queries", {},
+            extra={"HTTP_AUTHORIZATION": "Bearer " + bearer},
+        )
+        self.assertEqual((status, value), (401, {"error": "trusted_identity_required"}))
+        self.assertEqual(resolver.values, [bearer])
+
+        for invalid in ("bearer " + bearer, "Basic abc", "Bearer ", "Bearer " + bearer + " extra"):
+            resolver.values.clear()
+            status, value, _ = call(
+                app, "POST", "/v1/queries", {},
+                extra={"HTTP_AUTHORIZATION": invalid},
+            )
+            self.assertEqual((status, value), (401, {"error": "trusted_identity_required"}))
+            self.assertEqual(resolver.values, [])
+
     def test_query_route_uses_existing_tenant_scoped_read_service_only(self):
         store = MemoryStore()
         store.deployment_verifications[(TENANT, VERIFICATION_ID)] = {

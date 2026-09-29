@@ -202,7 +202,7 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         })
         application = create_development_application(settings)
         self.assertFalse(application.readiness_probes["data"].ready())
-        self.assertFalse(application.readiness_probes["identity"].ready())
+        self.assertTrue(application.readiness_probes["identity"].ready())
 
 
 if __name__ == "__main__":

@@ -107,9 +107,7 @@ class DevelopmentTrustedIdentityResolverTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             resolver().resolve(object())
 
-    def test_live_development_composition_remains_unavailable_and_not_ready(self):
-        source = (ROOT / "src/avuhz_service/development.py").read_text()
-        self.assertNotIn("DevelopmentTrustedIdentityResolver", source)
+    def test_live_development_composition_uses_trusted_identity_but_data_remains_not_ready(self):
         settings = DevelopmentServiceSettings.from_environment({
             "AVUHZ_SERVICE_ENVIRONMENT": "DEVELOPMENT",
             "AVUHZ_DATA_PROJECT_REF": "gnuqaefotwgkwurjpyik",
@@ -122,8 +120,11 @@ class DevelopmentTrustedIdentityResolverTests(unittest.TestCase):
             "AVUHZ_COMMAND_SERVICE_IDENTITY": "avuhz_command_service_dev",
             "PORT": "10000",
         })
-        application = create_development_application(settings)
-        self.assertFalse(application.readiness_probes["identity"].ready())
+        from unittest.mock import patch
+        from jwt import PyJWKClient
+        with patch.object(PyJWKClient, "__init__", return_value=None):
+            application = create_development_application(settings)
+        self.assertTrue(application.readiness_probes["identity"].ready())
         self.assertFalse(application.readiness_probes["data"].ready())
         with self.assertRaises(PermissionError):
             application.identity_resolver.resolve(HANDLE)

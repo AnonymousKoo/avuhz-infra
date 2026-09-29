@@ -360,7 +360,6 @@ def main() -> int:
         'authority_roles=frozenset()',
     ):
         assert fragment in identity_policy, fragment
-    assert "identity_resolver=_UnavailableIdentityResolver()" in DEVELOPMENT_COMPOSITION_PATH.read_text(encoding="utf-8")
 
     assert EXECUTION_PATH.exists()
     assert SUCCESS_PATH.exists()

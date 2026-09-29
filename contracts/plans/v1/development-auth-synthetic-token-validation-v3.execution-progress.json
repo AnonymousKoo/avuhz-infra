@@ -3,8 +3,8 @@
   "plan_id": "bce0d3e5-f975-4991-8f29-f9cfce7684a1",
   "plan_version": 3,
   "plan_digest": "sha256:c6a454343d64d1aee30293776b6ec94385c7890a691e3b5c2af8f8497ba165ad",
-  "record_version": 3,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development.auth.synthetic-token-validation-v3.step.01.recover-validate-and-logout-global",
@@ -53,16 +53,63 @@
     },
     {
       "step_id": "development.auth.synthetic-token-validation-v3.step.02.verify-zero-session-refresh-state",
-      "authorization_state": "PENDING",
-      "authorization_consumed": false,
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "authorization_consumed": true,
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.cleanup.verified",
+          "evidence_reference": "development-auth-synthetic-token-validation-v3-step2-success.evidence.json",
+          "evidence_digest": "sha256:74f021bb838622dc6cc64eed9b28478d3bd02c4de92d26ce1979c7f2b9b962b2",
+          "recorded_at": "2026-09-29T19:21:08Z"
+        }
+      ],
+      "observed_postcondition": "select\n  (select count(*) from auth.sessions) as session_count,\n  (select count(*) from auth.refresh_tokens) as refresh_token_count; Exactly one query; only session_count and refresh_token_count. Require exact 0/0 for SESSION_CLEANUP_VERIFIED; any nonzero result is SESSION_CLEANUP_NOT_VERIFIED; unavailable, malformed, or ambiguous results are SESSION_STATE_UNVERIFIED. No raw rows, identifiers, PII, extra SQL, or mutation.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.repaired-lifecycle-v2.revocation-request",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.auth.synthetic-token-validation-v3.step.01.recover-validate-and-logout-global",
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "evidence_digest": "sha256:dde0402a82bfc348ffbb3451869af4cb0190fbf02bf8fe42eb5819dd7943c197",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:dde0402a82bfc348ffbb3451869af4cb0190fbf02bf8fe42eb5819dd7943c197",
+          "recorded_at": "2026-09-29T19:21:08Z"
+        },
+        {
+          "binding_id": "binding.development.auth.repaired-lifecycle-v2.dashboard-postcleanup-read",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "evidence_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "recorded_at": "2026-09-29T19:21:08Z"
+        },
+        {
+          "binding_id": "binding.development.auth.repaired-lifecycle-v2.cleanup-verification",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-session.cleanup.verified",
+          "evidence_digest": "sha256:74f021bb838622dc6cc64eed9b28478d3bd02c4de92d26ce1979c7f2b9b962b2",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:10e0f73e66972437aacdbb7ea51de98aa358840d406c9baed2294afd956e2377",
+          "recorded_at": "2026-09-29T19:21:08Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-29T19:01:36Z",
-  "progress_digest": "sha256:8c8ff25e4a49ff5ca8b1db7a2c4770c8060ccf394b74272a3234815954a9e188"
+  "updated_at": "2026-09-29T19:21:08Z",
+  "progress_digest": "sha256:4e886cd88cd19187233d9e7f724b13feeeb1960014208a1d54d229ab4d27e6af"
 }

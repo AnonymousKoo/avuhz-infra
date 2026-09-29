@@ -207,7 +207,7 @@ DATA_RUNTIME_LOGIN_V4_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-runtime-login-v4.approval.json"
 )
 DATA_RUNTIME_LOGIN_V4_APPROVAL_FILE_DIGEST = (
-    "sha256:4fda27cfd6057f11ec483af18a0cbe69e92881625fbc061a3950125ce700201a"
+    "sha256:0a45e942b5a711fa2b53dd21c086288d342183d5821d1d8739706d1dfd6f9c75"
 )
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))

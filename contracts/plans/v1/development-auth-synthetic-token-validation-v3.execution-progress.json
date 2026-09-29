@@ -1,0 +1,68 @@
+{
+  "progress_id": "594277b5-7446-4605-a3da-d370a53a4b66",
+  "plan_id": "bce0d3e5-f975-4991-8f29-f9cfce7684a1",
+  "plan_version": 3,
+  "plan_digest": "sha256:c6a454343d64d1aee30293776b6ec94385c7890a691e3b5c2af8f8497ba165ad",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development.auth.synthetic-token-validation-v3.step.01.recover-validate-and-logout-global",
+      "authorization_state": "CONSUMED",
+      "authorization_consumed": true,
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "evidence": [
+        {
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "evidence_reference": "development-auth-synthetic-token-validation-v3-step1-success.evidence.json",
+          "evidence_digest": "sha256:dde0402a82bfc348ffbb3451869af4cb0190fbf02bf8fe42eb5819dd7943c197",
+          "recorded_at": "2026-09-29T19:01:36Z"
+        }
+      ],
+      "observed_postcondition": "Existing DEVELOPMENT synthetic identity: generate and directly verify one recovery credential with the repaired lifecycle, validate the access JWT, then request global logout once. Retain no raw payload, token data, UUID, email, credential/session material, or PII. No retry. Step 2 must prove exact 0/0 cleanup.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.auth.repaired-lifecycle-v2.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:3f75f25b98994c53a231ec41bcc024c1b5facbf83ca47597d4bf7dfa5d861d13",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:65b3719b9755c510b03b9283a6282332d2162e982c3e06e4453f0b96fa8db68c",
+          "recorded_at": "2026-09-29T18:56:23Z"
+        },
+        {
+          "binding_id": "binding.development.auth.repaired-lifecycle-v2.revocation-request",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.synthetic-session.global-revocation.accepted",
+          "evidence_digest": "sha256:dde0402a82bfc348ffbb3451869af4cb0190fbf02bf8fe42eb5819dd7943c197",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:dde0402a82bfc348ffbb3451869af4cb0190fbf02bf8fe42eb5819dd7943c197",
+          "recorded_at": "2026-09-29T19:01:36Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.auth.synthetic-token-validation-v3.step.02.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "authorization_consumed": false,
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-29T19:01:36Z",
+  "progress_digest": "sha256:8c8ff25e4a49ff5ca8b1db7a2c4770c8060ccf394b74272a3234815954a9e188"
+}

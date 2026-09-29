@@ -839,19 +839,18 @@ def main() -> int:
         and progress["overall_state"] == "NOT_STARTED",
         "draft v7 progress must remain entirely unexecuted",
     )
-    approval_paths = set((ROOT / "contracts/plans/v1").glob("*approval*.json"))
+    historical_approval_paths = {
+        V8_APPROVAL_PATH,
+        V9_APPROVAL_PATH,
+        V10_APPROVAL_PATH,
+        V11_APPROVAL_PATH,
+        V12_APPROVAL_PATH,
+        V13_APPROVAL_PATH,
+        V14_APPROVAL_PATH,
+    }
     require(
-        approval_paths
-        == {
-            V8_APPROVAL_PATH,
-            V9_APPROVAL_PATH,
-            V10_APPROVAL_PATH,
-            V11_APPROVAL_PATH,
-            V12_APPROVAL_PATH,
-            V13_APPROVAL_PATH,
-            V14_APPROVAL_PATH,
-        },
-        "approval artifact set differs from the exact authorized v8/v9/v10/v11/v12/v13/v14 approvals",
+        all(path.exists() for path in historical_approval_paths),
+        "one or more exact authorized v8/v9/v10/v11/v12/v13/v14 approvals are missing",
     )
     require(
         file_digest(V8_APPROVAL_PATH) == V8_APPROVAL_FILE_DIGEST

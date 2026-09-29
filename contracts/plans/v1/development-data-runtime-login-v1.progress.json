@@ -1,0 +1,30 @@
+{
+  "progress_id": "5ab15583-f92e-43d7-8fc3-8d30bac7420a",
+  "plan_id": "7658d59e-1919-4b6c-9925-f302857beaa3",
+  "plan_version": 1,
+  "plan_digest": "sha256:677068b61768561864ab825b74389c5d60a1a9ed555dbc1ae3d59714418eaa98",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.data.runtime-login.v1.step.01.create-runtime-login",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_reference": "evidence.data.runtime-login-v1.step1.failure",
+          "evidence_digest": "sha256:867f5ef220ee09498d8829182b0e4fac11c6ff30e75448f80504ad178cb0fb9c",
+          "recorded_at": "2026-09-29T21:13:54Z"
+        }
+      ],
+      "observed_postcondition": "Runtime login creation transaction failed at role-membership grant and rolled back; avuhz_data_runtime_service_dev is absent.",
+      "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-29T21:13:54Z",
+  "progress_digest": "sha256:12b8937d5524c194e9250f88e3ec6d00e7d957823ad81421e26ef72dffa5ed7c"
+}

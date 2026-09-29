@@ -1,0 +1,46 @@
+{
+  "environment": "DEVELOPMENT",
+  "responsibility": "DATA",
+  "project_reference": "gnuqaefotwgkwurjpyik",
+  "step_id": "development.data.runtime-login.v1.step.01.create-runtime-login",
+  "attempt": 1,
+  "outcome": "FAILED_ROLLED_BACK",
+  "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+  "provider_error_class": "postgres.membership.no_possible_grantors",
+  "mutation_attempted": true,
+  "transaction_rolled_back": true,
+  "runtime_login_exists_after_attempt": false,
+  "command_service_role_state": {
+    "login": false,
+    "superuser": false,
+    "bypassrls": false,
+    "createdb": false,
+    "createrole": false,
+    "replication": false
+  },
+  "grant_path_observation": {
+    "command_service_admin_member": "avuhz_data_migration_service_dev",
+    "admin_option": true,
+    "migration_identity_login": false
+  },
+  "security": {
+    "credential_value_returned": false,
+    "credential_value_retained": false,
+    "direct_table_grants_changed": false,
+    "rls_changed": false,
+    "render_touched": false,
+    "auth_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "retry_authorized": false,
+  "fresh_forward_only_correction_required": true,
+  "plan_id": "7658d59e-1919-4b6c-9925-f302857beaa3",
+  "plan_version": 1,
+  "plan_digest": "sha256:677068b61768561864ab825b74389c5d60a1a9ed555dbc1ae3d59714418eaa98",
+  "approval_id": "d57f8a82-1416-45bb-9eb2-e5438695129b",
+  "approval_digest": "sha256:88b7b56e472184b579f59ef0adc9d06ee8f90d7b111e0382c044d0e78a4e9a74",
+  "evidence_type": "data.runtime-login.created-and-verified",
+  "evidence_digest": "sha256:867f5ef220ee09498d8829182b0e4fac11c6ff30e75448f80504ad178cb0fb9c",
+  "recorded_at": "2026-09-29T21:13:54Z"
+}

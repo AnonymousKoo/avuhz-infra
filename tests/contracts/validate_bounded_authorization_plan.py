@@ -158,6 +158,9 @@ REPAIRED_RECOVERY_LIFECYCLE_CREDENTIAL_RETIREMENT_V1_APPROVAL_PATH = (
 SYNTHETIC_TOKEN_VALIDATION_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-auth-synthetic-token-validation-v1.approval.json"
 )
+SYNTHETIC_TOKEN_VALIDATION_V2_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-synthetic-token-validation-v2.approval.json"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -273,6 +276,8 @@ def main() -> int:
         expected_approval_paths.add(REPAIRED_RECOVERY_LIFECYCLE_CREDENTIAL_RETIREMENT_V1_APPROVAL_PATH)
     if SYNTHETIC_TOKEN_VALIDATION_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(SYNTHETIC_TOKEN_VALIDATION_V1_APPROVAL_PATH)
+    if SYNTHETIC_TOKEN_VALIDATION_V2_APPROVAL_PATH.exists():
+        expected_approval_paths.add(SYNTHETIC_TOKEN_VALIDATION_V2_APPROVAL_PATH)
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
@@ -412,6 +417,7 @@ def main() -> int:
                 | ({REPAIRED_RECOVERY_LIFECYCLE_CREDENTIAL_BINDING_CONTINUATION_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_CREDENTIAL_BINDING_CONTINUATION_V1_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_CREDENTIAL_RETIREMENT_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_CREDENTIAL_RETIREMENT_V1_APPROVAL_PATH.exists() else set())
                 | ({SYNTHETIC_TOKEN_VALIDATION_V1_APPROVAL_PATH} if SYNTHETIC_TOKEN_VALIDATION_V1_APPROVAL_PATH.exists() else set())
+                | ({SYNTHETIC_TOKEN_VALIDATION_V2_APPROVAL_PATH} if SYNTHETIC_TOKEN_VALIDATION_V2_APPROVAL_PATH.exists() else set())
             )
         return values
 

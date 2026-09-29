@@ -1,0 +1,127 @@
+name: DEVELOPMENT AUTH Synthetic Token Validation v3 Step 1
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN_SYNTHETIC_TOKEN_VALIDATION_V3_STEP1 for exact Step 1 only
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-auth-synthetic-token-validation-v3-step1
+  cancel-in-progress: false
+
+jobs:
+  run-development-auth-synthetic-token-validation:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+
+    env:
+      AVUHZ_EXPECTED_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: bce0d3e5-f975-4991-8f29-f9cfce7684a1
+      AVUHZ_PLAN_DIGEST: sha256:c6a454343d64d1aee30293776b6ec94385c7890a691e3b5c2af8f8497ba165ad
+      AVUHZ_APPROVAL_ID: 5218b03b-e6ca-48b4-a363-e116237bf998
+      AVUHZ_APPROVAL_DIGEST: sha256:6d1f479ebebf99456849318973441739266e5aeaece8fb2bd8befd0be3ffbb67
+      AVUHZ_WINDOW_START: '2026-09-29T16:46:45Z'
+      AVUHZ_WINDOW_END: '2026-09-29T22:46:45Z'
+      AVUHZ_CLEANUP_CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify main-only dispatch and exact Step 1 binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]] || [[ "$(git rev-parse HEAD)" != "${GITHUB_SHA}" ]]; then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_MAIN_ONLY"
+            exit 1
+          fi
+          if [[ "${GITHUB_RUN_NUMBER}" != "1" ]] || [[ "${GITHUB_RUN_ATTEMPT}" != "1" ]]; then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_REPLAY_PROHIBITED"
+            exit 1
+          fi
+          if [[ "${AVUHZ_CLEANUP_CONFIRMATION}" != "RUN_SYNTHETIC_TOKEN_VALIDATION_V3_STEP1" ]]; then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_CONFIRMATION_MISMATCH"
+            exit 1
+          fi
+          if [[ "${AVUHZ_EXPECTED_PROJECT_REF}" != "pwlhruwutoitnieactol" ]] \
+             || [[ "${AVUHZ_PLAN_ID}" != "bce0d3e5-f975-4991-8f29-f9cfce7684a1" ]] \
+             || [[ "${AVUHZ_PLAN_DIGEST}" != "sha256:c6a454343d64d1aee30293776b6ec94385c7890a691e3b5c2af8f8497ba165ad" ]] \
+             || [[ "${AVUHZ_APPROVAL_ID}" != "5218b03b-e6ca-48b4-a363-e116237bf998" ]] \
+             || [[ "${AVUHZ_APPROVAL_DIGEST}" != "sha256:6d1f479ebebf99456849318973441739266e5aeaece8fb2bd8befd0be3ffbb67" ]] \
+             || [[ "${AVUHZ_WINDOW_START}" != "2026-09-29T16:46:45Z" ]] \
+             || [[ "${AVUHZ_WINDOW_END}" != "2026-09-29T22:46:45Z" ]]; then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_PLAN_BINDING_MISMATCH"
+            exit 1
+          fi
+          if [[ ! -f contracts/plans/v1/development-auth-synthetic-token-validation-v3.approval.json ]]; then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_APPROVAL_ABSENT"
+            exit 1
+          fi
+          if [[ -f contracts/plans/v1/development-auth-synthetic-token-validation-v3.execution-progress.json ]] \
+             || compgen -G 'contracts/plans/v1/development-auth-synthetic-token-validation-v3-step1-*.evidence.json' >/dev/null; then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_STEP1_ALREADY_ATTEMPTED"
+            exit 1
+          fi
+          now_epoch="$(date -u +%s)"
+          start_epoch="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"
+          end_epoch="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          if (( now_epoch < start_epoch || now_epoch >= end_epoch )); then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_AUTHORIZATION_WINDOW_INACTIVE"
+            exit 1
+          fi
+
+      - name: Install pinned authorization and JWT dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3' \
+            'PyJWT[crypto]==2.14.0' \
+            'cryptography==50.0.1'
+
+      - name: Validate exact v3 Step 1 executor source binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          expected="cd7e0d2880041f2fba74f0736c6a451dbde29de4a8f35e6cecef84c77830727d"
+          actual="$(sha256sum scripts/development_auth_synthetic_token_validation_v3_step1.py | awk '{print $1}')"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "::error::SYNTHETIC_TOKEN_VALIDATION_V3_EXECUTOR_DIGEST_MISMATCH"
+            exit 1
+          fi
+
+      - name: Validate exact approval and Step 1 authority before secret resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_synthetic_token_validation_v3_step1.py --preflight-only
+
+      - name: Execute exact Step 1 once
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_SESSION_CLEANUP_V2_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_auth_synthetic_token_validation_v3_step1.py

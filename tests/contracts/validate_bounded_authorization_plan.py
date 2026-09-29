@@ -164,6 +164,9 @@ SYNTHETIC_TOKEN_VALIDATION_V2_APPROVAL_PATH = (
 SYNTHETIC_TOKEN_VALIDATION_V3_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-auth-synthetic-token-validation-v3.approval.json"
 )
+SYNTHETIC_TOKEN_VALIDATION_V3_CREDENTIAL_RETIREMENT_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-auth-synthetic-token-validation-v3-credential-retirement-v1.approval.json"
+)
 DATA_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-integration-v1.approval.json"
 )
@@ -283,6 +286,8 @@ def main() -> int:
         expected_approval_paths.add(SYNTHETIC_TOKEN_VALIDATION_V2_APPROVAL_PATH)
     if SYNTHETIC_TOKEN_VALIDATION_V3_APPROVAL_PATH.exists():
         expected_approval_paths.add(SYNTHETIC_TOKEN_VALIDATION_V3_APPROVAL_PATH)
+    if SYNTHETIC_TOKEN_VALIDATION_V3_CREDENTIAL_RETIREMENT_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(SYNTHETIC_TOKEN_VALIDATION_V3_CREDENTIAL_RETIREMENT_V1_APPROVAL_PATH)
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(

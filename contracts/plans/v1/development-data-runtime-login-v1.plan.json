@@ -1,0 +1,157 @@
+{
+  "plan_id": "7658d59e-1919-4b6c-9925-f302857beaa3",
+  "plan_version": 1,
+  "plan_digest": "sha256:677068b61768561864ab825b74389c5d60a1a9ed555dbc1ae3d59714418eaa98",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "data.provider",
+    "provider_reference": "supabase",
+    "project_reference": "gnuqaefotwgkwurjpyik",
+    "responsibility": "DATA",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-29T20:48:30Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-29T21:00:00Z",
+    "expires_at": "2026-09-30T03:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.data.runtime-login.v1.step.01.create-runtime-login"
+  ],
+  "steps": [
+    {
+      "step_id": "development.data.runtime-login.v1.step.01.create-runtime-login",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "database.role-and-membership-envelope",
+        "resource_reference": "postgres.role.avuhz_data_runtime_service_dev",
+        "binding_state": "BOUND",
+        "exact_version": "runtime-login.v1",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.create-runtime-login-role",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "data.tenant-isolation.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:7274e95367bf2c4567e47a7ee48055647aca220bc14ca7a513255be2b09946b3"
+        }
+      ],
+      "expected_postcondition": "DEVELOPMENT DATA contains exactly one LOGIN role named avuhz_data_runtime_service_dev with NOSUPERUSER, NOBYPASSRLS, NOCREATEDB, NOCREATEROLE, NOREPLICATION; its only Avuhz privilege inheritance is membership in the canonical NOLOGIN avuhz_command_service role; the credential value is never returned, logged, persisted, digested, or committed.",
+      "prohibited_actions": [
+        "auth.operation",
+        "batch.mutation",
+        "credential.output",
+        "credential.persist",
+        "database.owner",
+        "ddl.unrelated",
+        "grant.admin",
+        "migration.identity.use-as-runtime",
+        "production.target",
+        "rls.change",
+        "role.bypassrls",
+        "role.createdb",
+        "role.createrole",
+        "role.replication",
+        "role.superuser",
+        "service-role.use",
+        "staging.target",
+        "table-grant.direct",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "avuhz-command-service.mismatch",
+        "credential-exposure.requested",
+        "project.mismatch",
+        "provider.execution.failed",
+        "role.already-exists-unexpected",
+        "role.attributes.mismatch",
+        "role.membership.mismatch",
+        "scope.drift"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.runtime-login.v1.endpoint",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "db.gnuqaefotwgkwurjpyik.supabase.co",
+            "exact_digest": "sha256:d3460801e8740f4bb6d3d036405c6667262fb27a8468c3539b3b3fd3ed28aa6d"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v1.login-role",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "avuhz_data_runtime_service_dev",
+            "exact_digest": "sha256:4f63c4a1160aa0600ed8dc53515a480416e1413a68503652c6a3efccc5f4e9f7"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v1.role-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "established_binding_ids": [
+            "binding.development.data.runtime-login.v1.role-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "auth.operation",
+    "batch.mutation",
+    "credential.output",
+    "credential.persist",
+    "migration.identity.use-as-runtime",
+    "production.target",
+    "rls.change",
+    "service-role.use",
+    "staging.target",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

@@ -59,6 +59,7 @@ python3 tests/contracts/validate_development_auth_plan_v21.py
 python3 tests/contracts/validate_development_auth_plan_v22.py
 python3 tests/contracts/validate_development_data_plan_v1.py
 python3 tests/contracts/validate_development_data_plan_v2.py
+python3 tests/contracts/validate_development_data_runtime_login_v15.py
 python3 tests/contracts/validate_read_models.py
 python3 tests/contracts/validate_slice1_acceptance.py
 python3 tests/contracts/validate_phase5d_implementation_package_architecture.py

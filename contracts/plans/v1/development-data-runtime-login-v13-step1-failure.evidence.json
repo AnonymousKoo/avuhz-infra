@@ -1,0 +1,43 @@
+{
+  "environment": "DEVELOPMENT",
+  "responsibility": "DATA",
+  "project_reference": "gnuqaefotwgkwurjpyik",
+  "step_id": "development.data.runtime-login.v13.step.01.create-runtime-login",
+  "attempt": 1,
+  "outcome": "FAILED_ROLLED_BACK",
+  "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+  "provider_error_class": "postgres.insufficient_privilege.no_possible_grantors_for_in_role_membership",
+  "mutation_attempted": true,
+  "transaction_committed": false,
+  "failure_stage": "create_role_in_role_command_membership",
+  "role_creation_statement_reached": true,
+  "security": {
+    "credential_value_returned": false,
+    "credential_value_retained": false,
+    "credential_exposed_by_error_context": false,
+    "direct_table_grants_changed": false,
+    "rls_changed": false,
+    "render_touched": false,
+    "auth_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "retry_authorized": false,
+  "fresh_forward_only_correction_required": true,
+  "plan_id": "17111526-1610-4aa1-8c8f-86150a4dc27a",
+  "plan_version": 13,
+  "plan_digest": "sha256:19f4e48163c0837beabccd809781beba26f229ec379e37172f44e848c32b4130",
+  "approval_id": "a2e3c6e4-d803-4c5b-97ba-dcef774044ad",
+  "approval_digest": "sha256:3c12f8c19081cdfe7b5737a26f56f17ece1188b9cf874236b9888722099b1ad9",
+  "evidence_type": "data.runtime-login.created-and-verified",
+  "recorded_at": "2026-09-30T20:33:00Z",
+  "rollback_verification": {
+    "verified": true,
+    "runtime_role_exists_after_failure": false,
+    "unexpected_membership_exists_after_failure": false,
+    "persistent_runtime_membership_exists_after_failure": false,
+    "credential_exposure_observed": false,
+    "read_only_verification_completed": true
+  },
+  "evidence_digest": "sha256:30d04e4483cd98c6f2c2603b4202c3c0630709b8f53c713f09ab3e52ec82dc9d"
+}

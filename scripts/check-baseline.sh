@@ -124,6 +124,7 @@ supabase/provider-artifacts/development-data/current/development_data_runtime_lo
 supabase/provider-artifacts/development-data/current/development_data_runtime_login_v3.sql
 supabase/provider-artifacts/development-data/current/development_data_runtime_login_v4.sql
 supabase/provider-artifacts/development-data/current/development_data_runtime_login_v5.sql
+supabase/provider-artifacts/development-data/current/development_data_runtime_login_v6.sql
 EOF
 sort -o "$provider_data_expected" "$provider_data_expected"
 find supabase/provider-artifacts/development-data -type f -name '*.sql' -printf '%p\n' | sort > "$provider_data_actual"
@@ -164,7 +165,8 @@ while IFS= read -r sql_path; do
     supabase/provider-artifacts/development-data/current/development_data_runtime_login_v2.sql|\
     supabase/provider-artifacts/development-data/current/development_data_runtime_login_v3.sql|\
     supabase/provider-artifacts/development-data/current/development_data_runtime_login_v4.sql|\
-    supabase/provider-artifacts/development-data/current/development_data_runtime_login_v5.sql)
+    supabase/provider-artifacts/development-data/current/development_data_runtime_login_v5.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_runtime_login_v6.sql)
       ;;
     *)
       printf 'error: SQL path is outside the approved migration/inventory/provider-artifact surfaces: %s\n' "$sql_path" >&2

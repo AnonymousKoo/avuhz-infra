@@ -1,0 +1,40 @@
+{
+  "environment": "DEVELOPMENT",
+  "responsibility": "DATA",
+  "project_reference": "gnuqaefotwgkwurjpyik",
+  "evidence_type": "data.runtime-login.v15.set-role-path.proven",
+  "recorded_at": "2026-09-30T21:14:30Z",
+  "source": {
+    "pull_request": 282,
+    "merged_commit": "6490ac221924d6b8bb79df5d35feb72d75b1ddd5",
+    "main_pr_gate_run": 36777464890,
+    "main_pr_gate_conclusion": "success",
+    "postgres_migration_suite_conclusion": "success"
+  },
+  "bound_artifacts": {
+    "sql_path": "supabase/provider-artifacts/development-data/current/development_data_runtime_login_v7.sql",
+    "sql_git_blob": "e05214669a959430169c3c3131c7954a54fdc56a",
+    "wrapper_path": "supabase/provider-artifacts/development-data/current/development_data_runtime_login_v9.psql",
+    "wrapper_git_blob": "06fb883c4cb7aec241d77ffac258539fb90a9985"
+  },
+  "proven_sequence": [
+    "create restricted runtime login as hosted postgres owner",
+    "add temporary ADMIN=false INHERIT=false SET=true self-grant for migration identity",
+    "SET LOCAL ROLE to avuhz_data_migration_service_dev",
+    "grant avuhz_command_service to runtime with ADMIN=false INHERIT=false SET=true",
+    "RESET ROLE",
+    "revoke only postgres-granted temporary migration SET edge",
+    "verify original provider-granted ADMIN/NOSET edges and zero direct runtime table grants"
+  ],
+  "security": {
+    "remote_database_mutation_performed": false,
+    "credential_value_committed": false,
+    "credential_value_logged": false,
+    "rls_changed": false,
+    "auth_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "evidence_digest": "sha256:15936cbd8de06fb4fe0b9f5618a217cb6fa32e55ec1a0f06c1ae843316afe95c"
+}

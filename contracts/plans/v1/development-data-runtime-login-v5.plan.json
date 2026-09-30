@@ -1,0 +1,165 @@
+{
+  "plan_id": "63c03798-a7fc-4677-ace5-5a7cd972f597",
+  "plan_version": 5,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "data.provider",
+    "provider_reference": "supabase",
+    "project_reference": "gnuqaefotwgkwurjpyik",
+    "responsibility": "DATA",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-30T00:55:41Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-30T01:15:00Z",
+    "expires_at": "2026-09-30T06:15:00Z"
+  },
+  "ordered_step_ids": [
+    "development.data.runtime-login.v5.step.01.create-runtime-login"
+  ],
+  "steps": [
+    {
+      "step_id": "development.data.runtime-login.v5.step.01.create-runtime-login",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "database.runtime-login-owner-interactive-procedure",
+        "resource_reference": "supabase/provider-artifacts/development-data/current/development_data_runtime_login_v3.psql",
+        "binding_state": "BOUND",
+        "exact_version": "gitblob.4e86b00242d51f9b71d7a5253acaa66a6e4da8ad",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.create-runtime-login-role-forward-correction",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "data.runtime-login.v4.stopped",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:681eafbbb7be2d8b23b872108107e8ad45a0ffe98675d0afad344fa767ae258e"
+        }
+      ],
+      "expected_postcondition": "The bound v3 psql wrapper transfers the owner-held runtime password into a session-local PostgreSQL setting without credential output or persistence, invokes the canonical v2 runtime-login SQL exactly once, creates only the least-privilege runtime LOGIN, grants only SET membership in avuhz_command_service, restores the sealed migration SET edge before commit, adds no direct table grants, and clears the session setting after execution.",
+      "prohibited_actions": [
+        "auth.operation",
+        "batch.mutation",
+        "credential.output",
+        "credential.persist",
+        "database.owner",
+        "ddl.unrelated",
+        "grant.admin",
+        "migration.identity.login-enable",
+        "migration.identity.use-as-runtime",
+        "persistent-migration-set-edge",
+        "production.target",
+        "rls.change",
+        "role.bypassrls",
+        "role.createdb",
+        "role.createrole",
+        "role.replication",
+        "role.superuser",
+        "service-role.use",
+        "staging.target",
+        "table-grant.direct",
+        "unbound-artifact.execute",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "artifact-git-blob.mismatch",
+        "credential-exposure.requested",
+        "project.mismatch",
+        "provider.execution.failed",
+        "role.already-exists-unexpected",
+        "role.attributes.mismatch",
+        "role.membership.mismatch",
+        "sealed-identity-envelope.mismatch",
+        "temporary-set-edge.not-restored",
+        "v4-stopped-evidence.mismatch",
+        "scope.drift"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.runtime-login.v5.artifact-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.4e86b00242d51f9b71d7a5253acaa66a6e4da8ad",
+            "exact_digest": "sha256:1ee6ba1105061ae7f91fcf52d38e7205a64f92ca1f761429399f623f7c1975bb"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v5.v1-stopped-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:681eafbbb7be2d8b23b872108107e8ad45a0ffe98675d0afad344fa767ae258e",
+            "exact_digest": "sha256:3823b737a49dc561a527f2d7ed501ef2abeb4ad53c253c66c726a1a3fecaa549"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v5.role-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "established_binding_ids": [
+            "binding.development.data.runtime-login.v5.role-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "auth.operation",
+    "batch.mutation",
+    "credential.output",
+    "credential.persist",
+    "migration.identity.login-enable",
+    "migration.identity.use-as-runtime",
+    "persistent-migration-set-edge",
+    "production.target",
+    "rls.change",
+    "service-role.use",
+    "staging.target",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:87b738f0c545d1866891a79be1bdc798672ddfa2aca06331b9b12471d5319c02"
+}

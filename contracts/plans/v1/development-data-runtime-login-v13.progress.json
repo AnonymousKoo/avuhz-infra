@@ -1,0 +1,30 @@
+{
+  "progress_id": "f7379557-d37a-4dd5-b160-e15a6da5de36",
+  "plan_id": "17111526-1610-4aa1-8c8f-86150a4dc27a",
+  "plan_version": 13,
+  "plan_digest": "sha256:19f4e48163c0837beabccd809781beba26f229ec379e37172f44e848c32b4130",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.data.runtime-login.v13.step.01.create-runtime-login",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_reference": "evidence.data.runtime-login-v13.step1.failure",
+          "evidence_digest": "sha256:30d04e4483cd98c6f2c2603b4202c3c0630709b8f53c713f09ab3e52ec82dc9d",
+          "recorded_at": "2026-09-30T20:33:00Z"
+        }
+      ],
+      "observed_postcondition": "CREATE ROLE ... IN ROLE avuhz_command_service was rejected because PostgreSQL reported no possible grantors for the requested membership. The transaction did not commit; rollback verification confirmed the runtime role is absent, no persistent runtime role or unexpected membership survived, and no credential exposure occurred.",
+      "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-30T20:33:00Z",
+  "progress_digest": "sha256:6bdbf9bb91055e14a2766934170eb8b67485f6529b34301aefea1782b9466a37"
+}

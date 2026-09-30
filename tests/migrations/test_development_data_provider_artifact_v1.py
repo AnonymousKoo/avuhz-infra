@@ -18,6 +18,8 @@ DATABASE = "avuhz_development_data_provider_artifact_v1"
 EXECUTOR = "avuhz_hosted_data_postgres_sim_v1"
 MIGRATION_ROLE = "avuhz_data_migration_service_dev"
 COMMAND_ROLE = "avuhz_command_service"
+RUNTIME_ROLE = "avuhz_data_runtime_service_dev"
+RUNTIME_LOGIN_V7 = CURRENT / "development_data_runtime_login_v7.sql"
 
 
 def composed_migration() -> str:
@@ -70,6 +72,30 @@ class DevelopmentDataProviderArtifactV1StaticTests(unittest.TestCase):
         )
         self.assertEqual(sql.count("create table public.avuhz_"), 16)
         self.assertEqual(sql.count(" enable row level security;"), 16)
+
+
+    def test_runtime_login_v7_uses_only_a_temporary_set_edge(self):
+        sql = RUNTIME_LOGIN_V7.read_text(encoding="utf-8").lower()
+
+        self.assertIn(
+            f"grant {MIGRATION_ROLE} to postgres\n  with admin false, inherit false, set true;",
+            sql,
+        )
+        self.assertNotIn(
+            f"grant {MIGRATION_ROLE} to postgres\n  with admin true",
+            sql,
+        )
+        self.assertNotIn(f"set local role {MIGRATION_ROLE};", sql)
+        self.assertIn(
+            f"grant {COMMAND_ROLE} to {RUNTIME_ROLE}\n"
+            "  with admin false, inherit false, set true\n"
+            f"  granted by {MIGRATION_ROLE};",
+            sql,
+        )
+        self.assertIn(
+            f"revoke {MIGRATION_ROLE} from postgres\n  granted by postgres;",
+            sql,
+        )
 
 
 @unittest.skipUnless(
@@ -224,6 +250,70 @@ class DevelopmentDataProviderArtifactV1PostgresTests(unittest.TestCase):
             f"and owner_role.rolname<>'{MIGRATION_ROLE}';"
         )
         self.assertEqual(owners.splitlines(), ["16", "0"])
+
+
+    def test_runtime_login_v7_reseals_after_set_only_self_grant(self):
+        self._run_chain()
+        runtime_sql = self._as_hosted_executor(
+            RUNTIME_LOGIN_V7.read_text(encoding="utf-8")
+        )
+        runtime_sql = (
+            "select set_config('avuhz.runtime_login_password', repeat('x', 40), false);\n"
+            + runtime_sql
+        )
+        result = self._apply(runtime_sql, check=False)
+        self.assertEqual(
+            result.returncode,
+            0,
+            result.stderr.decode().strip(),
+        )
+
+        _, state, _ = self._psql(
+            f"select count(*) from pg_roles where rolname='{RUNTIME_ROLE}' "
+            "and rolcanlogin and not rolsuper and not rolinherit "
+            "and not rolcreatedb and not rolcreaterole and not rolreplication and not rolbypassrls;"
+            "select count(*) from pg_auth_members membership join pg_roles grantor_role "
+            "on grantor_role.oid=membership.grantor "
+            f"where membership.roleid=(select oid from pg_roles where rolname='{MIGRATION_ROLE}') "
+            f"and membership.member=(select oid from pg_roles where rolname='{EXECUTOR}') "
+            "and membership.admin_option and not membership.inherit_option "
+            "and not membership.set_option and grantor_role.rolsuper "
+            f"and grantor_role.rolname<>'{EXECUTOR}';"
+            "select count(*) from pg_auth_members membership "
+            f"where membership.roleid=(select oid from pg_roles where rolname='{MIGRATION_ROLE}') "
+            f"and membership.member=(select oid from pg_roles where rolname='{EXECUTOR}') "
+            f"and membership.grantor=(select oid from pg_roles where rolname='{EXECUTOR}');"
+            "select count(*) from pg_auth_members membership join pg_roles grantor_role "
+            "on grantor_role.oid=membership.grantor "
+            f"where membership.roleid=(select oid from pg_roles where rolname='{COMMAND_ROLE}') "
+            f"and membership.member=(select oid from pg_roles where rolname='{MIGRATION_ROLE}') "
+            "and membership.admin_option and not membership.inherit_option "
+            "and not membership.set_option and grantor_role.rolsuper;"
+            "select count(*) from pg_auth_members membership "
+            f"where membership.roleid=(select oid from pg_roles where rolname='{COMMAND_ROLE}') "
+            f"and membership.member=(select oid from pg_roles where rolname='{RUNTIME_ROLE}') "
+            f"and membership.grantor=(select oid from pg_roles where rolname='{MIGRATION_ROLE}') "
+            "and not membership.admin_option and not membership.inherit_option "
+            "and membership.set_option;"
+            "select count(*) from pg_auth_members membership join pg_roles grantor_role "
+            "on grantor_role.oid=membership.grantor "
+            f"where membership.roleid=(select oid from pg_roles where rolname='{RUNTIME_ROLE}') "
+            f"and membership.member=(select oid from pg_roles where rolname='{EXECUTOR}') "
+            "and membership.admin_option and not membership.inherit_option "
+            "and not membership.set_option and grantor_role.rolsuper;"
+            f"select pg_has_role('{EXECUTOR}','{MIGRATION_ROLE}','SET')::int;"
+            f"select pg_has_role('{MIGRATION_ROLE}','{COMMAND_ROLE}','SET')::int;"
+            f"select pg_has_role('{RUNTIME_ROLE}','{COMMAND_ROLE}','SET')::int;"
+            "select count(*) from information_schema.role_table_grants grants "
+            f"where grants.grantee='{RUNTIME_ROLE}';"
+            "select count(*) from pg_auth_members membership "
+            f"where membership.roleid=(select oid from pg_roles where rolname='{RUNTIME_ROLE}') "
+            f"or membership.member=(select oid from pg_roles where rolname='{RUNTIME_ROLE}');"
+        )
+        self.assertEqual(
+            state.splitlines(),
+            ["1", "1", "0", "1", "1", "1", "0", "0", "1", "0", "2"],
+        )
 
     def test_unexpected_migration_role_membership_blocks_seal(self):
         self._apply(self._as_hosted_executor(BOOTSTRAP.read_text(encoding="utf-8")))

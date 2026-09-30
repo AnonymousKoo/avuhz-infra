@@ -1,0 +1,30 @@
+{
+  "progress_id": "deb68457-012d-47fe-9a12-5aa5f9ce3a66",
+  "plan_id": "d1d5371a-132e-4d25-9db4-d038c963b601",
+  "plan_version": 11,
+  "plan_digest": "sha256:eb518a6368b3fc27388d49c5e87b7f992aaeb2382e7b2619d898ddc117de59fc",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.data.runtime-login.v11.step.01.create-runtime-login",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_reference": "evidence.data.runtime-login-v11.step1.failure",
+          "evidence_digest": "sha256:d8e562bb806dc168d465594262281f71e034b456a3ec996a168ecdaae6a6e631",
+          "recorded_at": "2026-09-30T18:19:13Z"
+        }
+      ],
+      "observed_postcondition": "Runtime login transaction reached role creation but failed at the explicit GRANTED BY migration-role membership grant; ON_ERROR_STOP prevented COMMIT, so the transaction was rolled back. Hardened psql output did not expose credential context.",
+      "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-30T18:19:13Z",
+  "progress_digest": "sha256:e3a63962540fa76b8d5c0e2530bff668586b75f7026f2c6752b5e889040505ad"
+}

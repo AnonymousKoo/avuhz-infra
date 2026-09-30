@@ -85,13 +85,14 @@ class DevelopmentDataProviderArtifactV1StaticTests(unittest.TestCase):
             f"grant {MIGRATION_ROLE} to postgres\n  with admin true",
             sql,
         )
-        self.assertNotIn(f"set local role {MIGRATION_ROLE};", sql)
+        self.assertEqual(sql.count(f"set local role {MIGRATION_ROLE};"), 1)
+        self.assertEqual(sql.count("reset role;"), 1)
         self.assertIn(
             f"grant {COMMAND_ROLE} to {RUNTIME_ROLE}\n"
-            "  with admin false, inherit false, set true\n"
-            f"  granted by {MIGRATION_ROLE};",
+            "  with admin false, inherit false, set true;",
             sql,
         )
+        self.assertNotIn(f"granted by {MIGRATION_ROLE};", sql)
         self.assertIn(
             f"revoke {MIGRATION_ROLE} from postgres\n  granted by postgres;",
             sql,

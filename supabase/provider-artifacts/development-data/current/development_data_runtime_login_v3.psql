@@ -1,0 +1,20 @@
+\set ON_ERROR_STOP on
+\set ECHO none
+\set QUIET on
+
+\getenv avuhz_runtime_password AVUHZ_RUNTIME_PASSWORD
+select set_config('avuhz.runtime_login_password', $1, false) is not null as handoff_loaded
+\bind :'avuhz_runtime_password'
+\gset
+\unset avuhz_runtime_password
+
+\if :handoff_loaded
+\else
+  \echo 'error: DEVELOPMENT DATA runtime password handoff failed'
+  \quit 3
+\endif
+\unset handoff_loaded
+
+\ir development_data_runtime_login_v2.sql
+
+reset avuhz.runtime_login_password;

@@ -1,0 +1,217 @@
+{
+  "plan_id": "502705ed-9ef9-4d46-a31d-fb6f3c082cd2",
+  "plan_version": 10,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "data.provider",
+    "provider_reference": "supabase",
+    "project_reference": "gnuqaefotwgkwurjpyik",
+    "responsibility": "DATA",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-30T16:51:57Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-09-30T17:21:00Z",
+    "expires_at": "2026-09-30T21:21:00Z"
+  },
+  "ordered_step_ids": [
+    "development.data.runtime-login.v10.step.01.create-runtime-login"
+  ],
+  "steps": [
+    {
+      "step_id": "development.data.runtime-login.v10.step.01.create-runtime-login",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "database.runtime-login-owner-interactive-procedure",
+        "resource_reference": "supabase/provider-artifacts/development-data/current/development_data_runtime_login_v5.psql",
+        "binding_state": "BOUND",
+        "exact_version": "gitblob.b4eea1c22ef29c825b5c94f9d3c8ae54edb44846",
+        "exact_digest": null
+      },
+      "operation": "provider.resource.create-runtime-login-role-forward-correction",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "data.runtime-login.v5.preflight-drift",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:4f0dfcc866cef6afa98c9caa7919de3071d7ab4b8253307738b049ee9569011a"
+        },
+        {
+          "evidence_type": "data.owner-password.owner-remediation-recorded",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:89742eeca7accb3196cceff9d2207a50096413ae0ce4ffd2c62485da8ddb3b82"
+        },
+        {
+          "evidence_type": "data.runtime-login.v8.failed-rolled-back",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:5ae3d87ff61f04042f6cee823f8360f518c6c88e805fdae6fb993b81dac1930d"
+        }
+      ],
+      "expected_postcondition": "The bound v5 wrapper securely hands off the owner-held runtime password, invokes corrected v4 SQL once, creates only the restricted runtime LOGIN under the owner session, grants exact SET membership in avuhz_command_service explicitly by the sealed migration identity, adds no direct table grants, preserves sealed provider-granted memberships, and clears the session setting.",
+      "prohibited_actions": [
+        "auth.operation",
+        "batch.mutation",
+        "credential.output",
+        "credential.persist",
+        "database.owner",
+        "ddl.unrelated",
+        "grant.admin",
+        "migration.identity.login-enable",
+        "migration.identity.use-as-runtime",
+        "persistent-migration-set-edge",
+        "production.target",
+        "rls.change",
+        "role.bypassrls",
+        "role.createdb",
+        "role.createrole",
+        "role.replication",
+        "role.superuser",
+        "service-role.use",
+        "staging.target",
+        "table-grant.direct",
+        "unbound-artifact.execute",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "artifact-git-blob.mismatch",
+        "credential-exposure.requested",
+        "project.mismatch",
+        "provider.execution.failed",
+        "role.already-exists-unexpected",
+        "role.attributes.mismatch",
+        "role.membership.mismatch",
+        "sealed-identity-envelope.mismatch",
+        "v5-preflight-drift-evidence.mismatch",
+        "scope.drift",
+        "owner-password-remediation-evidence.mismatch",
+        "v8-failure-evidence.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.runtime-login.v10.wrapper-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.b4eea1c22ef29c825b5c94f9d3c8ae54edb44846",
+            "exact_digest": "sha256:3f5f2cf591e5bba54a84354d3d1bf25d99b2f2fc8998114f5ce2fe90411dfc48"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v10.sql-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.e52e6ade84342164ffa7aeb2477c0dd911bfc892",
+            "exact_digest": "sha256:ca41cc8cc7c8c199066307dbde02134e1e0b3d50aa59f3cf19f2d5fb965f8d0d"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v10.v5-preflight-drift",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:4f0dfcc866cef6afa98c9caa7919de3071d7ab4b8253307738b049ee9569011a",
+            "exact_digest": "sha256:f79484c699df3541590683f8a7d473165bdcba428e227a2c12e18d2c499ea852"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v10.role-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v10.owner-password-remediation",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:89742eeca7accb3196cceff9d2207a50096413ae0ce4ffd2c62485da8ddb3b82",
+            "exact_digest": "sha256:b7413577c9a209cc4bd657b8f754dfd1246e7f473d9c6d9af3a793727bf2b36c"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.runtime-login.v10.v8-failure",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:5ae3d87ff61f04042f6cee823f8360f518c6c88e805fdae6fb993b81dac1930d",
+            "exact_digest": "sha256:8f1fd6452f0909fdc320adf58997c3c0b311650308dd1950c3bc174a6b1f2843"
+          }
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "established_binding_ids": [
+            "binding.development.data.runtime-login.v10.role-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "auth.operation",
+    "batch.mutation",
+    "credential.output",
+    "credential.persist",
+    "migration.identity.login-enable",
+    "migration.identity.use-as-runtime",
+    "persistent-migration-set-edge",
+    "production.target",
+    "rls.change",
+    "service-role.use",
+    "staging.target",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:9bdb2021a3627adea81105cfe560fffe23f147803a34a9c0cb8c1e2263f54f8f"
+}

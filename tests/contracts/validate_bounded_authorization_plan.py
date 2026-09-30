@@ -245,6 +245,12 @@ DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH = (
 DATA_RUNTIME_LOGIN_V12_APPROVAL_FILE_DIGEST = (
     "sha256:37e63350a2a3cdd6e16c6e962ad1e74ed4cd9016ec9d8e757583298e02174b29"
 )
+DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-data-runtime-login-v13.approval.json"
+)
+DATA_RUNTIME_LOGIN_V13_APPROVAL_FILE_DIGEST = (
+    "sha256:e23109eca03ca180368e4fa74537390e27269d21134f21b835e23b02c1ae8f94"
+)
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))
 spec = spec_from_loader(loader.name, loader)
@@ -336,6 +342,8 @@ def main() -> int:
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V11_APPROVAL_PATH)
     if DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH)
+    if DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH.exists():
+        expected_approval_paths.add(DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH)
     if V24_APPROVAL_PATH.exists():
         expected_approval_paths.add(V24_APPROVAL_PATH)
     if V31_APPROVAL_PATH.exists():
@@ -506,6 +514,8 @@ def main() -> int:
     if (DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V10_APPROVAL_FILE_DIGEST):
         raise SystemExit("exact authorized DEVELOPMENT DATA runtime-login v10 approval file digest mismatch")
 
+    if (DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V13_APPROVAL_FILE_DIGEST):
+        raise SystemExit("DEVELOPMENT DATA runtime-login v13 approval file digest mismatch")
     if (DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V12_APPROVAL_FILE_DIGEST):
         raise SystemExit("DEVELOPMENT DATA runtime-login v12 approval file digest mismatch")
     if (DATA_RUNTIME_LOGIN_V11_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V11_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V11_APPROVAL_FILE_DIGEST):
@@ -556,6 +566,7 @@ def main() -> int:
                     DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH,
                     DATA_RUNTIME_LOGIN_V11_APPROVAL_PATH,
                     DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH,
+                    DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH,
                 }
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())

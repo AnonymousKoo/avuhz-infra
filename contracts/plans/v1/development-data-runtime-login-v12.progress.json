@@ -1,0 +1,30 @@
+{
+  "progress_id": "67a2d4a4-221b-463a-b7ef-01eebc3fdfd2",
+  "plan_id": "78890d95-7ef9-4cce-ad8d-e683289b334c",
+  "plan_version": 12,
+  "plan_digest": "sha256:cbb9cdca19772140d10e8498f2a01544b48b70657df5eb5d74f48a7cdbf9ad7d",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.data.runtime-login.v12.step.01.create-runtime-login",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_reference": "evidence.data.runtime-login-v12.step1.failure",
+          "evidence_digest": "sha256:729da7b2fb3c57d8b3d98403fa76ccabb54c8cd88d0cd88e4f9598dfb34a51f2",
+          "recorded_at": "2026-09-30T19:30:30Z"
+        }
+      ],
+      "observed_postcondition": "Runtime login transaction reached role creation but failed at the temporary migration membership grant because the current owner could not grant the requested ADMIN option. ON_ERROR_STOP prevented COMMIT; independent read-only verification confirmed the runtime role is absent, no temporary postgres-granted migration membership survived, and the original supabase_admin-granted sealed membership remains.",
+      "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-30T19:30:30Z",
+  "progress_digest": "sha256:591c166aef6a232c345d59d65dbf6eb98353496d29f8bb5c0b057d6e0dba1673"
+}

@@ -80,9 +80,12 @@ begin
 end
 $temporary_set_edge$;
 
+set local role avuhz_data_migration_service_dev;
+
 grant avuhz_command_service to avuhz_data_runtime_service_dev
-  with admin false, inherit false, set true
-  granted by avuhz_data_migration_service_dev;
+  with admin false, inherit false, set true;
+
+reset role;
 
 revoke avuhz_data_migration_service_dev from postgres
   granted by postgres;

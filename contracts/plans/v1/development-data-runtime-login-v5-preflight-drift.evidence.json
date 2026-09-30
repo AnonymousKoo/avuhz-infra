@@ -1,0 +1,47 @@
+{
+  "evidence_id": "621a43f4-7867-432e-9a58-d6ee82652ead",
+  "evidence_type": "data.runtime-login.v5.owner-interactive-read-only-preflight",
+  "environment": "DEVELOPMENT",
+  "provider_reference": "supabase",
+  "project_reference": "gnuqaefotwgkwurjpyik",
+  "recorded_at": "2026-09-30T01:29:53Z",
+  "observation_basis": "OWNER_INTERACTIVE_PSQL_READ_ONLY_TRANSACTION_SCREEN",
+  "transaction_mode": "READ_ONLY",
+  "transaction_rolled_back": true,
+  "provider_mutation_attempted": false,
+  "runtime_role_present": false,
+  "observed_roles": {
+    "avuhz_command_service": {
+      "rolsuper": false,
+      "rolinherit": false,
+      "rolcreaterole": false,
+      "rolcreatedb": false,
+      "rolcanlogin": false,
+      "rolreplication": false,
+      "rolbypassrls": false
+    },
+    "avuhz_data_migration_service_dev": {
+      "rolsuper": false,
+      "rolinherit": false,
+      "rolcreaterole": false,
+      "rolcreatedb": false,
+      "rolcanlogin": false,
+      "rolreplication": false,
+      "rolbypassrls": false
+    }
+  },
+  "postgres_can_set_migration": true,
+  "migration_can_set_command": false,
+  "canonical_sql_expected_postgres_can_set_migration": false,
+  "preflight_drift": true,
+  "authorization_result": "PREFLIGHT_DRIFT",
+  "step_authorized": false,
+  "authorization_consumed": false,
+  "credential_value_returned": false,
+  "credential_value_retained": false,
+  "auth_touched": false,
+  "render_touched": false,
+  "staging_touched": false,
+  "production_touched": false,
+  "evidence_digest": "sha256:4f0dfcc866cef6afa98c9caa7919de3071d7ab4b8253307738b049ee9569011a"
+}

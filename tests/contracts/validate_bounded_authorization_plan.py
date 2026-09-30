@@ -227,6 +227,12 @@ DATA_RUNTIME_LOGIN_V8_APPROVAL_PATH = (
 DATA_RUNTIME_LOGIN_V8_APPROVAL_FILE_DIGEST = (
     "sha256:ba4596d613074ed11087f57d69c32ff88f6da5976f265e16d9ca59620113fc82"
 )
+DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-data-runtime-login-v10.approval.json"
+)
+DATA_RUNTIME_LOGIN_V10_APPROVAL_FILE_DIGEST = (
+    "sha256:0edd0886c8080ca59b0a11a97263ffdde90bc0e24dc582c0596d98e1f10dbc96"
+)
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))
 spec = spec_from_loader(loader.name, loader)
@@ -312,6 +318,8 @@ def main() -> int:
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V6_APPROVAL_PATH)
     if DATA_RUNTIME_LOGIN_V8_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V8_APPROVAL_PATH)
+    if DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH.exists():
+        expected_approval_paths.add(DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH)
     if V24_APPROVAL_PATH.exists():
         expected_approval_paths.add(V24_APPROVAL_PATH)
     if V31_APPROVAL_PATH.exists():
@@ -479,6 +487,9 @@ def main() -> int:
     if (DATA_RUNTIME_LOGIN_V8_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V8_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V8_APPROVAL_FILE_DIGEST):
         raise SystemExit("exact authorized DEVELOPMENT DATA runtime-login v8 approval file digest mismatch")
 
+    if (DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V10_APPROVAL_FILE_DIGEST):
+        raise SystemExit("exact authorized DEVELOPMENT DATA runtime-login v10 approval file digest mismatch")
+
     # The preserved v14 validator must see its original exact v8-v14 inventory.
     # Filter only later approvals for that one historical glob call, then restore
     # pathlib immediately. The full current approval inventory is checked above.
@@ -521,6 +532,7 @@ def main() -> int:
                     DATA_RUNTIME_LOGIN_V5_APPROVAL_PATH,
                     DATA_RUNTIME_LOGIN_V6_APPROVAL_PATH,
                     DATA_RUNTIME_LOGIN_V8_APPROVAL_PATH,
+                    DATA_RUNTIME_LOGIN_V10_APPROVAL_PATH,
                 }
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())

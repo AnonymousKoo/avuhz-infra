@@ -1,0 +1,8 @@
+\set ON_ERROR_STOP on
+\set VERBOSITY terse
+\set SHOW_CONTEXT never
+\getenv avuhz_runtime_login_password AVUHZ_RUNTIME_PASSWORD
+select set_config('avuhz.runtime_login_password', :'avuhz_runtime_login_password', false) is not null as runtime_password_handoff_bound \gset
+\unset avuhz_runtime_login_password
+\ir development_data_runtime_login_v6.sql
+select set_config('avuhz.runtime_login_password', '', false) = '' as runtime_password_handoff_cleared;

@@ -1,0 +1,39 @@
+{
+  "environment": "DEVELOPMENT",
+  "responsibility": "DATA",
+  "project_reference": "gnuqaefotwgkwurjpyik",
+  "step_id": "development.data.runtime-login.v8.step.01.create-runtime-login",
+  "attempt": 1,
+  "outcome": "FAILED_ROLLED_BACK",
+  "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+  "provider_error_class": "postgres.insufficient_privilege.migration_role_cannot_create_role",
+  "mutation_attempted": true,
+  "transaction_committed": false,
+  "failure_stage": "runtime_role_creation",
+  "role_creation_statement_reached": true,
+  "security": {
+    "credential_value_returned": false,
+    "credential_value_retained": false,
+    "direct_table_grants_changed": false,
+    "rls_changed": false,
+    "render_touched": false,
+    "auth_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "credential_remediation": {
+    "runtime_login_password_rotated_by_owner_after_terminal_exposure": true,
+    "replacement_credential_value_returned": false,
+    "replacement_credential_value_retained": false
+  },
+  "retry_authorized": false,
+  "fresh_forward_only_correction_required": true,
+  "plan_id": "74b99091-b5de-46ff-9911-ed09f4263ef0",
+  "plan_version": 8,
+  "plan_digest": "sha256:57713a79f217eed614f9afc9ca92648bc7d1548c0a530409e47bc19dacb40836",
+  "approval_id": "eb729484-ab41-455c-afb8-656884e7f8af",
+  "approval_digest": "sha256:ba77111d4107ca3fcd528c500e0d19c19cade050b5bab950ba1b469538dbb6ae",
+  "evidence_type": "data.runtime-login.created-and-verified",
+  "recorded_at": "2026-09-30T15:52:23Z",
+  "evidence_digest": "sha256:5ae3d87ff61f04042f6cee823f8360f518c6c88e805fdae6fb993b81dac1930d"
+}

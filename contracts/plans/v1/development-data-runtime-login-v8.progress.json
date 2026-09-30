@@ -1,0 +1,30 @@
+{
+  "progress_id": "d1441c73-8180-4141-8f4a-65371c5b1b71",
+  "plan_id": "74b99091-b5de-46ff-9911-ed09f4263ef0",
+  "plan_version": 8,
+  "plan_digest": "sha256:57713a79f217eed614f9afc9ca92648bc7d1548c0a530409e47bc19dacb40836",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.data.runtime-login.v8.step.01.create-runtime-login",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_reference": "evidence.data.runtime-login-v8.step1.failure",
+          "evidence_digest": "sha256:5ae3d87ff61f04042f6cee823f8360f518c6c88e805fdae6fb993b81dac1930d",
+          "recorded_at": "2026-09-30T15:52:23Z"
+        }
+      ],
+      "observed_postcondition": "Runtime login creation transaction failed because the sealed migration role is NOCREATEROLE; no COMMIT occurred and the transaction was rolled back.",
+      "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-30T15:52:23Z",
+  "progress_digest": "sha256:25cee55870a2ca65595874736b0b99554f6c4b2733fa90d1da76bcfbcf96c4ca"
+}

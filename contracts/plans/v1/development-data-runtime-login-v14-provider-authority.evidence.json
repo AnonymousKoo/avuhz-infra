@@ -1,0 +1,55 @@
+{
+  "environment": "DEVELOPMENT",
+  "responsibility": "DATA",
+  "project_reference": "gnuqaefotwgkwurjpyik",
+  "evidence_type": "data.runtime-login.provider-authority-boundary.diagnosed",
+  "observed_at": "2026-09-30T20:52:06Z",
+  "provider_state": {
+    "project_name": "DEVELOPMENT DATA",
+    "project_status": "ACTIVE_HEALTHY",
+    "postgres_engine": "17",
+    "postgres_version": "17.6.1.155",
+    "session_user": "postgres",
+    "current_user": "postgres"
+  },
+  "authority_observations": {
+    "postgres_can_set_avuhz_data_migration_service_dev": false,
+    "postgres_can_set_avuhz_command_service": false,
+    "supabase_admin_is_superuser": true,
+    "supabase_admin_can_create_role": true,
+    "supabase_admin_can_login": true,
+    "supabase_admin_can_set_avuhz_data_migration_service_dev": true,
+    "supabase_admin_can_set_avuhz_command_service": true
+  },
+  "membership_observations": [
+    {
+      "granted_role": "avuhz_command_service",
+      "member_role": "avuhz_data_migration_service_dev",
+      "grantor_role": "supabase_admin",
+      "admin_option": true,
+      "inherit_option": false,
+      "set_option": false
+    },
+    {
+      "granted_role": "avuhz_data_migration_service_dev",
+      "member_role": "postgres",
+      "grantor_role": "supabase_admin",
+      "admin_option": true,
+      "inherit_option": false,
+      "set_option": false
+    }
+  ],
+  "provider_documentation_observation": "Supabase documents supabase_admin as an internal role used for administrative tasks; no supported customer-facing custom role-membership administration mechanism has been bound for this correction.",
+  "conclusion": "The customer postgres session cannot exercise the grantor authority required to attach a new runtime login to avuhz_command_service under the current sealed role envelope. A provider-supported administrative mechanism must be identified and explicitly bound before any forward-only runtime-login correction can be authorized.",
+  "security": {
+    "database_mutation_performed": false,
+    "credential_value_returned": false,
+    "credential_value_retained": false,
+    "credential_exposure_observed": false,
+    "rls_changed": false,
+    "auth_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "evidence_digest": "sha256:f8cfb1a22441addc0349a89de0ce8ed8a04e931fe8570137b3a459b26b3a7dcb"
+}

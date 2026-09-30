@@ -1,0 +1,137 @@
+{
+  "plan_id": "27a8c45a-be97-486e-885c-d04c6af32140",
+  "plan_version": 14,
+  "plan_digest": "sha256:a265babb99bebd6712df5d034f6af5769927114e065b87bd82868d5aa33aa2c1",
+  "definition_status": "DRAFT_BLOCKED",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "data.provider",
+    "provider_reference": "supabase",
+    "project_reference": "gnuqaefotwgkwurjpyik",
+    "responsibility": "DATA",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-09-30T20:52:06Z",
+  "authorization_window": {
+    "binding_state": "UNRESOLVED_BLOCKER",
+    "starts_at": null,
+    "expires_at": null
+  },
+  "ordered_step_ids": [
+    "development.data.runtime-login.v14.step.01.establish-provider-supported-membership"
+  ],
+  "steps": [
+    {
+      "step_id": "development.data.runtime-login.v14.step.01.establish-provider-supported-membership",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "provider.data-role-membership-admin-path",
+        "resource_reference": "supabase:gnuqaefotwgkwurjpyik:avuhz-command-service-runtime-membership",
+        "binding_state": "UNRESOLVED_BLOCKER",
+        "exact_version": null,
+        "exact_digest": null
+      },
+      "operation": "provider.data-role-membership.establish-supported-admin-path",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "data.runtime-login.v13.failed-rolled-back",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:30d04e4483cd98c6f2c2603b4202c3c0630709b8f53c713f09ab3e52ec82dc9d"
+        },
+        {
+          "evidence_type": "data.runtime-login.provider-authority-boundary.diagnosed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:f8cfb1a22441addc0349a89de0ce8ed8a04e931fe8570137b3a459b26b3a7dcb"
+        }
+      ],
+      "expected_postcondition": "A documented Supabase-supported administrative mechanism, executed by a legitimately capable provider authority, establishes only the restricted runtime login membership in avuhz_command_service with no ADMIN option, no inherited privileges, no direct table grants, no migration-identity login enablement, and no weakening of the sealed migration/grantor envelope; the resulting role and membership state is independently verified before any runtime credential is used.",
+      "prohibited_actions": [
+        "auth.operation",
+        "batch.mutation",
+        "credential.output",
+        "credential.persist",
+        "database.owner",
+        "ddl.unrelated",
+        "grant.admin",
+        "migration.identity.login-enable",
+        "migration.identity.use-as-runtime",
+        "persistent-migration-set-edge",
+        "production.target",
+        "provider-admin-identity.impersonate",
+        "provider-internal-credential.create",
+        "provider-internal-credential.export",
+        "provider-internal-role.login-enable",
+        "rls.change",
+        "role.bypassrls",
+        "role.createdb",
+        "role.createrole",
+        "role.replication",
+        "role.superuser",
+        "service-role.use",
+        "staging.target",
+        "table-grant.direct",
+        "unbound-provider-mechanism.execute",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "provider-admin-mechanism.unresolved",
+        "provider-authority.unsupported",
+        "provider-credential-exposure.requested",
+        "project.mismatch",
+        "role.already-exists-unexpected",
+        "role.membership.mismatch",
+        "sealed-identity-envelope.mismatch",
+        "scope.drift",
+        "security.validation.failed",
+        "v13-failure-evidence.mismatch",
+        "provider-authority-evidence.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [
+        "binding.development.data.runtime-login.v14.provider-admin-mechanism"
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "auth.operation",
+    "batch.mutation",
+    "credential.output",
+    "credential.persist",
+    "migration.identity.login-enable",
+    "migration.identity.use-as-runtime",
+    "persistent-migration-set-edge",
+    "production.target",
+    "provider-admin-identity.impersonate",
+    "provider-internal-credential.create",
+    "provider-internal-credential.export",
+    "provider-internal-role.login-enable",
+    "rls.change",
+    "service-role.use",
+    "staging.target",
+    "unbound-provider-mechanism.execute",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "provider-admin-mechanism.unresolved",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

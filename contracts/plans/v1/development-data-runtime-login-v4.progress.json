@@ -1,0 +1,30 @@
+{
+  "progress_id": "fe0359be-8ebb-47b0-b7e0-828a144e8dd1",
+  "plan_id": "534a94b9-5465-43ae-a328-10033a323c71",
+  "plan_version": 4,
+  "plan_digest": "sha256:ad6b1dc173d3ff7e9a20552abb12c929aa62ca1b1395125c6294d2619aab4b73",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.data.runtime-login.v4.step.01.create-runtime-login",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_reference": "evidence.data.runtime-login-v4.step1.failure",
+          "evidence_digest": "sha256:ee8566945e65dba9f4a26fbdc314e1cce6b5da932903bfc07cc5f156973b3125",
+          "recorded_at": "2026-09-30T00:41:17Z"
+        }
+      ],
+      "observed_postcondition": "Canonical execution stopped at the initial runtime-password handoff preflight before the role-creation statement; no COMMIT occurred and the attempted transaction was rolled back.",
+      "safe_error_code": "PROVIDER_EXECUTION_FAILED",
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-09-30T00:41:17Z",
+  "progress_digest": "sha256:681eafbbb7be2d8b23b872108107e8ad45a0ffe98675d0afad344fa767ae258e"
+}

@@ -1,0 +1,44 @@
+{
+  "progress_id": "b6d39e14-f4b7-4aca-9f5f-3d5b7f842c1e",
+  "plan_id": "7c4d9204-4d9a-43df-9ef7-4b8c2f5a7a01",
+  "plan_version": 15,
+  "plan_digest": "sha256:c9fbd3dfbb8096cb501a85a61e52c2cdf184c76fb3c5b7f019bea0d1c3da2caa",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.data.runtime-login.v15.step.01.create-runtime-login",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_reference": "provider.execution.data-runtime-login-v15.step1.attempt1.verified",
+          "evidence_digest": "sha256:817df8e5a593314325827b89e8b8d38d60c13157ea571ba22575ffab5f02de8a",
+          "recorded_at": "2026-09-30T23:26:43Z"
+        }
+      ],
+      "observed_postcondition": "The exact v9 hardened wrapper securely hands off the owner-held runtime password and invokes exact v7 SQL once. Under the hosted postgres owner, v7 creates only the restricted runtime LOGIN, adds only a temporary ADMIN=false/INHERIT=false/SET=true postgres-granted edge to avuhz_data_migration_service_dev, SET LOCAL ROLEs into that sealed migration identity, grants avuhz_command_service to the runtime with ADMIN=false/INHERIT=false/SET=true, RESET ROLEs, removes only the temporary postgres-granted migration edge, preserves the original provider-granted ADMIN/NOSET management edges, adds no direct runtime table grants, changes no RLS or auth state, and leaves postgres and the migration identity without persistent SET access.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.data.runtime-login.v15.role-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "evidence_digest": "sha256:817df8e5a593314325827b89e8b8d38d60c13157ea571ba22575ffab5f02de8a",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:bdc78286bcb2f25a9f122dc8563b7e6a33314d4603c92f212bd80f942ad492a8",
+          "recorded_at": "2026-09-30T23:26:43Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-09-30T23:26:43Z",
+  "progress_digest": "sha256:cedb1f757b8182af0596eec2dc7c5803dcf0be3c8100e3bc4a0967cb3fcd2c84"
+}

@@ -711,7 +711,7 @@
           }
         },
         "expected_postcondition": {
-          "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/boundedText"
+          "$ref": "#/$defs/postconditionText"
         },
         "prohibited_actions": {
           "$ref": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v1#/$defs/referenceList"
@@ -761,6 +761,11 @@
           }
         }
       }
+    },
+    "postconditionText": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 1000
     }
   }
 }

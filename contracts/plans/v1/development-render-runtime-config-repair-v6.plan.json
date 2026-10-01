@@ -1,0 +1,618 @@
+{
+  "plan_id": "6a97b35c-ecea-41e0-bdde-dd46a202b627",
+  "plan_version": 6,
+  "plan_digest": "sha256:0f996c1c71d0ba055077535d617249fdccde1db0c23c91547f45c409aeacc7f4",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "runtime.provider",
+    "provider_reference": "render",
+    "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+    "responsibility": "RUNTIME",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-01T22:36:54Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-02T00:00:00Z",
+    "expires_at": "2026-10-02T04:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.render.runtime-config-repair-v6.step.01.bind-auth-issuer",
+    "development.render.runtime-config-repair-v6.step.02.bind-service-audience",
+    "development.render.runtime-config-repair-v6.step.03.bind-tenant-bridge",
+    "development.render.runtime-config-repair-v6.step.04.bind-rls-policy-reference",
+    "development.render.runtime-config-repair-v6.step.05.bind-command-service-identity"
+  ],
+  "steps": [
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.01.bind-auth-issuer",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_AUTH_ISSUER",
+        "binding_state": "BOUND",
+        "exact_version": "render.dashboard-save-only.nonsecret-runtime-config.v3",
+        "exact_digest": "sha256:1a737f27f25128c1555714e62dc3045e2a67d9d5be0e4ad79643464c4e0eae2f"
+      },
+      "operation": "provider.render.dashboard.environment-variable.save-only-single-nonsecret-exact",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:7cde43655288a8b5d894fa6788489c94c6d081d2780fa0bdc676245dc2a2a327"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:e0a7102ac233b37126514f18250a1d710585c3b337d7c38e2f1d80916d27e1ef"
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_AUTH_ISSUER to the canonical value bound by digest sha256:1a737f27f25128c1555714e62dc3045e2a67d9d5be0e4ad79643464c4e0eae2f. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "connected-render-update-environment-variables-wrapper.use",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure",
+        "v4.retry"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "dashboard.save-only-option.missing",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step01-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step01-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v6.step01-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.02.bind-service-audience",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_SERVICE_AUDIENCE",
+        "binding_state": "BOUND",
+        "exact_version": "render.dashboard-save-only.nonsecret-runtime-config.v3",
+        "exact_digest": "sha256:f4caaa492a7b9babfb3184ff93b3e978552cff3c954c5360d275d09b34f3aa7a"
+      },
+      "operation": "provider.render.dashboard.environment-variable.save-only-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v6.step.01.bind-auth-issuer"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.01.bind-auth-issuer",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_SERVICE_AUDIENCE to the canonical value bound by digest sha256:f4caaa492a7b9babfb3184ff93b3e978552cff3c954c5360d275d09b34f3aa7a. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "connected-render-update-environment-variables-wrapper.use",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure",
+        "v4.retry"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "dashboard.save-only-option.missing",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step01-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.01.bind-auth-issuer",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step02-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step02-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v6.step02-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.03.bind-tenant-bridge",
+      "ordinal": 3,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_TENANT_BRIDGE",
+        "binding_state": "BOUND",
+        "exact_version": "render.dashboard-save-only.nonsecret-runtime-config.v3",
+        "exact_digest": "sha256:20c3c7c2b635afd302f68a43e5f2a88042ddee7a898aa657e206a4df560e22ea"
+      },
+      "operation": "provider.render.dashboard.environment-variable.save-only-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v6.step.02.bind-service-audience"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.02.bind-service-audience",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_TENANT_BRIDGE to the canonical value bound by digest sha256:20c3c7c2b635afd302f68a43e5f2a88042ddee7a898aa657e206a4df560e22ea. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "connected-render-update-environment-variables-wrapper.use",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure",
+        "v4.retry"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "dashboard.save-only-option.missing",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step02-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.02.bind-service-audience",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step03-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step03-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v6.step03-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.04.bind-rls-policy-reference",
+      "ordinal": 4,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_RLS_POLICY_REFERENCE",
+        "binding_state": "BOUND",
+        "exact_version": "render.dashboard-save-only.nonsecret-runtime-config.v3",
+        "exact_digest": "sha256:19e60b5024bd856f8a35d345e96ced39e43da5b4f3759fae2a254f6d6c3953bf"
+      },
+      "operation": "provider.render.dashboard.environment-variable.save-only-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v6.step.03.bind-tenant-bridge"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.03.bind-tenant-bridge",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_RLS_POLICY_REFERENCE to the canonical value bound by digest sha256:19e60b5024bd856f8a35d345e96ced39e43da5b4f3759fae2a254f6d6c3953bf. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "connected-render-update-environment-variables-wrapper.use",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure",
+        "v4.retry"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "dashboard.save-only-option.missing",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step03-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.03.bind-tenant-bridge",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step04-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step04-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v6.step04-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.05.bind-command-service-identity",
+      "ordinal": 5,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_COMMAND_SERVICE_IDENTITY",
+        "binding_state": "BOUND",
+        "exact_version": "render.dashboard-save-only.nonsecret-runtime-config.v3",
+        "exact_digest": "sha256:c1082ecb1ea736a9dc2dd8ecea67e428cbdbc1bd5d3886085f35b98119315d14"
+      },
+      "operation": "provider.render.dashboard.environment-variable.save-only-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v6.step.04.bind-rls-policy-reference"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.04.bind-rls-policy-reference",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_COMMAND_SERVICE_IDENTITY to the canonical value bound by digest sha256:c1082ecb1ea736a9dc2dd8ecea67e428cbdbc1bd5d3886085f35b98119315d14. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "connected-render-update-environment-variables-wrapper.use",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure",
+        "v4.retry"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "dashboard.save-only-option.missing",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step04-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.04.bind-rls-policy-reference",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step05-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step05-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v6.step05-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "connected-render-update-environment-variables-wrapper.use",
+    "deployment.trigger",
+    "environment-group.modify",
+    "environment-variable.batch-update",
+    "environment-variable.replace-all",
+    "environment-variable.secret.modify",
+    "n8n.operation",
+    "port.modify",
+    "production.target",
+    "render.auto-deploy.modify",
+    "render.branch.modify",
+    "render.service-setting.modify",
+    "secret.agent-visible",
+    "secret.digest",
+    "secret.git-persist",
+    "secret.local-persist",
+    "secret.log",
+    "secret.return",
+    "staging.target",
+    "supabase.operation",
+    "vertical.infrastructure",
+    "v4.retry",
+    "v5.execute",
+    "v5.approve"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "deployment.detected",
+    "evidence.missing",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift",
+    "unexpected.provider-effect"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

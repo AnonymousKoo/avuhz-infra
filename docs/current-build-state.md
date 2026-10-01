@@ -227,7 +227,7 @@ Each item remains a separate bounded resource/action boundary.
 
 Any v32 recovery inspection, forward-only token-lifecycle correction, future synthetic-token execution, DATA access, Render change, staging or production action, and hosted adapter wiring remain separate boundaries and require their own exact authorization where applicable.
 
-Current superseding AUTH truth: repaired recovery and synthetic-token validation v3 are `COMPLETED`, their dedicated temporary credentials/bindings are retired and independently verified absent, and their consumed approvals grant no further execution authority. Hosted adapter wiring remains a new separate boundary.
+Current superseding AUTH truth: repaired recovery and synthetic-token validation v3 are `COMPLETED`, their dedicated temporary credentials/bindings are retired and independently verified absent, and their consumed approvals grant no further execution authority. Hosted identity and DATA adapter code is now wired repository-locally; connected DATA validation and every Render change remain separate unexecuted boundaries.
 
 ## Recovery rule
 

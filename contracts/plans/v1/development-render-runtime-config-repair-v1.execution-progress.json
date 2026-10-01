@@ -1,0 +1,132 @@
+{
+  "progress_id": "0b93b675-b1fe-4c86-9950-5389a21a5769",
+  "plan_id": "0e5d2dc6-d0c0-4e49-bfb1-c47d9629986d",
+  "plan_version": 1,
+  "plan_digest": "sha256:de24909e3a096dbfe7912c77849f8a353a9613a8d702554a565ce00e2bf6e3a8",
+  "record_version": 2,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.01.bind-avuhz-service-environment",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_reference": "render.deploy.dep-dav9iss1nsns73ar8eo0.prohibited-side-effect",
+          "evidence_digest": "sha256:6c3d32fcf9de9d9ff81945ae5b3dae4ee8be650c7a5a27f9fc8b506c6026ecc2",
+          "recorded_at": "2026-10-01T17:34:12Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one approved single-key non-secret environment-variable merge was attempted for AVUHZ_SERVICE_ENVIRONMENT with replace=false. The connected Render provider action unexpectedly triggered deploy dep-dav9iss1nsns73ar8eo0, violating the step prohibition on deployment.trigger. The deploy failed closed with update_failed and the September live deploy remained live. Execution stopped immediately; Steps 2-9 were not attempted; AVUHZ_POSTGRES_DSN and PORT were not read or modified.",
+      "safe_error_code": "RENDER_ENVVAR_UPDATE_TRIGGERED_PROHIBITED_DEPLOYMENT",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step01-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:758e9f6eff4c5b4428dcfa4a0fbb6331269ae7065a9cfefecc7b5a32c8e7518f",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:758e9f6eff4c5b4428dcfa4a0fbb6331269ae7065a9cfefecc7b5a32c8e7518f",
+          "recorded_at": "2026-10-01T17:34:12Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.02.bind-avuhz-data-project-ref",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.03.bind-avuhz-data-project-url",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.04.bind-avuhz-auth-project-ref",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.05.bind-avuhz-auth-issuer",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.06.bind-avuhz-service-audience",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.07.bind-avuhz-tenant-bridge",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.08.bind-avuhz-rls-policy-reference",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.09.bind-avuhz-command-service-identity",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-01T17:34:12Z",
+  "progress_digest": "sha256:a9bf657b6d0fd5179cce44e48de189e596d8bdce92b70584369889deb7c2534d"
+}

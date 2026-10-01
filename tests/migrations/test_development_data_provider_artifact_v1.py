@@ -1,10 +1,23 @@
 """Certify the DEVELOPMENT DATA migration-identity bootstrap, scoped migration, and seal."""
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import unittest
 from pathlib import Path
+
+from avuhz_engineering.development_data_catalog_rls_validation import (
+    CATALOG_SHAPE_SQL,
+    EXPECTED_CATALOG_DIGEST,
+    EXPECTED_COLUMN_COUNT,
+    EXPECTED_COLUMN_GRANT_COUNT,
+    EXPECTED_CONSTRAINT_COUNT,
+    EXPECTED_POLICY_COUNT,
+    EXPECTED_TABLE_COUNT,
+    EXPECTED_TABLE_GRANT_COUNT,
+)
+from avuhz_runtime.implementation_handoff import canonical_digest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -251,6 +264,28 @@ class DevelopmentDataProviderArtifactV1PostgresTests(unittest.TestCase):
             f"and owner_role.rolname<>'{MIGRATION_ROLE}';"
         )
         self.assertEqual(owners.splitlines(), ["16", "0"])
+
+
+    def test_catalog_contract_digest_matches_canonical_migration(self):
+        self._run_chain()
+        self._psql(
+            f"grant {COMMAND_ROLE} to postgres;",
+            user="postgres",
+        )
+        _, raw_shape, _ = self._psql(
+            f"set role {COMMAND_ROLE};" + CATALOG_SHAPE_SQL,
+            user="postgres",
+        )
+        shape = json.loads(raw_shape)
+        self.assertEqual(len(shape["tables"]), EXPECTED_TABLE_COUNT)
+        self.assertEqual(len(shape["columns"]), EXPECTED_COLUMN_COUNT)
+        self.assertEqual(len(shape["constraints"]), EXPECTED_CONSTRAINT_COUNT)
+        self.assertEqual(len(shape["policies"]), EXPECTED_POLICY_COUNT)
+        self.assertEqual(len(shape["table_grants"]), EXPECTED_TABLE_GRANT_COUNT)
+        self.assertEqual(len(shape["column_grants"]), EXPECTED_COLUMN_GRANT_COUNT)
+        self.assertTrue(shape["schema_usage"])
+        self.assertFalse(shape["schema_create"])
+        self.assertEqual(canonical_digest(shape), EXPECTED_CATALOG_DIGEST)
 
 
     def test_runtime_login_v7_reseals_after_set_only_self_grant(self):

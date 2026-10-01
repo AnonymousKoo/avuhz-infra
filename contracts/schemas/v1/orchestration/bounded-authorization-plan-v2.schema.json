@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v2",
   "title": "Bounded Provider Change Authorization Plan v2",
-  "description": "Backward-compatible authorization-plan contract adding DEVELOPMENT-only Supabase AUTH-admin ephemeral and provider-read credential classes whose material never enters plan, approval, progress, evidence, request, log, or agent-visible surfaces.",
+  "description": "Backward-compatible authorization-plan contract adding DEVELOPMENT-only Supabase AUTH-admin ephemeral, AUTH provider-read, and DATA runtime-read credential classes whose material never enters plan, approval, progress, evidence, request, log, Git, or agent-visible surfaces.",
   "type": "object",
   "additionalProperties": false,
   "required": [

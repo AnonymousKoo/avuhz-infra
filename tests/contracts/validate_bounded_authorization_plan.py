@@ -257,6 +257,12 @@ DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH = (
 DATA_RUNTIME_LOGIN_V15_APPROVAL_FILE_DIGEST = (
     "sha256:f4e04df684674cfc2744024a11f4325dc2c76abcf81623679d63819cf4e97735"
 )
+DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-data-catalog-rls-validation-v1.approval.json"
+)
+DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:b9adf8923d0aff6ed8a25b2465fb873fcad6ba87e103f05a49d6f4cb8e17d46c"
+)
 
 loader = SourceFileLoader("avuhz_bounded_authorization_plan_v14_legacy", str(LEGACY_PATH))
 spec = spec_from_loader(loader.name, loader)
@@ -352,6 +358,8 @@ def main() -> int:
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH)
     if DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH)
+    if DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
     if V24_APPROVAL_PATH.exists():
         expected_approval_paths.add(V24_APPROVAL_PATH)
     if V31_APPROVAL_PATH.exists():
@@ -526,6 +534,14 @@ def main() -> int:
         raise SystemExit("DEVELOPMENT DATA runtime-login v13 approval file digest mismatch")
     if (DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V15_APPROVAL_FILE_DIGEST):
         raise SystemExit("DEVELOPMENT DATA runtime-login v15 approval file digest mismatch")
+    if (
+        DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists()
+        and file_digest(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
+        != DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit(
+            "DEVELOPMENT DATA catalog/RLS validation v1 approval file digest mismatch"
+        )
     if (DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V12_APPROVAL_FILE_DIGEST):
         raise SystemExit("DEVELOPMENT DATA runtime-login v12 approval file digest mismatch")
     if (DATA_RUNTIME_LOGIN_V11_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V11_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V11_APPROVAL_FILE_DIGEST):
@@ -578,6 +594,7 @@ def main() -> int:
                     DATA_RUNTIME_LOGIN_V12_APPROVAL_PATH,
                     DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH,
                     DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH,
+                    DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH,
                 }
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())

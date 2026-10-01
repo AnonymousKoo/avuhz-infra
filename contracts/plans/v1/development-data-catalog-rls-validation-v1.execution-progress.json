@@ -1,0 +1,57 @@
+{
+  "progress_id": "65f5d97a-951f-42b6-8617-f399137ccbc4",
+  "plan_id": "a4e15530-b16a-4d45-9bc1-00c4d54a7271",
+  "plan_version": 1,
+  "plan_digest": "sha256:0713d866acdfb2ef3fe15e2eca46aeb4a4c8ef18eca528f1eb83f6cd868dca29",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.data.catalog-rls-validation-v1.step.01.inspect-read-only",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "data.catalog-rls.validated",
+          "evidence_reference": "provider.execution.data-catalog-rls-v1.step1.attempt1.verified",
+          "evidence_digest": "sha256:b6db300972239326512e881d960659d29a8ad3d2ddb277029fb0b2edd46b7c76",
+          "recorded_at": "2026-10-01T02:14:48Z"
+        }
+      ],
+      "observed_postcondition": "One separately approved DEVELOPMENT DATA connection authenticates as the restricted runtime login, enters a read-only transaction before inspection, proves the exact runtime and command-role envelope, validates the canonical 16-table catalog/RLS/constraint/grant fingerprint against the committed migration, emits only bounded secret-free evidence, then rolls back and closes without reading business rows or AUTH data and without mutation, DDL, repair, Render, staging, or production effects.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.runtime-read-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "data.runtime-read-executor-capability.observed",
+          "evidence_digest": "sha256:3337fa57a3f499f727da3f369cc01a2c983a051ba2979d5ddb808fb6decdc186",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:5b48c3148fb1c2b7063f338a4290981eff9debbf35fc95c6d9acae9d35402094",
+          "recorded_at": "2026-10-01T02:14:48Z"
+        },
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.catalog-rls.validated",
+          "evidence_digest": "sha256:b6db300972239326512e881d960659d29a8ad3d2ddb277029fb0b2edd46b7c76",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:cab743a119b54eecba50632606a62de195c1748782c90a3459648e7368b787a4",
+          "recorded_at": "2026-10-01T02:14:48Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-01T02:14:48Z",
+  "progress_digest": "sha256:853f5cd3c6988c3e7dcccaf9b4272f7a60e7563cfb55e998ae2ab7ce01c56d45"
+}

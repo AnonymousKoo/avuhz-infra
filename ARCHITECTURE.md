@@ -78,15 +78,15 @@ No Stripe SDK, Stripe adapter, billing service, usage-metering worker, or billin
 
 The service is a Python WSGI command/query API. `src/avuhz_service/application.py` exposes `/v1/commands`, `/v1/queries`, and bounded health endpoints. Mutations have one governed Executor path; queries require trusted identity plus `engagement:read`. Responses are `no-store`, and the local request handler suppresses access logging because paths may contain authoritative identifiers.
 
-Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jsonschema`. The repository also pins the Supabase CLI for local/provider artifact work. A DEVELOPMENT Render service is recorded in canonical state, but readiness remains intentionally fail-closed until hosted AUTH and DATA adapters are injected and independently verified.
+Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jsonschema`. The repository also pins the Supabase CLI for local/provider artifact work. A DEVELOPMENT Render service is recorded in canonical state. Hosted AUTH and DATA adapters are now composed in repository code, but live readiness remains unestablished until the exact reviewed code is deployed with a separately authorized DATA secret binding and connected validation.
 
 ## Provider boundaries and readiness
 
 - Supabase DEVELOPMENT AUTH is project `pwlhruwutoitnieactol`; Supabase DEVELOPMENT DATA is project `gnuqaefotwgkwurjpyik`. Registration and repository evidence do not grant new provider read or mutation authority.
 - `supabase/provider-artifacts/development-auth/` and `supabase/provider-artifacts/development-data/` are separate, allowlisted provider-artifact surfaces. AUTH-specific SQL is deliberately excluded from the automatic migration chain.
 - `supabase/config.toml` is local configuration, not proof that a hosted service or Edge Function is deployed. Its permissive local network defaults and enabled local components are not production network policy.
-- A DEVELOPMENT Render service and bounded historical health evidence are recorded in `docs/current-build-state.md`; liveness can pass while readiness remains `503` because the hosted provider adapters are unavailable.
-- AUTH v28 and DATA v3 are completed provider-foundation evidence, not reusable authority. The active cleanup need, hosted adapter work, any Render change, n8n, communications, billing, staging, and production are distinct boundaries requiring their own authorization.
+- A DEVELOPMENT Render service and bounded historical health evidence are recorded in `docs/current-build-state.md`; the current live deploy predates the hosted adapter code, so its historical readiness remains `503` and does not establish readiness for the current repository state.
+- AUTH recovery/token cleanup and DATA v15 runtime-login creation are completed historical evidence, not reusable authority. Connected DATA validation, any Render secret/deploy/readiness change, n8n, communications, billing, staging, and production are distinct boundaries requiring their own authorization.
 - Current platform production readiness is `NOT_READY`; `READY_FOR_PHASE6` is `NO`.
 
 ## Repository resource map

@@ -2,6 +2,7 @@
 """Validate the pristine DEVELOPMENT DATA catalog/RLS validation v1 package."""
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -32,6 +33,8 @@ BASE = ROOT / "contracts/plans/v1"
 PLAN_PATH = BASE / "development-data-catalog-rls-validation-v1.plan.json"
 PROGRESS_PATH = BASE / "development-data-catalog-rls-validation-v1.progress.json"
 APPROVAL_PATH = BASE / "development-data-catalog-rls-validation-v1.approval.json"
+EVIDENCE_PATH = BASE / "development-data-catalog-rls-validation-v1-step1-success.evidence.json"
+EXECUTION_PROGRESS_PATH = BASE / "development-data-catalog-rls-validation-v1.execution-progress.json"
 EXECUTOR_PATH = ROOT / "scripts/development_data_catalog_rls_validation_v1.py"
 HELPER_PATH = (
     ROOT / "src/avuhz_engineering/development_data_catalog_rls_validation.py"
@@ -46,6 +49,13 @@ PROGRESS_DIGEST = "sha256:90ebe6e250ebf7452078733d0fd0f4ae5e07d17702608eea4e3b4b
 APPROVAL_ID = "8220ef0c-0eef-4849-a413-4ed8bd5d1ae6"
 APPROVAL_DIGEST = "sha256:6aaab135e7ddf18d2f28a2c9d8fa3ba752aa5232956b807f41dd4e9c278f123a"
 APPROVED_AT = "2026-10-01T01:43:29Z"
+EXECUTED_AT = "2026-10-01T02:14:48Z"
+EVIDENCE_DIGEST = "sha256:b6db300972239326512e881d960659d29a8ad3d2ddb277029fb0b2edd46b7c76"
+EXECUTION_PROGRESS_ID = "65f5d97a-951f-42b6-8617-f399137ccbc4"
+EXECUTION_PROGRESS_DIGEST = "sha256:853f5cd3c6988c3e7dcccaf9b4272f7a60e7563cfb55e998ae2ab7ce01c56d45"
+PROVIDER_OBSERVATION_DIGEST = "sha256:cab743a119b54eecba50632606a62de195c1748782c90a3459648e7368b787a4"
+CAPABILITY_EVIDENCE_DIGEST = "sha256:3337fa57a3f499f727da3f369cc01a2c983a051ba2979d5ddb808fb6decdc186"
+CAPABILITY_VALUE_DIGEST = "sha256:5b48c3148fb1c2b7063f338a4290981eff9debbf35fc95c6d9acae9d35402094"
 EXECUTOR_BLOB = "5e1a29c95b9cab4695f52f752ca10e7a03070973"
 HELPER_BLOB = "c47b36d3406e26a9d9ac66c8b943afa6a3c9ca81"
 CONTRACT_DIGEST = "sha256:ac7555458c5d0f6c40f535b1c81166aaa03295801035a83443ea537a7ccc74cc"
@@ -78,6 +88,10 @@ def load(path: Path) -> dict:
     return value
 
 
+def raw_digest(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def git_blob(path: Path) -> str:
     return subprocess.check_output(
         ["git", "rev-parse", f"HEAD:{path.relative_to(ROOT).as_posix()}"],
@@ -100,9 +114,12 @@ def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     approval = load(APPROVAL_PATH)
+    evidence = load(EVIDENCE_PATH)
+    execution = load(EXECUTION_PROGRESS_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_progress(plan, execution, SCHEMA_ROOT)
     validate_approval(
         plan,
         approval,
@@ -242,9 +259,89 @@ def main() -> int:
         "approval_digest": APPROVAL_DIGEST,
     }
     assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
-    assert not list(
-        BASE.glob("development-data-catalog-rls-validation-v1*.evidence.json")
-    )
+    assert raw_digest(EVIDENCE_PATH) == EVIDENCE_DIGEST
+    assert evidence["evidence_type"] == "data.catalog-rls.validated"
+    assert evidence["environment"] == "DEVELOPMENT"
+    assert evidence["responsibility"] == "DATA"
+    assert evidence["project_reference"] == "gnuqaefotwgkwurjpyik"
+    assert evidence["plan_id"] == PLAN_ID
+    assert evidence["plan_digest"] == PLAN_DIGEST
+    assert evidence["approval_id"] == APPROVAL_ID
+    assert evidence["approval_digest"] == APPROVAL_DIGEST
+    assert evidence["outcome"] == "SUCCEEDED_VERIFIED"
+    assert evidence["authorization_state"] == "CONSUMED"
+    assert evidence["authorization_consumed"] is True
+    assert evidence["execution_state"] == "SUCCEEDED"
+    assert evidence["verification_state"] == "PASS"
+    assert evidence["recorded_at"] == EXECUTED_AT
+
+    observed = evidence["provider_observation"]
+    assert observed["validation_classification"] == "DATA_CATALOG_RLS_VALIDATED"
+    assert observed["catalog_digest"] == EXPECTED_CATALOG_DIGEST
+    assert observed["expected_catalog_digest"] == EXPECTED_CATALOG_DIGEST
+    assert observed["validation_contract_digest"] == CONTRACT_DIGEST
+    assert canonical_digest(observed) == PROVIDER_OBSERVATION_DIGEST
+    assert observed["table_count"] == 16
+    assert observed["column_count"] == 306
+    assert observed["constraint_count"] == 266
+    assert observed["policy_count"] == 16
+    assert observed["table_grant_count"] == 31
+    assert observed["column_grant_count"] == 638
+    assert observed["schema_usage"] is True
+    assert observed["schema_create"] is False
+    assert observed["transaction_read_only"] is True
+    assert observed["connection_count"] == 1
+    assert observed["connection_attempted"] is True
+    assert observed["rollback_attempted"] is True
+
+    security = evidence["security_state"]
+    for key in (
+        "business_rows_read",
+        "auth_data_read",
+        "credential_material_retained",
+        "raw_catalog_metadata_retained",
+        "provider_mutation_attempted",
+        "ddl_attempted",
+        "render_touched",
+        "n8n_touched",
+        "staging_touched",
+        "production_touched",
+    ):
+        assert security[key] is False, key
+
+    assert execution["progress_id"] == EXECUTION_PROGRESS_ID
+    assert execution["plan_id"] == PLAN_ID
+    assert execution["plan_digest"] == PLAN_DIGEST
+    assert execution["record_version"] == 3
+    assert execution["overall_state"] == "COMPLETED"
+    assert execution["updated_at"] == EXECUTED_AT
+    assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    completed = execution["step_states"][0]
+    assert completed["step_id"] == STEP_ID
+    assert completed["authorization_state"] == "CONSUMED"
+    assert completed["authorization_consumed"] is True
+    assert completed["execution_state"] == "SUCCEEDED"
+    assert completed["verification_state"] == "PASS"
+    assert completed["safe_error_code"] is None
+    assert completed["observed_postcondition"] == step["expected_postcondition"]
+    assert completed["evidence"] == [{
+        "evidence_type": "data.catalog-rls.validated",
+        "evidence_reference": "provider.execution.data-catalog-rls-v1.step1.attempt1.verified",
+        "evidence_digest": EVIDENCE_DIGEST,
+        "recorded_at": EXECUTED_AT,
+    }]
+    assert len(completed["binding_assertions"]) == 2
+    capability, result = completed["binding_assertions"]
+    assert capability["binding_id"] == capability_binding["binding_id"]
+    assert capability["evidence_digest"] == CAPABILITY_EVIDENCE_DIGEST
+    assert capability["value_digest"] == CAPABILITY_VALUE_DIGEST
+    assert capability["sanitized_value"] is None
+    assert capability["recorded_at"] == EXECUTED_AT
+    assert result["binding_id"] == result_binding["binding_id"]
+    assert result["evidence_digest"] == EVIDENCE_DIGEST
+    assert result["value_digest"] == PROVIDER_OBSERVATION_DIGEST
+    assert result["sanitized_value"] is None
+    assert result["recorded_at"] == EXECUTED_AT
 
     executor = EXECUTOR_PATH.read_text(encoding="utf-8")
     main_source = executor[executor.index("def main() -> int:") :]
@@ -266,9 +363,9 @@ def main() -> int:
     assert "Semgrep local secret rules" in baseline
 
     print(
-        "DEVELOPMENT DATA catalog/RLS validation v1: PASS "
-        "(APPROVED; pristine progress; exact executor/helper/catalog contract "
-        "bound; no provider execution)"
+        "DEVELOPMENT DATA catalog/RLS validation v1 completion: PASS "
+        "(read-only provider validation verified; 16-table/RLS fingerprint matched; "
+        "authority consumed; no business-row/AUTH read or mutation)"
     )
     return 0
 

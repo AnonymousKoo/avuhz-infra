@@ -1,0 +1,23 @@
+{
+  "progress_id": "d4423116-def4-4761-85f3-b7eba1697a12",
+  "plan_id": "1653db1c-e55b-49ec-9fd5-6216d1160609",
+  "plan_version": 1,
+  "plan_digest": "sha256:2fa09354bfc112dc43faecf3c7718e9addb570ff81b34215831881a960864e83",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v1.step.01.deploy-canonical-main",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-01T15:03:37Z",
+  "progress_digest": "sha256:4e473c2acf1ada44d82ff804becc6e25142dc71249fdd02ec0c1e937bdd12e97"
+}

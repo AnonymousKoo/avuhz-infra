@@ -76,19 +76,9 @@ class DevelopmentServiceSettings:
         return cls(**{key: values[name] for key, name in required.items()}, port=port)
 
 
-class _UnavailableProbe:
-    def ready(self):
-        return False
-
-
 class _ConfiguredProbe:
     def ready(self):
         return True
-
-
-class _UnavailableIdentityResolver:
-    def resolve(self, authenticated_identity: object):
-        raise PermissionError("trusted development identity dependency is unavailable")
 
 
 def create_development_application(

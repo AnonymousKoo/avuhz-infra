@@ -12,6 +12,8 @@ RESOURCE=BASE/'development-render-runtime-config-repair-v1.resource.json'
 PLAN=BASE/'development-render-runtime-config-repair-v1.plan.json'
 PROGRESS=BASE/'development-render-runtime-config-repair-v1.progress.json'
 APPROVAL=BASE/'development-render-runtime-config-repair-v1.approval.json'
+STOP=BASE/'development-render-runtime-config-repair-v1-stop.evidence.json'
+EXECUTION=BASE/'development-render-runtime-config-repair-v1.execution-progress.json'
 FAILURE=BASE/'development-render-deployment-v1-failure.evidence.json'
 FAILURE_EXEC=BASE/'development-render-deployment-v1.execution-progress.json'
 SOURCE=ROOT/'src/avuhz_service/development.py'
@@ -40,7 +42,7 @@ EXPECTED=[
 def load(p): return json.loads(p.read_text())
 def file_digest(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
-    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); approval=load(APPROVAL); failure=load(FAILURE); failed_exec=load(FAILURE_EXEC)
+    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); approval=load(APPROVAL); failure=load(FAILURE); failed_exec=load(FAILURE_EXEC); stop=load(STOP); execution=load(EXECUTION)
     validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
     assert file_digest(SOURCE)==SOURCE_DIGEST
     payload={k:v for k,v in resource.items() if k!='contract_digest'}
@@ -97,9 +99,24 @@ def main():
         assert s['evidence']==[] and s['binding_assertions']==[] and s['safe_error_code'] is None
     assert approval=={'approval_id':APPROVAL_ID,'plan_id':PLAN_ID,'plan_version':1,'plan_digest':PLAN_DIGEST,'owner_identity':'github:AnonymousKoo','decision':'APPROVE','environment':'DEVELOPMENT','effective_at':'2026-10-01T17:30:00Z','expires_at':'2026-10-01T21:30:00Z','approved_at':APPROVED_AT,'status':'ACTIVE','authority_scope':'EXACT_PLAN_ONLY','approval_digest':APPROVAL_DIGEST}
     assert approval['approval_digest']==APPROVAL_DIGEST==approval_digest(approval)
+    validate_progress(plan,execution,SCHEMA)
+    assert execution['overall_state']=='STOPPED' and execution['record_version']==2
+    first=execution['step_states'][0]
+    assert first['authorization_state']=='CONSUMED' and first['authorization_consumed'] is True
+    assert first['execution_state']=='FAILED' and first['verification_state']=='FAIL'
+    assert first['safe_error_code']=='RENDER_ENVVAR_UPDATE_TRIGGERED_PROHIBITED_DEPLOYMENT'
+    assert stop['classification']=='UNEXPECTED_PROVIDER_SIDE_EFFECT_DEPLOYMENT_TRIGGERED'
+    assert stop['unexpected_deployment_observation']['deploy_id']=='dep-dav9iss1nsns73ar8eo0'
+    assert stop['unexpected_deployment_observation']['status']=='update_failed'
+    assert stop['post_stop_provider_state']['previous_deploy_remains_live'] is True
+    assert stop['security_state']['protected_existing_key_read'] is False and stop['security_state']['protected_existing_key_modified'] is False
+    assert stop['security_state']['port_modified'] is False and stop['security_state']['steps_2_through_9_attempted'] is False
+    for later in execution['step_states'][1:]:
+        assert later['authorization_state']=='BLOCKED' and later['authorization_consumed'] is False
+        assert later['execution_state']=='NOT_STARTED' and later['verification_state']=='NOT_STARTED'
     rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
     for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
     assert 'AVUHZ_POSTGRES_DSN' in rendered and 'PORT' in rendered
-    print('DEVELOPMENT Render runtime config repair v1: PASS (APPROVED; 9 exact non-secret keys, one key per step; DSN/PORT/deploy/config-batch prohibited; unexecuted)')
+    print('DEVELOPMENT Render runtime config repair v1: PASS (STOPPED at step 1 after prohibited provider-triggered deploy; steps 2-9 blocked; prior live deploy preserved)')
     return 0
 if __name__=='__main__': raise SystemExit(main())

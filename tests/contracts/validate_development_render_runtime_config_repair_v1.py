@@ -5,7 +5,7 @@ import hashlib, json, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 BASE=ROOT/'contracts/plans/v1'; SCHEMA=ROOT/'contracts/schemas/v1'
 RESOURCE=BASE/'development-render-runtime-config-repair-v1.resource.json'
@@ -23,6 +23,9 @@ PROGRESS_ID='0b93b675-b1fe-4c86-9950-5389a21a5769'
 PROGRESS_DIGEST='sha256:7eec8aba140c85164e112475d28385b88b8a45b5ef66716c64df5a3a558b44eb'
 FAILURE_DIGEST='sha256:27b6c2825e43edcc17cfbe628c7f44f42c580727a2ded442ac722f04a2b8d186'
 FAILURE_PROGRESS_DIGEST='sha256:4f70e9c95518844760d57d0ed6d7d89cd56ecaf5bd0a79dd355f4aa1d1f7ee15'
+APPROVAL_ID='d8b5b5f2-0dba-40fc-970b-4e3a1f5de9e5'
+APPROVAL_DIGEST='sha256:032e4f7fd01f07b2634fe0398b95f1a3502a197636eff07a706f2a8522352bb8'
+APPROVED_AT='2026-10-01T16:51:18Z'
 EXPECTED=[
  ('AVUHZ_SERVICE_ENVIRONMENT','DEVELOPMENT','DEVELOPMENT_ENVIRONMENT','sha256:0b670a3e1c67e120bd6ff3f31b081fc93b78a5eaf01bc7be071b23c048e6647b'),
  ('AVUHZ_DATA_PROJECT_REF','gnuqaefotwgkwurjpyik','DEVELOPMENT_DATA_PROJECT_REF','sha256:9855d6f60015e0d08d73e728c5e8997ae13b9f02791fe932b219abc685005179'),
@@ -37,8 +40,8 @@ EXPECTED=[
 def load(p): return json.loads(p.read_text())
 def file_digest(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
-    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); failure=load(FAILURE); failed_exec=load(FAILURE_EXEC)
-    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA)
+    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); approval=load(APPROVAL); failure=load(FAILURE); failed_exec=load(FAILURE_EXEC)
+    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
     assert file_digest(SOURCE)==SOURCE_DIGEST
     payload={k:v for k,v in resource.items() if k!='contract_digest'}
     assert resource['contract_digest']==RESOURCE_DIGEST==canonical_digest(payload)
@@ -92,10 +95,11 @@ def main():
         assert s['authorization_state']=='PENDING' and s['authorization_consumed'] is False
         assert s['execution_state']=='NOT_STARTED' and s['verification_state']=='NOT_STARTED'
         assert s['evidence']==[] and s['binding_assertions']==[] and s['safe_error_code'] is None
-    assert not APPROVAL.exists()
+    assert approval=={'approval_id':APPROVAL_ID,'plan_id':PLAN_ID,'plan_version':1,'plan_digest':PLAN_DIGEST,'owner_identity':'github:AnonymousKoo','decision':'APPROVE','environment':'DEVELOPMENT','effective_at':'2026-10-01T17:30:00Z','expires_at':'2026-10-01T21:30:00Z','approved_at':APPROVED_AT,'status':'ACTIVE','authority_scope':'EXACT_PLAN_ONLY','approval_digest':APPROVAL_DIGEST}
+    assert approval['approval_digest']==APPROVAL_DIGEST==approval_digest(approval)
     rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
     for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
     assert 'AVUHZ_POSTGRES_DSN' in rendered and 'PORT' in rendered
-    print('DEVELOPMENT Render runtime config repair v1: PASS (READY_FOR_APPROVAL; 9 exact non-secret keys, one key per step; DSN/PORT/deploy/config-batch prohibited)')
+    print('DEVELOPMENT Render runtime config repair v1: PASS (APPROVED; 9 exact non-secret keys, one key per step; DSN/PORT/deploy/config-batch prohibited; unexecuted)')
     return 0
 if __name__=='__main__': raise SystemExit(main())

@@ -281,6 +281,12 @@ RENDER_DEPLOYMENT_V1_APPROVAL_PATH = (
 RENDER_DEPLOYMENT_V1_APPROVAL_FILE_DIGEST = (
     "sha256:3e2257bb10ab7d20e425752dad91b13f0168ed6952588e6200b42824dc49fa82"
 )
+RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-render-runtime-config-repair-v1.approval.json"
+)
+RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:2957313e8833e7f8219fddc36ef96fb587f9a90d947b4c19ac4c061d92f847fe"
+)
 DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-catalog-rls-validation-v1.approval.json"
 )
@@ -390,6 +396,8 @@ def main() -> int:
         expected_approval_paths.add(RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH)
     if RENDER_DEPLOYMENT_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_DEPLOYMENT_V1_APPROVAL_PATH)
+    if RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
     if DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
     if V24_APPROVAL_PATH.exists():
@@ -591,6 +599,12 @@ def main() -> int:
     ):
         raise SystemExit("DEVELOPMENT Render deployment v1 approval file digest mismatch")
     if (
+        RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists()
+        and file_digest(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
+        != RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("DEVELOPMENT Render runtime config repair v1 approval file digest mismatch")
+    if (
         DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists()
         and file_digest(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
         != DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_FILE_DIGEST
@@ -655,6 +669,7 @@ def main() -> int:
                     RENDER_DATA_SECRET_BINDING_V2_APPROVAL_PATH,
                     RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH,
                     RENDER_DEPLOYMENT_V1_APPROVAL_PATH,
+                    RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH,
                 }
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())

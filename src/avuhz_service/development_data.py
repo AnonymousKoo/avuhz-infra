@@ -1,11 +1,15 @@
-"""Disposable-local PostgreSQL composition for DEVELOPMENT DATA certification."""
+"""DEVELOPMENT DATA composition for local certification and hosted runtime."""
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
 from typing import Callable, Protocol
 
-from avuhz_runtime.postgres import PostgresStore, PostgresUnitOfWork
+from avuhz_runtime.postgres import (
+    PostgresStore,
+    PostgresUnitOfWork,
+    connection_factory_from_environment,
+)
 
 from .development import (
     DEVELOPMENT_COMMAND_SERVICE_IDENTITY,
@@ -18,6 +22,9 @@ from .development import (
 
 DEVELOPMENT_MIGRATION_IDENTITY = "avuhz_migration_service_dev"
 CANONICAL_APPLICATION_DATABASE_ROLE = "avuhz_command_service"
+DEVELOPMENT_RUNTIME_LOGIN_IDENTITY = "avuhz_data_runtime_service_dev"
+DEVELOPMENT_DATA_ENDPOINT_HOST = "db.gnuqaefotwgkwurjpyik.supabase.co"
+DEVELOPMENT_POSTGRES_DSN_ENV = "AVUHZ_POSTGRES_DSN"
 _INTERNAL_RUNTIME_AUDIENCE = "avuhz-command-api"
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 _DATABASE_NAME = re.compile(r"^avuhz_development_disposable_[a-z0-9_]{1,48}$")
@@ -71,8 +78,83 @@ class DisposableLocalPostgresConnector(Protocol):
     ) -> object: ...
 
 
+class HostedDevelopmentPostgresConnectionFactory:
+    """Validate one hosted runtime session before exposing command-role authority."""
+
+    def __init__(self, connection_factory: Callable[[], object]):
+        if not callable(connection_factory):
+            raise ValueError("hosted DEVELOPMENT PostgreSQL connection factory is required")
+        self._connection_factory = connection_factory
+
+    def __call__(self):
+        connection = None
+        try:
+            connection = self._connection_factory()
+            if connection is None:
+                raise RuntimeError
+            if connection.autocommit:
+                connection.autocommit = False
+
+            info = getattr(connection, "info", None)
+            if info is None or getattr(info, "host", None) != DEVELOPMENT_DATA_ENDPOINT_HOST:
+                raise RuntimeError
+
+            runtime = connection.execute(
+                "select session_user = %s "
+                "and exists (select 1 from pg_catalog.pg_roles rol "
+                "where rol.rolname=session_user and rol.rolcanlogin "
+                "and not rol.rolsuper and not rol.rolinherit and not rol.rolcreatedb "
+                "and not rol.rolcreaterole and not rol.rolreplication and not rol.rolbypassrls) "
+                "and (select count(*) from pg_catalog.pg_auth_members membership "
+                "join pg_catalog.pg_roles granted_role on granted_role.oid=membership.roleid "
+                "join pg_catalog.pg_roles member_role on member_role.oid=membership.member "
+                "join pg_catalog.pg_roles grantor_role on grantor_role.oid=membership.grantor "
+                "where granted_role.rolname=%s and member_role.rolname=session_user "
+                "and grantor_role.rolname=%s and not membership.admin_option "
+                "and not membership.inherit_option and membership.set_option)=1 "
+                "and not pg_has_role(session_user,%s,'SET') "
+                "and (select count(*) from information_schema.role_table_grants "
+                "where grantee=session_user)=0 "
+                "and coalesce((select ssl from pg_catalog.pg_stat_ssl "
+                "where pid=pg_backend_pid()),false) as ready",
+                (
+                    DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
+                    CANONICAL_APPLICATION_DATABASE_ROLE,
+                    DEVELOPMENT_MIGRATION_IDENTITY,
+                    DEVELOPMENT_MIGRATION_IDENTITY,
+                ),
+            ).fetchone()
+            if not runtime or runtime.get("ready") is not True:
+                raise RuntimeError
+
+            connection.execute(f"set role {CANONICAL_APPLICATION_DATABASE_ROLE}")
+            effective = connection.execute(
+                "select current_user=%s and session_user=%s "
+                "and has_schema_privilege(current_user,'public','USAGE') "
+                "and not has_schema_privilege(current_user,'public','CREATE') as ready",
+                (
+                    CANONICAL_APPLICATION_DATABASE_ROLE,
+                    DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
+                ),
+            ).fetchone()
+            if not effective or effective.get("ready") is not True:
+                raise RuntimeError
+            return connection
+        except Exception:
+            if connection is not None:
+                try:
+                    connection.rollback()
+                except Exception:
+                    pass
+                try:
+                    connection.close()
+                except Exception:
+                    pass
+            raise RuntimeError("DEVELOPMENT DATA runtime connection is invalid") from None
+
+
 class DevelopmentPostgresDataProbe:
-    """Bounded local readiness check; it never reads tenant or provider data."""
+    """Bounded readiness check; it never reads tenant or business rows."""
 
     def __init__(self, connection_factory: Callable[[], object]):
         self._connection_factory = connection_factory
@@ -82,16 +164,35 @@ class DevelopmentPostgresDataProbe:
         try:
             connection = self._connection_factory()
             row = connection.execute(
-                "select current_user = %s and not rol.rolsuper and not rol.rolbypassrls "
+                "select current_user = %s "
+                "and exists (select 1 from pg_catalog.pg_roles rol "
+                "where rol.rolname=current_user and not rol.rolcanlogin "
+                "and not rol.rolsuper and not rol.rolbypassrls and not rol.rolcreatedb "
+                "and not rol.rolcreaterole and not rol.rolreplication) "
                 "and (select count(*) from pg_catalog.pg_tables "
                 "where schemaname='public' and tablename like 'avuhz_%') = 16 "
-                "and (select count(*) from pg_catalog.pg_class c join pg_catalog.pg_namespace n "
-                "on n.oid=c.relnamespace where n.nspname='public' "
-                "and c.relname like 'avuhz_%' and c.relrowsecurity) = 16 "
-                "from pg_catalog.pg_roles rol where rol.rolname=current_user",
+                "and (select count(*) from pg_catalog.pg_class relation "
+                "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
+                "where namespace.nspname='public' and relation.relname like 'avuhz_%' "
+                "and relation.relkind in ('r','p') and relation.relrowsecurity) = 16 "
+                "and (select count(*) from pg_catalog.pg_policy policy "
+                "join pg_catalog.pg_class relation on relation.oid=policy.polrelid "
+                "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
+                "where namespace.nspname='public' and relation.relname like 'avuhz_%' "
+                "and policy.polname='avuhz_command_service_tenant_isolation') = 16 "
+                "and (select count(*) from pg_catalog.pg_tables table_info "
+                "where table_info.schemaname='public' and table_info.tablename like 'avuhz_%' "
+                "and has_table_privilege(current_user,"
+                "format('%I.%I',table_info.schemaname,table_info.tablename),'SELECT')) = 16 "
+                "and (select count(*) from pg_catalog.pg_tables table_info "
+                "where table_info.schemaname='public' and table_info.tablename like 'avuhz_%' "
+                "and has_table_privilege(current_user,"
+                "format('%I.%I',table_info.schemaname,table_info.tablename),'DELETE')) = 0 "
+                "and has_schema_privilege(current_user,'public','USAGE') "
+                "and not has_schema_privilege(current_user,'public','CREATE') as ready",
                 (CANONICAL_APPLICATION_DATABASE_ROLE,),
             ).fetchone()
-            return bool(row and row.get("?column?") is True)
+            return bool(row and row.get("ready") is True)
         except Exception:
             return False
         finally:
@@ -119,6 +220,14 @@ class LocalDevelopmentDataComposition:
         return self.uow_factory(self.store, trusted_context)
 
 
+@dataclass(frozen=True)
+class HostedDevelopmentDataComposition:
+    settings: DevelopmentDataSettings
+    store: PostgresStore
+    uow_factory: type[PostgresUnitOfWork]
+    readiness_probe: DevelopmentPostgresDataProbe
+
+
 def create_local_development_data_composition(
     settings: DevelopmentDataSettings,
     endpoint: DisposableLocalPostgresEndpoint,
@@ -142,4 +251,25 @@ def create_local_development_data_composition(
         store=store,
         uow_factory=PostgresUnitOfWork,
         readiness_probe=DevelopmentPostgresDataProbe(connection_factory),
+    )
+
+
+def create_hosted_development_data_composition(
+    settings: DevelopmentDataSettings,
+    connection_factory: Callable[[], object] | None = None,
+) -> HostedDevelopmentDataComposition:
+    if type(settings) is not DevelopmentDataSettings:
+        raise ValueError("exact hosted DEVELOPMENT DATA configuration is required")
+    raw_factory = (
+        connection_factory_from_environment(DEVELOPMENT_POSTGRES_DSN_ENV)
+        if connection_factory is None
+        else connection_factory
+    )
+    hosted_factory = HostedDevelopmentPostgresConnectionFactory(raw_factory)
+    store = PostgresStore(hosted_factory)
+    return HostedDevelopmentDataComposition(
+        settings=settings,
+        store=store,
+        uow_factory=PostgresUnitOfWork,
+        readiness_probe=DevelopmentPostgresDataProbe(hosted_factory),
     )

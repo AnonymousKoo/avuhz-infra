@@ -20,7 +20,7 @@ from .development import (
 )
 
 
-DEVELOPMENT_MIGRATION_IDENTITY = "avuhz_migration_service_dev"
+DEVELOPMENT_MIGRATION_IDENTITY = "avuhz_data_migration_service_dev"
 CANONICAL_APPLICATION_DATABASE_ROLE = "avuhz_command_service"
 DEVELOPMENT_RUNTIME_LOGIN_IDENTITY = "avuhz_data_runtime_service_dev"
 DEVELOPMENT_DATA_ENDPOINT_HOST = "db.gnuqaefotwgkwurjpyik.supabase.co"

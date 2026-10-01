@@ -1,0 +1,220 @@
+{
+  "plan_id": "a4e15530-b16a-4d45-9bc1-00c4d54a7271",
+  "plan_version": 1,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "data.provider",
+    "provider_reference": "supabase",
+    "project_reference": "gnuqaefotwgkwurjpyik",
+    "responsibility": "DATA",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-01T01:28:00Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-01T02:00:00Z",
+    "expires_at": "2026-10-01T05:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.data.catalog-rls-validation-v1.step.01.inspect-read-only"
+  ],
+  "steps": [
+    {
+      "step_id": "development.data.catalog-rls-validation-v1.step.01.inspect-read-only",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "database.catalog-rls-validation-executor",
+        "resource_reference": "scripts/development_data_catalog_rls_validation_v1.py",
+        "binding_state": "BOUND",
+        "exact_version": "gitblob.5e1a29c95b9cab4695f52f752ca10e7a03070973",
+        "exact_digest": "sha256:ac7555458c5d0f6c40f535b1c81166aaa03295801035a83443ea537a7ccc74cc"
+      },
+      "operation": "provider.data-catalog-rls.inspect-read-only",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "data.runtime-login.created-and-verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:817df8e5a593314325827b89e8b8d38d60c13157ea571ba22575ffab5f02de8a"
+        }
+      ],
+      "expected_postcondition": "One separately approved DEVELOPMENT DATA connection authenticates as the restricted runtime login, enters a read-only transaction before inspection, proves the exact runtime and command-role envelope, validates the canonical 16-table catalog/RLS/constraint/grant fingerprint against the committed migration, emits only bounded secret-free evidence, then rolls back and closes without reading business rows or AUTH data and without mutation, DDL, repair, Render, staging, or production effects.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "business-row.read",
+        "auth-data.read",
+        "credential.persist",
+        "credential.expose",
+        "credential.log",
+        "credential.return",
+        "credential.digest",
+        "credential.copy",
+        "credential.create",
+        "credential.rotate",
+        "credential.export",
+        "service-role.use",
+        "migration-identity.use",
+        "ddl.execute",
+        "batch.mutation",
+        "resource.repair",
+        "rls.change",
+        "grant.change",
+        "schema.change",
+        "render.operation",
+        "n8n.operation",
+        "staging.target",
+        "production.target",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "code-binding.mismatch",
+        "credential-resolution.failed",
+        "endpoint.mismatch",
+        "runtime-role.mismatch",
+        "effective-role.mismatch",
+        "catalog-count.mismatch",
+        "catalog-digest.mismatch",
+        "rls-policy.mismatch",
+        "scope.drift",
+        "provider.execution.failed",
+        "security.validation.failed"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_DATA_RUNTIME_READ"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.executor-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.5e1a29c95b9cab4695f52f752ca10e7a03070973",
+            "exact_digest": "sha256:57568e4dc335dba7d95c56563c61d2512b21de5e9e3d83368c9c90e99b4ceb69"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.helper-git-blob",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "gitblob.c47b36d3406e26a9d9ac66c8b943afa6a3c9ca81",
+            "exact_digest": "sha256:eb3ade5d31cc61c794bac560e7fa18483e5a527bbeb3a6c71dca0085d4bba35c"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.validation-contract",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:ac7555458c5d0f6c40f535b1c81166aaa03295801035a83443ea537a7ccc74cc",
+            "exact_digest": "sha256:7d14c86cfbea8af2dbcfdbec02d44a3074e026ea2a696b9c867537b92f9781a1"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.v15-runtime-login-success",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:817df8e5a593314325827b89e8b8d38d60c13157ea571ba22575ffab5f02de8a",
+            "exact_digest": "sha256:809e8a6d3ce40d090ee0fbc0dbd7c37d463fe87b14a8edc2e0a7711aa4179f04"
+          }
+        },
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.runtime-read-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "data.runtime-read-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.data.catalog-rls-validation-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "data.catalog-rls.validated",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "data.catalog-rls.validated",
+          "established_binding_ids": [
+            "binding.development.data.catalog-rls-validation-v1.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "provider.mutation",
+    "business-row.read",
+    "auth-data.read",
+    "credential.persist",
+    "credential.expose",
+    "credential.log",
+    "credential.return",
+    "credential.digest",
+    "credential.copy",
+    "credential.create",
+    "credential.rotate",
+    "credential.export",
+    "service-role.use",
+    "migration-identity.use",
+    "ddl.execute",
+    "batch.mutation",
+    "resource.repair",
+    "rls.change",
+    "grant.change",
+    "schema.change",
+    "render.operation",
+    "n8n.operation",
+    "staging.target",
+    "production.target",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "approval.expired",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "scope.drift",
+    "target.drift",
+    "security.validation.failed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:0713d866acdfb2ef3fe15e2eca46aeb4a4c8ef18eca528f1eb83f6cd868dca29"
+}
+
+[executed on device: DefNet (407e98ab-1503-4c73-9c80-4acea2362eed)]

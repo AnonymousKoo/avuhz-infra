@@ -539,6 +539,174 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "steps": {
+            "contains": {
+              "properties": {
+                "credential_policy": {
+                  "properties": {
+                    "allowed_classes": {
+                      "contains": {
+                        "const": "SUPABASE_DATA_RUNTIME_READ"
+                      }
+                    }
+                  },
+                  "required": [
+                    "allowed_classes"
+                  ]
+                }
+              },
+              "required": [
+                "credential_policy"
+              ]
+            }
+          }
+        },
+        "required": [
+          "steps"
+        ]
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "const": "DEVELOPMENT"
+          },
+          "target": {
+            "properties": {
+              "provider_class": {
+                "const": "data.provider"
+              },
+              "provider_reference": {
+                "const": "supabase"
+              },
+              "responsibility": {
+                "const": "DATA"
+              },
+              "issuer_reference": {
+                "const": null
+              },
+              "audience_reference": {
+                "const": null
+              }
+            }
+          },
+          "steps": {
+            "items": {
+              "if": {
+                "properties": {
+                  "credential_policy": {
+                    "properties": {
+                      "allowed_classes": {
+                        "contains": {
+                          "const": "SUPABASE_DATA_RUNTIME_READ"
+                        }
+                      }
+                    },
+                    "required": [
+                      "allowed_classes"
+                    ]
+                  }
+                },
+                "required": [
+                  "credential_policy"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "execution_class": {
+                    "const": "PROVIDER_READ"
+                  },
+                  "operation": {
+                    "const": "provider.data-catalog-rls.inspect-read-only"
+                  },
+                  "credential_policy": {
+                    "properties": {
+                      "permitted": {
+                        "const": true
+                      },
+                      "allowed_classes": {
+                        "const": [
+                          "SUPABASE_DATA_RUNTIME_READ"
+                        ]
+                      },
+                      "values_stored": {
+                        "const": false
+                      }
+                    }
+                  },
+                  "prohibited_actions": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "provider.mutation"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "business-row.read"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "auth-data.read"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.persist"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.expose"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.log"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.return"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.digest"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.copy"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "service-role.use"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "migration-identity.use"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "ddl.execute"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -608,7 +776,8 @@
               "SYNTHETIC_IDENTITY",
               "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN",
               "SUPABASE_AUTH_ADMIN_EPHEMERAL",
-              "SUPABASE_PROVIDER_READ"
+              "SUPABASE_PROVIDER_READ",
+              "SUPABASE_DATA_RUNTIME_READ"
             ]
           }
         },

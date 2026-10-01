@@ -1,0 +1,134 @@
+{
+  "contract_version": "v1",
+  "environment": "DEVELOPMENT",
+  "provider": "render",
+  "workspace_id": "tea-dab95hv40ujc73a7ccag",
+  "service_id": "srv-dab9n4qd0e5s73dq37mg",
+  "service_name": "avuhz-command-dev",
+  "environment_id": "evm-dab96l2jobas73bp95bg",
+  "source_contract": {
+    "path": "src/avuhz_service/development.py",
+    "file_digest": "sha256:7e55968e667a566e2a82f9dc8b90c4e3f7ec4d69b4c0c49adc0db2994f94f972"
+  },
+  "provider_managed_required_keys": [
+    "PORT"
+  ],
+  "protected_existing_keys": [
+    "AVUHZ_POSTGRES_DSN"
+  ],
+  "preexisting_staged_variables": [
+    {
+      "key": "AVUHZ_SERVICE_ENVIRONMENT",
+      "value": "DEVELOPMENT",
+      "source_reference": "development-render-runtime-config-repair-v1-stop.evidence.json",
+      "must_not_be_mutated_by_v5": true
+    },
+    {
+      "key": "AVUHZ_DATA_PROJECT_REF",
+      "value": "gnuqaefotwgkwurjpyik",
+      "source_reference": "development-render-runtime-config-repair-v4-step03-scope-drift.evidence.json",
+      "source_digest": "sha256:7cde43655288a8b5d894fa6788489c94c6d081d2780fa0bdc676245dc2a2a327",
+      "state_basis": "OWNER_CONFIRMED_FINAL_VALUE_WITHIN_V4_SCOPE_DRIFT",
+      "must_not_be_mutated_by_v5": true
+    },
+    {
+      "key": "AVUHZ_DATA_PROJECT_URL",
+      "value": "https://gnuqaefotwgkwurjpyik.supabase.co",
+      "source_reference": "development-render-runtime-config-repair-v4-step02-success.evidence.json",
+      "source_digest": "sha256:a27ca73d3f74d7062e0ba82a701c50a3fd1a26f1b66ae4eec95e58bf2cf6597e",
+      "state_basis": "V4_STEP2_SUCCEEDED_VERIFIED",
+      "must_not_be_mutated_by_v5": true
+    },
+    {
+      "key": "AVUHZ_AUTH_PROJECT_REF",
+      "value": "pwlhruwutoitnieactol",
+      "source_reference": "development-render-runtime-config-repair-v4-step03-scope-drift.evidence.json",
+      "source_digest": "sha256:7cde43655288a8b5d894fa6788489c94c6d081d2780fa0bdc676245dc2a2a327",
+      "state_basis": "OWNER_CONFIRMED_FINAL_VALUE_WITHIN_V4_SCOPE_DRIFT",
+      "must_not_be_mutated_by_v5": true
+    }
+  ],
+  "v4_stop_progress_digest": "sha256:e0a7102ac233b37126514f18250a1d710585c3b337d7c38e2f1d80916d27e1ef",
+  "variables": [
+    {
+      "ordinal": 1,
+      "key": "AVUHZ_AUTH_ISSUER",
+      "value": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+      "source_constant": "DEVELOPMENT_AUTH_ISSUER",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:1a737f27f25128c1555714e62dc3045e2a67d9d5be0e4ad79643464c4e0eae2f",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 2,
+      "key": "AVUHZ_SERVICE_AUDIENCE",
+      "value": "audience.avuhz.command-service.development",
+      "source_constant": "DEVELOPMENT_SERVICE_AUDIENCE",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:f4caaa492a7b9babfb3184ff93b3e978552cff3c954c5360d275d09b34f3aa7a",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 3,
+      "key": "AVUHZ_TENANT_BRIDGE",
+      "value": "TrustedExecutionContext.tenant_id -> avuhz.tenant_id",
+      "source_constant": "DEVELOPMENT_TENANT_BRIDGE",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:20c3c7c2b635afd302f68a43e5f2a88042ddee7a898aa657e206a4df560e22ea",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 4,
+      "key": "AVUHZ_RLS_POLICY_REFERENCE",
+      "value": "policy.avuhz.tenant-rls.development.v1",
+      "source_constant": "DEVELOPMENT_RLS_POLICY_REFERENCE",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:19e60b5024bd856f8a35d345e96ced39e43da5b4f3759fae2a254f6d6c3953bf",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 5,
+      "key": "AVUHZ_COMMAND_SERVICE_IDENTITY",
+      "value": "avuhz_command_service_dev",
+      "source_constant": "DEVELOPMENT_COMMAND_SERVICE_IDENTITY",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:c1082ecb1ea736a9dc2dd8ecea67e428cbdbc1bd5d3886085f35b98119315d14",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    }
+  ],
+  "provider_mechanism": {
+    "surface": "RENDER_DASHBOARD_ENVIRONMENT",
+    "action": "SAVE_ONLY",
+    "single_key_per_save": true,
+    "deployment_side_effect_allowed": false,
+    "connected_update_environment_variables_wrapper_allowed": false
+  },
+  "mutation_policy": {
+    "allowed_environment_variable_changes": 5,
+    "single_key_per_provider_action": true,
+    "batched_provider_action_authorized": false,
+    "replace_all_authorized": false,
+    "environment_group_changes_authorized": false,
+    "service_setting_changes_authorized": false,
+    "auto_deploy_changes_authorized": false,
+    "deployment_authorized": false,
+    "secret_material_agent_visible": false,
+    "secret_material_persisted": false
+  },
+  "contract_digest": "sha256:4c6a3350b86846c2d4f54b4302333accee18139d70776dc04e7dee5b43de9d13"
+}

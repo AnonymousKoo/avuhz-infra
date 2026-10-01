@@ -1,0 +1,67 @@
+{
+  "progress_id": "3c6ee8f8-e00f-4674-b0be-c8968083501d",
+  "plan_id": "db081e9c-460d-455c-8228-c632d3c7782f",
+  "plan_version": 5,
+  "plan_digest": "sha256:4ac4f2c9f41b5bcbee7ad7333266afe44d3923ec8e88b608c10986197782e538",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.render.runtime-config-repair-v5.step.01.bind-auth-issuer",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v5.step.02.bind-service-audience",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v5.step.03.bind-tenant-bridge",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v5.step.04.bind-rls-policy-reference",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v5.step.05.bind-command-service-identity",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-01T22:30:15Z",
+  "progress_digest": "sha256:b16d324d270071c13773f0cae937972df51e8f2767ea2ef0750147e916553e45"
+}

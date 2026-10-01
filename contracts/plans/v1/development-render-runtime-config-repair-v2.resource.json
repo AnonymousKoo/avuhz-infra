@@ -1,0 +1,145 @@
+{
+  "contract_version": "v1",
+  "environment": "DEVELOPMENT",
+  "provider": "render",
+  "workspace_id": "tea-dab95hv40ujc73a7ccag",
+  "service_id": "srv-dab9n4qd0e5s73dq37mg",
+  "service_name": "avuhz-command-dev",
+  "environment_id": "evm-dab96l2jobas73bp95bg",
+  "source_contract": {
+    "path": "src/avuhz_service/development.py",
+    "file_digest": "sha256:7e55968e667a566e2a82f9dc8b90c4e3f7ec4d69b4c0c49adc0db2994f94f972"
+  },
+  "provider_managed_required_keys": [
+    "PORT"
+  ],
+  "protected_existing_keys": [
+    "AVUHZ_POSTGRES_DSN"
+  ],
+  "preexisting_staged_variable": {
+    "key": "AVUHZ_SERVICE_ENVIRONMENT",
+    "value": "DEVELOPMENT",
+    "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+    "source_v1_stop_evidence_digest": "sha256:6c3d32fcf9de9d9ff81945ae5b3dae4ee8be650c7a5a27f9fc8b506c6026ecc2",
+    "source_v1_execution_progress_digest": "sha256:a9bf657b6d0fd5179cce44e48de189e596d8bdce92b70584369889deb7c2534d",
+    "must_not_be_mutated_by_v2": true
+  },
+  "variables": [
+    {
+      "ordinal": 1,
+      "key": "AVUHZ_DATA_PROJECT_REF",
+      "value": "gnuqaefotwgkwurjpyik",
+      "source_constant": "DEVELOPMENT_DATA_PROJECT_REF",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:b1a13e14939b1632705c89236ffce1d718e912aad40a1366368ac28b465ec692",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 2,
+      "key": "AVUHZ_DATA_PROJECT_URL",
+      "value": "https://gnuqaefotwgkwurjpyik.supabase.co",
+      "source_constant": "DEVELOPMENT_DATA_PROJECT_URL",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:a7bf83a1e1e139131f79f9c190a4e76d61739d19216e8b0628914c7590bf195c",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 3,
+      "key": "AVUHZ_AUTH_PROJECT_REF",
+      "value": "pwlhruwutoitnieactol",
+      "source_constant": "DEVELOPMENT_AUTH_PROJECT_REF",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:9c72c2925f273fecaf86dc92a0c693686a2f58b7daa5b5bb309818f85af9e76c",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 4,
+      "key": "AVUHZ_AUTH_ISSUER",
+      "value": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+      "source_constant": "DEVELOPMENT_AUTH_ISSUER",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:234e37a3f86d8d09b67d5c296fc50efae7fe77a5bc161a823a7ad75f796edf06",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 5,
+      "key": "AVUHZ_SERVICE_AUDIENCE",
+      "value": "audience.avuhz.command-service.development",
+      "source_constant": "DEVELOPMENT_SERVICE_AUDIENCE",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:b0d58de7bca23e6da32fedb47295a84b8f32c2ac50d0c0809ac2464777c96447",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 6,
+      "key": "AVUHZ_TENANT_BRIDGE",
+      "value": "TrustedExecutionContext.tenant_id -> avuhz.tenant_id",
+      "source_constant": "DEVELOPMENT_TENANT_BRIDGE",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:19afe3846e96d99541eddb97001ab7df6cba54ff4af45ad0aeb57c25cfd04afe",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 7,
+      "key": "AVUHZ_RLS_POLICY_REFERENCE",
+      "value": "policy.avuhz.tenant-rls.development.v1",
+      "source_constant": "DEVELOPMENT_RLS_POLICY_REFERENCE",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:9ebb0198f9b8b6e882245dfcc3029e898cf8167f1bce51884afd11fbba0f2d3c",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    },
+    {
+      "ordinal": 8,
+      "key": "AVUHZ_COMMAND_SERVICE_IDENTITY",
+      "value": "avuhz_command_service_dev",
+      "source_constant": "DEVELOPMENT_COMMAND_SERVICE_IDENTITY",
+      "value_class": "NON_SECRET_CANONICAL_CONFIGURATION",
+      "update_mode": "DASHBOARD_SAVE_ONLY_SINGLE_KEY",
+      "replace_all_environment_variables": false,
+      "deploy_authorized": false,
+      "entry_digest": "sha256:afae6cf564f072d9fd32ef9cba6958408a048a0ec85f789018f9893feb9a9f8b",
+      "provider_surface": "RENDER_DASHBOARD_ENVIRONMENT_SAVE_ONLY"
+    }
+  ],
+  "provider_mechanism": {
+    "surface": "RENDER_DASHBOARD_ENVIRONMENT",
+    "action": "SAVE_ONLY",
+    "single_key_per_save": true,
+    "deployment_side_effect_allowed": false,
+    "connected_update_environment_variables_wrapper_allowed": false
+  },
+  "mutation_policy": {
+    "allowed_environment_variable_changes": 8,
+    "single_key_per_provider_action": true,
+    "batched_provider_action_authorized": false,
+    "replace_all_authorized": false,
+    "environment_group_changes_authorized": false,
+    "service_setting_changes_authorized": false,
+    "auto_deploy_changes_authorized": false,
+    "deployment_authorized": false,
+    "secret_material_agent_visible": false,
+    "secret_material_persisted": false
+  },
+  "contract_digest": "sha256:01dde83617ddb08dd18ad8550bfa8322ad003c43bbf50da45540337f23b13ebf"
+}

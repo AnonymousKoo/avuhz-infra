@@ -32,6 +32,35 @@ EXPECTED_COLUMN_GRANT_COUNT = 638
 EXPECTED_CATALOG_DIGEST = (
     "sha256:4824fdc375da9561e5a4ea261c634d1f84e006bc5a5c770c2b5f706ff19fe59b"
 )
+DATA_CATALOG_VALIDATION_OPERATION = "provider.data-catalog-rls.inspect-read-only"
+DATA_CATALOG_VALIDATION_CONTRACT = {
+    "environment": "DEVELOPMENT",
+    "provider_reference": "supabase",
+    "project_reference": DEVELOPMENT_DATA_PROJECT_REF,
+    "responsibility": "DATA",
+    "operation": DATA_CATALOG_VALIDATION_OPERATION,
+    "execution_class": "PROVIDER_READ",
+    "credential_class": DATA_RUNTIME_READ_CREDENTIAL_CLASS,
+    "credential_reference": DATA_RUNTIME_DSN_ENV_REFERENCE,
+    "endpoint_host": DEVELOPMENT_DATA_ENDPOINT_HOST,
+    "runtime_login": DEVELOPMENT_DATA_RUNTIME_LOGIN,
+    "migration_identity": DEVELOPMENT_DATA_MIGRATION_IDENTITY,
+    "effective_role": CANONICAL_COMMAND_ROLE,
+    "transaction_mode": "READ_ONLY",
+    "expected_catalog_digest": EXPECTED_CATALOG_DIGEST,
+    "expected_counts": {
+        "tables": EXPECTED_TABLE_COUNT,
+        "columns": EXPECTED_COLUMN_COUNT,
+        "constraints": EXPECTED_CONSTRAINT_COUNT,
+        "policies": EXPECTED_POLICY_COUNT,
+        "table_grants": EXPECTED_TABLE_GRANT_COUNT,
+        "column_grants": EXPECTED_COLUMN_GRANT_COUNT,
+    },
+    "business_rows_read": False,
+    "auth_data_read": False,
+    "provider_mutation_available": False,
+    "ddl_available": False,
+}
 
 BEGIN_READ_ONLY_SQL = "set transaction read only"
 SET_COMMAND_ROLE_SQL = f"set role {CANONICAL_COMMAND_ROLE}"

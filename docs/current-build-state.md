@@ -49,16 +49,16 @@
 
 ## Current runtime truth
 
-`src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`. The live hosted DEVELOPMENT composition still uses its unavailable real-provider resolver.
+Canonical code now injects the certified DEVELOPMENT trusted-identity resolver and the hosted DEVELOPMENT DATA composition. The DATA connection remains lazy and secret-free in Git: `AVUHZ_POSTGRES_DSN` is resolved only at runtime, and each connection must authenticate to the canonical DATA host as `avuhz_data_runtime_service_dev`, satisfy the restricted role/membership/SSL checks, and successfully `SET ROLE avuhz_command_service` before the existing Postgres store/UoW can use it.
 
 Therefore:
 
-- startup/liveness can be healthy;
-- `/health/ready` remains `503`;
-- command/query requests fail closed at trusted identity resolution; and
-- no hosted Supabase DATA connection is created by the current service composition.
+- startup/liveness can remain healthy without resolving a database credential;
+- `/health/ready` remains fail-closed when the DSN is missing or any endpoint/role/RLS readiness check fails;
+- trusted identity resolution is already composed; DATA work still requires the validated hosted connection and transaction-local tenant binding; and
+- no PostgREST, Supabase `service_role`, migration identity, or parallel persistence path is introduced.
 
-This is intentional. AUTH v21/v24/v26/v28 completion, AUTH v31 and v32 failure recording, and DATA v3 completion do not themselves authorize runtime credential creation, secret retrieval, another synthetic-token attempt, hosted adapter wiring, or readiness promotion. AUTH v32 and v32 session-inspection-v1 authority are consumed and cannot be reused. The failed inspection grants no retry, cleanup, mutation, or token authority. The default Supabase `aud=authenticated` is rejected by Avuhz; the approved DEVELOPMENT command-service audience remains separate.
+Read-only Render inspection on 2026-09-30 confirmed the only workspace service is DEVELOPMENT `avuhz-command-dev` (`srv-dab9n4qd0e5s73dq37mg`), with auto-deploy disabled and its live deploy still pinned to commit `6bff57065151462fc74861c68a232454b2ef9a20` from 2026-09-01. This repository-local adapter change does not mutate Render, bind a secret, deploy current code, or establish hosted readiness. The default Supabase `aud=authenticated` remains rejected; the approved DEVELOPMENT command-service audience is separate.
 
 ## Multi-tenant truth
 
@@ -117,7 +117,7 @@ AUTH v25 is immutable historical state with plan id `b9532651-b0a2-420f-a3fb-bde
 
 The canonical DEVELOPMENT Auth-admin bootstrap retirement audit is `contracts/plans/v1/development-auth-admin-bootstrap-retirement.evidence.json`, observed at `2026-09-15T16:48:52Z`, with raw file digest `sha256:9e310b6b114b4b4a2b71f35a6f9b6324231f3f071a2fdecc5d589d7b91e635ef`. It records provider deletion as owner-confirmed rather than independently provider-verified, while the GitHub `development` environment secret binding and local ignored `supabase/.temp` secret material are independently verified absent. No credential material is retained in the audit.
 
-The hosted DEVELOPMENT runtime remains deliberately unwired: `src/avuhz_service/development.py` still uses `_UnavailableIdentityResolver` and `_UnavailableUnitOfWork`. The exact v26 server-owned allowlist entry is now persisted and verified, but hosted identity resolution is intentionally not yet injected into runtime composition.
+The canonical DEVELOPMENT service now composes the certified hosted identity path and the hosted DATA adapter code path. Runtime DATA still fails closed until the environment-scoped DSN resolves to the exact restricted DEVELOPMENT DATA login and passes connection/readiness checks. No Render secret binding, deploy, readiness promotion, or provider mutation is authorized by repository composition alone.
 
 AUTH v27 has plan id `cf30c352-08f2-4d17-98e5-9dbc5edc103e`, plan digest `sha256:9d2ab111c08ed6455b847c578eb6aa949cee12707ccb104e666e5fbe7b08c1c6`, exact owner approval `671bb3cb-3555-44a2-b7e3-17bcb04eeb03`, and immutable window `2026-09-15T18:30:00Z` through `2026-09-16T00:30:00Z`. A fresh provider preflight verified the exact function/body/owner/ACL and that no Auth hook was configured. The owner-interactive dashboard then disclosed an additional five-effect permission reconciliation bundle. Because v27 prohibited `function-acl.modify`, the Create hook action was canceled before mutation; v27 progress therefore remains pristine `PENDING / NOT_STARTED / NOT_STARTED / unconsumed` and no v27 success evidence exists.
 
@@ -164,14 +164,14 @@ Because the bounded authorization progress schema has no `SKIPPED` state or cond
 
 ## Next task
 
-The DEVELOPMENT provider foundations, repaired recovery lifecycle, synthetic-token validation v3, and v3 temporary-credential retirement are complete and sealed. Historical AUTH v31/v32 and cleanup failures remain non-retryable evidence only. Hosted DEVELOPMENT identity and DATA adapters remain deliberately unwired.
+The DEVELOPMENT provider foundations, repaired recovery lifecycle, synthetic-token validation v3, temporary-credential retirement, hosted trusted-identity adapter, and repository-local hosted DATA adapter are complete at the code boundary. Historical AUTH v31/v32 and cleanup failures remain non-retryable evidence only. Render remains unchanged and is not readiness-promoted.
 
 The intended sequence is now:
 
-1. define a fresh bounded repository-local implementation boundary for the hosted DEVELOPMENT trusted-identity adapter using the certified AUTH issuer/audience/tenant-policy contracts;
-2. implement and locally verify that identity adapter without changing Supabase, Render, DATA, n8n, staging, or production resources;
-3. separately define and implement the hosted DEVELOPMENT DATA adapter with least privilege and the existing tenant/RLS boundary;
-4. only after AUTH and DATA dependencies verify independently, define a separate Render/runtime readiness-promotion boundary;
+1. complete a fresh, separately authorized DEVELOPMENT DATA connected catalog/RLS validation using the existing restricted runtime login, reading only catalog/role/RLS/grant metadata and retaining no DSN or business rows;
+2. if that connected validation passes, define a separate one-resource Render secret-binding boundary for `AVUHZ_POSTGRES_DSN` on exact service `avuhz-command-dev`;
+3. because auto-deploy is disabled, treat deployment of the exact reviewed commit as its own subsequent Render resource change;
+4. independently verify post-deploy `/health/ready`, exact runtime identity/tenant denial behavior, and bounded command/query health before any staging work;
 5. then complete remaining DEVELOPMENT operational controls before staging or production certification.
 
 Each item remains a separate bounded resource/action boundary.
@@ -193,14 +193,14 @@ Each item remains a separate bounded resource/action boundary.
 
 ## Known gaps
 
-- The dedicated synthetic DEVELOPMENT Auth identity exists, tenant metadata is bound, and the exact server-owned read-only allowlist is applied; hosted runtime composition is still intentionally unwired.
+- The dedicated synthetic DEVELOPMENT Auth identity, tenant metadata, exact server-owned read-only allowlist, hosted identity adapter, and hosted DATA adapter code path are present. Live Render secret binding/deployment and connected DATA validation remain separate unfinished boundaries.
 - AUTH v25 is expired/unexecuted historical state and must not be reused; AUTH v26 completed the exact local-only allowlist bind and is consumed.
 - The DEVELOPMENT Auth-admin bootstrap credential retirement is complete. Provider deletion is owner-confirmed; the GitHub `development` environment binding and local ignored temp secret material are independently verified absent. The retired credential must not be reused.
 - The custom access-token hook function exists and the hosted Custom Access Token hook is enabled on the exact certified function. AUTH v27 remains unconsumed historical authority after the dashboard bundle mismatch; AUTH v28 completed and consumed the exact broader dashboard-bundle authority.
 - AUTH v29 was rejected before canonicalization and has no provider effects or reusable authority. AUTH v30 remains pristine/unapproved/unexecuted. AUTH v31 and v32 are stopped/consumed and non-retryable. v32 exposed an access-token-gated emergency-cleanup weakness: `NOT_NEEDED` did not prove zero provider sessions. The forward-only lifecycle redesign is canonical. The one approved recovery inspection is also stopped/consumed and non-retryable after its project read failed before SQL. The owner-interactive attribution boundary subsequently established that the single observed DEVELOPMENT AUTH session belongs to the dedicated synthetic identity, but it did not inspect refresh tokens. Cleanup v1 is now stopped/consumed after its only Step 2 attempt failed before provider contact because the bounded admin credential was unavailable or invalid; no temporary session, logout, cleanup, or verification occurred. Step 3 is blocked, provider session/refresh state remains unverified, and retry is unauthorized. The earlier owner-interactive count boundary remains pristine, unapproved, and unexecuted.
 - Cleanup credential-repair v1 is `COMPLETED`: Steps 1–4 are consumed/succeeded/pass. Step 3 verified only the exact GitHub `development` secret-reference presence boolean; it did not read the secret value or mutate GitHub. Step 4 sealed the local retirement obligation (evidence digest `sha256:38ebcc897696f11284c540994c4a6144f08530ad8c4ec7e42c84a64f01559b8f`; progress digest `sha256:6d4e4d5473a50790e1c6db4df50e4428fda37dc9988b4bf44ddb145955b6e2f9`): after the cleanup continuation completes or permanently stops, fresh exact retirement approval must authorize deleting the dedicated Supabase key and only the named GitHub `development` binding, then independently verify both references absent. Step 4 performed no retirement, provider contact, secret access, or GitHub mutation. Its `recorded_at` is a truthful evidence-record timestamp; no exact local-operation timestamp was retained. No secret value or credential-material digest is present. Cleanup v2 Step 1 succeeded with fresh sanitized 1/1 precondition evidence. Its sole Step 2 attempt is consumed/failed with `RECOVERY_VERIFICATION_RESPONSE_SHAPE_INVALID`; a temporary session may or may not have been created, so that boundary could not establish current state. JWT validation and global logout were not reached; Step 3 is blocked/unexecuted, cleanup is not verified, and retry is unauthorized. The subsequent completed owner-interactive rebaseline now establishes current aggregate state `2 sessions / 2 refresh tokens`, classified `SESSION_CLEANUP_REQUIRED`, without proving the cause of the additional session. A fresh forward-only cleanup continuation is required. The dedicated credential retirement obligation remains mandatory after that continuation completes or permanently stops.
-- End-to-end synthetic-token validation v3 is complete and its dedicated temporary Supabase key and GitHub `development` binding are retired and independently verified absent; the hosted DEVELOPMENT identity adapter is still not wired.
-- Hosted DEVELOPMENT identity and DATA adapters are not wired.
+- End-to-end synthetic-token validation v3 is complete and its dedicated temporary Supabase key and GitHub `development` binding are retired and independently verified absent; the hosted DEVELOPMENT identity adapter is wired in canonical code.
+- Hosted DEVELOPMENT identity and DATA adapter code is wired, but the live Render service has not been updated to the current commit or readiness-promoted under a verified DATA secret binding.
 - No canonical n8n workflow exports are present in this repository.
 - No shared communications provider adapter is implemented here yet.
 - No shared Stripe billing/usage-metering engine is implemented here yet.

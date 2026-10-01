@@ -1,0 +1,1043 @@
+{
+  "plan_id": "0e5d2dc6-d0c0-4e49-bfb1-c47d9629986d",
+  "plan_version": 1,
+  "plan_digest": "sha256:de24909e3a096dbfe7912c77849f8a353a9613a8d702554a565ce00e2bf6e3a8",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "runtime.provider",
+    "provider_reference": "render",
+    "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+    "responsibility": "RUNTIME",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-01T16:43:47Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-01T17:30:00Z",
+    "expires_at": "2026-10-01T21:30:00Z"
+  },
+  "ordered_step_ids": [
+    "development.render.runtime-config-repair-v1.step.01.bind-avuhz-service-environment",
+    "development.render.runtime-config-repair-v1.step.02.bind-avuhz-data-project-ref",
+    "development.render.runtime-config-repair-v1.step.03.bind-avuhz-data-project-url",
+    "development.render.runtime-config-repair-v1.step.04.bind-avuhz-auth-project-ref",
+    "development.render.runtime-config-repair-v1.step.05.bind-avuhz-auth-issuer",
+    "development.render.runtime-config-repair-v1.step.06.bind-avuhz-service-audience",
+    "development.render.runtime-config-repair-v1.step.07.bind-avuhz-tenant-bridge",
+    "development.render.runtime-config-repair-v1.step.08.bind-avuhz-rls-policy-reference",
+    "development.render.runtime-config-repair-v1.step.09.bind-avuhz-command-service-identity"
+  ],
+  "steps": [
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.01.bind-avuhz-service-environment",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_SERVICE_ENVIRONMENT",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:0b670a3e1c67e120bd6ff3f31b081fc93b78a5eaf01bc7be071b23c048e6647b"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:27b6c2825e43edcc17cfbe628c7f44f42c580727a2ded442ac722f04a2b8d186"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:4f70e9c95518844760d57d0ed6d7d89cd56ecaf5bd0a79dd355f4aa1d1f7ee15"
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_SERVICE_ENVIRONMENT to the exact canonical value recorded by resource digest sha256:0b670a3e1c67e120bd6ff3f31b081fc93b78a5eaf01bc7be071b23c048e6647b. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step01-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step01-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step01-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.02.bind-avuhz-data-project-ref",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_DATA_PROJECT_REF",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:9855d6f60015e0d08d73e728c5e8997ae13b9f02791fe932b219abc685005179"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.01.bind-avuhz-service-environment"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.01.bind-avuhz-service-environment",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_DATA_PROJECT_REF to the exact canonical value recorded by resource digest sha256:9855d6f60015e0d08d73e728c5e8997ae13b9f02791fe932b219abc685005179. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step01-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.01.bind-avuhz-service-environment",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step02-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step02-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step02-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.03.bind-avuhz-data-project-url",
+      "ordinal": 3,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_DATA_PROJECT_URL",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:c78afdc6b95586a278c9964646083e1cf2a09a12c956a64716904ecd68831de5"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.02.bind-avuhz-data-project-ref"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.02.bind-avuhz-data-project-ref",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_DATA_PROJECT_URL to the exact canonical value recorded by resource digest sha256:c78afdc6b95586a278c9964646083e1cf2a09a12c956a64716904ecd68831de5. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step02-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.02.bind-avuhz-data-project-ref",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step03-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step03-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step03-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.04.bind-avuhz-auth-project-ref",
+      "ordinal": 4,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_AUTH_PROJECT_REF",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:f4d33e38f87fa126efac7a951e29670c6db7008096e23851945e30f425a21d81"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.03.bind-avuhz-data-project-url"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.03.bind-avuhz-data-project-url",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_AUTH_PROJECT_REF to the exact canonical value recorded by resource digest sha256:f4d33e38f87fa126efac7a951e29670c6db7008096e23851945e30f425a21d81. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step03-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.03.bind-avuhz-data-project-url",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step04-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step04-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step04-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.05.bind-avuhz-auth-issuer",
+      "ordinal": 5,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_AUTH_ISSUER",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:547dc7c47a61515eb7563dfb7e788ffc45a38b82fe77f72cb7dea691b84523cd"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.04.bind-avuhz-auth-project-ref"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.04.bind-avuhz-auth-project-ref",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_AUTH_ISSUER to the exact canonical value recorded by resource digest sha256:547dc7c47a61515eb7563dfb7e788ffc45a38b82fe77f72cb7dea691b84523cd. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step04-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.04.bind-avuhz-auth-project-ref",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step05-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step05-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step05-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.06.bind-avuhz-service-audience",
+      "ordinal": 6,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_SERVICE_AUDIENCE",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:2112e2df245a35003c13ecaf99d21017ab37946e9f7e2a4e89df83ffabfa401d"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.05.bind-avuhz-auth-issuer"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.05.bind-avuhz-auth-issuer",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_SERVICE_AUDIENCE to the exact canonical value recorded by resource digest sha256:2112e2df245a35003c13ecaf99d21017ab37946e9f7e2a4e89df83ffabfa401d. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step05-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.05.bind-avuhz-auth-issuer",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step06-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step06-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step06-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.07.bind-avuhz-tenant-bridge",
+      "ordinal": 7,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_TENANT_BRIDGE",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:b58193aa77ed71603ee63e568c24ba73d4b7bc005eb61f195815c468b05c6a25"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.06.bind-avuhz-service-audience"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.06.bind-avuhz-service-audience",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_TENANT_BRIDGE to the exact canonical value recorded by resource digest sha256:b58193aa77ed71603ee63e568c24ba73d4b7bc005eb61f195815c468b05c6a25. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step06-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.06.bind-avuhz-service-audience",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step07-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step07-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step07-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.08.bind-avuhz-rls-policy-reference",
+      "ordinal": 8,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_RLS_POLICY_REFERENCE",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:aaf6e7b7735ee1a08649840ca857dca37e1d9120ba9501e1a5ad25f4cb256647"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.07.bind-avuhz-tenant-bridge"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.07.bind-avuhz-tenant-bridge",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_RLS_POLICY_REFERENCE to the exact canonical value recorded by resource digest sha256:aaf6e7b7735ee1a08649840ca857dca37e1d9120ba9501e1a5ad25f4cb256647. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step07-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.07.bind-avuhz-tenant-bridge",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step08-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step08-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step08-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v1.step.09.bind-avuhz-command-service-identity",
+      "ordinal": 9,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_COMMAND_SERVICE_IDENTITY",
+        "binding_state": "BOUND",
+        "exact_version": "render.nonsecret-runtime-config.v1",
+        "exact_digest": "sha256:55ff95fbfef522d552e7c7497ce5d623a851cef44415ccff7340fb96b311104b"
+      },
+      "operation": "provider.render.environment-variable.merge-single-nonsecret-exact",
+      "dependency_step_ids": [
+        "development.render.runtime-config-repair-v1.step.08.bind-avuhz-rls-policy-reference"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.08.bind-avuhz-rls-policy-reference",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), merge exactly one non-secret environment variable AVUHZ_COMMAND_SERVICE_IDENTITY to the exact canonical value recorded by resource digest sha256:55ff95fbfef522d552e7c7497ce5d623a851cef44415ccff7340fb96b311104b. Use replace=false and modify no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is triggered. One provider call may change only this one key.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.replace-all",
+        "environment-variable.secret.modify",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "batch-mutation.required",
+        "deployment.detected",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step08-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v1.step.08.bind-avuhz-rls-policy-reference",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step09-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v1.step09-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-repair-v1.step09-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "deployment.trigger",
+    "environment-group.modify",
+    "environment-variable.batch-update",
+    "environment-variable.replace-all",
+    "environment-variable.secret.modify",
+    "n8n.operation",
+    "port.modify",
+    "production.target",
+    "render.auto-deploy.modify",
+    "render.branch.modify",
+    "render.service-setting.modify",
+    "secret.agent-visible",
+    "secret.digest",
+    "secret.git-persist",
+    "secret.local-persist",
+    "secret.log",
+    "secret.return",
+    "staging.target",
+    "supabase.operation",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift",
+    "unexpected.provider-effect"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

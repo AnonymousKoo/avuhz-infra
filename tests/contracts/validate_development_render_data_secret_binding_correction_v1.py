@@ -12,6 +12,8 @@ PLAN=BASE/'development-render-data-secret-binding-correction-v1.plan.json'
 PROGRESS=BASE/'development-render-data-secret-binding-correction-v1.progress.json'
 RESOURCE=BASE/'development-render-data-secret-binding-correction-v1.resource.json'
 APPROVAL=BASE/'development-render-data-secret-binding-correction-v1.approval.json'
+EXECUTION=BASE/'development-render-data-secret-binding-correction-v1.execution-progress.json'
+SUCCESS=BASE/'development-render-data-secret-binding-correction-v1-success.evidence.json'
 V2_FAILURE=BASE/'development-render-data-secret-binding-v2-failure.evidence.json'
 V2_EXEC=BASE/'development-render-data-secret-binding-v2.execution-progress.json'
 PLAN_ID='7c9de2be-fb23-4d5c-8f5a-fc40b1d2276d'
@@ -25,11 +27,15 @@ STEP_ID='development.render.data-secret-binding-correction-v1.step.01.verify-fin
 APPROVAL_ID='cd8c764b-9f9e-40c1-ab62-b7ac2f28b11a'
 APPROVAL_DIGEST='sha256:7f2979b1c93d5473481d8746ef3dc1c8ac2aa1e3249e88f262a01e631657a9f2'
 APPROVED_AT='2026-10-01T14:21:39Z'
+EXECUTION_PROGRESS_DIGEST='sha256:3332d49e5ff1dfba01fd5e71ba0b7e81914a42de59dcb7d32bc09a73026f795f'
+SUCCESS_EVIDENCE_DIGEST='sha256:b63c47ed92d1dcbbffefba9dbb395591c16be2bfc2d8048b71edceb724993464'
+PREFLIGHT_DIGEST='sha256:7077f4a54b45011c3b956926c959186b11dc8817e38c62297bee024a1c90e5bb'
+RESULT_DIGEST='sha256:b46d5df390a7a316ad7f60f64b99f65125da64bd8efcaef550619cd87f4e88d3'
 def load(p): return json.loads(p.read_text())
 def raw(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
-    plan=load(PLAN); progress=load(PROGRESS); resource=load(RESOURCE); approval=load(APPROVAL); failure=load(V2_FAILURE); v2x=load(V2_EXEC)
-    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
+    plan=load(PLAN); progress=load(PROGRESS); resource=load(RESOURCE); approval=load(APPROVAL); execution=load(EXECUTION); success=load(SUCCESS); failure=load(V2_FAILURE); v2x=load(V2_EXEC)
+    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_progress(plan,execution,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
     assert plan['plan_id']==PLAN_ID and plan['plan_version']==1 and plan['plan_digest']==PLAN_DIGEST==plan_digest(plan)
     assert plan['definition_status']=='READY_FOR_APPROVAL' and plan['environment']=='DEVELOPMENT'
     assert plan['target']=={'provider_class':'runtime.provider','provider_reference':'render','project_reference':'srv-dab9n4qd0e5s73dq37mg','responsibility':'RUNTIME','issuer_reference':None,'audience_reference':None}
@@ -61,8 +67,35 @@ def main():
     assert s['authorization_state']=='PENDING' and s['execution_state']=='NOT_STARTED' and s['verification_state']=='NOT_STARTED' and s['authorization_consumed'] is False
     assert approval=={'approval_id':APPROVAL_ID,'plan_id':PLAN_ID,'plan_version':1,'plan_digest':PLAN_DIGEST,'owner_identity':'github:AnonymousKoo','decision':'APPROVE','environment':'DEVELOPMENT','effective_at':'2026-10-01T14:45:00Z','expires_at':'2026-10-01T18:45:00Z','approved_at':APPROVED_AT,'status':'ACTIVE','authority_scope':'EXACT_PLAN_ONLY','approval_digest':APPROVAL_DIGEST}
     assert approval['approval_digest']==APPROVAL_DIGEST==approval_digest(approval)
-    rendered=PLAN.read_text()+PROGRESS.read_text()+RESOURCE.read_text()
+    assert execution['progress_digest']==EXECUTION_PROGRESS_DIGEST and execution['overall_state']=='COMPLETED' and execution['record_version']==3
+    sx=execution['step_states'][0]
+    assert sx['authorization_state']=='CONSUMED' and sx['authorization_consumed'] is True
+    assert sx['execution_state']=='SUCCEEDED' and sx['verification_state']=='PASS' and sx['safe_error_code'] is None
+    assert sx['observed_postcondition']==step['expected_postcondition']
+    assert len(sx['evidence'])==1 and sx['evidence'][0]['evidence_type']=='runtime.render.data-secret-binding.corrective-state-verified'
+    assert sx['evidence'][0]['evidence_digest']==SUCCESS_EVIDENCE_DIGEST
+    assert len(sx['binding_assertions'])==2
+    pre=[x for x in sx['binding_assertions'] if x['binding_id']=='binding.development.render.data-secret-binding-correction-v1.dashboard-session'][0]
+    result=[x for x in sx['binding_assertions'] if x['binding_id']=='binding.development.render.data-secret-binding-correction-v1.result'][0]
+    assert pre['evidence_digest']==PREFLIGHT_DIGEST and pre['value_digest']==PREFLIGHT_DIGEST
+    assert result['evidence_digest']==SUCCESS_EVIDENCE_DIGEST and result['value_digest']==RESULT_DIGEST
+    assert success['outcome']=='SUCCEEDED_VERIFIED' and success['classification']=='RENDER_DATA_SECRET_BINDING_CORRECTIVE_STATE_VERIFIED'
+    assert success['owner_observation']['service_level_key_present'] is True
+    assert success['owner_observation']['service_level_value_masked'] is True
+    assert success['owner_observation']['secret_value_observed'] is False
+    assert success['owner_observation']['duplicate_environment_group_key_absent'] is True
+    assert success['provider_read_observation']['auto_deploy_off_verified'] is True
+    assert success['provider_read_observation']['latest_live_deploy_unchanged_verified'] is True
+    assert success['provider_read_observation']['provider_mutation_attempted'] is False
+    assert success['provider_read_observation']['deployment_triggered'] is False
+    assert success['verification_observation']['postcondition_verified'] is True
+    assert success['security_state']['secret_material_recorded'] is False
+    assert success['security_state']['secret_digest_recorded'] is False
+    assert success['security_state']['provider_mutation_attempted'] is False
+    assert success['security_state']['deployment_triggered'] is False
+    assert raw(SUCCESS)==SUCCESS_EVIDENCE_DIGEST
+    rendered=PLAN.read_text()+PROGRESS.read_text()+RESOURCE.read_text()+EXECUTION.read_text()+SUCCESS.read_text()
     for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
-    print('DEVELOPMENT Render DATA secret-binding correction v1: PASS (APPROVED read-only final-state verification; v2 scope drift bound; no mutation/deploy/secret observation)')
+    print('DEVELOPMENT Render DATA secret-binding correction v1: PASS (COMPLETED/SUCCEEDED/PASS; service key owner-confirmed masked; duplicate group key absent; no deploy/mutation/secret observation)')
     return 0
 if __name__=='__main__': raise SystemExit(main())

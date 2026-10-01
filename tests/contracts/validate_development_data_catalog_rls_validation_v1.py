@@ -11,8 +11,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -41,6 +43,9 @@ PROGRESS_ID = "d35c52af-28c7-4f2a-9687-4ed7a173e1d4"
 STEP_ID = "development.data.catalog-rls-validation-v1.step.01.inspect-read-only"
 PLAN_DIGEST = "sha256:0713d866acdfb2ef3fe15e2eca46aeb4a4c8ef18eca528f1eb83f6cd868dca29"
 PROGRESS_DIGEST = "sha256:90ebe6e250ebf7452078733d0fd0f4ae5e07d17702608eea4e3b4b417024962d"
+APPROVAL_ID = "8220ef0c-0eef-4849-a413-4ed8bd5d1ae6"
+APPROVAL_DIGEST = "sha256:6aaab135e7ddf18d2f28a2c9d8fa3ba752aa5232956b807f41dd4e9c278f123a"
+APPROVED_AT = "2026-10-01T01:43:29Z"
 EXECUTOR_BLOB = "5e1a29c95b9cab4695f52f752ca10e7a03070973"
 HELPER_BLOB = "c47b36d3406e26a9d9ac66c8b943afa6a3c9ca81"
 CONTRACT_DIGEST = "sha256:ac7555458c5d0f6c40f535b1c81166aaa03295801035a83443ea537a7ccc74cc"
@@ -94,9 +99,16 @@ def binding(step: dict, binding_id: str) -> dict:
 def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
+    approval = load(APPROVAL_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(
+        plan,
+        approval,
+        SCHEMA_ROOT,
+        plan["authorization_window"]["starts_at"],
+    )
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
@@ -214,7 +226,22 @@ def main() -> int:
     ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
     assert state["evidence"] == []
     assert state["binding_assertions"] == []
-    assert not APPROVAL_PATH.exists()
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": "2026-10-01T02:00:00Z",
+        "expires_at": "2026-10-01T05:00:00Z",
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
     assert not list(
         BASE.glob("development-data-catalog-rls-validation-v1*.evidence.json")
     )
@@ -240,8 +267,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT DATA catalog/RLS validation v1: PASS "
-        "(READY_FOR_APPROVAL; pristine; exact executor/helper/catalog contract "
-        "bound; no approval; no provider authority)"
+        "(APPROVED; pristine progress; exact executor/helper/catalog contract "
+        "bound; no provider execution)"
     )
     return 0
 

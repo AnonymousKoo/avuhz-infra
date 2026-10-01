@@ -58,7 +58,7 @@ Therefore:
 - trusted identity resolution is already composed; DATA work still requires the validated hosted connection and transaction-local tenant binding; and
 - no PostgREST, Supabase `service_role`, migration identity, or parallel persistence path is introduced.
 
-Read-only Render inspection on 2026-09-30 confirmed the only workspace service is DEVELOPMENT `avuhz-command-dev` (`srv-dab9n4qd0e5s73dq37mg`), with auto-deploy disabled and its live deploy still pinned to commit `6bff57065151462fc74861c68a232454b2ef9a20` from 2026-09-01. This repository-local adapter change does not mutate Render, bind a secret, deploy current code, or establish hosted readiness. The default Supabase `aud=authenticated` remains rejected; the approved DEVELOPMENT command-service audience is separate.
+Read-only Render inspection on 2026-09-30 confirmed the only workspace service is DEVELOPMENT `avuhz-command-dev` (`srv-dab9n4qd0e5s73dq37mg`), with auto-deploy disabled and its live deploy still pinned to commit `6bff57065151462fc74861c68a232454b2ef9a20` from 2026-09-01. This repository-local adapter change does not mutate Render, bind a secret, deploy current code, or establish hosted readiness. The default Supabase `aud=authenticated` is rejected by Avuhz; the approved DEVELOPMENT command-service audience remains separate.
 
 ## Multi-tenant truth
 

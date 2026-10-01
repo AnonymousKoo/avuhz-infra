@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate bounded DEVELOPMENT Render deployment v1 preparation."""
 from __future__ import annotations
-import json, sys
+import hashlib, json, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
@@ -12,6 +12,8 @@ RESOURCE=BASE/'development-render-deployment-v1.resource.json'
 PLAN=BASE/'development-render-deployment-v1.plan.json'
 PROGRESS=BASE/'development-render-deployment-v1.progress.json'
 APPROVAL=BASE/'development-render-deployment-v1.approval.json'
+EXECUTION=BASE/'development-render-deployment-v1.execution-progress.json'
+FAILURE=BASE/'development-render-deployment-v1-failure.evidence.json'
 CORRECTION_SUCCESS=BASE/'development-render-data-secret-binding-correction-v1-success.evidence.json'
 CORRECTION_EXEC=BASE/'development-render-data-secret-binding-correction-v1.execution-progress.json'
 RESOURCE_DIGEST='sha256:7927f96735933c56cb33e892b48ddf32004cc50e1a0f19850acaec02a11433c5'
@@ -25,10 +27,15 @@ STEP_ID='development.render.deployment-v1.step.01.deploy-canonical-main'
 APPROVAL_ID='cc604943-5b43-4116-b2d5-78a8cab062d2'
 APPROVAL_DIGEST='sha256:419b9e3449a62350c517e3ae8d764e4554acb6e35c2c1b1f5b6cb8f590cb61ea'
 APPROVED_AT='2026-10-01T15:12:33Z'
+EXECUTION_PROGRESS_DIGEST='sha256:4f70e9c95518844760d57d0ed6d7d89cd56ecaf5bd0a79dd355f4aa1d1f7ee15'
+FAILURE_EVIDENCE_DIGEST='sha256:27b6c2825e43edcc17cfbe628c7f44f42c580727a2ded442ac722f04a2b8d186'
+HEAD_OBSERVATION_DIGEST='sha256:14aa717760e25fe45efcd792f29a6d1055ee9f3b8405eb9ce56fb88bbca4d2c4'
+SERVICE_PREFLIGHT_DIGEST='sha256:78435e29af773970e34c66b8e0efcdadd36bd4ce5c52afa5012b3741ddc505d0'
 def load(p): return json.loads(p.read_text())
+def raw(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
-    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); approval=load(APPROVAL); correction=load(CORRECTION_SUCCESS); correction_exec=load(CORRECTION_EXEC)
-    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
+    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); approval=load(APPROVAL); execution=load(EXECUTION); failure=load(FAILURE); correction=load(CORRECTION_SUCCESS); correction_exec=load(CORRECTION_EXEC)
+    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_progress(plan,execution,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
     payload={k:v for k,v in resource.items() if k!='contract_digest'}
     assert resource['contract_digest']==RESOURCE_DIGEST==canonical_digest(payload)
     assert resource['environment']=='DEVELOPMENT' and resource['provider']=='render'
@@ -66,8 +73,35 @@ def main():
     assert progress['overall_state']=='NOT_STARTED' and s['authorization_state']=='PENDING' and s['authorization_consumed'] is False and s['execution_state']=='NOT_STARTED' and s['verification_state']=='NOT_STARTED' and s['evidence']==[] and s['binding_assertions']==[]
     assert approval=={'approval_id':APPROVAL_ID,'plan_id':PLAN_ID,'plan_version':1,'plan_digest':PLAN_DIGEST,'owner_identity':'github:AnonymousKoo','decision':'APPROVE','environment':'DEVELOPMENT','effective_at':'2026-10-01T16:30:00Z','expires_at':'2026-10-01T20:30:00Z','approved_at':APPROVED_AT,'status':'ACTIVE','authority_scope':'EXACT_PLAN_ONLY','approval_digest':APPROVAL_DIGEST}
     assert approval['approval_digest']==APPROVAL_DIGEST==approval_digest(approval)
-    rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
+    assert execution['progress_digest']==EXECUTION_PROGRESS_DIGEST and execution['overall_state']=='STOPPED' and execution['record_version']==3
+    sx=execution['step_states'][0]
+    assert sx['authorization_state']=='CONSUMED' and sx['authorization_consumed'] is True
+    assert sx['execution_state']=='FAILED' and sx['verification_state']=='FAIL'
+    assert sx['safe_error_code']=='RENDER_DEPLOYMENT_RUNTIME_CONFIGURATION_INVALID'
+    assert len(sx['evidence'])==1 and sx['evidence'][0]['evidence_type']=='runtime.render.deployment.completed'
+    assert sx['evidence'][0]['evidence_digest']==FAILURE_EVIDENCE_DIGEST
+    assert len(sx['binding_assertions'])==2
+    head_binding=[x for x in sx['binding_assertions'] if x['binding_id']=='binding.development.render.deployment-v1.canonical-main-head'][0]
+    service_binding=[x for x in sx['binding_assertions'] if x['binding_id']=='binding.development.render.deployment-v1.render-service-preflight'][0]
+    assert head_binding['evidence_digest']==HEAD_OBSERVATION_DIGEST
+    assert head_binding['sanitized_value']=='github.commit.bc955168daeab7f5021ce7e8f7a22f38a38b6496'
+    assert service_binding['evidence_digest']==SERVICE_PREFLIGHT_DIGEST and service_binding['sanitized_value'] is None
+    assert failure['outcome']=='FAILED' and failure['safe_error_code']=='RENDER_DEPLOYMENT_RUNTIME_CONFIGURATION_INVALID'
+    assert failure['classification']=='BUILD_SUCCEEDED_RUNTIME_CONFIGURATION_INVALID'
+    assert failure['deployment_observation']['deploy_id']=='dep-dav8ligu01pc738r1vtg'
+    assert failure['deployment_observation']['commit_id']=='bc955168daeab7f5021ce7e8f7a22f38a38b6496'
+    assert failure['deployment_observation']['status']=='update_failed'
+    assert failure['deployment_observation']['build_succeeded'] is True
+    assert failure['deployment_observation']['runtime_start_attempted'] is True
+    assert failure['deployment_observation']['retry_attempted'] is False
+    assert failure['deployment_observation']['second_deploy_triggered'] is False
+    assert failure['post_failure_provider_state']['previous_deploy_remains_live'] is True
+    assert failure['security_state']['secret_material_recorded'] is False
+    assert failure['security_state']['environment_variable_mutation_attempted'] is False
+    assert failure['security_state']['retry_attempted'] is False and failure['security_state']['second_deploy_triggered'] is False
+    assert raw(FAILURE)==FAILURE_EVIDENCE_DIGEST
+    rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()+EXECUTION.read_text()+FAILURE.read_text()
     for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
-    print('DEVELOPMENT Render deployment v1: PASS (APPROVED; one-service/one-manual-deploy scope; preflight-bound exact main SHA; clearCache=false; no config/secret execution yet)')
+    print('DEVELOPMENT Render deployment v1: PASS (CONSUMED/FAILED/FAIL; build succeeded, runtime configuration invalid; prior live deploy preserved; no retry/config/secret mutation)')
     return 0
 if __name__=='__main__': raise SystemExit(main())

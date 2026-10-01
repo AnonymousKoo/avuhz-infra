@@ -1,0 +1,57 @@
+{
+  "progress_id": "d4423116-def4-4761-85f3-b7eba1697a12",
+  "plan_id": "1653db1c-e55b-49ec-9fd5-6216d1160609",
+  "plan_version": 1,
+  "plan_digest": "sha256:2fa09354bfc112dc43faecf3c7718e9addb570ff81b34215831881a960864e83",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v1.step.01.deploy-canonical-main",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_reference": "render.deploy.dep-dav8ligu01pc738r1vtg.failed-runtime-configuration",
+          "evidence_digest": "sha256:27b6c2825e43edcc17cfbe628c7f44f42c580727a2ded442ac722f04a2b8d186",
+          "recorded_at": "2026-10-01T16:33:41Z"
+        }
+      ],
+      "observed_postcondition": "Exactly one authorized manual Render deploy was triggered with clearCache=false for DEVELOPMENT service srv-dab9n4qd0e5s73dq37mg at preflight-bound canonical main bc955168daeab7f5021ce7e8f7a22f38a38b6496. The build succeeded, but runtime startup exited with the sanitized message Avuhz development service configuration is invalid, so deploy dep-dav8ligu01pc738r1vtg reached update_failed. The prior live deploy dep-dabab1942hec73acamdg remained live. No retry, second deploy, environment/configuration mutation, secret observation, Supabase, n8n, staging, or production action occurred.",
+      "safe_error_code": "RENDER_DEPLOYMENT_RUNTIME_CONFIGURATION_INVALID",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v1.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "evidence_digest": "sha256:14aa717760e25fe45efcd792f29a6d1055ee9f3b8405eb9ce56fb88bbca4d2c4",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "sanitized_value": "github.commit.bc955168daeab7f5021ce7e8f7a22f38a38b6496",
+          "value_digest": "sha256:437cf2f38551c02789bdc6f9be84b3d64cc7e6dbc908c272806ce4f8fa5cebb4",
+          "recorded_at": "2026-10-01T16:33:41Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v1.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:78435e29af773970e34c66b8e0efcdadd36bd4ce5c52afa5012b3741ddc505d0",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:78435e29af773970e34c66b8e0efcdadd36bd4ce5c52afa5012b3741ddc505d0",
+          "recorded_at": "2026-10-01T16:33:41Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-01T16:33:41Z",
+  "progress_digest": "sha256:4f70e9c95518844760d57d0ed6d7d89cd56ecaf5bd0a79dd355f4aa1d1f7ee15"
+}

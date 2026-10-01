@@ -225,7 +225,7 @@ Each item remains a separate bounded resource/action boundary.
 
 `development-auth-v32-synthetic-session-cleanup-credential-retirement-v3` is prepared only: plan `f7105a67-82fc-4ae8-9962-ac895571978d`, version `3`, digest `sha256:e390c7f1f9fdb0d2475ddcbafa3465c4c36aa669bbf85313bc2826fcf9c333b4`, pristine progress `0d0d79a1-7d9b-4b5b-909e-de334f9c245a`, digest `sha256:2a106704bfed590f1f0da61137a1652131351191fabb434548d42657f8339473`, and future window `2026-09-28T00:00:00Z` through `2026-09-28T06:00:00Z`. It preserves the exact retirement scope, uses a unique v3 step namespace, and binds the pristine v1 and v2 lineage. It has no approval and grants no deletion, provider-read, GitHub mutation, or secret-value authority yet.
 
-Any v32 recovery inspection, forward-only token-lifecycle correction, future synthetic-token execution, DATA access, Render change, staging or production action, and hosted adapter wiring remain separate boundaries and require their own exact authorization where applicable.
+Any future token lifecycle work, connected DATA validation/access, Render secret binding or deployment, staging, or production action remains a separate boundary and requires its own exact authorization where applicable.
 
 Current superseding AUTH truth: repaired recovery and synthetic-token validation v3 are `COMPLETED`, their dedicated temporary credentials/bindings are retired and independently verified absent, and their consumed approvals grant no further execution authority. Hosted identity and DATA adapter code is now wired repository-locally; connected DATA validation and every Render change remain separate unexecuted boundaries.
 

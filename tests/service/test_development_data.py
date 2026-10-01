@@ -315,9 +315,11 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         uow.close()
         self.assertTrue(connection.closed)
 
-    def test_hosted_development_composition_remains_fail_closed(self):
+    def test_hosted_development_composition_remains_fail_closed_without_dsn(self):
         source = (ROOT / "src/avuhz_service/development.py").read_text()
         self.assertNotIn("create_local_development_data_composition", source)
+        self.assertIn("create_hosted_development_data_composition", source)
+        self.assertNotIn("_UnavailableUnitOfWork", source)
         settings = DevelopmentServiceSettings.from_environment({
             "AVUHZ_SERVICE_ENVIRONMENT": "DEVELOPMENT",
             "AVUHZ_DATA_PROJECT_REF": "gnuqaefotwgkwurjpyik",
@@ -333,6 +335,31 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         application = create_development_application(settings)
         self.assertFalse(application.readiness_probes["data"].ready())
         self.assertTrue(application.readiness_probes["identity"].ready())
+
+    def test_hosted_development_application_becomes_data_ready_only_after_validated_connection(self):
+        settings = DevelopmentServiceSettings.from_environment({
+            "AVUHZ_SERVICE_ENVIRONMENT": "DEVELOPMENT",
+            "AVUHZ_DATA_PROJECT_REF": "gnuqaefotwgkwurjpyik",
+            "AVUHZ_DATA_PROJECT_URL": "https://gnuqaefotwgkwurjpyik.supabase.co",
+            "AVUHZ_AUTH_PROJECT_REF": "pwlhruwutoitnieactol",
+            "AVUHZ_AUTH_ISSUER": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+            "AVUHZ_SERVICE_AUDIENCE": "audience.avuhz.command-service.development",
+            "AVUHZ_TENANT_BRIDGE": "TrustedExecutionContext.tenant_id -> avuhz.tenant_id",
+            "AVUHZ_RLS_POLICY_REFERENCE": "policy.avuhz.tenant-rls.development.v1",
+            "AVUHZ_COMMAND_SERVICE_IDENTITY": "avuhz_command_service_dev",
+            "PORT": "10000",
+        })
+        raw_factory = FakeHostedFactory()
+        application = create_development_application(
+            settings,
+            data_connection_factory=raw_factory,
+        )
+        self.assertTrue(application.readiness_probes["identity"].ready())
+        self.assertTrue(application.readiness_probes["data"].ready())
+        self.assertEqual(
+            raw_factory.connections[-1].executions[1],
+            ("set role avuhz_command_service", ()),
+        )
 
 
 if __name__ == "__main__":

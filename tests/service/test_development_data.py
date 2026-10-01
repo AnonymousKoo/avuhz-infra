@@ -15,9 +15,12 @@ from avuhz_runtime.postgres import PostgresStore, PostgresUnitOfWork
 from avuhz_service.development import DevelopmentServiceSettings, create_development_application
 from avuhz_service.development_data import (
     CANONICAL_APPLICATION_DATABASE_ROLE,
+    DEVELOPMENT_DATA_ENDPOINT_HOST,
     DEVELOPMENT_MIGRATION_IDENTITY,
+    DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
     DevelopmentDataSettings,
     DisposableLocalPostgresEndpoint,
+    create_hosted_development_data_composition,
     create_local_development_data_composition,
 )
 
@@ -44,7 +47,7 @@ class FakeConnection:
 
     def execute(self, statement, parameters=()):
         self.executions.append((statement, parameters))
-        row = {"?column?": self.ready} if statement.startswith("select current_user") else None
+        row = {"ready": self.ready} if statement.startswith("select current_user") else None
         return FakeCursor(row)
 
     def commit(self):
@@ -66,6 +69,47 @@ class FakeLocalConnector:
     def connect(self, endpoint, database_role):
         self.calls.append((endpoint, database_role))
         connection = FakeConnection(self.ready)
+        self.connections.append(connection)
+        return connection
+
+
+class FakeConnectionInfo:
+    def __init__(self, host=DEVELOPMENT_DATA_ENDPOINT_HOST):
+        self.host = host
+
+
+class FakeHostedConnection(FakeConnection):
+    def __init__(
+        self,
+        *,
+        host=DEVELOPMENT_DATA_ENDPOINT_HOST,
+        runtime_ready=True,
+        effective_ready=True,
+        readiness_ready=True,
+    ):
+        super().__init__(readiness_ready)
+        self.info = FakeConnectionInfo(host)
+        self.runtime_ready = runtime_ready
+        self.effective_ready = effective_ready
+
+    def execute(self, statement, parameters=()):
+        self.executions.append((statement, parameters))
+        if statement.startswith("select session_user"):
+            return FakeCursor({"ready": self.runtime_ready})
+        if statement == "set role avuhz_command_service":
+            return FakeCursor()
+        if statement.startswith("select current_user"):
+            return FakeCursor({"ready": self.effective_ready and self.ready})
+        return FakeCursor()
+
+
+class FakeHostedFactory:
+    def __init__(self, **connection_options):
+        self.connection_options = connection_options
+        self.connections = []
+
+    def __call__(self):
+        connection = FakeHostedConnection(**self.connection_options)
         self.connections.append(connection)
         return connection
 
@@ -184,6 +228,92 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertFalse(create_local_development_data_composition(
             DevelopmentDataSettings(), endpoint(), FakeLocalConnector(ready=False),
         ).readiness_probe.ready())
+
+    def test_hosted_connection_validates_runtime_identity_then_sets_command_role(self):
+        raw_factory = FakeHostedFactory()
+        composition = create_hosted_development_data_composition(
+            DevelopmentDataSettings(),
+            raw_factory,
+        )
+        self.assertIsInstance(composition.store, PostgresStore)
+        self.assertIs(composition.uow_factory, PostgresUnitOfWork)
+        self.assertTrue(composition.readiness_probe.ready())
+
+        connection = raw_factory.connections[-1]
+        self.assertEqual(connection.info.host, DEVELOPMENT_DATA_ENDPOINT_HOST)
+        runtime_sql, runtime_parameters = connection.executions[0]
+        self.assertTrue(runtime_sql.startswith("select session_user"))
+        self.assertEqual(
+            runtime_parameters,
+            (
+                DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
+                CANONICAL_APPLICATION_DATABASE_ROLE,
+                DEVELOPMENT_MIGRATION_IDENTITY,
+                DEVELOPMENT_MIGRATION_IDENTITY,
+            ),
+        )
+        self.assertEqual(
+            connection.executions[1],
+            ("set role avuhz_command_service", ()),
+        )
+        effective_sql, effective_parameters = connection.executions[2]
+        self.assertTrue(effective_sql.startswith("select current_user"))
+        self.assertEqual(
+            effective_parameters,
+            (
+                CANONICAL_APPLICATION_DATABASE_ROLE,
+                DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
+            ),
+        )
+        readiness_sql, readiness_parameters = connection.executions[3]
+        self.assertIn("avuhz_command_service_tenant_isolation", readiness_sql)
+        self.assertIn("has_table_privilege", readiness_sql)
+        self.assertIn("'DELETE'", readiness_sql)
+        self.assertEqual(
+            readiness_parameters,
+            (CANONICAL_APPLICATION_DATABASE_ROLE,),
+        )
+        self.assertEqual((connection.rollbacks, connection.closed), (1, True))
+
+    def test_hosted_connection_fails_closed_on_endpoint_or_role_drift(self):
+        for options in (
+            {"host": "db.example.invalid"},
+            {"runtime_ready": False},
+            {"effective_ready": False},
+            {"readiness_ready": False},
+        ):
+            with self.subTest(options=options):
+                raw_factory = FakeHostedFactory(**options)
+                composition = create_hosted_development_data_composition(
+                    DevelopmentDataSettings(),
+                    raw_factory,
+                )
+                self.assertFalse(composition.readiness_probe.ready())
+                connection = raw_factory.connections[-1]
+                self.assertTrue(connection.closed)
+                self.assertGreaterEqual(connection.rollbacks, 1)
+
+    def test_hosted_uow_keeps_existing_tenant_binding_and_never_uses_migration_identity(self):
+        raw_factory = FakeHostedFactory()
+        composition = create_hosted_development_data_composition(
+            DevelopmentDataSettings(),
+            raw_factory,
+        )
+        uow = composition.uow_factory(composition.store)
+        connection = raw_factory.connections[-1]
+        uow.bind_trusted_context(context())
+        self.assertEqual(
+            connection.executions[-1],
+            ("select set_config('avuhz.tenant_id',%s,true)", (TENANT,)),
+        )
+        runtime_sql = connection.executions[0][0]
+        self.assertIn("not pg_has_role(session_user,%s,'SET')", runtime_sql)
+        self.assertNotIn("set role avuhz_data_migration_service_dev", "\n".join(
+            statement for statement, _ in connection.executions
+        ))
+        uow.rollback()
+        uow.close()
+        self.assertTrue(connection.closed)
 
     def test_hosted_development_composition_remains_fail_closed(self):
         source = (ROOT / "src/avuhz_service/development.py").read_text()

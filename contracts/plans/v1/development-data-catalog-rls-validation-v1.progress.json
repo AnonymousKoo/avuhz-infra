@@ -1,0 +1,25 @@
+{
+  "progress_id": "d35c52af-28c7-4f2a-9687-4ed7a173e1d4",
+  "plan_id": "a4e15530-b16a-4d45-9bc1-00c4d54a7271",
+  "plan_version": 1,
+  "plan_digest": "sha256:0713d866acdfb2ef3fe15e2eca46aeb4a4c8ef18eca528f1eb83f6cd868dca29",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.data.catalog-rls-validation-v1.step.01.inspect-read-only",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-01T01:28:00Z",
+  "progress_digest": "sha256:90ebe6e250ebf7452078733d0fd0f4ae5e07d17702608eea4e3b4b417024962d"
+}
+
+[executed on device: DefNet (407e98ab-1503-4c73-9c80-4acea2362eed)]

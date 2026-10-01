@@ -5,12 +5,13 @@ import hashlib,json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 BASE=ROOT/'contracts/plans/v1'; SCHEMA=ROOT/'contracts/schemas/v1'
 RESOURCE=BASE/'development-render-runtime-config-repair-v5.resource.json'
 PLAN=BASE/'development-render-runtime-config-repair-v6.plan.json'
 PROGRESS=BASE/'development-render-runtime-config-repair-v6.progress.json'
+APPROVAL=BASE/'development-render-runtime-config-repair-v6.approval.json'
 V4_EXEC=BASE/'development-render-runtime-config-repair-v4.execution-progress.json'
 V4_SCOPE=BASE/'development-render-runtime-config-repair-v4-step03-scope-drift.evidence.json'
 PLAN_ID='6a97b35c-ecea-41e0-bdde-dd46a202b627'
@@ -19,11 +20,14 @@ PROGRESS_ID='74fad263-04ac-4f38-b859-249551b1719e'
 PROGRESS_DIGEST='sha256:6ef5a4c3c6869edff0fc06e748d55c59a255a79b923a69a42c85ff7eec7de40e'
 RESOURCE_DIGEST='sha256:4c6a3350b86846c2d4f54b4302333accee18139d70776dc04e7dee5b43de9d13'
 V4_SCOPE_DIGEST='sha256:7cde43655288a8b5d894fa6788489c94c6d081d2780fa0bdc676245dc2a2a327'
+APPROVAL_ID='0c46e427-43c2-4657-b85d-dbb757a073d3'
+APPROVAL_DIGEST='sha256:5cb92e469c8de776d46321ae08e4e42490c527f88bfa12d88347d2602c6cc3fb'
+APPROVED_AT='2026-10-01T22:42:57Z'
 def load(p): return json.loads(p.read_text())
 def file_digest(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); x=load(V4_EXEC); s3=load(V4_SCOPE)
- validate_plan(p,SCHEMA); validate_progress(p,g,SCHEMA)
+ r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); x=load(V4_EXEC); s3=load(V4_SCOPE); a=load(APPROVAL)
+ validate_plan(p,SCHEMA); validate_progress(p,g,SCHEMA); validate_approval(p,a,SCHEMA,p['authorization_window']['starts_at'])
  assert file_digest(V4_SCOPE)==V4_SCOPE_DIGEST
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['environment']=='DEVELOPMENT' and r['provider']=='render'
@@ -63,8 +67,10 @@ def main():
    assert s['dependency_step_ids']==[p['steps'][i-2]['step_id']]
  assert g==initial_progress(p,SCHEMA,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST
  assert g['overall_state']=='NOT_STARTED' and all(s['authorization_state']=='PENDING' and not s['authorization_consumed'] and s['execution_state']=='NOT_STARTED' for s in g['step_states'])
- rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
+ assert a=={'approval_id':APPROVAL_ID,'plan_id':PLAN_ID,'plan_version':6,'plan_digest':PLAN_DIGEST,'owner_identity':'github:AnonymousKoo','decision':'APPROVE','environment':'DEVELOPMENT','effective_at':'2026-10-02T00:00:00Z','expires_at':'2026-10-02T04:00:00Z','approved_at':APPROVED_AT,'status':'ACTIVE','authority_scope':'EXACT_PLAN_ONLY','approval_digest':APPROVAL_DIGEST}
+ assert a['approval_digest']==APPROVAL_DIGEST==approval_digest(a)
+ rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()+APPROVAL.read_text()
  for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
- print('DEVELOPMENT Render runtime config repair v6: PASS (READY_FOR_APPROVAL; 8:00 PM-12:00 AM ET window; five Save-only single-key steps; no provider execution)')
+ print('DEVELOPMENT Render runtime config repair v6: PASS (APPROVED; 8:00 PM-12:00 AM ET window; five Save-only single-key steps; no provider execution)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

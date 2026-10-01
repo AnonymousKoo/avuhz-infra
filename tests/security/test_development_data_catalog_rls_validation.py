@@ -245,7 +245,7 @@ class DevelopmentDataCatalogRlsValidationTests(unittest.TestCase):
 
     def test_only_one_connection_factory_call_is_structurally_reachable(self):
         source = validation.__file__
-        tree = ast.parse(open(source, encoding="utf-8").read())
+        tree = ast.parse(Path(source).read_text(encoding="utf-8"))
         factory_calls = [
             node
             for node in ast.walk(tree)

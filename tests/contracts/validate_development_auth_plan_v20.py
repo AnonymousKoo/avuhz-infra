@@ -108,6 +108,7 @@ def main() -> int:
     assert current_classes == legacy_classes + [
         NEW_CREDENTIAL_CLASS,
         "SUPABASE_PROVIDER_READ",
+        "SUPABASE_DATA_RUNTIME_READ",
     ]
     for classes in (legacy_classes, current_classes):
         assert "SERVER_ADMIN_CREDENTIAL" not in classes

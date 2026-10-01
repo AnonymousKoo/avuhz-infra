@@ -246,6 +246,7 @@ def main() -> int:
         "EPHEMERAL_SYNTHETIC_ACCESS_TOKEN",
         CREDENTIAL_CLASS,
         "SUPABASE_PROVIDER_READ",
+        "SUPABASE_DATA_RUNTIME_READ",
     ]
     assert "SERVICE_ROLE" not in classes
     assert "SERVER_ADMIN_CREDENTIAL" not in classes

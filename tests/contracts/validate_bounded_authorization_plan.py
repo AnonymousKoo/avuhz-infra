@@ -257,6 +257,12 @@ DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH = (
 DATA_RUNTIME_LOGIN_V15_APPROVAL_FILE_DIGEST = (
     "sha256:f4e04df684674cfc2744024a11f4325dc2c76abcf81623679d63819cf4e97735"
 )
+RENDER_DATA_SECRET_BINDING_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-render-data-secret-binding-v1.approval.json"
+)
+RENDER_DATA_SECRET_BINDING_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:8c04f1a2437e62ed6957189f1140e719c8f89b3d61cafcf5bae57e0d7a32f595"
+)
 DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-catalog-rls-validation-v1.approval.json"
 )
@@ -358,6 +364,8 @@ def main() -> int:
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH)
     if DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH)
+    if RENDER_DATA_SECRET_BINDING_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RENDER_DATA_SECRET_BINDING_V1_APPROVAL_PATH)
     if DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
     if V24_APPROVAL_PATH.exists():
@@ -535,6 +543,12 @@ def main() -> int:
     if (DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH.exists() and file_digest(DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH) != DATA_RUNTIME_LOGIN_V15_APPROVAL_FILE_DIGEST):
         raise SystemExit("DEVELOPMENT DATA runtime-login v15 approval file digest mismatch")
     if (
+        RENDER_DATA_SECRET_BINDING_V1_APPROVAL_PATH.exists()
+        and file_digest(RENDER_DATA_SECRET_BINDING_V1_APPROVAL_PATH)
+        != RENDER_DATA_SECRET_BINDING_V1_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("DEVELOPMENT Render DATA secret-binding v1 approval file digest mismatch")
+    if (
         DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists()
         and file_digest(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
         != DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_FILE_DIGEST
@@ -595,6 +609,7 @@ def main() -> int:
                     DATA_RUNTIME_LOGIN_V13_APPROVAL_PATH,
                     DATA_RUNTIME_LOGIN_V15_APPROVAL_PATH,
                     DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH,
+                    RENDER_DATA_SECRET_BINDING_V1_APPROVAL_PATH,
                 }
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())

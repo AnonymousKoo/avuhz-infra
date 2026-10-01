@@ -10,8 +10,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (  # noqa: E402
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -35,6 +37,9 @@ RESOURCE_DIGEST = "sha256:6b5a9d6b18d2ad26df6eb650ca6838545676464c76475e8a053b77
 CATALOG_EVIDENCE_DIGEST = "sha256:b6db300972239326512e881d960659d29a8ad3d2ddb277029fb0b2edd46b7c76"
 CATALOG_PROGRESS_DIGEST = "sha256:853f5cd3c6988c3e7dcccaf9b4272f7a60e7563cfb55e998ae2ab7ce01c56d45"
 STEP_ID = "development.render.data-secret-binding-v1.step.01.bind-avuhz-postgres-dsn"
+APPROVAL_ID = "6a7ddbe8-b969-49cf-ac79-788473c11d58"
+APPROVAL_DIGEST = "sha256:d916a034dca70c662379f62041ff54f31888928f976382088e4ca52374634171"
+APPROVED_AT = "2026-10-01T02:38:51Z"
 
 
 def load(path: Path) -> dict:
@@ -47,11 +52,13 @@ def main() -> int:
     plan = load(PLAN_PATH)
     progress = load(PROGRESS_PATH)
     resource = load(RESOURCE_PATH)
+    approval = load(APPROVAL_PATH)
     catalog_evidence = load(CATALOG_EVIDENCE_PATH)
     catalog_progress = load(CATALOG_PROGRESS_PATH)
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, plan["authorization_window"]["starts_at"])
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
@@ -144,7 +151,22 @@ def main() -> int:
     assert state["authorization_consumed"] is False
     assert state["evidence"] == []
     assert state["binding_assertions"] == []
-    assert not APPROVAL_PATH.exists()
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": "2026-10-01T03:00:00Z",
+        "expires_at": "2026-10-01T06:00:00Z",
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
 
     rendered = PLAN_PATH.read_text() + RESOURCE_PATH.read_text() + PROGRESS_PATH.read_text()
     for forbidden in (
@@ -168,8 +190,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT Render DATA secret-binding v1: PASS "
-        "(READY_FOR_APPROVAL; exact one-service/one-env-key scope; "
-        "deploy prohibited; no secret material persisted; no provider authority)"
+        "(APPROVED; pristine progress; exact one-service/one-env-key scope; "
+        "deploy prohibited; no secret material persisted or provider execution)"
     )
     return 0
 

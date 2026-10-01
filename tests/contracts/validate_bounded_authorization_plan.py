@@ -275,6 +275,12 @@ RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH = (
 RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_FILE_DIGEST = (
     "sha256:3c13a8478fd971975f6628cb7d7864874ad51098cd4d9692bea21b3bf3a6cae6"
 )
+RENDER_DEPLOYMENT_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-render-deployment-v1.approval.json"
+)
+RENDER_DEPLOYMENT_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:3e2257bb10ab7d20e425752dad91b13f0168ed6952588e6200b42824dc49fa82"
+)
 DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-catalog-rls-validation-v1.approval.json"
 )
@@ -382,6 +388,8 @@ def main() -> int:
         expected_approval_paths.add(RENDER_DATA_SECRET_BINDING_V2_APPROVAL_PATH)
     if RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH)
+    if RENDER_DEPLOYMENT_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RENDER_DEPLOYMENT_V1_APPROVAL_PATH)
     if DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
     if V24_APPROVAL_PATH.exists():
@@ -577,6 +585,12 @@ def main() -> int:
     ):
         raise SystemExit("DEVELOPMENT Render DATA secret-binding correction v1 approval file digest mismatch")
     if (
+        RENDER_DEPLOYMENT_V1_APPROVAL_PATH.exists()
+        and file_digest(RENDER_DEPLOYMENT_V1_APPROVAL_PATH)
+        != RENDER_DEPLOYMENT_V1_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("DEVELOPMENT Render deployment v1 approval file digest mismatch")
+    if (
         DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists()
         and file_digest(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
         != DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_FILE_DIGEST
@@ -640,6 +654,7 @@ def main() -> int:
                     RENDER_DATA_SECRET_BINDING_V1_APPROVAL_PATH,
                     RENDER_DATA_SECRET_BINDING_V2_APPROVAL_PATH,
                     RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH,
+                    RENDER_DEPLOYMENT_V1_APPROVAL_PATH,
                 }
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())

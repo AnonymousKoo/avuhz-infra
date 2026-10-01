@@ -5,7 +5,7 @@ import json, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 BASE=ROOT/'contracts/plans/v1'; SCHEMA=ROOT/'contracts/schemas/v1'
 RESOURCE=BASE/'development-render-deployment-v1.resource.json'
@@ -22,10 +22,13 @@ PROGRESS_DIGEST='sha256:4e473c2acf1ada44d82ff804becc6e25142dc71249fdd02ec0c1e937
 CORRECTION_SUCCESS_DIGEST='sha256:b63c47ed92d1dcbbffefba9dbb395591c16be2bfc2d8048b71edceb724993464'
 CORRECTION_PROGRESS_DIGEST='sha256:3332d49e5ff1dfba01fd5e71ba0b7e81914a42de59dcb7d32bc09a73026f795f'
 STEP_ID='development.render.deployment-v1.step.01.deploy-canonical-main'
+APPROVAL_ID='cc604943-5b43-4116-b2d5-78a8cab062d2'
+APPROVAL_DIGEST='sha256:419b9e3449a62350c517e3ae8d764e4554acb6e35c2c1b1f5b6cb8f590cb61ea'
+APPROVED_AT='2026-10-01T15:12:33Z'
 def load(p): return json.loads(p.read_text())
 def main():
-    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); correction=load(CORRECTION_SUCCESS); correction_exec=load(CORRECTION_EXEC)
-    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA)
+    resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); approval=load(APPROVAL); correction=load(CORRECTION_SUCCESS); correction_exec=load(CORRECTION_EXEC)
+    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
     payload={k:v for k,v in resource.items() if k!='contract_digest'}
     assert resource['contract_digest']==RESOURCE_DIGEST==canonical_digest(payload)
     assert resource['environment']=='DEVELOPMENT' and resource['provider']=='render'
@@ -61,9 +64,10 @@ def main():
     assert progress==initial_progress(plan,SCHEMA,PROGRESS_ID,plan['created_at']) and progress['progress_digest']==PROGRESS_DIGEST
     s=progress['step_states'][0]
     assert progress['overall_state']=='NOT_STARTED' and s['authorization_state']=='PENDING' and s['authorization_consumed'] is False and s['execution_state']=='NOT_STARTED' and s['verification_state']=='NOT_STARTED' and s['evidence']==[] and s['binding_assertions']==[]
-    assert not APPROVAL.exists()
+    assert approval=={'approval_id':APPROVAL_ID,'plan_id':PLAN_ID,'plan_version':1,'plan_digest':PLAN_DIGEST,'owner_identity':'github:AnonymousKoo','decision':'APPROVE','environment':'DEVELOPMENT','effective_at':'2026-10-01T16:30:00Z','expires_at':'2026-10-01T20:30:00Z','approved_at':APPROVED_AT,'status':'ACTIVE','authority_scope':'EXACT_PLAN_ONLY','approval_digest':APPROVAL_DIGEST}
+    assert approval['approval_digest']==APPROVAL_DIGEST==approval_digest(approval)
     rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
     for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
-    print('DEVELOPMENT Render deployment v1: PASS (READY_FOR_APPROVAL; one-service/one-manual-deploy scope; preflight-bound exact main SHA; clearCache=false; no config/secret/provider authority)')
+    print('DEVELOPMENT Render deployment v1: PASS (APPROVED; one-service/one-manual-deploy scope; preflight-bound exact main SHA; clearCache=false; no config/secret execution yet)')
     return 0
 if __name__=='__main__': raise SystemExit(main())

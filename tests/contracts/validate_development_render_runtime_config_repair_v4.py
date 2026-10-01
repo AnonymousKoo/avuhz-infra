@@ -12,6 +12,10 @@ RESOURCE=BASE/'development-render-runtime-config-repair-v2.resource.json'
 PLAN=BASE/'development-render-runtime-config-repair-v4.plan.json'
 PROGRESS=BASE/'development-render-runtime-config-repair-v4.progress.json'
 APPROVAL=BASE/'development-render-runtime-config-repair-v4.approval.json'
+EXECUTION=BASE/'development-render-runtime-config-repair-v4.execution-progress.json'
+STEP1_EVIDENCE=BASE/'development-render-runtime-config-repair-v4-step01-success.evidence.json'
+STEP2_EVIDENCE=BASE/'development-render-runtime-config-repair-v4-step02-success.evidence.json'
+STEP3_FAILURE=BASE/'development-render-runtime-config-repair-v4-step03-scope-drift.evidence.json'
 V1_STOP=BASE/'development-render-runtime-config-repair-v1-stop.evidence.json'
 V1_EXEC=BASE/'development-render-runtime-config-repair-v1.execution-progress.json'
 PLAN_ID='c7977496-6f41-4e37-a272-1e5065a48e49'
@@ -24,7 +28,7 @@ APPROVED_AT='2026-10-01T20:54:00Z'
 def load(p): return json.loads(p.read_text())
 def file_digest(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); x=load(V1_EXEC); a=load(APPROVAL)
+ r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); x=load(V1_EXEC); a=load(APPROVAL); execp=load(EXECUTION); s1=load(STEP1_EVIDENCE); s2=load(STEP2_EVIDENCE); s3=load(STEP3_FAILURE)
  validate_plan(p,SCHEMA); validate_progress(p,g,SCHEMA); validate_approval(p,a,SCHEMA,p['authorization_window']['starts_at'])
  assert file_digest(V1_STOP)==V1_STOP_DIGEST
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
@@ -66,8 +70,32 @@ def main():
  assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
  assert a['effective_at']=='2026-10-01T21:30:00Z' and a['expires_at']=='2026-10-02T01:30:00Z' and a['approved_at']==APPROVED_AT
  assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY' and a['approval_digest']==approval_digest(a)
+ validate_progress(p,execp,SCHEMA)
+ assert execp['overall_state']=='STOPPED' and execp['record_version']==7
+ for idx in (0,1):
+  st=execp['step_states'][idx]
+  assert st['authorization_state']=='CONSUMED' and st['authorization_consumed'] is True and st['execution_state']=='SUCCEEDED' and st['verification_state']=='PASS'
+  assert st['safe_error_code'] is None and st['observed_postcondition']==p['steps'][idx]['expected_postcondition']
+  assert len(st['evidence'])==1 and st['evidence'][0]['evidence_type']=='runtime.render.nonsecret-environment-variable.bound'
+ assert execp['step_states'][0]['evidence'][0]['evidence_digest']==file_digest(STEP1_EVIDENCE)
+ assert execp['step_states'][1]['evidence'][0]['evidence_digest']==file_digest(STEP2_EVIDENCE)
+ st3=execp['step_states'][2]
+ assert st3['authorization_state']=='CONSUMED' and st3['authorization_consumed'] is True
+ assert st3['execution_state']=='FAILED' and st3['verification_state']=='FAIL' and st3['safe_error_code']=='RENDER_ENVIRONMENT_SCOPE_DRIFT'
+ assert len(st3['evidence'])==1 and st3['evidence'][0]['evidence_digest']==file_digest(STEP3_FAILURE)
+ assert s1['owner_observation']['key']=='AVUHZ_DATA_PROJECT_REF' and s1['owner_observation']['canonical_value']=='gnuqaefotwgkwurjpyik'
+ assert s1['owner_observation']['save_only_used'] is True and s1['provider_read_observation']['new_deploy_detected'] is False
+ assert s1['security_state']['protected_existing_key_read'] is False and s1['security_state']['protected_existing_key_modified'] is False and s1['security_state']['port_modified'] is False
+ assert s2['owner_observation']['key']=='AVUHZ_DATA_PROJECT_URL' and s2['owner_observation']['canonical_value']=='https://gnuqaefotwgkwurjpyik.supabase.co'
+ assert s2['owner_observation']['save_only_used'] is True and s2['provider_read_observation']['new_deploy_detected'] is False
+ assert s2['security_state']['protected_existing_key_read'] is False and s2['security_state']['protected_existing_key_modified'] is False and s2['security_state']['port_modified'] is False
+ assert s3['outcome']=='FAILED_SCOPE_DRIFT' and s3['classification']=='OWNER_INTERACTIVE_SAVE_ONLY_TWO_KEY_SCOPE_DRIFT'
+ assert s3['owner_observation']['intended_step_key']=='AVUHZ_AUTH_PROJECT_REF' and s3['owner_observation']['additional_key_changed_same_save']=='AVUHZ_DATA_PROJECT_REF'
+ assert s3['owner_observation']['provider_action_changed_more_than_one_key'] is True and s3['verification_observation']['scope_drift'] is True
+ assert s3['verification_observation']['new_deploy_detected'] is False and s3['security_state']['protected_existing_key_read'] is False and s3['security_state']['port_modified'] is False
+ assert all(x['authorization_state']=='BLOCKED' and x['execution_state']=='NOT_STARTED' for x in execp['step_states'][3:])
  rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
  for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
- print('DEVELOPMENT Render runtime config repair v4: PASS (APPROVED; 5:30-9:30 PM ET window; 8 Save-only single-key mutations; connected auto-deploy wrapper prohibited)')
+ print('DEVELOPMENT Render runtime config repair v4: PASS (STOPPED at Step 3 scope drift; Steps 1-2 succeeded; Steps 4-8 blocked; no deployment)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

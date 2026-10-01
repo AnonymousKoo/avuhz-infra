@@ -154,7 +154,8 @@ class PlatformProductionReadinessTests(unittest.TestCase):
             "validation `PASS`",
             "c13eec4a0c453116e035e0ff652a1e7395471422ec70f9aa1eb0c6391bfb73af",
             "The completed JWKS discovery grants no continuing AUTH/DATA access",
-            "live hosted DEVELOPMENT composition still uses its unavailable real-provider resolver",
+            "Canonical code now injects the certified DEVELOPMENT trusted-identity resolver",
+            "live deploy still pinned to commit `6bff57065151462fc74861c68a232454b2ef9a20`",
         ):
             self.assertIn(value, STATE)
         self.assertIn("raw-response persistence", STATE)

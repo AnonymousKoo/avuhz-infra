@@ -76,31 +76,16 @@ class DevelopmentServiceSettings:
         return cls(**{key: values[name] for key, name in required.items()}, port=port)
 
 
-class _UnavailableProbe:
-    def ready(self):
-        return False
-
-
 class _ConfiguredProbe:
     def ready(self):
         return True
 
 
-class _UnavailableIdentityResolver:
-    def resolve(self, authenticated_identity: object):
-        raise PermissionError("trusted development identity dependency is unavailable")
-
-
-class _UnavailableStore:
-    pass
-
-
-class _UnavailableUnitOfWork:
-    def __init__(self, *_args, **_kwargs):
-        raise RuntimeError("development data dependency is unavailable")
-
-
-def create_development_application(settings: DevelopmentServiceSettings):
+def create_development_application(
+    settings: DevelopmentServiceSettings,
+    *,
+    data_connection_factory=None,
+):
     # Imports are local because these provider adapters bind back to the exact
     # DEVELOPMENT constants defined by this module.
     from .development_identity import DevelopmentTrustedIdentityResolver
@@ -109,10 +94,17 @@ def create_development_application(settings: DevelopmentServiceSettings):
         DevelopmentSupabaseIdentityVerifier,
     )
     from .development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
+    from .development_data import (
+        DevelopmentDataSettings,
+        create_hosted_development_data_composition,
+    )
 
     # Settings bind this composition to approved non-secret DEVELOPMENT references.
-    # Identity verification is read-only; DATA remains deliberately unavailable.
-    store = _UnavailableStore()
+    # Provider credentials remain runtime-only; missing or invalid DATA stays fail-closed.
+    data = create_hosted_development_data_composition(
+        DevelopmentDataSettings(),
+        data_connection_factory,
+    )
     identity_resolver = DevelopmentTrustedIdentityResolver(
         DevelopmentSupabaseIdentityVerifier(
             DevelopmentSupabaseEs256JwtVerifier(),
@@ -120,12 +112,12 @@ def create_development_application(settings: DevelopmentServiceSettings):
         )
     )
     return create_service_application(
-        store=store,
-        uow_factory=_UnavailableUnitOfWork,
+        store=data.store,
+        uow_factory=data.uow_factory,
         identity_resolver=identity_resolver,
         readiness_probes={
             "configuration": _ConfiguredProbe(),
-            "data": _UnavailableProbe(),
+            "data": data.readiness_probe,
             "identity": _ConfiguredProbe(),
         },
     )

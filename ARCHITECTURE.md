@@ -25,7 +25,7 @@ RBAC/ABAC is implemented as trusted server-side policy, not as caller-supplied r
 
 There is no canonical Avuhz user-directory or organization-directory table in the 16-table DATA migration. Users are currently external AUTH identities resolved into a trusted principal. Tenant authority is carried as one canonical tenant UUID in provider-controlled AUTH metadata, checked against one server-owned allowlist entry, propagated as `TrustedExecutionContext.tenant_id`, and rebound transaction-locally for DATA RLS. `organization_id` exists in the trusted context model, but the current synthetic DEVELOPMENT resolver does not implement an organization membership directory or organization-admin model.
 
-Current hosted limitation: `src/avuhz_service/development.py` still instantiates `_UnavailableIdentityResolver`. The provider-specific verifier exists and is tested, but the hosted DEVELOPMENT service has not yet injected it. One short-lived synthetic-token end-to-end validation is also still not complete. The latest bounded DEVELOPMENT AUTH evidence reports two sessions and two refresh tokens and classifies the state as `SESSION_CLEANUP_REQUIRED`; cleanup v3 is prepared but unapproved and unexecuted. This unresolved state blocks hosted identity and DATA wiring.
+Current hosted code state: `src/avuhz_service/development.py` injects the certified `DevelopmentTrustedIdentityResolver`/Supabase JWT verifier path, and synthetic-token validation v3 plus the repaired recovery/temporary-credential retirement lifecycle are complete. The DEVELOPMENT DATA path is also composed through the existing `PostgresStore`/`PostgresUnitOfWork`: the hosted connection boundary validates the canonical DATA endpoint host, the restricted `avuhz_data_runtime_service_dev` session, exact SET-only membership in `avuhz_command_service`, no migration-role SET access, zero direct runtime table grants, and SSL before `SET ROLE avuhz_command_service`. `PostgresUnitOfWork` then binds only the verified trusted tenant to transaction-local `avuhz.tenant_id`. Render deployment, secret binding, connected catalog/RLS validation, and readiness promotion remain separate unexecuted boundaries.
 
 ## 2. Event-driven workflow / orchestration engine
 
@@ -56,7 +56,7 @@ For the authoritative Avuhz tables, the implemented isolation model is:
 - `avuhz_command_service` receives `SELECT` on all 16 tables, `INSERT` only on the 15 tables that support creation through the governed runtime, and column-scoped `UPDATE` grants for allowed transitions;
 - runtime/application authority is separate from migration/DDL authority.
 
-`src/avuhz_runtime/postgres.py` and the UnitOfWork path bridge trusted tenant context into the transaction. `src/avuhz_service/development_data.py` currently permits only disposable loopback PostgreSQL for certification; the hosted DEVELOPMENT service still uses `_UnavailableUnitOfWork`, so no real hosted Supabase DATA adapter is injected yet.
+`src/avuhz_runtime/postgres.py` and the UnitOfWork path bridge trusted tenant context into the transaction. `src/avuhz_service/development_data.py` preserves the disposable loopback certification composition and separately defines the hosted DEVELOPMENT connection boundary used by `src/avuhz_service/development.py`. Missing DSN, endpoint drift, runtime-role/ACL drift, missing SSL, failed command-role activation, or canonical table/RLS readiness mismatch fails closed. The adapter does not use PostgREST, Supabase `service_role`, migration identity, DDL, or a parallel repository path.
 
 There is also a preserved legacy schema inventory at `supabase/inventory/current_public_schema.sql`. That inventory contains non-Avuhz tables with older broad policies such as `authenticated_full_access USING (true) WITH CHECK (true)` and anon demo-read policies. Those legacy policies are **not** the isolation model for the `avuhz_*` authority path and must not be copied into new Avuhz resources. They remain legacy security debt requiring separate ownership and remediation decisions.
 
@@ -78,15 +78,15 @@ No Stripe SDK, Stripe adapter, billing service, usage-metering worker, or billin
 
 The service is a Python WSGI command/query API. `src/avuhz_service/application.py` exposes `/v1/commands`, `/v1/queries`, and bounded health endpoints. Mutations have one governed Executor path; queries require trusted identity plus `engagement:read`. Responses are `no-store`, and the local request handler suppresses access logging because paths may contain authoritative identifiers.
 
-Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jsonschema`. The repository also pins the Supabase CLI for local/provider artifact work. A DEVELOPMENT Render service is recorded in canonical state, but readiness remains intentionally fail-closed until hosted AUTH and DATA adapters are injected and independently verified.
+Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jsonschema`. The repository also pins the Supabase CLI for local/provider artifact work. A DEVELOPMENT Render service is recorded in canonical state. Hosted AUTH and DATA adapters are now composed in repository code, but live readiness remains unestablished until the exact reviewed code is deployed with a separately authorized DATA secret binding and connected validation.
 
 ## Provider boundaries and readiness
 
 - Supabase DEVELOPMENT AUTH is project `pwlhruwutoitnieactol`; Supabase DEVELOPMENT DATA is project `gnuqaefotwgkwurjpyik`. Registration and repository evidence do not grant new provider read or mutation authority.
 - `supabase/provider-artifacts/development-auth/` and `supabase/provider-artifacts/development-data/` are separate, allowlisted provider-artifact surfaces. AUTH-specific SQL is deliberately excluded from the automatic migration chain.
 - `supabase/config.toml` is local configuration, not proof that a hosted service or Edge Function is deployed. Its permissive local network defaults and enabled local components are not production network policy.
-- A DEVELOPMENT Render service and bounded historical health evidence are recorded in `docs/current-build-state.md`; liveness can pass while readiness remains `503` because the hosted provider adapters are unavailable.
-- AUTH v28 and DATA v3 are completed provider-foundation evidence, not reusable authority. The active cleanup need, hosted adapter work, any Render change, n8n, communications, billing, staging, and production are distinct boundaries requiring their own authorization.
+- A DEVELOPMENT Render service and bounded historical health evidence are recorded in `docs/current-build-state.md`; the current live deploy predates the hosted adapter code, so its historical readiness remains `503` and does not establish readiness for the current repository state.
+- AUTH recovery/token cleanup and DATA v15 runtime-login creation are completed historical evidence, not reusable authority. Connected DATA validation, any Render secret/deploy/readiness change, n8n, communications, billing, staging, and production are distinct boundaries requiring their own authorization.
 - Current platform production readiness is `NOT_READY`; `READY_FOR_PHASE6` is `NO`.
 
 ## Repository resource map
@@ -110,9 +110,8 @@ Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jso
 
 ## Known Gaps
 
-- End-to-end issuance and local validation of one short-lived synthetic DEVELOPMENT token is not complete.
-- DEVELOPMENT AUTH currently has two sessions and two refresh tokens; cleanup is required, cleanup v3 has no approval or execution authority, and the dedicated credential-retirement obligation remains outstanding after cleanup completes or permanently stops.
-- Hosted DEVELOPMENT identity and DATA adapters are not wired; `/health/ready` therefore remains intentionally unavailable.
+- Synthetic-token validation v3, repaired recovery cleanup, and the dedicated temporary-credential retirement are complete; their consumed authority grants no further provider action.
+- Hosted DEVELOPMENT identity and DATA adapter code is composed in the current service, but the live Render service has not been promoted to this code under a verified DATA secret binding and connected catalog/RLS validation. Hosted provider readiness therefore remains unestablished.
 - No canonical Avuhz user directory, organization directory, membership model, or organization-admin authority model is implemented in the 16-table DATA schema.
 - No canonical n8n workflow exports or deployed n8n integration are present.
 - No shared communications provider adapter or SPF/DKIM/DMARC deployment configuration is implemented here.

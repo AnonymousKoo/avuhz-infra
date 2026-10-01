@@ -686,6 +686,21 @@
                       },
                       {
                         "contains": {
+                          "const": "credential.create"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.rotate"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "credential.export"
+                        }
+                      },
+                      {
+                        "contains": {
                           "const": "service-role.use"
                         }
                       },
@@ -704,6 +719,85 @@
                 }
               }
             }
+          },
+          "prohibited_actions": {
+            "allOf": [
+              {
+                "contains": {
+                  "const": "provider.mutation"
+                }
+              },
+              {
+                "contains": {
+                  "const": "business-row.read"
+                }
+              },
+              {
+                "contains": {
+                  "const": "auth-data.read"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.persist"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.expose"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.log"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.return"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.digest"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.copy"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.create"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.rotate"
+                }
+              },
+              {
+                "contains": {
+                  "const": "credential.export"
+                }
+              },
+              {
+                "contains": {
+                  "const": "service-role.use"
+                }
+              },
+              {
+                "contains": {
+                  "const": "migration-identity.use"
+                }
+              },
+              {
+                "contains": {
+                  "const": "ddl.execute"
+                }
+              }
+            ]
           }
         }
       }

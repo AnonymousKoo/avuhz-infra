@@ -5,7 +5,7 @@ import hashlib, json, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 BASE=ROOT/'contracts/plans/v1'; SCHEMA=ROOT/'contracts/schemas/v1'
 PLAN=BASE/'development-render-data-secret-binding-correction-v1.plan.json'
@@ -22,11 +22,14 @@ PROGRESS_DIGEST='sha256:2f5c6752a42e471a750060c0ac0f90a5688fd67e4da2e5ec538f2cc8
 V2_FAILURE_DIGEST='sha256:276c0dcd8fff4ac1281a011b8555877ca5c20991aab234406454d5b28cd2674f'
 V2_PROGRESS_DIGEST='sha256:0e0030941489fddeed94d1cb7149f61cfbb8c7cb4183a96f5cbc233bfb45c8ab'
 STEP_ID='development.render.data-secret-binding-correction-v1.step.01.verify-final-state'
+APPROVAL_ID='cd8c764b-9f9e-40c1-ab62-b7ac2f28b11a'
+APPROVAL_DIGEST='sha256:7f2979b1c93d5473481d8746ef3dc1c8ac2aa1e3249e88f262a01e631657a9f2'
+APPROVED_AT='2026-10-01T14:21:39Z'
 def load(p): return json.loads(p.read_text())
 def raw(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
-    plan=load(PLAN); progress=load(PROGRESS); resource=load(RESOURCE); failure=load(V2_FAILURE); v2x=load(V2_EXEC)
-    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA)
+    plan=load(PLAN); progress=load(PROGRESS); resource=load(RESOURCE); approval=load(APPROVAL); failure=load(V2_FAILURE); v2x=load(V2_EXEC)
+    validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
     assert plan['plan_id']==PLAN_ID and plan['plan_version']==1 and plan['plan_digest']==PLAN_DIGEST==plan_digest(plan)
     assert plan['definition_status']=='READY_FOR_APPROVAL' and plan['environment']=='DEVELOPMENT'
     assert plan['target']=={'provider_class':'runtime.provider','provider_reference':'render','project_reference':'srv-dab9n4qd0e5s73dq37mg','responsibility':'RUNTIME','issuer_reference':None,'audience_reference':None}
@@ -56,9 +59,10 @@ def main():
     assert progress['progress_digest']==PROGRESS_DIGEST and progress['overall_state']=='NOT_STARTED'
     s=progress['step_states'][0]
     assert s['authorization_state']=='PENDING' and s['execution_state']=='NOT_STARTED' and s['verification_state']=='NOT_STARTED' and s['authorization_consumed'] is False
-    assert not APPROVAL.exists()
+    assert approval=={'approval_id':APPROVAL_ID,'plan_id':PLAN_ID,'plan_version':1,'plan_digest':PLAN_DIGEST,'owner_identity':'github:AnonymousKoo','decision':'APPROVE','environment':'DEVELOPMENT','effective_at':'2026-10-01T14:45:00Z','expires_at':'2026-10-01T18:45:00Z','approved_at':APPROVED_AT,'status':'ACTIVE','authority_scope':'EXACT_PLAN_ONLY','approval_digest':APPROVAL_DIGEST}
+    assert approval['approval_digest']==APPROVAL_DIGEST==approval_digest(approval)
     rendered=PLAN.read_text()+PROGRESS.read_text()+RESOURCE.read_text()
     for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
-    print('DEVELOPMENT Render DATA secret-binding correction v1: PASS (read-only final-state verification; v2 scope drift bound; no mutation/deploy/secret observation authority)')
+    print('DEVELOPMENT Render DATA secret-binding correction v1: PASS (APPROVED read-only final-state verification; v2 scope drift bound; no mutation/deploy/secret observation)')
     return 0
 if __name__=='__main__': raise SystemExit(main())

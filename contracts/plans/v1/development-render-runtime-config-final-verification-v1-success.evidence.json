@@ -1,0 +1,70 @@
+{
+  "evidence_type": "runtime.render.nonsecret-environment-config.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "RUNTIME",
+  "provider_reference": "render",
+  "workspace_reference": "tea-dab95hv40ujc73a7ccag",
+  "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+  "service_name": "avuhz-command-dev",
+  "plan_id": "f1328946-0c78-42a1-9039-1b20a2bf4ab6",
+  "plan_version": 1,
+  "plan_digest": "sha256:14df7da6e7721f253e9d363bcb64ed7224aa90e3b3966db8fbd5f0928c22f2f5",
+  "approval_id": "a0cdbe03-a6d4-4eea-ba48-10db31f24dd9",
+  "approval_digest": "sha256:72849c03f631bd57203723e4ffd20e355f6f3b6f4801cda76a47705bfafb9694",
+  "step_id": "development.render.runtime-config-final-verification-v1.step.01.verify-hosted-environment",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "OWNER_INTERACTIVE_DASHBOARD_READ_ONLY_FINAL_STATE_VERIFICATION",
+  "owner_visual_observation": {
+    "full_list_expanded": true,
+    "show_less_visible": true,
+    "nonsecret_values": {
+      "AVUHZ_SERVICE_ENVIRONMENT": "DEVELOPMENT",
+      "AVUHZ_DATA_PROJECT_REF": "gnuqaefotwgkwurjpyik",
+      "AVUHZ_DATA_PROJECT_URL": "https://gnuqaefotwgkwurjpyik.supabase.co",
+      "AVUHZ_AUTH_PROJECT_REF": "pwlhruwutoitnieactol",
+      "AVUHZ_AUTH_ISSUER": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+      "AVUHZ_SERVICE_AUDIENCE": "audience.avuhz.command-service.development",
+      "AVUHZ_TENANT_BRIDGE": "TrustedExecutionContext.tenant_id -> avuhz.tenant_id",
+      "AVUHZ_RLS_POLICY_REFERENCE": "policy.avuhz.tenant-rls.development.v1",
+      "AVUHZ_COMMAND_SERVICE_IDENTITY": "avuhz_command_service_dev"
+    },
+    "duplicate_keys": [],
+    "postgres_dsn_masked": true,
+    "port_observed": "10000"
+  },
+  "provider_read_observation": {
+    "branch": "main",
+    "auto_deploy": "no",
+    "auto_deploy_trigger": "off",
+    "latest_deploy_id": "dep-dav9iss1nsns73ar8eo0",
+    "latest_deploy_status": "update_failed",
+    "live_deploy_id": "dep-dabab1942hec73acamdg",
+    "live_deploy_status": "live",
+    "new_deploy_detected": false
+  },
+  "verification_observation": {
+    "all_nine_nonsecret_values_match": true,
+    "no_duplicate_keys_verified": true,
+    "secret_value_observed": false,
+    "port_modified": false,
+    "provider_api_environment_enumeration_performed": false,
+    "provider_mutation_attempted": false,
+    "deployment_triggered": false,
+    "postcondition_verified": true,
+    "verified_state_digest": "sha256:c5e8da6cfedf7a8adf904bb2c285d27c2175efb9511fb48ed8a7a82fa7f84520"
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "secret_material_observed": false,
+    "secret_material_recorded": false,
+    "screenshot_persisted": false,
+    "screenshot_committed": false,
+    "supabase_operation_performed": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_SUPPLIED_TRANSIENT_DASHBOARD_VISUAL_CONFIRMATION_PLUS_FRESH_PROVIDER_READ_ONLY_SERVICE_DEPLOY_VERIFICATION",
+  "recorded_at": "2026-10-02T03:35:14Z"
+}

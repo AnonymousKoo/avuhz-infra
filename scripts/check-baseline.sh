@@ -216,3 +216,5 @@ printf 'baseline checks: PASS\n'
 python3 tests/contracts/validate_development_render_runtime_config_repair_v6_execution.py
 
 python3 tests/contracts/validate_development_render_runtime_config_final_verification_v1.py
+
+python3 tests/contracts/validate_development_render_runtime_config_final_verification_v1_execution.py

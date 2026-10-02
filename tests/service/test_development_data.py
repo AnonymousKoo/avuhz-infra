@@ -16,6 +16,8 @@ from avuhz_service.development import DevelopmentServiceSettings, create_develop
 from avuhz_service.development_data import (
     CANONICAL_APPLICATION_DATABASE_ROLE,
     DEVELOPMENT_DATA_ENDPOINT_HOST,
+    DEVELOPMENT_DATA_ENDPOINT_PORT,
+    DEVELOPMENT_DATA_SESSION_POOLER_HOST,
     DEVELOPMENT_MIGRATION_IDENTITY,
     DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
     DevelopmentDataSettings,
@@ -74,8 +76,13 @@ class FakeLocalConnector:
 
 
 class FakeConnectionInfo:
-    def __init__(self, host=DEVELOPMENT_DATA_ENDPOINT_HOST):
+    def __init__(
+        self,
+        host=DEVELOPMENT_DATA_ENDPOINT_HOST,
+        port=DEVELOPMENT_DATA_ENDPOINT_PORT,
+    ):
         self.host = host
+        self.port = port
 
 
 class FakeHostedConnection(FakeConnection):
@@ -83,12 +90,13 @@ class FakeHostedConnection(FakeConnection):
         self,
         *,
         host=DEVELOPMENT_DATA_ENDPOINT_HOST,
+        port=DEVELOPMENT_DATA_ENDPOINT_PORT,
         runtime_ready=True,
         effective_ready=True,
         readiness_ready=True,
     ):
         super().__init__(readiness_ready)
-        self.info = FakeConnectionInfo(host)
+        self.info = FakeConnectionInfo(host, port)
         self.runtime_ready = runtime_ready
         self.effective_ready = effective_ready
 
@@ -241,6 +249,7 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
 
         connection = raw_factory.connections[-1]
         self.assertEqual(connection.info.host, DEVELOPMENT_DATA_ENDPOINT_HOST)
+        self.assertEqual(connection.info.port, DEVELOPMENT_DATA_ENDPOINT_PORT)
         runtime_sql, runtime_parameters = connection.executions[0]
         self.assertTrue(runtime_sql.startswith("select session_user"))
         self.assertEqual(
@@ -275,9 +284,30 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         )
         self.assertEqual((connection.rollbacks, connection.closed), (1, True))
 
+    def test_hosted_connection_accepts_exact_supavisor_session_endpoint(self):
+        raw_factory = FakeHostedFactory(
+            host=DEVELOPMENT_DATA_SESSION_POOLER_HOST,
+            port=DEVELOPMENT_DATA_ENDPOINT_PORT,
+        )
+        composition = create_hosted_development_data_composition(
+            DevelopmentDataSettings(),
+            raw_factory,
+        )
+        self.assertTrue(composition.readiness_probe.ready())
+        connection = raw_factory.connections[-1]
+        self.assertEqual(connection.info.host, DEVELOPMENT_DATA_SESSION_POOLER_HOST)
+        self.assertEqual(connection.info.port, 5432)
+        self.assertEqual(
+            connection.executions[1],
+            ("set role avuhz_command_service", ()),
+        )
+        self.assertEqual((connection.rollbacks, connection.closed), (1, True))
+
     def test_hosted_connection_fails_closed_on_endpoint_or_role_drift(self):
         for options in (
             {"host": "db.example.invalid"},
+            {"host": "aws-0-us-west-2.pooler.supabase.com"},
+            {"host": DEVELOPMENT_DATA_SESSION_POOLER_HOST, "port": 6543},
             {"runtime_ready": False},
             {"effective_ready": False},
             {"readiness_ready": False},

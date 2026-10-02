@@ -1,0 +1,115 @@
+{
+  "progress_id": "89660648-56b5-450a-ad16-dc17d34eba1f",
+  "plan_id": "fbdfdd80-ce73-4dfa-a24d-6baa4eaaaec9",
+  "plan_version": 5,
+  "plan_digest": "sha256:102e46593d29bcd5b74c33441b21f57d6d88b64f28bda8aa6966939faccc3e77",
+  "record_version": 2,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v5.step.01.deploy-client-tls-corrected-canonical-main",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_reference": "development-render-deployment-v5-step01-success.evidence.json",
+          "evidence_digest": "sha256:dc78dcd12f35eb5bcbddf58b51c4a613c3017b1fab9882070186ce051c38ff36",
+          "recorded_at": "2026-10-02T17:01:46Z"
+        }
+      ],
+      "observed_postcondition": "After fresh preflight binds the exact canonical GitHub main SHA, verifies client-TLS correction commit f9afa8857cecc5bf86b86d7f1d5f43167affd7c0 is an ancestor of that SHA, verifies repository protection and DEVELOPMENT Render service state, and confirms the current live deployment is dep-davsr0egekts73fb61k0 at commit 640f6d10e76a4fdda3994bdd9b45b801a8887257, trigger exactly one manual deploy with clearCache=false. The deployment must pull canonical main, build and start successfully, reach live, and report a commit ID equal to the preflight-bound canonical main SHA. No retry, second deployment, environment/configuration change, secret observation, Supabase mutation, n8n operation, staging, or production action is authorized.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v5.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "evidence_digest": "sha256:d172db131d39b0bede7f3dc5e034cf16fea598c1481713a8789f24dfe1902de3",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "sanitized_value": "github.commit.sha-c18813faf3539beb1516585db0e13926a6efd12d",
+          "value_digest": "sha256:8cf540bb52640b45fa14c047330c3a0fd6bcb285396965de7aa3f47f2c725fbc",
+          "recorded_at": "2026-10-02T17:00:00Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v5.github-protection-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.repository-protection-preflight.observed",
+          "evidence_digest": "sha256:4ec04684b881925797b5b32197eeba58cbccd35cd5285dd31dcd624980e2b952",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:4ec04684b881925797b5b32197eeba58cbccd35cd5285dd31dcd624980e2b952",
+          "recorded_at": "2026-10-02T17:00:00Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v5.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:5f41cd7d8c87b799429426f8d529e57998b01aa300b3e04f8993adc5b402abd3",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:5f41cd7d8c87b799429426f8d529e57998b01aa300b3e04f8993adc5b402abd3",
+          "recorded_at": "2026-10-02T17:00:00Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v5.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:dc78dcd12f35eb5bcbddf58b51c4a613c3017b1fab9882070186ce051c38ff36",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:dc78dcd12f35eb5bcbddf58b51c4a613c3017b1fab9882070186ce051c38ff36",
+          "recorded_at": "2026-10-02T17:01:46Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.deployment-v5.step.02.verify-runtime-use",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "evidence_reference": "development-render-deployment-v5-step02-readiness-failure.evidence.json",
+          "evidence_digest": "sha256:9a4e02157df59a48e4394eed911fcf9a365610963a2d1287ef6362f9d618a47b",
+          "recorded_at": "2026-10-02T17:15:00Z"
+        }
+      ],
+      "observed_postcondition": "Read-only runtime/use verification failed because DATA readiness remained HTTP 503/unavailable. The live runtime completed the hosted runtime-identity and effective-role SQL once per sampled request, while the final data-probe statement never completed in PostgreSQL. All underlying DATA/RLS predicates independently evaluate true. Code inspection identifies unescaped PostgreSQL format %I tokens inside a Psycopg parameterized query; Psycopg requires literal percent signs to be doubled. No retry or second deployment is authorized.",
+      "safe_error_code": "RENDER_POST_DEPLOY_DATA_READINESS_NOT_READY",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v5.result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.deployment-v5.step.01.deploy-client-tls-corrected-canonical-main",
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:dc78dcd12f35eb5bcbddf58b51c4a613c3017b1fab9882070186ce051c38ff36",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:dc78dcd12f35eb5bcbddf58b51c4a613c3017b1fab9882070186ce051c38ff36",
+          "recorded_at": "2026-10-02T17:01:46Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-02T17:15:00Z",
+  "progress_digest": "sha256:8cd9c2c1821467dc84a8466218b28bf990151c3bbabd542eb477680bd4e84f69"
+}

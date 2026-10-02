@@ -1,0 +1,34 @@
+{
+  "progress_id": "8901f764-c3f6-4b1a-acc9-d2c6a2bb48ff",
+  "plan_id": "e9b77a10-a7e7-4bdb-a965-379932f5fe39",
+  "plan_version": 6,
+  "plan_digest": "sha256:f11242d8a1fdb846dae8c0cfac99303a02edc821559b820e7e92d744e32ccaf6",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v6.step.01.deploy-probe-percent-escaped-canonical-main",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.deployment-v6.step.02.verify-runtime-use",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-02T17:40:16Z",
+  "progress_digest": "sha256:39be198b0aa46141a5d0835fdc903f03c2495fcda5aca0b0381ad856174c99d0"
+}

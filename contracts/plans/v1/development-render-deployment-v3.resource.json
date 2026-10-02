@@ -1,0 +1,47 @@
+{
+  "contract_version": "v3",
+  "environment": "DEVELOPMENT",
+  "provider": "render",
+  "workspace_id": "tea-dab95hv40ujc73a7ccag",
+  "service_id": "srv-dab9n4qd0e5s73dq37mg",
+  "service_name": "avuhz-command-dev",
+  "environment_id": "evm-dab96l2jobas73bp95bg",
+  "repo": "AnonymousKoo/avuhz-infra",
+  "repo_visibility_expected": "public",
+  "branch": "main",
+  "branch_protection_required": {
+    "required_status_checks": [
+      "main-pr-gate"
+    ],
+    "enforce_admins": true,
+    "required_pull_request_reviews": true
+  },
+  "auto_deploy_expected": "no",
+  "auto_deploy_trigger_expected": "off",
+  "current_live_deploy_id": "dep-dabab1942hec73acamdg",
+  "current_live_commit": "6bff57065151462fc74861c68a232454b2ef9a20",
+  "last_failed_deploy_id": "dep-dav9iss1nsns73ar8eo0",
+  "manual_deploy_count_authorized": 1,
+  "clear_cache_authorized": false,
+  "deployment_head_binding": "RESOLVED_BY_STEP_PREFLIGHT",
+  "source_runtime_config_success_evidence_digest": "sha256:4b44e6320c9b1572fffa9ef8a0ee273e741a887d45af9ea82ef63a4ef92e5b80",
+  "source_runtime_config_progress_digest": "sha256:0aa764de2f55daa2faecfc4f57225e574a3ea45bc82d3a8bf8c53c94568b021f",
+  "supersedes_deployment_v2": {
+    "plan_id": "be4592c8-edf7-4221-b278-86e15ce0f695",
+    "plan_digest": "sha256:85b869495a2b3b391ea82bc8d415e6e3b0070a7ee1b3c75fdf2dfdfa7b7b89a6",
+    "approval_id": "f12e132d-c6ad-49e9-92f6-a5bcec391ee7",
+    "progress_state": "NOT_STARTED",
+    "reason": "repository visibility changed from private to public before execution; v2 private-repository precondition no longer matches provider state"
+  },
+  "environment_variable_changes_authorized": 0,
+  "environment_group_changes_authorized": 0,
+  "service_setting_changes_authorized": 0,
+  "github_visibility_changes_authorized": 0,
+  "github_branch_protection_changes_authorized": 0,
+  "secret_material_agent_visible": false,
+  "supabase_operation_authorized": false,
+  "n8n_operation_authorized": false,
+  "staging_authorized": false,
+  "production_authorized": false,
+  "contract_digest": "sha256:315cd02881d80be3d8fc208b73f9e7e3917917bba944b1b8382f6a0ad27584bc"
+}

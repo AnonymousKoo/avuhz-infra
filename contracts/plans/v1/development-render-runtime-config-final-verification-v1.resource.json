@@ -1,0 +1,43 @@
+{
+  "contract_version": "v1",
+  "environment": "DEVELOPMENT",
+  "provider": "render",
+  "workspace_id": "tea-dab95hv40ujc73a7ccag",
+  "service_id": "srv-dab9n4qd0e5s73dq37mg",
+  "service_name": "avuhz-command-dev",
+  "environment_id": "evm-dab96l2jobas73bp95bg",
+  "expected_nonsecret_environment": {
+    "AVUHZ_SERVICE_ENVIRONMENT": "DEVELOPMENT",
+    "AVUHZ_DATA_PROJECT_REF": "gnuqaefotwgkwurjpyik",
+    "AVUHZ_DATA_PROJECT_URL": "https://gnuqaefotwgkwurjpyik.supabase.co",
+    "AVUHZ_AUTH_PROJECT_REF": "pwlhruwutoitnieactol",
+    "AVUHZ_AUTH_ISSUER": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "AVUHZ_SERVICE_AUDIENCE": "audience.avuhz.command-service.development",
+    "AVUHZ_TENANT_BRIDGE": "TrustedExecutionContext.tenant_id -> avuhz.tenant_id",
+    "AVUHZ_RLS_POLICY_REFERENCE": "policy.avuhz.tenant-rls.development.v1",
+    "AVUHZ_COMMAND_SERVICE_IDENTITY": "avuhz_command_service_dev"
+  },
+  "protected_secret_keys": [
+    "AVUHZ_POSTGRES_DSN"
+  ],
+  "provider_managed_keys": [
+    "PORT"
+  ],
+  "verification_policy": {
+    "read_only": true,
+    "owner_interactive_dashboard_allowed": true,
+    "provider_api_environment_enumeration_allowed": false,
+    "screenshot_commit_allowed": false,
+    "secret_value_visibility_allowed": false,
+    "mutation_allowed": false,
+    "deployment_allowed": false,
+    "require_no_duplicate_keys": true,
+    "require_branch_main": true,
+    "require_auto_deploy_off": true,
+    "require_no_new_deployment": true
+  },
+  "source_stop_progress_digest": "sha256:e3d647157f671708f1edc61d3933a1cbfa8fe9187f015caf681d8e39a13624f1",
+  "source_stop_plan_id": "6a97b35c-ecea-41e0-bdde-dd46a202b627",
+  "source_stop_plan_digest": "sha256:0f996c1c71d0ba055077535d617249fdccde1db0c23c91547f45c409aeacc7f4",
+  "contract_digest": "sha256:4b7803a36c3143f0ed2cb6145734320420d1d8fd9d9ad3a4832378088b81f088"
+}

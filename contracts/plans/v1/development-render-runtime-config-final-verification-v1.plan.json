@@ -1,0 +1,166 @@
+{
+  "plan_id": "f1328946-0c78-42a1-9039-1b20a2bf4ab6",
+  "plan_version": 1,
+  "plan_digest": "sha256:14df7da6e7721f253e9d363bcb64ed7224aa90e3b3966db8fbd5f0928c22f2f5",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "runtime.provider",
+    "provider_reference": "render",
+    "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+    "responsibility": "RUNTIME",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-02T01:51:36Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-02T03:00:00Z",
+    "expires_at": "2026-10-02T05:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.render.runtime-config-final-verification-v1.step.01.verify-hosted-environment"
+  ],
+  "steps": [
+    {
+      "step_id": "development.render.runtime-config-final-verification-v1.step.01.verify-hosted-environment",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "render.service.environment-configuration",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:environment",
+        "binding_state": "BOUND",
+        "exact_version": "render.dashboard-read-only.final-state.v1",
+        "exact_digest": "sha256:4b7803a36c3143f0ed2cb6145734320420d1d8fd9d9ad3a4832378088b81f088"
+      },
+      "operation": "provider.render.dashboard.environment-config.verify-read-only-exact",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:e3d647157f671708f1edc61d3933a1cbfa8fe9187f015caf681d8e39a13624f1"
+        }
+      ],
+      "expected_postcondition": "Read-only owner-interactive verification proves the nine canonical non-secret DEVELOPMENT environment values exactly match, no duplicate keys exist, AVUHZ_POSTGRES_DSN remains masked and is not revealed or modified, PORT is not modified, branch remains main, auto-deploy remains off, and no new deployment exists.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "environment-variable.modify",
+        "environment-variable.add",
+        "environment-variable.delete",
+        "environment-variable.batch-update",
+        "environment-variable.replace-all",
+        "connected-render-update-environment-variables-wrapper.use",
+        "deployment.trigger",
+        "environment-group.modify",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.return",
+        "secret.log",
+        "secret.digest",
+        "screenshot.commit",
+        "supabase.operation",
+        "n8n.operation",
+        "staging.target",
+        "production.target",
+        "vertical.infrastructure",
+        "v6.retry"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "environment-value.mismatch",
+        "duplicate-key.detected",
+        "secret-exposure.required",
+        "target.drift",
+        "deployment.detected",
+        "service-setting.drift",
+        "outcome.ambiguous"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-mutation",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.runtime-config-final-verification-v1.v6-stop-state",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:e3d647157f671708f1edc61d3933a1cbfa8fe9187f015caf681d8e39a13624f1",
+            "exact_digest": "sha256:174e40951b844cfa17393d2cd16feaaea0fa17fdb262da9c88724ba55e1740f7"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-final-verification-v1.preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-final-verification-v1.verified-state",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-config.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-config.verified",
+          "established_binding_ids": [
+            "binding.development.render.runtime-config-final-verification-v1.verified-state"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "provider.mutation",
+    "environment-variable.modify",
+    "deployment.trigger",
+    "environment-group.modify",
+    "render.auto-deploy.modify",
+    "render.branch.modify",
+    "render.service-setting.modify",
+    "secret.agent-visible",
+    "secret.return",
+    "secret.log",
+    "secret.digest",
+    "screenshot.commit",
+    "supabase.operation",
+    "n8n.operation",
+    "staging.target",
+    "production.target",
+    "vertical.infrastructure",
+    "v6.retry"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "authorization.unbound",
+    "security.validation.failed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

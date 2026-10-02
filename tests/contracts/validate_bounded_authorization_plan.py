@@ -299,6 +299,12 @@ RENDER_DEPLOYMENT_V3_APPROVAL_PATH = (
 RENDER_DEPLOYMENT_V3_APPROVAL_FILE_DIGEST = (
     "sha256:97d84fb242cb2366b9b4f72788399b264fbb34f8a1230f235cbc7a7b17372cf2"
 )
+RENDER_DEPLOYMENT_V4_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-render-deployment-v4.approval.json"
+)
+RENDER_DEPLOYMENT_V4_APPROVAL_FILE_DIGEST = (
+    "sha256:ae8d5c82eb73f5c45bf06b62eb4d9acd308597d6910ef80c944e4226544a3582"
+)
 RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-render-runtime-config-repair-v1.approval.json"
 )
@@ -438,6 +444,8 @@ def main() -> int:
         expected_approval_paths.add(RENDER_DEPLOYMENT_V2_APPROVAL_PATH)
     if RENDER_DEPLOYMENT_V3_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_DEPLOYMENT_V3_APPROVAL_PATH)
+    if RENDER_DEPLOYMENT_V4_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RENDER_DEPLOYMENT_V4_APPROVAL_PATH)
     if RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
     if RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH.exists():
@@ -665,6 +673,12 @@ def main() -> int:
     ):
         raise SystemExit("DEVELOPMENT Render deployment v3 approval file digest mismatch")
     if (
+        RENDER_DEPLOYMENT_V4_APPROVAL_PATH.exists()
+        and file_digest(RENDER_DEPLOYMENT_V4_APPROVAL_PATH)
+        != RENDER_DEPLOYMENT_V4_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("DEVELOPMENT Render deployment v4 approval file digest mismatch")
+    if (
         RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists()
         and file_digest(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
         != RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_FILE_DIGEST
@@ -757,6 +771,7 @@ def main() -> int:
                     RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH,
                 }
                 | ({RENDER_DEPLOYMENT_V3_APPROVAL_PATH} if RENDER_DEPLOYMENT_V3_APPROVAL_PATH.exists() else set())
+                | ({RENDER_DEPLOYMENT_V4_APPROVAL_PATH} if RENDER_DEPLOYMENT_V4_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH.exists() else set())

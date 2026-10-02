@@ -1,0 +1,70 @@
+{
+  "progress_id": "57403053-deb7-41b1-b743-2be6f7c3e517",
+  "plan_id": "862d1756-bee5-48a1-8420-c2a88d032f5d",
+  "plan_version": 2,
+  "plan_digest": "sha256:67679547732c6a0a90aae13958ce67130a1ca2cc0383fe78589a9cf3de7e3072",
+  "record_version": 2,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.render.data-supavisor-session-dsn-v2.step.01.replace-avuhz-postgres-dsn-save-only",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.data-supavisor-session-dsn.bound",
+          "evidence_reference": "provider.owner-confirmed-render-save-only.supavisor-session-dsn-v2.attempt1.verified",
+          "evidence_digest": "sha256:626e401ab7a4521c02f02505da1f4af01d35bcf68e98046a0f5b70f6fa60b6d8",
+          "recorded_at": "2026-10-02T14:00:35Z"
+        }
+      ],
+      "observed_postcondition": "On exact DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use only the Render Dashboard Environment Save only action to replace exactly one existing secret key AVUHZ_POSTGRES_DSN. Compose the provider-held value from the existing restricted runtime-login password supplied by the owner-controlled approved vault plus these exact non-secret components: username avuhz_data_runtime_service_dev.gnuqaefotwgkwurjpyik, host aws-1-us-west-2.pooler.supabase.com, port 5432, database postgres, and TLS mode require. The password and completed secret value remain masked and unobserved by the agent, are never logged/digested/persisted outside Render, no other key or service setting changes, and no deployment is created.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:cae598dc3071050d74f5d9c86df7261c1946bd80354ec192293b8a7bea56fd4b",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:cae598dc3071050d74f5d9c86df7261c1946bd80354ec192293b8a7bea56fd4b",
+          "recorded_at": "2026-10-02T14:00:35Z"
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.owner-vault-runtime-credential",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-vault-runtime-credential.available",
+          "evidence_digest": "sha256:e73b23cb9418be6886aad3933ded05a4c2853cd5106249bd9ec3110bc280a3a7",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:e73b23cb9418be6886aad3933ded05a4c2853cd5106249bd9ec3110bc280a3a7",
+          "recorded_at": "2026-10-02T14:00:35Z"
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.data-supavisor-session-dsn.bound",
+          "evidence_digest": "sha256:626e401ab7a4521c02f02505da1f4af01d35bcf68e98046a0f5b70f6fa60b6d8",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:6fe29855ee1282434e485ea1da35d674649c57e066a66fa91b59aafadf74ec9f",
+          "recorded_at": "2026-10-02T14:00:35Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-02T14:00:35Z",
+  "progress_digest": "sha256:ca2d1b6d5b1781ada04e22608db22e1947c3833063903000608fca469e33b640"
+}

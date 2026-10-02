@@ -1,0 +1,34 @@
+{
+  "progress_id": "54f5c07f-bc14-4df8-af76-3becbe9eb9de",
+  "plan_id": "0e0d8749-96ce-447e-bc96-cc6df74b6d10",
+  "plan_version": 4,
+  "plan_digest": "sha256:9af474607552e519796d50b437a957f418af92cb6be9b2a75141c2639910241a",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v4.step.01.deploy-canonical-main",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.deployment-v4.step.02.verify-runtime-use",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-02T14:09:54Z",
+  "progress_digest": "sha256:29043b26f60ebb8c378b18fc36a2768213bc911a4fbf94550192369b027a0c1d"
+}

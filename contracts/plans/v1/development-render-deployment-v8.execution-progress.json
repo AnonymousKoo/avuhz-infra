@@ -1,0 +1,128 @@
+{
+  "progress_id": "8e3a0acd-97df-4b3d-b1ce-f3ec70903780",
+  "plan_id": "003ad8fb-3200-467b-aeb3-2c6ddd533bf2",
+  "plan_version": 8,
+  "plan_digest": "sha256:0eae523081e31639758370843b61bf1bf76a43c4a427a871eff7b0877a961088",
+  "record_version": 2,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v8.step.01.deploy-probe-percent-escaped-canonical-main",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_reference": "development-render-deployment-v8-step01-success.evidence.json",
+          "evidence_digest": "sha256:b600e6020d02a99b57ef999c7c7e58927c014fce59ba5506a2e98019c7d24494",
+          "recorded_at": "2026-10-02T21:01:38Z"
+        }
+      ],
+      "observed_postcondition": "After fresh preflight binds the exact canonical GitHub main SHA, verifies client-TLS correction commit f9afa8857cecc5bf86b86d7f1d5f43167affd7c0, readiness-probe identifier-format percent-escape commit 1ac034de34503739839a8cdb8c7f9ce4eb01c60f, and readiness-probe LIKE-percent escape commit 8856a817be68cd0afb37fcde56852d2041f3a5a6 are ancestors of that SHA, verifies repository protection and DEVELOPMENT Render service state, and confirms the current live deployment is dep-db00ul3ncjis7382bqm0 at commit 0eeb35a1763cdc06599c8889c315b597ef259dcf, trigger exactly one manual deploy with clearCache=false. The deployment must pull canonical main, build and start successfully, reach live, and report a Render commit ID equal to the preflight-bound canonical main SHA. No retry, second deployment, environment/configuration change, secret observation, Supabase mutation, n8n operation, staging, or production action is authorized.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v8.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "evidence_digest": "sha256:87612a55062eb7553ad184db804c3276032110ac2d29d26bdd99dda78de92a51",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "sanitized_value": "github.commit.sha-b4cd44412e6ab02c5f7f9f7ac6eeeb7c72db2f5c",
+          "value_digest": "sha256:8a4a02531c41042787142a6bbbf7cbd29c10dc47b7b9e0b09ad907a8b30537ff",
+          "recorded_at": "2026-10-02T21:00:28Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v8.github-protection-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.repository-protection-preflight.observed",
+          "evidence_digest": "sha256:4ec04684b881925797b5b32197eeba58cbccd35cd5285dd31dcd624980e2b952",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:4ec04684b881925797b5b32197eeba58cbccd35cd5285dd31dcd624980e2b952",
+          "recorded_at": "2026-10-02T21:00:28Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v8.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:41116e9a11f10e69c71069e0650c6b9f0f2623e699f69b3d97e7f5871d7c37b9",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:41116e9a11f10e69c71069e0650c6b9f0f2623e699f69b3d97e7f5871d7c37b9",
+          "recorded_at": "2026-10-02T21:00:28Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v8.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:b600e6020d02a99b57ef999c7c7e58927c014fce59ba5506a2e98019c7d24494",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b600e6020d02a99b57ef999c7c7e58927c014fce59ba5506a2e98019c7d24494",
+          "recorded_at": "2026-10-02T21:01:38Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.deployment-v8.step.02.verify-runtime-use",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "evidence_reference": "development-render-deployment-v8-step02-success.evidence.json",
+          "evidence_digest": "sha256:20333eb7c7298b494c551144c575d0a1e9c9eee4fac7ecc6d73cfea4d26f5598",
+          "recorded_at": "2026-10-02T21:02:43Z"
+        }
+      ],
+      "observed_postcondition": "Read-only post-deploy verification confirms the Step 1 deployment is the latest and only newly triggered deployment, is live, and reports the preflight-bound canonical main SHA; service remains on branch main with auto-deploy disabled; GET /health/startup returns HTTP 200 started; GET /health/live returns HTTP 200 alive; GET /health/ready returns HTTP 200 with configuration ready, identity ready, data ready, and overall status ready; unauthenticated POST /v1/commands and /v1/queries each return HTTP 401 trusted_identity_required. No provider mutation, environment enumeration, secret observation, Supabase operation, n8n operation, staging, production, retry, or second deployment is performed.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v8.result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.deployment-v8.step.01.deploy-probe-percent-escaped-canonical-main",
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:b600e6020d02a99b57ef999c7c7e58927c014fce59ba5506a2e98019c7d24494",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b600e6020d02a99b57ef999c7c7e58927c014fce59ba5506a2e98019c7d24494",
+          "recorded_at": "2026-10-02T21:01:38Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v8.runtime-verification",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "evidence_digest": "sha256:20333eb7c7298b494c551144c575d0a1e9c9eee4fac7ecc6d73cfea4d26f5598",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:20333eb7c7298b494c551144c575d0a1e9c9eee4fac7ecc6d73cfea4d26f5598",
+          "recorded_at": "2026-10-02T21:02:43Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-02T21:02:43Z",
+  "progress_digest": "sha256:a71d84f748a22f7fc2b01803951d4edc8a0eda47bddaf0c4609192d28d098124"
+}

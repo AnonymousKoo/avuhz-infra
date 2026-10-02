@@ -1,0 +1,396 @@
+{
+  "plan_id": "862d1756-bee5-48a1-8420-c2a88d032f5d",
+  "plan_version": 2,
+  "plan_digest": "sha256:67679547732c6a0a90aae13958ce67130a1ca2cc0383fe78589a9cf3de7e3072",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "runtime.provider",
+    "provider_reference": "render",
+    "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+    "responsibility": "RUNTIME",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-02T12:52:27Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-02T13:20:00Z",
+    "expires_at": "2026-10-02T17:20:00Z"
+  },
+  "ordered_step_ids": [
+    "development.render.data-supavisor-session-dsn-v2.step.01.replace-avuhz-postgres-dsn-save-only"
+  ],
+  "steps": [
+    {
+      "step_id": "development.render.data-supavisor-session-dsn-v2.step.01.replace-avuhz-postgres-dsn-save-only",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "render.service.environment-variable",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:env:AVUHZ_POSTGRES_DSN",
+        "binding_state": "BOUND",
+        "exact_version": "render.dashboard-save-only.secret-supavisor-session-dsn.v2",
+        "exact_digest": "sha256:c80ae29ae18937d06f8971f92b41ae752eaa089f6f9f912e8e402ae4a954b55e"
+      },
+      "operation": "provider.render.dashboard.environment-variable.save-only-single-secret-exact",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "data.catalog-rls.validated",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:b6db300972239326512e881d960659d29a8ad3d2ddb277029fb0b2edd46b7c76"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:853f5cd3c6988c3e7dcccaf9b4272f7a60e7563cfb55e998ae2ab7ce01c56d45"
+        },
+        {
+          "evidence_type": "runtime.render.data-secret-binding.corrective-state-verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:b63c47ed92d1dcbbffefba9dbb395591c16be2bfc2d8048b71edceb724993464"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:3332d49e5ff1dfba01fd5e71ba0b7e81914a42de59dcb7d32bc09a73026f795f"
+        },
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:560b8147f448e12d34e9266816a889a04aba082abec2741a91647be7c6a9fd2a"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:1f628b63d94f127877ee6b96d31e1d66134a3c8ea7dd6eb31fc69da1c0b31e1a"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:70838c77aee5f8342818c47ed4ed57bb24fe977bf5650da85fe703f22a0c29dd"
+        }
+      ],
+      "expected_postcondition": "On exact DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use only the Render Dashboard Environment Save only action to replace exactly one existing secret key AVUHZ_POSTGRES_DSN. Compose the provider-held value from the existing restricted runtime-login password supplied by the owner-controlled approved vault plus these exact non-secret components: username avuhz_data_runtime_service_dev.gnuqaefotwgkwurjpyik, host aws-1-us-west-2.pooler.supabase.com, port 5432, database postgres, and TLS mode require. The password and completed secret value remain masked and unobserved by the agent, are never logged/digested/persisted outside Render, no other key or service setting changes, and no deployment is created.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "connected-render-update-environment-variables-wrapper.use",
+        "deployment.trigger",
+        "environment-group.modify",
+        "environment-variable.batch-update",
+        "environment-variable.delete",
+        "environment-variable.other.modify",
+        "environment-variable.replace-all",
+        "n8n.operation",
+        "port.modify",
+        "production.target",
+        "provider.other-resource.modify",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.deploy",
+        "render.other-service.modify",
+        "render.service-setting.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "dashboard.save-only-option.missing",
+        "deployment.detected",
+        "existing-secret-key.absent",
+        "owner-interactive-session.unavailable",
+        "owner-vault-runtime-credential.unavailable",
+        "provider.preflight.failed",
+        "scope.drift",
+        "secret-exposure.required",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "support-commit.not-ancestor-of-main",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.v1-plan",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:5cb71dc6a3f3013bd46401acf42b204f4f6ed4bd3c5e9c376f0f84d31b01dcad",
+            "exact_digest": "sha256:13a75a5d487112e77521075cb985a62e0b06b68fda880adb115856cf820b8436"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.v1-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:70838c77aee5f8342818c47ed4ed57bb24fe977bf5650da85fe703f22a0c29dd",
+            "exact_digest": "sha256:11533b9039d5174e3fe43ff20a13069a7426596eeccd595ca18c16d2c8da849d"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.catalog-success",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:b6db300972239326512e881d960659d29a8ad3d2ddb277029fb0b2edd46b7c76",
+            "exact_digest": "sha256:2c8242acd2cf16c3f46135b56fcb8cb0ed0fcade6c874e2d2236e2e4478219fd"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.catalog-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:853f5cd3c6988c3e7dcccaf9b4272f7a60e7563cfb55e998ae2ab7ce01c56d45",
+            "exact_digest": "sha256:21e3b0edd782d8e007d9668f145b188452bcd4657067da0a5aed2d6a4505b4f1"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.secret-binding-success",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:b63c47ed92d1dcbbffefba9dbb395591c16be2bfc2d8048b71edceb724993464",
+            "exact_digest": "sha256:05212f58f1f35ba80e2bb67b1199d29dd3088e04e43cea8b88cadf1e94ce0afd"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.secret-binding-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:3332d49e5ff1dfba01fd5e71ba0b7e81914a42de59dcb7d32bc09a73026f795f",
+            "exact_digest": "sha256:d081699c2182cd1051f26533922615de6303fddc5a91b55e5f61d5c3582d8e07"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.deployment-success",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:560b8147f448e12d34e9266816a889a04aba082abec2741a91647be7c6a9fd2a",
+            "exact_digest": "sha256:cf852ba2e1f6cfdee06a510ad4cf5a2749f46ea0f7a2a03e051ebc2ead911757"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.deployment-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:1f628b63d94f127877ee6b96d31e1d66134a3c8ea7dd6eb31fc69da1c0b31e1a",
+            "exact_digest": "sha256:6eca1973c5e88dc5cd5c72a739312ec51d4116669972c56c83c800874abf7e3a"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.service",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "render.service.srv-dab9n4qd0e5s73dq37mg",
+            "exact_digest": "sha256:17c18bfcd5a64df5f732d0d9ccefa7d10ab1d8404d11af359071cafde2761517"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.environment",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "render.environment.evm-dab96l2jobas73bp95bg",
+            "exact_digest": "sha256:80c28392f4c1b43e38a4bfe1d04d9d968dee4d107e7a97892e47392267709fed"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.key",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "render.env.avuhz_postgres_dsn",
+            "exact_digest": "sha256:894b0fbead3947c374a98f24858b04f4161c045e94b768017ddba571d92213c1"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.pooler-host",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "aws-1-us-west-2.pooler.supabase.com",
+            "exact_digest": "sha256:0ea9be6bb76a61c9ece189c5ade6df3dcc6662c5dd49a5b85795671e104abba5"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.pooler-username",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "avuhz_data_runtime_service_dev.gnuqaefotwgkwurjpyik",
+            "exact_digest": "sha256:f9351da54e2690fbd05f027c301130ffe386f4fc28332860f7b793de5b2d3f3a"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.support-commit",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "git.commit.e85426bccd646c8f4c9c3ccaac90a2c1a632d3db",
+            "exact_digest": "sha256:5c0aa141eff390509c5549ce4b3fadaf6c4180c78c95f93bcf28c5052df7f0b8"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.owner-vault-runtime-credential",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-vault-runtime-credential.available",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.data-supavisor-session-dsn-v2.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.data-supavisor-session-dsn.bound",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.data-supavisor-session-dsn.bound",
+          "established_binding_ids": [
+            "binding.development.render.data-supavisor-session-dsn-v2.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "connected-render-update-environment-variables-wrapper.use",
+    "deployment.trigger",
+    "environment-group.modify",
+    "environment-variable.batch-update",
+    "environment-variable.delete",
+    "environment-variable.other.modify",
+    "environment-variable.replace-all",
+    "n8n.operation",
+    "port.modify",
+    "production.target",
+    "provider.other-resource.modify",
+    "render.auto-deploy.modify",
+    "render.branch.modify",
+    "render.deploy",
+    "render.other-service.modify",
+    "render.service-setting.modify",
+    "secret.agent-visible",
+    "secret.digest",
+    "secret.git-persist",
+    "secret.local-persist",
+    "secret.log",
+    "secret.return",
+    "staging.target",
+    "supabase.operation",
+    "vertical.infrastructure",
+    "render.other-resource.modify"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "scope.drift",
+    "secret-exposure.required",
+    "security.validation.failed",
+    "target.drift"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

@@ -1,0 +1,238 @@
+{
+  "plan_id": "be4592c8-edf7-4221-b278-86e15ce0f695",
+  "plan_version": 2,
+  "plan_digest": "sha256:85b869495a2b3b391ea82bc8d415e6e3b0070a7ee1b3c75fdf2dfdfa7b7b89a6",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "runtime.provider",
+    "provider_reference": "render",
+    "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+    "responsibility": "RUNTIME",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-02T03:53:06Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-02T05:00:00Z",
+    "expires_at": "2026-10-02T08:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.render.deployment-v2.step.01.deploy-private-canonical-main"
+  ],
+  "steps": [
+    {
+      "step_id": "development.render.deployment-v2.step.01.deploy-private-canonical-main",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "render.service.deployment",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:deployment",
+        "binding_state": "BOUND",
+        "exact_version": "render.manual-private-source-deployment.v2",
+        "exact_digest": "sha256:6d50b602bd6e47d25a7b496217d037763f333eede4154ceab521585b986e88ab"
+      },
+      "operation": "provider.render.deploy.trigger-manual-latest-main",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-config.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:4b44e6320c9b1572fffa9ef8a0ee273e741a887d45af9ea82ef63a4ef92e5b80"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:0aa764de2f55daa2faecfc4f57225e574a3ea45bc82d3a8bf8c53c94568b021f"
+        }
+      ],
+      "expected_postcondition": "Using only the approved owner-interactive Render session, after fresh preflight verifies GitHub repository AnonymousKoo/avuhz-infra remains private, binds the exact canonical GitHub main SHA, and confirms DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev) still uses branch main with auto-deploy disabled, trigger exactly one manual deploy with clearCache=false. The deployment must prove Render can pull the private repository, build successfully, start successfully, reach live, and report a Render commit ID equal to the preflight-bound canonical main SHA. Do not modify environment variables, environment groups, service settings, branch configuration, auto-deploy, build/start commands, GitHub visibility, Supabase, n8n, staging, or production resources. No retry or second deployment is authorized by this step.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.retry",
+        "deployment.second-trigger",
+        "environment-group.modify",
+        "environment-variable.create",
+        "environment-variable.delete",
+        "environment-variable.modify",
+        "github.repository-visibility.modify",
+        "n8n.operation",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.build-command.modify",
+        "render.clear-cache",
+        "render.service-setting.modify",
+        "render.start-command.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "canonical-main.head-changed-after-binding",
+        "deployment.commit-mismatch",
+        "deployment.failed",
+        "deployment.unexpected-state",
+        "github.repository.not-private",
+        "private-repository-source-pull.failed",
+        "provider.preflight.failed",
+        "scope.drift",
+        "service-id.mismatch",
+        "service-name.mismatch",
+        "service-setting.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.deployment-v2.runtime-config-success",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:4b44e6320c9b1572fffa9ef8a0ee273e741a887d45af9ea82ef63a4ef92e5b80",
+            "exact_digest": "sha256:cc401fa51ecdb4af66536308562a3f04069f8a12c627b1de4b9b6b347ccf055e"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v2.runtime-config-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:0aa764de2f55daa2faecfc4f57225e574a3ea45bc82d3a8bf8c53c94568b021f",
+            "exact_digest": "sha256:80c0dbc9dd798db298c28df4e0ac6b6345e49bd875f6769bd650a3fda2330c06"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v2.service",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "render.service.srv-dab9n4qd0e5s73dq37mg",
+            "exact_digest": "sha256:17c18bfcd5a64df5f732d0d9ccefa7d10ab1d8404d11af359071cafde2761517"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v2.branch",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "github.branch.main",
+            "exact_digest": "sha256:9d88398440bf7479706cc7331c2ba1434df3947fdeb78169a13d135c7f8f553d"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v2.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v2.github-repository-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.repository-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v2.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v2.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.deployment.completed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "established_binding_ids": [
+            "binding.development.render.deployment-v2.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "deployment.retry",
+    "deployment.second-trigger",
+    "environment-group.modify",
+    "environment-variable.modify",
+    "github.repository-visibility.modify",
+    "n8n.operation",
+    "production.target",
+    "render.auto-deploy.modify",
+    "render.branch.modify",
+    "render.clear-cache",
+    "render.service-setting.modify",
+    "secret.agent-visible",
+    "secret.digest",
+    "secret.git-persist",
+    "secret.local-persist",
+    "secret.log",
+    "secret.return",
+    "staging.target",
+    "supabase.operation",
+    "vertical.infrastructure"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift",
+    "unexpected.provider-effect"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

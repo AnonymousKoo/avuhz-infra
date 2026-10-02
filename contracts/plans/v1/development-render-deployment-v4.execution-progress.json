@@ -1,0 +1,115 @@
+{
+  "progress_id": "54f5c07f-bc14-4df8-af76-3becbe9eb9de",
+  "plan_id": "0e0d8749-96ce-447e-bc96-cc6df74b6d10",
+  "plan_version": 4,
+  "plan_digest": "sha256:0b1bf623d7ea3367d517cb84db185ffbbfeffdd8192c88d92c0f67e46b22ce06",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v4.step.01.deploy-canonical-main",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_reference": "development-render-deployment-v4-step01-success.evidence.json",
+          "evidence_digest": "sha256:b3509b9380bfbd75998e771d53926c84c590a4ade854b37fa9dd7fef001b1a3b",
+          "recorded_at": "2026-10-02T15:29:00Z"
+        }
+      ],
+      "observed_postcondition": "Fresh preflight verifies the exact DEVELOPMENT Render service, public GitHub repository, protected main with required main-pr-gate and admin enforcement, Supavisor support commit e85426bccd646c8f4c9c3ccaac90a2c1a632d3db as an ancestor, current live deploy dep-davkk6egekts73eefa40 at 43a9e1ccec2c1a2fd3eee530dd817981303caaba, auto-deploy off, and binds the exact canonical main SHA. Trigger exactly one manual Render deploy with clearCache=false. It must build, start, become live, and report that exact bound SHA. No environment, service, GitHub protection/visibility, Supabase, n8n, staging, production, secret, retry, or second-deploy mutation is allowed.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v4.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "evidence_digest": "sha256:d049ef481bc56fb8b07fe76caf028f81ed77589640b283077d97bc92fddf9bfe",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "sanitized_value": "github.commit.sha-640f6d10e76a4fdda3994bdd9b45b801a8887257",
+          "value_digest": "sha256:bf50d5de84159710f16c40454ecfef0ccb033c68b3f77a4ce7c5ec3258cb5159",
+          "recorded_at": "2026-10-02T15:27:26Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v4.github-protection-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.repository-protection-preflight.observed",
+          "evidence_digest": "sha256:4ec04684b881925797b5b32197eeba58cbccd35cd5285dd31dcd624980e2b952",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:4ec04684b881925797b5b32197eeba58cbccd35cd5285dd31dcd624980e2b952",
+          "recorded_at": "2026-10-02T15:27:26Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v4.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:ee2a3b26d5a4e68ba5c9861bc2073e3fd5d4180d2765addedbd3166c808bf759",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:ee2a3b26d5a4e68ba5c9861bc2073e3fd5d4180d2765addedbd3166c808bf759",
+          "recorded_at": "2026-10-02T15:27:26Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v4.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:b3509b9380bfbd75998e771d53926c84c590a4ade854b37fa9dd7fef001b1a3b",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b3509b9380bfbd75998e771d53926c84c590a4ade854b37fa9dd7fef001b1a3b",
+          "recorded_at": "2026-10-02T15:29:00Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.deployment-v4.step.02.verify-runtime-use",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "evidence_reference": "development-render-deployment-v4-step02-readiness-failure.evidence.json",
+          "evidence_digest": "sha256:b2c6eea129cb52d7955aeb96f40ccc6408938faeb83b7f00d4ff38907cfe1398",
+          "recorded_at": "2026-10-02T15:36:00Z"
+        }
+      ],
+      "observed_postcondition": "Read-only runtime/use verification failed because DATA readiness remained 503/unavailable after the exact deployment went live. Supavisor authenticated the runtime login and all DATA/RLS predicates matched, but Avuhz rejected the session because pg_stat_ssl on the provider-internal Supavisor-to-Postgres backend hop is false. No retry or second deployment is authorized.",
+      "safe_error_code": "RENDER_POST_DEPLOY_DATA_READINESS_NOT_READY",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v4.result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.deployment-v4.step.01.deploy-canonical-main",
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:b3509b9380bfbd75998e771d53926c84c590a4ade854b37fa9dd7fef001b1a3b",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b3509b9380bfbd75998e771d53926c84c590a4ade854b37fa9dd7fef001b1a3b",
+          "recorded_at": "2026-10-02T15:29:00Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-02T15:36:00Z",
+  "progress_digest": "sha256:44f142ec9a28b8eb503015dc795bb19e58f9194beaad112af57e1dda3d50517c"
+}

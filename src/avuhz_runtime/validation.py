@@ -31,8 +31,9 @@ class CommandValidator:
         ))
     def _composed_schema(self, definition: CommandDefinition):
         constraints = {"type": "object", "properties": {"command_type": {"const": definition.command_type}, "subject_type": {"const": definition.subject_type}, "payload_schema": {"const": definition.payload_schema_id}}, "required": ["payload"]}
-        creations = {"AcceptAcquisitionHandoff", "OpenEngagement", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult", "RecordClientAcceptance", "ProposeDeploymentAuthorization", "StartDeploymentExecution", "RecordDeploymentVerification"}
-        if definition.command_type == "AcceptAcquisitionHandoff": constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
+        creations = {"AcceptAcquisitionHandoff", "AcceptImplementationHandoff", "OpenEngagement", "DraftImplementationBrief", "ProposeImplementationAuthorization", "DraftCodexBuildPackage", "StartBuildExecution", "RecordQAResult", "RecordClientAcceptance", "ProposeDeploymentAuthorization", "StartDeploymentExecution", "RecordDeploymentVerification"}
+        if definition.command_type in {"AcceptAcquisitionHandoff", "AcceptImplementationHandoff"}:
+            constraints["not"] = {"anyOf": [{"required": ["engagement_id"]}, {"required": ["expected_record_version"]}]}
         elif definition.command_type in creations:
             constraints["not"] = {"required": ["expected_record_version"]}; constraints["required"].append("engagement_id")
         else: constraints["required"] += ["engagement_id", "expected_record_version"]
@@ -41,8 +42,10 @@ class CommandValidator:
     def _semantic_failure(self, raw, definition):
         command = definition.command_type; payload = raw["payload"]
         if raw["subject_type"] != definition.subject_type: return self._failure(RuntimeReason.PAYLOAD_INVALID, "command subject does not match registration")
-        if command == "AcceptAcquisitionHandoff" and "engagement_id" in raw: return self._failure(RuntimeReason.FIELD_FORBIDDEN, "engagement context is not permitted for handoff acceptance")
+        if command in {"AcceptAcquisitionHandoff", "AcceptImplementationHandoff"} and "engagement_id" in raw:
+            return self._failure(RuntimeReason.FIELD_FORBIDDEN, "engagement context is not permitted for handoff acceptance")
         identity_fields = {
+            "AcceptImplementationHandoff": "implementation_handoff_id",
             "DraftImplementationBrief": "implementation_brief_id", "ReviseImplementationBrief": "implementation_brief_id", "ApproveImplementationBrief": "implementation_brief_id",
             "ProposeImplementationAuthorization": "implementation_authorization_id", "ReviseImplementationAuthorization": "implementation_authorization_id", "ActivateImplementationAuthorization": "implementation_authorization_id", "RevokeImplementationAuthorization": "implementation_authorization_id",
             "DraftCodexBuildPackage": "codex_build_package_id", "ReviseCodexBuildPackage": "codex_build_package_id", "ReleaseCodexBuildPackage": "codex_build_package_id",

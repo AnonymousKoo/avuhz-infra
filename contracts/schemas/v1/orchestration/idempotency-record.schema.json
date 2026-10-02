@@ -36,6 +36,7 @@
       "type": "string",
       "enum": [
         "AcceptAcquisitionHandoff",
+        "AcceptImplementationHandoff",
         "OpenEngagement",
         "DraftImplementationBrief",
         "ReviseImplementationBrief",

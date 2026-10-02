@@ -13,7 +13,11 @@ from .phase5d_deployment_execution import DEPLOYMENT_EXECUTION_CAPABILITIES, DEP
 from .phase5d_deployment_verification import DEPLOYMENT_VERIFICATION_CAPABILITIES
 
 
-COMMAND_CAPABILITIES = {"AcceptAcquisitionHandoff": "engagement:accept_handoff", "OpenEngagement": "engagement:open"}
+COMMAND_CAPABILITIES = {
+    "AcceptAcquisitionHandoff": "engagement:accept_handoff",
+    "AcceptImplementationHandoff": "implementation_handoff:accept",
+    "OpenEngagement": "engagement:open",
+}
 COMMAND_CAPABILITIES.update(IMPLEMENTATION_BRIEF_CAPABILITIES)
 COMMAND_CAPABILITIES.update(IMPLEMENTATION_AUTHORIZATION_CAPABILITIES)
 COMMAND_CAPABILITIES.update(CODEX_BUILD_PACKAGE_CAPABILITIES)

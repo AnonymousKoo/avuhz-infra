@@ -35,6 +35,7 @@ class PostgresStore:
     def snapshot(self, command, trusted_context=None):
         queries = {
             "ACQUISITION_HANDOFF": ("select tenant_id,1 as record_version,null::uuid as engagement_id,accepted_at from public.avuhz_acquisition_handoffs where tenant_id=%s and handoff_id=%s", "accepted_at"),
+            "IMPLEMENTATION_HANDOFF": ("select tenant_id,handoff_version as record_version,null::uuid as engagement_id,state from public.avuhz_implementation_handoffs where tenant_id=%s and implementation_handoff_id=%s order by handoff_version desc limit 1", "state"),
             "ENGAGEMENT": ("select tenant_id,record_version,null::uuid as engagement_id,engagement_state from public.avuhz_engagements where tenant_id=%s and engagement_id=%s", "engagement_state"),
             "IMPLEMENTATION_BRIEF": ("select tenant_id,record_version,engagement_id,state from public.avuhz_implementation_briefs where tenant_id=%s and implementation_brief_id=%s and state<>'SUPERSEDED' order by implementation_brief_version desc limit 1", "state"),
             "IMPLEMENTATION_AUTHORIZATION": ("select tenant_id,record_version,engagement_id,state from public.avuhz_implementation_authorizations where tenant_id=%s and implementation_authorization_id=%s and state<>'SUPERSEDED' order by authorization_version desc limit 1", "state"),
@@ -207,7 +208,12 @@ class IdempotencyPostgresRepository:
         return None if not r else {"fingerprint":r["semantic_request_fingerprint"],"command_id":r["result_reference"]}
     def reserve(self,key,fingerprint,prepared=None):
         key=self._scope_key(key)
-        self.uow.failpoint("IDEMPOTENCY_RESERVE"); tenant,principal,command,subject_type,scope,idem=key; version=getattr(prepared,"expected_record_version",None) or 1
+        self.uow.failpoint("IDEMPOTENCY_RESERVE"); tenant,principal,command,subject_type,scope,idem=key
+        version = (
+            prepared.payload["handoff_version"]
+            if prepared and prepared.command_type == "AcceptImplementationHandoff"
+            else getattr(prepared, "expected_record_version", None) or 1
+        )
         cur=self.uow.connection.execute("insert into public.avuhz_idempotency_records (id,tenant_id,trusted_principal_id,command_type,subject_type,subject_id,subject_version,idempotency_key,semantic_request_fingerprint,fingerprint_schema_version,processing_status,retention_class,attempt_count) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,'v1','RESERVED','OPERATIONAL_DEDUPLICATION',0) on conflict (tenant_id,trusted_principal_id,command_type,subject_type,idempotency_scope,idempotency_key) do nothing returning id",(str(uuid.uuid4()),tenant,principal,command,subject_type,prepared.subject_id,version,idem,fingerprint))
         if cur.fetchone(): return None
         return self.get(key)

@@ -101,11 +101,44 @@ class CrossRepositoryImplementationHandoffTests(unittest.TestCase):
 
         flow = ImplementationBriefRuntimeTests(); flow.setUp()
         flow.store.implementation_handoffs.clear()
+        flow.store.events.clear()
+        flow.store.outbox.clear()
         flow.handoff = copy.deepcopy(handoff); flow._tenant = handoff["tenant_id"]
         flow._engagement_id = handoff["source_engagement_reference"]
-        uow = UnitOfWork(flow.store)
-        ImplementationHandoffAcceptanceService(uow).accept(handoff, flow.handoff_context())
-        uow.commit()
+        raw_handoff = {
+            "command_id": flow.next_id(),
+            "command_type": "AcceptImplementationHandoff",
+            "command_schema_version": 1,
+            "tenant_id": handoff["tenant_id"],
+            "subject_type": "IMPLEMENTATION_HANDOFF",
+            "subject_id": handoff["implementation_handoff_id"],
+            "requested_by": "provider-adapter.fictional",
+            "caller_type": "PROVIDER_ADAPTER",
+            "caller_identity": {
+                "subject": "provider-adapter.fictional",
+                "audience": "avuhz-command-api",
+                "caller_type": "PROVIDER_ADAPTER",
+                "tenant_ids": [handoff["tenant_id"]],
+                "capabilities": ["implementation_handoff:accept"],
+                "environment": "TEST",
+                "authentication_strength": "STRONG",
+                "step_up_performed": False,
+                "authenticated_at": flow.h.now,
+                "expires_at": "2030-03-15T16:00:00Z",
+            },
+            "correlation_id": flow.next_id(),
+            "idempotency_key": "sekinfra-handoff-accept-0001",
+            "requested_at": flow.h.now,
+            "environment": "TEST",
+            "payload_schema": "urn:avuhz:schema:contracts:commands:accept-implementation-handoff-payload:v1",
+            "payload_version": 1,
+            "payload": handoff,
+        }
+        self.assertEqual(
+            flow.executor.execute(raw_handoff, flow.handoff_context())["result"], "ACCEPTED"
+        )
+        self.assertEqual(flow.store.events[-1]["event_type"], "implementation_handoff.accepted")
+        self.assertEqual(flow.store.outbox[-1]["status"], "PENDING")
 
         source = copy.deepcopy(handoff["source_artifact_references"])
         scope_ids = [item["scope_item_id"] for item in handoff["approved_scope"]]

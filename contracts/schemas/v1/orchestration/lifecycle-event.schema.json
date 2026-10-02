@@ -28,6 +28,8 @@
       "type": "string",
       "enum": [
         "engagement.handoff.accepted",
+        "implementation_handoff.accepted",
+        "implementation_handoff.revoked",
         "engagement.opened",
         "implementation_brief.drafted",
         "implementation_brief.revised",
@@ -120,6 +122,31 @@
       "properties": {
         "handoff_id": {
           "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/handoffId"
+        }
+      }
+    },
+    "implementationHandoffMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_handoff_id",
+        "handoff_version",
+        "state"
+      ],
+      "properties": {
+        "implementation_handoff_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+        },
+        "handoff_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "APPROVED",
+            "REVOKED"
+          ]
         }
       }
     },
@@ -253,6 +280,35 @@
           },
           "sanitized_metadata": {
             "$ref": "#/$defs/handoffMetadata"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "implementation_handoff.accepted",
+              "implementation_handoff.revoked"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "IMPLEMENTATION_HANDOFF"
+              }
+            }
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/implementationHandoffMetadata"
           }
         }
       }

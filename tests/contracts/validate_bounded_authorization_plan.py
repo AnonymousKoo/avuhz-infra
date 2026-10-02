@@ -299,6 +299,12 @@ RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH = (
 RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_FILE_DIGEST = (
     "sha256:73e195ce493906e8c19acfceffc0efbb91cd048ce2f4d27a523cf86c0268a730"
 )
+RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-render-runtime-config-final-verification-v1.approval.json"
+)
+RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:a5c12a93dd2cc1f79f64a934cc08dc8106f6402f8fada5d3344ac60b5e851d9f"
+)
 DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-data-catalog-rls-validation-v1.approval.json"
 )
@@ -414,6 +420,8 @@ def main() -> int:
         expected_approval_paths.add(RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH)
     if RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH)
+    if RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH)
     if DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
     if V24_APPROVAL_PATH.exists():
@@ -633,6 +641,12 @@ def main() -> int:
     ):
         raise SystemExit("DEVELOPMENT Render runtime config repair v6 approval file digest mismatch")
     if (
+        RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH.exists()
+        and file_digest(RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH)
+        != RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("DEVELOPMENT Render runtime config final verification v1 approval file digest mismatch")
+    if (
         DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH.exists()
         and file_digest(DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_PATH)
         != DATA_CATALOG_RLS_VALIDATION_V1_APPROVAL_FILE_DIGEST
@@ -701,6 +715,7 @@ def main() -> int:
                 }
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH.exists() else set())
+                | ({RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH.exists() else set())
                 | ({RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH} if RECOVERY_PREDICATE_DIAGNOSTIC_V4_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V1_APPROVAL_PATH.exists() else set())
                 | ({REPAIRED_RECOVERY_LIFECYCLE_V2_APPROVAL_PATH} if REPAIRED_RECOVERY_LIFECYCLE_V2_APPROVAL_PATH.exists() else set())

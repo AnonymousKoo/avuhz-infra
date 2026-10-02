@@ -4,12 +4,13 @@ import json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
 RESOURCE=B/'development-render-deployment-v3.resource.json'
 PLAN=B/'development-render-deployment-v3.plan.json'
 PROGRESS=B/'development-render-deployment-v3.progress.json'
+APPROVAL=B/'development-render-deployment-v3.approval.json'
 FINAL_EV=B/'development-render-runtime-config-final-verification-v1-success.evidence.json'
 FINAL_EX=B/'development-render-runtime-config-final-verification-v1.execution-progress.json'
 V2_PLAN=B/'development-render-deployment-v2.plan.json'
@@ -17,8 +18,8 @@ V2_PROGRESS=B/'development-render-deployment-v2.progress.json'
 V2_APPROVAL=B/'development-render-deployment-v2.approval.json'
 def load(p): return json.loads(p.read_text())
 def main():
- r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); ev=load(FINAL_EV); ex=load(FINAL_EX); v2=load(V2_PLAN); v2p=load(V2_PROGRESS); v2a=load(V2_APPROVAL)
- validate_plan(p,S); validate_progress(p,g,S)
+ r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); a=load(APPROVAL); ev=load(FINAL_EV); ex=load(FINAL_EX); v2=load(V2_PLAN); v2p=load(V2_PROGRESS); v2a=load(V2_APPROVAL)
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert r['contract_digest']==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['contract_version']=='v3' and r['environment']=='DEVELOPMENT' and r['provider']=='render'
  assert r['workspace_id']=='tea-dab95hv40ujc73a7ccag'
@@ -65,8 +66,14 @@ def main():
   assert x in st['stop_conditions']
  assert g==initial_progress(p,S,g['progress_id'],p['created_at'])
  assert g['overall_state']=='NOT_STARTED' and g['step_states'][0]['authorization_state']=='PENDING' and g['step_states'][0]['execution_state']=='NOT_STARTED'
- rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
+ assert a['approval_id']=='0b9285a6-c1ed-4340-9758-80fdb43d2dcb'
+ assert a['plan_id']==p['plan_id'] and a['plan_version']==3 and a['plan_digest']==p['plan_digest']
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-02T05:30:00Z' and a['expires_at']=='2026-10-02T08:30:00Z' and a['approved_at']=='2026-10-02T05:05:50Z'
+ assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']=='sha256:208fb857e36bbd41012f441d08c550a7db7e2a237487dd23802c5260cad3b1a7'==approval_digest(a)
+ rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()+APPROVAL.read_text()
  for forbidden in ('postgresql://','password=','op://'): assert forbidden not in rendered
- print('DEVELOPMENT Render deployment v3: PASS (READY_FOR_APPROVAL; public+protected repo required; v2 superseded; exact runtime-config PASS bound; one deploy; no retry/config/visibility/protection/secret mutation)')
+ print('DEVELOPMENT Render deployment v3: PASS (APPROVED; public+protected repo required; v2 superseded; exact runtime-config PASS bound; one deploy; no retry/config/visibility/protection/secret mutation)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

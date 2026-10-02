@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:commands:accept-implementation-handoff-payload:v1",
+  "title": "AcceptImplementationHandoff Payload v1",
+  "description": "Exact provider-neutral ImplementationHandoff truth accepted from a trusted service/provider-adapter boundary. It grants no implementation, deployment, credential, billing, or production authority.",
+  "allOf": [
+    {
+      "$ref": "urn:avuhz:public-contract:implementation-handoff:v1"
+    }
+  ]
+}

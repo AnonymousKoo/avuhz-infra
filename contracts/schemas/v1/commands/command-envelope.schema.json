@@ -27,6 +27,7 @@
       "type": "string",
       "enum": [
         "AcceptAcquisitionHandoff",
+        "AcceptImplementationHandoff",
         "OpenEngagement",
         "DraftImplementationBrief",
         "ReviseImplementationBrief",
@@ -59,6 +60,7 @@
       "type": "string",
       "enum": [
         "ACQUISITION_HANDOFF",
+        "IMPLEMENTATION_HANDOFF",
         "ENGAGEMENT",
         "IMPLEMENTATION_BRIEF",
         "IMPLEMENTATION_AUTHORIZATION",
@@ -177,6 +179,25 @@
             "properties": {
               "subject_type": {
                 "const": "ACQUISITION_HANDOFF"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command_type": {
+                "const": "AcceptImplementationHandoff"
+              }
+            },
+            "required": [
+              "command_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "subject_type": {
+                "const": "IMPLEMENTATION_HANDOFF"
               }
             }
           }

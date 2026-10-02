@@ -8,6 +8,7 @@ import uuid
 from dataclasses import dataclass, field
 
 from .guards import AuthoritativeSubjectSnapshot
+from .implementation_handoff import ImplementationHandoffAcceptanceService
 from .models import ValidationFailure
 from .outbox_delivery import claim_delivery, fail_delivery, normalize_delivery, publish_delivery
 from .runtime import prepare_and_guard_command
@@ -83,6 +84,13 @@ class MemoryStore:
         record = None
         if command.subject_type == "ACQUISITION_HANDOFF":
             record = self.handoffs.get(command.subject_id)
+        elif command.subject_type == "IMPLEMENTATION_HANDOFF":
+            record = self._current(
+                self.implementation_handoffs,
+                command.tenant_id,
+                command.subject_id,
+                "handoff_version",
+            )
         elif command.subject_type == "ENGAGEMENT":
             record = self.engagements.get(command.subject_id)
         elif command.subject_type == "IMPLEMENTATION_BRIEF":
@@ -324,6 +332,8 @@ class Executor:
         if prepared.command_type in CODEX_BUILD_PACKAGE_COMMANDS: return CodexBuildPackageHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in IMPLEMENTATION_AUTHORIZATION_COMMANDS: return ImplementationAuthorizationHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
         if prepared.command_type in IMPLEMENTATION_BRIEF_COMMANDS: return ImplementationBriefHandler(uow).execute(prepared.command_type, prepared, context, now, prepared.command_id)
+        if prepared.command_type == "AcceptImplementationHandoff":
+            return ImplementationHandoffAcceptanceService(uow).accept(prepared.payload, context)
         if prepared.command_type == "AcceptAcquisitionHandoff":
             record = uow.handoffs.get(prepared.tenant_id, prepared.subject_id)
             if not record or record.get("accepted"): raise ValueError("handoff unavailable")
@@ -400,6 +410,27 @@ class Executor:
             if command == "RecordImplementationBriefApproval": metadata["approval_id"] = prepared.command_id
             if command == "ReviseImplementationBrief": metadata["superseded_version"] = prepared.payload["supersedes_implementation_brief_reference"]["reference_version"]
             return self._event_record(prepared, IMPLEMENTATION_BRIEF_EVENTS[command], record, "IMPLEMENTATION_BRIEF", metadata)
+        if command == "AcceptImplementationHandoff":
+            record = uow.implementation_handoffs.get_version(
+                prepared.tenant_id, prepared.subject_id, prepared.payload["handoff_version"]
+            )
+            event_record = copy.deepcopy(record)
+            event_record["record_version"] = record["handoff_version"]
+            event_type = (
+                "implementation_handoff.revoked"
+                if record["state"] == "REVOKED"
+                else "implementation_handoff.accepted"
+            )
+            metadata = {
+                "implementation_handoff_id": prepared.subject_id,
+                "handoff_version": record["handoff_version"],
+                "state": record["state"],
+            }
+            event = self._event_record(
+                prepared, event_type, event_record, "IMPLEMENTATION_HANDOFF", metadata
+            )
+            event.pop("engagement_id", None)
+            return event
         if command == "AcceptAcquisitionHandoff":
             record = uow.handoffs.get(prepared.tenant_id, prepared.subject_id); record["record_version"] = record.get("record_version", 1)
             return self._event_record(prepared, "engagement.handoff.accepted", record, "ACQUISITION_HANDOFF", {"handoff_id": prepared.subject_id})

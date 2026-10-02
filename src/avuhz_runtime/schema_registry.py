@@ -21,6 +21,7 @@ SCHEMA_FILES = (
     'commands/command-result.schema.json',
     'commands/command-envelope.schema.json',
     'commands/accept-acquisition-handoff.payload.schema.json',
+    'commands/accept-implementation-handoff.payload.schema.json',
     'commands/open-engagement.payload.schema.json',
     'commands/draft-implementation-brief.payload.schema.json',
     'commands/revise-implementation-brief.payload.schema.json',

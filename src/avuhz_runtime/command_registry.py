@@ -15,6 +15,7 @@ def command(name, subject, slug, capability):
 
 COMMANDS = {
     "AcceptAcquisitionHandoff": command("AcceptAcquisitionHandoff", "ACQUISITION_HANDOFF", "accept-acquisition-handoff", "engagement:accept_handoff"),
+    "AcceptImplementationHandoff": command("AcceptImplementationHandoff", "IMPLEMENTATION_HANDOFF", "accept-implementation-handoff", "implementation_handoff:accept"),
     "OpenEngagement": command("OpenEngagement", "ENGAGEMENT", "open-engagement", "engagement:open"),
     "DraftImplementationBrief": command("DraftImplementationBrief", "IMPLEMENTATION_BRIEF", "draft-implementation-brief", "implementation_brief:draft"),
     "ReviseImplementationBrief": command("ReviseImplementationBrief", "IMPLEMENTATION_BRIEF", "revise-implementation-brief", "implementation_brief:draft"),

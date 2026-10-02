@@ -1,0 +1,74 @@
+{
+  "evidence_type": "runtime.render.deployment.completed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "RUNTIME",
+  "provider_reference": "render",
+  "workspace_reference": "tea-dab95hv40ujc73a7ccag",
+  "environment_reference": "evm-dab96l2jobas73bp95bg",
+  "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+  "service_name": "avuhz-command-dev",
+  "plan_id": "b14abd4a-f814-453a-87c8-19e668dd3803",
+  "plan_version": 3,
+  "plan_digest": "sha256:7d2dfb9fa10bebcbf2296408a505bc21dd88d4262697dde89a4df707c6b1aaab",
+  "approval_id": "0b9285a6-c1ed-4340-9758-80fdb43d2dcb",
+  "approval_digest": "sha256:208fb857e36bbd41012f441d08c550a7db7e2a237487dd23802c5260cad3b1a7",
+  "step_id": "development.render.deployment-v3.step.01.deploy-public-protected-canonical-main",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "MANUAL_RENDER_DEPLOYMENT_LIVE_EXACT_CANONICAL_MAIN",
+  "preflight": {
+    "repository": "AnonymousKoo/avuhz-infra",
+    "repository_visibility": "public",
+    "canonical_main_sha": "43a9e1ccec2c1a2fd3eee530dd817981303caaba",
+    "branch_protection": {
+      "required_status_checks": [
+        "main-pr-gate"
+      ],
+      "required_pull_request_reviews": true,
+      "enforce_admins": true
+    },
+    "render_service_id": "srv-dab9n4qd0e5s73dq37mg",
+    "render_branch": "main",
+    "auto_deploy": "no",
+    "auto_deploy_trigger": "off",
+    "previous_latest_deploy_id": "dep-dav9iss1nsns73ar8eo0"
+  },
+  "deployment_observation": {
+    "deploy_id": "dep-davkk6egekts73eefa40",
+    "commit_id": "43a9e1ccec2c1a2fd3eee530dd817981303caaba",
+    "status": "live",
+    "trigger": "api",
+    "clear_cache": false,
+    "source_pull_succeeded": true,
+    "build_succeeded": true,
+    "runtime_start_succeeded": true,
+    "commit_matches_preflight": true
+  },
+  "post_deploy_provider_state": {
+    "latest_deploy_id": "dep-davkk6egekts73eefa40",
+    "latest_deploy_status": "live",
+    "branch": "main",
+    "auto_deploy": "no",
+    "auto_deploy_trigger": "off",
+    "repo": "https://github.com/AnonymousKoo/avuhz-infra",
+    "second_deploy_detected": false
+  },
+  "security_state": {
+    "secret_material_observed": false,
+    "secret_material_recorded": false,
+    "environment_variable_enumeration_performed": false,
+    "environment_variable_mutation_attempted": false,
+    "environment_group_mutation_attempted": false,
+    "service_setting_mutation_attempted": false,
+    "github_visibility_mutation_attempted": false,
+    "github_branch_protection_mutation_attempted": false,
+    "supabase_operation_performed": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false,
+    "retry_attempted": false,
+    "second_deploy_triggered": false
+  },
+  "verified_state_digest": "sha256:7af384bd3d00a1822b4afd18574ac4cb41d1f830ef2ee414623901fd3f9b73db",
+  "recorded_at": "2026-10-02T06:09:21Z"
+}

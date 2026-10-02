@@ -1,0 +1,229 @@
+{
+  "progress_id": "74fad263-04ac-4f38-b859-249551b1719e",
+  "plan_id": "6a97b35c-ecea-41e0-bdde-dd46a202b627",
+  "plan_version": 6,
+  "plan_digest": "sha256:0f996c1c71d0ba055077535d617249fdccde1db0c23c91547f45c409aeacc7f4",
+  "record_version": 9,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.01.bind-auth-issuer",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_reference": "development-render-runtime-config-repair-v6-step01-success.evidence.json",
+          "evidence_digest": "sha256:9f98d818cc8e1bbb91c5658f25d91223b63a05c0440c39fef6b16c9ed04dd630",
+          "recorded_at": "2026-10-02T01:20:35Z"
+        }
+      ],
+      "observed_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_AUTH_ISSUER to the canonical value bound by digest sha256:1a737f27f25128c1555714e62dc3045e2a67d9d5be0e4ad79643464c4e0eae2f. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step01-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "recorded_at": "2026-10-02T00:06:07Z"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step01-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_digest": "sha256:9f98d818cc8e1bbb91c5658f25d91223b63a05c0440c39fef6b16c9ed04dd630",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9f98d818cc8e1bbb91c5658f25d91223b63a05c0440c39fef6b16c9ed04dd630",
+          "recorded_at": "2026-10-02T01:20:35Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.02.bind-service-audience",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_reference": "development-render-runtime-config-repair-v6-step02-success.evidence.json",
+          "evidence_digest": "sha256:05ae491a1e838217f1f1f2300d361fa6c96b5c09cfeb11f82e96d224ccd2c7e1",
+          "recorded_at": "2026-10-02T01:22:21Z"
+        }
+      ],
+      "observed_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_SERVICE_AUDIENCE to the canonical value bound by digest sha256:f4caaa492a7b9babfb3184ff93b3e978552cff3c954c5360d275d09b34f3aa7a. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step01-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.01.bind-auth-issuer",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_digest": "sha256:9f98d818cc8e1bbb91c5658f25d91223b63a05c0440c39fef6b16c9ed04dd630",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9f98d818cc8e1bbb91c5658f25d91223b63a05c0440c39fef6b16c9ed04dd630",
+          "recorded_at": "2026-10-02T01:20:35Z"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step02-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "recorded_at": "2026-10-02T01:20:35Z"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step02-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_digest": "sha256:05ae491a1e838217f1f1f2300d361fa6c96b5c09cfeb11f82e96d224ccd2c7e1",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:05ae491a1e838217f1f1f2300d361fa6c96b5c09cfeb11f82e96d224ccd2c7e1",
+          "recorded_at": "2026-10-02T01:22:21Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.03.bind-tenant-bridge",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_reference": "development-render-runtime-config-repair-v6-step03-success.evidence.json",
+          "evidence_digest": "sha256:b1ddd99a60707e731a20c7b2d3bc47248b302489b1b804d6a1191073809c0867",
+          "recorded_at": "2026-10-02T01:24:10Z"
+        }
+      ],
+      "observed_postcondition": "On DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg (avuhz-command-dev), use the Render Dashboard Environment Save only action to persist exactly one non-secret variable AVUHZ_TENANT_BRIDGE to the canonical value bound by digest sha256:20c3c7c2b635afd302f68a43e5f2a88042ddee7a898aa657e206a4df560e22ea. Change no other key. Confirm branch remains main, auto-deploy remains disabled, AVUHZ_POSTGRES_DSN is not read/returned/modified, provider-managed PORT is not modified, and no deployment is created before continuing.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step02-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.02.bind-service-audience",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_digest": "sha256:05ae491a1e838217f1f1f2300d361fa6c96b5c09cfeb11f82e96d224ccd2c7e1",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:05ae491a1e838217f1f1f2300d361fa6c96b5c09cfeb11f82e96d224ccd2c7e1",
+          "recorded_at": "2026-10-02T01:22:21Z"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step03-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "recorded_at": "2026-10-02T01:22:21Z"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step03-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_digest": "sha256:b1ddd99a60707e731a20c7b2d3bc47248b302489b1b804d6a1191073809c0867",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b1ddd99a60707e731a20c7b2d3bc47248b302489b1b804d6a1191073809c0867",
+          "recorded_at": "2026-10-02T01:24:10Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.04.bind-rls-policy-reference",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_reference": "development-render-runtime-config-repair-v6-step04-scope-drift.evidence.json",
+          "evidence_digest": "sha256:0485e0e2f07bd01d3e5a91fad32b8e08f4fd624e9861a2ad0ef3c2a5d2eefafa",
+          "recorded_at": "2026-10-02T01:33:15Z"
+        }
+      ],
+      "observed_postcondition": "The owner corrected AVUHZ_DATA_PROJECT_URL to its canonical DEVELOPMENT DATA URL while v6 Step 4 authorized only AVUHZ_RLS_POLICY_REFERENCE. No deployment occurred and the correction was directionally correct, but exact one-resource authorization was exceeded, so v6 stopped and Step 5 is blocked.",
+      "safe_error_code": "RENDER_ENVIRONMENT_SCOPE_DRIFT",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step03-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.runtime-config-repair-v6.step.03.bind-tenant-bridge",
+          "evidence_type": "runtime.render.nonsecret-environment-variable.bound",
+          "evidence_digest": "sha256:b1ddd99a60707e731a20c7b2d3bc47248b302489b1b804d6a1191073809c0867",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b1ddd99a60707e731a20c7b2d3bc47248b302489b1b804d6a1191073809c0867",
+          "recorded_at": "2026-10-02T01:24:10Z"
+        },
+        {
+          "binding_id": "binding.development.render.runtime-config-repair-v6.step04-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:9bd3d2f47384c178479824cdb1dc8c390b1c07e7adb6a31bf3f8a253d4624794",
+          "recorded_at": "2026-10-02T01:24:10Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.runtime-config-repair-v6.step.05.bind-command-service-identity",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-02T01:33:15Z",
+  "progress_digest": "sha256:e3d647157f671708f1edc61d3933a1cbfa8fe9187f015caf681d8e39a13624f1"
+}

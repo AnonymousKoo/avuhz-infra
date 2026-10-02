@@ -24,6 +24,12 @@ DEVELOPMENT_MIGRATION_IDENTITY = "avuhz_data_migration_service_dev"
 CANONICAL_APPLICATION_DATABASE_ROLE = "avuhz_command_service"
 DEVELOPMENT_RUNTIME_LOGIN_IDENTITY = "avuhz_data_runtime_service_dev"
 DEVELOPMENT_DATA_ENDPOINT_HOST = "db.gnuqaefotwgkwurjpyik.supabase.co"
+DEVELOPMENT_DATA_SESSION_POOLER_HOST = "aws-1-us-west-2.pooler.supabase.com"
+DEVELOPMENT_DATA_ENDPOINT_PORT = 5432
+DEVELOPMENT_DATA_ALLOWED_ENDPOINT_HOSTS = frozenset({
+    DEVELOPMENT_DATA_ENDPOINT_HOST,
+    DEVELOPMENT_DATA_SESSION_POOLER_HOST,
+})
 DEVELOPMENT_POSTGRES_DSN_ENV = "AVUHZ_POSTGRES_DSN"
 _INTERNAL_RUNTIME_AUDIENCE = "avuhz-command-api"
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
@@ -96,7 +102,11 @@ class HostedDevelopmentPostgresConnectionFactory:
                 connection.autocommit = False
 
             info = getattr(connection, "info", None)
-            if info is None or getattr(info, "host", None) != DEVELOPMENT_DATA_ENDPOINT_HOST:
+            if (
+                info is None
+                or getattr(info, "host", None) not in DEVELOPMENT_DATA_ALLOWED_ENDPOINT_HOSTS
+                or getattr(info, "port", None) != DEVELOPMENT_DATA_ENDPOINT_PORT
+            ):
                 raise RuntimeError
 
             runtime = connection.execute(

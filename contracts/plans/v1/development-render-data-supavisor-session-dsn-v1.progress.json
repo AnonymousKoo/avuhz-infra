@@ -1,0 +1,23 @@
+{
+  "progress_id": "37d0f201-081a-434a-aa19-76b2e48aa467",
+  "plan_id": "2ae07c70-a2a7-43d4-a998-b0636d7cdc2b",
+  "plan_version": 1,
+  "plan_digest": "sha256:5cb71dc6a3f3013bd46401acf42b204f4f6ed4bd3c5e9c376f0f84d31b01dcad",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.render.data-supavisor-session-dsn-v1.step.01.replace-avuhz-postgres-dsn-save-only",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-02T11:37:16Z",
+  "progress_digest": "sha256:70838c77aee5f8342818c47ed4ed57bb24fe977bf5650da85fe703f22a0c29dd"
+}

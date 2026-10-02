@@ -196,11 +196,11 @@ class DevelopmentPostgresDataProbe:
                 "and (select count(*) from pg_catalog.pg_tables table_info "
                 "where table_info.schemaname='public' and table_info.tablename like 'avuhz_%' "
                 "and has_table_privilege(current_user,"
-                "format('%I.%I',table_info.schemaname,table_info.tablename),'SELECT')) = 16 "
+                "format('%%I.%%I',table_info.schemaname,table_info.tablename),'SELECT')) = 16 "
                 "and (select count(*) from pg_catalog.pg_tables table_info "
                 "where table_info.schemaname='public' and table_info.tablename like 'avuhz_%' "
                 "and has_table_privilege(current_user,"
-                "format('%I.%I',table_info.schemaname,table_info.tablename),'DELETE')) = 0 "
+                "format('%%I.%%I',table_info.schemaname,table_info.tablename),'DELETE')) = 0 "
                 "and has_schema_privilege(current_user,'public','USAGE') "
                 "and not has_schema_privilege(current_user,'public','CREATE') as ready",
                 (CANONICAL_APPLICATION_DATABASE_ROLE,),

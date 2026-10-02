@@ -287,6 +287,8 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertIn("avuhz_command_service_tenant_isolation", readiness_sql)
         self.assertIn("has_table_privilege", readiness_sql)
         self.assertIn("'DELETE'", readiness_sql)
+        self.assertIn("format('%%I.%%I',table_info.schemaname,table_info.tablename)", readiness_sql)
+        self.assertNotIn("format('%I.%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertEqual(
             readiness_parameters,
             (CANONICAL_APPLICATION_DATABASE_ROLE,),

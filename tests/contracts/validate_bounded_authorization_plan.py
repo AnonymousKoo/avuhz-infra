@@ -275,6 +275,12 @@ RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH = (
 RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_FILE_DIGEST = (
     "sha256:3c13a8478fd971975f6628cb7d7864874ad51098cd4d9692bea21b3bf3a6cae6"
 )
+RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-render-data-supavisor-session-dsn-v2.approval.json"
+)
+RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_FILE_DIGEST = (
+    "sha256:d33ecffafbb2553a6b74e1022559db6534f9400556f94e7c0908982ee261d7bd"
+)
 RENDER_DEPLOYMENT_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-render-deployment-v1.approval.json"
 )
@@ -424,6 +430,8 @@ def main() -> int:
         expected_approval_paths.add(RENDER_DATA_SECRET_BINDING_V2_APPROVAL_PATH)
     if RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_DATA_SECRET_BINDING_CORRECTION_V1_APPROVAL_PATH)
+    if RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_PATH)
     if RENDER_DEPLOYMENT_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_DEPLOYMENT_V1_APPROVAL_PATH)
     if RENDER_DEPLOYMENT_V2_APPROVAL_PATH.exists():
@@ -469,6 +477,12 @@ def main() -> int:
         raise SystemExit(
             "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22, optional exact v24, exact v25/v26/v27/v28, optional exact v31, exact v32, exact v32 session inspection v1, exact v32 owner-interactive session attribution v1, exact cleanup-v1, credential-repair-v1, cleanup-v2, session-state rebaseline v1, and DATA v1-v3 and DATA search-path-repair v1 approvals"
         )
+    if (
+        RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_PATH.exists()
+        and file_digest(RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_PATH)
+        != RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("exact authorized Render Supavisor session DSN v2 approval file digest mismatch")
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized v15 approval file digest mismatch")
     if file_digest(V16_APPROVAL_PATH) != V16_APPROVAL_FILE_DIGEST:

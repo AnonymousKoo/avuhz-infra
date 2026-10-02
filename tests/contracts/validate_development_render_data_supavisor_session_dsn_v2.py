@@ -5,11 +5,11 @@ import json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
 NAME='development-render-data-supavisor-session-dsn-v2'
-RESOURCE=B/f'{NAME}.resource.json'; PLAN=B/f'{NAME}.plan.json'; PROGRESS=B/f'{NAME}.progress.json'
+RESOURCE=B/f'{NAME}.resource.json'; PLAN=B/f'{NAME}.plan.json'; PROGRESS=B/f'{NAME}.progress.json'; APPROVAL=B/f'{NAME}.approval.json'
 CATALOG=B/'development-data-catalog-rls-validation-v1.execution-progress.json'
 SECRET=B/'development-render-data-secret-binding-correction-v1.execution-progress.json'
 DEPLOY=B/'development-render-deployment-v3.execution-progress.json'
@@ -20,8 +20,8 @@ PROGRESS_ID='57403053-deb7-41b1-b743-2be6f7c3e517'
 PROGRESS_DIGEST='sha256:2a85be21e39dbaa862beb117d65fa6a71c9e0e2f264bde7bce0e92c0868abc26'
 def load(p): return json.loads(p.read_text())
 def main():
- r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); cat=load(CATALOG); sec=load(SECRET); dep=load(DEPLOY)
- validate_plan(p,S); validate_progress(p,g,S)
+ r=load(RESOURCE); p=load(PLAN); g=load(PROGRESS); a=load(APPROVAL); cat=load(CATALOG); sec=load(SECRET); dep=load(DEPLOY)
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['contract_version']=='v2' and r['supersedes_v1']['progress_state']=='NOT_STARTED'
  assert r['environment']=='DEVELOPMENT' and r['provider']=='render'
@@ -71,9 +71,14 @@ def main():
  assert decl['binding.development.render.data-supavisor-session-dsn-v2.owner-vault-runtime-credential']['phase']=='RESOLVED_BY_STEP_PREFLIGHT'
  assert decl['binding.development.render.data-supavisor-session-dsn-v2.result']['evidence_type']=='runtime.render.data-supavisor-session-dsn.bound'
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST
+ assert a['plan_id']==p['plan_id'] and a['plan_version']==2 and a['plan_digest']==p['plan_digest']
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-02T13:20:00Z' and a['expires_at']=='2026-10-02T17:20:00Z'
+ assert a['approved_at']=='2026-10-02T13:07:05Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert g['overall_state']=='NOT_STARTED' and g['step_states'][0]['authorization_state']=='PENDING' and g['step_states'][0]['execution_state']=='NOT_STARTED' and g['step_states'][0]['authorization_consumed'] is False
- rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()
+ rendered=RESOURCE.read_text()+PLAN.read_text()+PROGRESS.read_text()+APPROVAL.read_text()
  for forbidden in ('postgresql://','postgres://','password=','op://'): assert forbidden not in rendered
- print('DEVELOPMENT Render Supavisor session DSN v2: PASS (READY_FOR_APPROVAL; forward-only v2; one secret key; Dashboard Save only; exact IPv4 session pooler; no deployment/API wrapper/secret exposure)')
+ print('DEVELOPMENT Render Supavisor session DSN v2: PASS (APPROVED; forward-only v2; one secret key; Dashboard Save only; exact IPv4 session pooler; no deployment/API wrapper/secret exposure)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

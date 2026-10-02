@@ -17,6 +17,7 @@ from avuhz_service.development_data import (
     CANONICAL_APPLICATION_DATABASE_ROLE,
     DEVELOPMENT_DATA_ENDPOINT_HOST,
     DEVELOPMENT_DATA_ENDPOINT_PORT,
+    DEVELOPMENT_DATA_REQUIRED_SSLMODE,
     DEVELOPMENT_DATA_SESSION_POOLER_HOST,
     DEVELOPMENT_MIGRATION_IDENTITY,
     DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
@@ -80,9 +81,14 @@ class FakeConnectionInfo:
         self,
         host=DEVELOPMENT_DATA_ENDPOINT_HOST,
         port=DEVELOPMENT_DATA_ENDPOINT_PORT,
+        sslmode=DEVELOPMENT_DATA_REQUIRED_SSLMODE,
     ):
         self.host = host
         self.port = port
+        self.sslmode = sslmode
+
+    def get_parameters(self):
+        return {"sslmode": self.sslmode}
 
 
 class FakeHostedConnection(FakeConnection):
@@ -91,12 +97,13 @@ class FakeHostedConnection(FakeConnection):
         *,
         host=DEVELOPMENT_DATA_ENDPOINT_HOST,
         port=DEVELOPMENT_DATA_ENDPOINT_PORT,
+        sslmode=DEVELOPMENT_DATA_REQUIRED_SSLMODE,
         runtime_ready=True,
         effective_ready=True,
         readiness_ready=True,
     ):
         super().__init__(readiness_ready)
-        self.info = FakeConnectionInfo(host, port)
+        self.info = FakeConnectionInfo(host, port, sslmode)
         self.runtime_ready = runtime_ready
         self.effective_ready = effective_ready
 
@@ -250,8 +257,10 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         connection = raw_factory.connections[-1]
         self.assertEqual(connection.info.host, DEVELOPMENT_DATA_ENDPOINT_HOST)
         self.assertEqual(connection.info.port, DEVELOPMENT_DATA_ENDPOINT_PORT)
+        self.assertEqual(connection.info.get_parameters(), {"sslmode": "require"})
         runtime_sql, runtime_parameters = connection.executions[0]
         self.assertTrue(runtime_sql.startswith("select session_user"))
+        self.assertNotIn("pg_stat_ssl", runtime_sql)
         self.assertEqual(
             runtime_parameters,
             (
@@ -308,6 +317,8 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
             {"host": "db.example.invalid"},
             {"host": "aws-0-us-west-2.pooler.supabase.com"},
             {"host": DEVELOPMENT_DATA_SESSION_POOLER_HOST, "port": 6543},
+            {"host": DEVELOPMENT_DATA_SESSION_POOLER_HOST, "sslmode": "disable"},
+            {"host": DEVELOPMENT_DATA_SESSION_POOLER_HOST, "sslmode": "prefer"},
             {"runtime_ready": False},
             {"effective_ready": False},
             {"readiness_ready": False},

@@ -3,15 +3,15 @@ from __future__ import annotations
 import json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-render-deployment-v4'
 def load(p): return json.loads(p.read_text())
 def main():
- r=load(B/f'{N}.resource.json'); p=load(B/f'{N}.plan.json'); g=load(B/f'{N}.progress.json')
+ r=load(B/f'{N}.resource.json'); p=load(B/f'{N}.plan.json'); g=load(B/f'{N}.progress.json'); a=load(B/f'{N}.approval.json')
  dsn=load(B/'development-render-data-supavisor-session-dsn-v2-success.evidence.json'); dsnx=load(B/'development-render-data-supavisor-session-dsn-v2.execution-progress.json')
  d3=load(B/'development-render-deployment-v3-success.evidence.json'); d3x=load(B/'development-render-deployment-v3.execution-progress.json')
- validate_plan(p,S); validate_progress(p,g,S)
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert r['contract_digest']==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['contract_version']=='v4' and r['environment']=='DEVELOPMENT' and r['provider']=='render'
  assert r['workspace_id']=='tea-dab95hv40ujc73a7ccag' and r['service_id']=='srv-dab9n4qd0e5s73dq37mg' and r['service_name']=='avuhz-command-dev'
@@ -31,6 +31,11 @@ def main():
  assert r['secret_material_agent_visible'] is False and r['supabase_operation_authorized'] is False and r['n8n_operation_authorized'] is False and r['staging_authorized'] is False and r['production_authorized'] is False
  assert p['plan_version']==4 and p['plan_digest']==plan_digest(p) and p['definition_status']=='READY_FOR_APPROVAL' and p['environment']=='DEVELOPMENT'
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-02T15:00:00Z','expires_at':'2026-10-02T19:00:00Z'} and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+ assert a['plan_id']==p['plan_id'] and a['plan_version']==4 and a['plan_digest']==p['plan_digest']
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-02T15:00:00Z' and a['expires_at']=='2026-10-02T19:00:00Z'
+ assert a['approved_at']=='2026-10-02T14:27:25Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert len(p['steps'])==2 and p['ordered_step_ids']==[x['step_id'] for x in p['steps']]
  s1,s2=p['steps']
  assert s1['operation']=='provider.render.deploy.trigger-manual-latest-main' and s1['execution_class']=='PROVIDER_MUTATION'
@@ -50,8 +55,8 @@ def main():
  for x in ('readiness.not-200','readiness.configuration-not-ready','readiness.identity-not-ready','readiness.data-not-ready','commands.anonymous-not-401','queries.anonymous-not-401','second-deploy.detected'): assert x in s2['stop_conditions']
  assert g==initial_progress(p,S,g['progress_id'],p['created_at']) and g['overall_state']=='NOT_STARTED'
  assert all(st['authorization_state']=='PENDING' and st['execution_state']=='NOT_STARTED' and st['authorization_consumed'] is False for st in g['step_states'])
- rendered=(B/f'{N}.resource.json').read_text()+(B/f'{N}.plan.json').read_text()+(B/f'{N}.progress.json').read_text()
+ rendered=(B/f'{N}.resource.json').read_text()+(B/f'{N}.plan.json').read_text()+(B/f'{N}.progress.json').read_text()+(B/f'{N}.approval.json').read_text()
  for forbidden in ('postgresql://','postgres://','password=','op://'): assert forbidden not in rendered
- print('DEVELOPMENT Render deployment v4: PASS (READY_FOR_APPROVAL; one canonical-main deploy + read-only runtime/use verification; readiness 200 required; no retry/config/secret/provider drift)')
+ print('DEVELOPMENT Render deployment v4: PASS (APPROVED; one canonical-main deploy + read-only runtime/use verification; readiness 200 required; no retry/config/secret/provider drift)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

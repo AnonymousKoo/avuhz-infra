@@ -289,6 +289,8 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertIn("'DELETE'", readiness_sql)
         self.assertIn("format('%%I.%%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertNotIn("format('%I.%I',table_info.schemaname,table_info.tablename)", readiness_sql)
+        self.assertEqual(readiness_sql.count("like 'avuhz_%%'"), 5)
+        self.assertNotIn("like 'avuhz_%'", readiness_sql.replace("like 'avuhz_%%'", ""))
         self.assertEqual(
             readiness_parameters,
             (CANONICAL_APPLICATION_DATABASE_ROLE,),

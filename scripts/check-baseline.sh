@@ -227,5 +227,6 @@ python3 tests/contracts/validate_development_render_deployment_v2.py
 python3 tests/contracts/validate_development_render_deployment_v3.py
 python3 tests/contracts/validate_development_render_deployment_v4.py
 python3 tests/contracts/validate_development_render_deployment_v4_execution.py
+python3 tests/contracts/validate_development_render_deployment_v5.py
 
 python3 tests/contracts/validate_development_render_deployment_v3_execution.py

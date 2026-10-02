@@ -1,0 +1,376 @@
+{
+  "plan_id": "43a909c1-69ca-404d-af78-00f0a95433b9",
+  "plan_version": 9,
+  "plan_digest": "sha256:29dcfed8c41ac1d1806055ccf6b9b40c64832e5f48bbdb3ce7891c4360d012ba",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "runtime.provider",
+    "provider_reference": "render",
+    "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+    "responsibility": "RUNTIME",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-02T22:09:50Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-02T23:00:00Z",
+    "expires_at": "2026-10-03T03:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.render.deployment-v9.step.01.deploy-implementation-handoff-canonical-main",
+    "development.render.deployment-v9.step.02.verify-implementation-handoff-runtime"
+  ],
+  "steps": [
+    {
+      "step_id": "development.render.deployment-v9.step.01.deploy-implementation-handoff-canonical-main",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "render.service.deployment",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:deployment",
+        "binding_state": "BOUND",
+        "exact_version": "render.manual-implementation-handoff-canonical-main.v9",
+        "exact_digest": "sha256:6af1b729ac5b0b8dfcd3dab7137705907c2c3d2a3792ac0a9c539eca1f4b20cb"
+      },
+      "operation": "provider.render.deploy.trigger-manual-latest-main",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:b600e6020d02a99b57ef999c7c7e58927c014fce59ba5506a2e98019c7d24494"
+        },
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:20333eb7c7298b494c551144c575d0a1e9c9eee4fac7ecc6d73cfea4d26f5598"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:a71d84f748a22f7fc2b01803951d4edc8a0eda47bddaf0c4609192d28d098124"
+        },
+        {
+          "evidence_type": "data.implementation-handoff-intake.migrated",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:358b0a3026cf680ee622efdb30c981936683566534eccdf00a0665380f265526"
+        }
+      ],
+      "expected_postcondition": "After fresh preflight binds the exact canonical GitHub main SHA, verifies ImplementationHandoff runtime commit a40e41e254f1d106d80189bb6b0e4be44f2a85bc is an ancestor of that SHA, verifies the exact verified DEVELOPMENT DATA ImplementationHandoff migration evidence, verifies protected-main and DEVELOPMENT Render service state, and confirms the current live deployment is dep-db01n2navr4c73dq8700 at commit b4cd44412e6ab02c5f7f9f7ac6eeeb7c72db2f5c, trigger exactly one manual deploy with clearCache=false. The deployment must pull canonical main, build and start successfully, reach live, and report a Render commit ID equal to the preflight-bound canonical main SHA. No handoff execution, identity policy change, retry, second deployment, environment/configuration change, secret observation, Supabase mutation, n8n operation, staging, or production action is authorized.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.retry",
+        "deployment.second-trigger",
+        "environment-group.modify",
+        "environment-variable.create",
+        "environment-variable.delete",
+        "environment-variable.modify",
+        "github.branch-protection.modify",
+        "github.repository-visibility.modify",
+        "n8n.operation",
+        "production.target",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.build-command.modify",
+        "render.clear-cache",
+        "render.service-setting.modify",
+        "render.start-command.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.git-persist",
+        "secret.local-persist",
+        "secret.log",
+        "secret.return",
+        "staging.target",
+        "supabase.operation",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "canonical-main.head-changed-after-binding",
+        "implementation-handoff-runtime.not-ancestor-of-main",
+        "data-implementation-handoff-evidence.mismatch",
+        "current-live-deploy.mismatch",
+        "deployment.commit-mismatch",
+        "deployment.failed",
+        "github.repository.not-public",
+        "github.branch-protection.missing",
+        "github.branch-protection.required-check-missing",
+        "github.branch-protection.admin-enforcement-missing",
+        "github.branch-protection.pull-request-rule-missing",
+        "provider.preflight.failed",
+        "scope.drift",
+        "unexpected.provider-effect",
+        "v8-outcome.mismatch"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.deployment-v9.v8-step1",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:b600e6020d02a99b57ef999c7c7e58927c014fce59ba5506a2e98019c7d24494",
+            "exact_digest": "sha256:fcfe6cafb45e90255707b1c7841d0de28d6ae8ef62c0985964bfd77646a1d31b"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.v8-step2",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:20333eb7c7298b494c551144c575d0a1e9c9eee4fac7ecc6d73cfea4d26f5598",
+            "exact_digest": "sha256:908198db5b4811b5d15fb7324f353866d2a34a7a1a324c0cd13c7b27ddb028f7"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.v8-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:a71d84f748a22f7fc2b01803951d4edc8a0eda47bddaf0c4609192d28d098124",
+            "exact_digest": "sha256:f801b66e79606f9a554ba3b0941a1d8327e1320bb3664040fa7ff25e98451a6c"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.data-handoff-evidence",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:358b0a3026cf680ee622efdb30c981936683566534eccdf00a0665380f265526",
+            "exact_digest": "sha256:08c889475f7fe6c66b2ddc74bdc8f4b900f3914f8066a892daba0da615a541d8"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.service",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "render.service.srv-dab9n4qd0e5s73dq37mg",
+            "exact_digest": "sha256:17c18bfcd5a64df5f732d0d9ccefa7d10ab1d8404d11af359071cafde2761517"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.branch",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "github.branch.main",
+            "exact_digest": "sha256:9d88398440bf7479706cc7331c2ba1434df3947fdeb78169a13d135c7f8f553d"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.implementation-handoff-runtime",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "git.commit.a40e41e254f1d106d80189bb6b0e4be44f2a85bc",
+            "exact_digest": "sha256:9464cd70adc0edc03f6c914e1750c00eacafa6503067249e39a2cf6752442157"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.github-protection-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.repository-protection-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.deployment.completed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "established_binding_ids": [
+            "binding.development.render.deployment-v9.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.deployment-v9.step.02.verify-implementation-handoff-runtime",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "render.service.post-deploy-runtime-verification",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:post-deploy-runtime",
+        "binding_state": "BOUND",
+        "exact_version": "render.post-deploy-implementation-handoff-runtime.v9",
+        "exact_digest": "sha256:6af1b729ac5b0b8dfcd3dab7137705907c2c3d2a3792ac0a9c539eca1f4b20cb"
+      },
+      "operation": "provider.render.verify-post-deploy-runtime-use",
+      "dependency_step_ids": [
+        "development.render.deployment-v9.step.01.deploy-implementation-handoff-canonical-main"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "source_step_id": "development.render.deployment-v9.step.01.deploy-implementation-handoff-canonical-main",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Read-only post-deploy verification confirms the Step 1 deployment is the latest and only newly triggered deployment, is live, and reports the preflight-bound canonical main SHA; service remains on branch main with auto-deploy disabled; GET /health/startup returns HTTP 200 started; GET /health/live returns HTTP 200 alive; GET /health/ready returns HTTP 200 with configuration ready, identity ready, data ready, and overall status ready; unauthenticated POST /v1/commands and /v1/queries each return HTTP 401 trusted_identity_required; an unauthenticated AcceptImplementationHandoff-shaped POST /v1/commands also returns HTTP 401 trusted_identity_required. No successful handoff execution or identity-policy mutation is attempted. No provider mutation, environment enumeration, secret observation, Supabase operation, n8n operation, staging, production, retry, or second deployment is performed.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "deployment.retry",
+        "deployment.second-trigger",
+        "environment-variable.read",
+        "environment-variable.modify",
+        "environment-group.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.log",
+        "secret.return",
+        "supabase.operation",
+        "n8n.operation",
+        "staging.target",
+        "production.target",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "deployment.latest-mismatch",
+        "deployment.commit-mismatch",
+        "deployment.not-live",
+        "second-deploy.detected",
+        "startup.not-200",
+        "liveness.not-200",
+        "readiness.not-200",
+        "readiness.configuration-not-ready",
+        "readiness.identity-not-ready",
+        "readiness.data-not-ready",
+        "commands.anonymous-not-401",
+        "queries.anonymous-not-401",
+        "implementation-handoff.anonymous-not-401",
+        "provider.preflight.failed",
+        "scope.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.deployment-v9.result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.deployment-v9.step.01.deploy-implementation-handoff-canonical-main",
+          "evidence_type": "runtime.render.deployment.completed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v9.runtime-verification",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "established_binding_ids": [
+            "binding.development.render.deployment-v9.runtime-verification"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "authorization.scope-widen",
+    "batch.mutation",
+    "production.target",
+    "secret.agent-visible",
+    "staging.target"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift",
+    "unexpected.provider-effect"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

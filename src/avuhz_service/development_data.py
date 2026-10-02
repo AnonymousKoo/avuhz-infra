@@ -26,6 +26,7 @@ DEVELOPMENT_RUNTIME_LOGIN_IDENTITY = "avuhz_data_runtime_service_dev"
 DEVELOPMENT_DATA_ENDPOINT_HOST = "db.gnuqaefotwgkwurjpyik.supabase.co"
 DEVELOPMENT_DATA_SESSION_POOLER_HOST = "aws-1-us-west-2.pooler.supabase.com"
 DEVELOPMENT_DATA_ENDPOINT_PORT = 5432
+DEVELOPMENT_DATA_REQUIRED_SSLMODE = "require"
 DEVELOPMENT_DATA_ALLOWED_ENDPOINT_HOSTS = frozenset({
     DEVELOPMENT_DATA_ENDPOINT_HOST,
     DEVELOPMENT_DATA_SESSION_POOLER_HOST,
@@ -102,10 +103,14 @@ class HostedDevelopmentPostgresConnectionFactory:
                 connection.autocommit = False
 
             info = getattr(connection, "info", None)
+            get_parameters = getattr(info, "get_parameters", None) if info is not None else None
+            parameters = get_parameters() if callable(get_parameters) else None
             if (
                 info is None
                 or getattr(info, "host", None) not in DEVELOPMENT_DATA_ALLOWED_ENDPOINT_HOSTS
                 or getattr(info, "port", None) != DEVELOPMENT_DATA_ENDPOINT_PORT
+                or not hasattr(parameters, "get")
+                or parameters.get("sslmode") != DEVELOPMENT_DATA_REQUIRED_SSLMODE
             ):
                 raise RuntimeError
 
@@ -124,9 +129,7 @@ class HostedDevelopmentPostgresConnectionFactory:
                 "and not membership.inherit_option and membership.set_option)=1 "
                 "and not pg_has_role(session_user,%s,'SET') "
                 "and (select count(*) from information_schema.role_table_grants "
-                "where grantee=session_user)=0 "
-                "and coalesce((select ssl from pg_catalog.pg_stat_ssl "
-                "where pid=pg_backend_pid()),false) as ready",
+                "where grantee=session_user)=0 as ready",
                 (
                     DEVELOPMENT_RUNTIME_LOGIN_IDENTITY,
                     CANONICAL_APPLICATION_DATABASE_ROLE,

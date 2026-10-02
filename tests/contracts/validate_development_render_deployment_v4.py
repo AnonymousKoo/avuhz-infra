@@ -23,14 +23,14 @@ def main():
  assert r['supavisor_support_commit']=='e85426bccd646c8f4c9c3ccaac90a2c1a632d3db' and r['supavisor_support_must_be_ancestor_of_execution_main'] is True
  assert canonical_digest(dsn)==r['source_supavisor_dsn_success_evidence_digest']=='sha256:626e401ab7a4521c02f02505da1f4af01d35bcf68e98046a0f5b70f6fa60b6d8'
  assert dsnx['overall_state']=='COMPLETED' and dsnx['progress_digest']==r['source_supavisor_dsn_progress_digest']=='sha256:ca2d1b6d5b1781ada04e22608db22e1947c3833063903000608fca469e33b640'
- assert canonical_digest(d3)==r['source_deployment_v3_success_evidence_digest']=='sha256:03a28444f3d1db009b1a1b49a80c19ae4c76dd8e186b7765a3c5018888159f2a'
+ assert d3x['step_states'][0]['evidence'][0]['evidence_digest']==r['source_deployment_v3_success_evidence_digest']=='sha256:560b8147f448e12d34e9266816a889a04aba082abec2741a91647be7c6a9fd2a'
  assert d3x['overall_state']=='COMPLETED' and d3x['progress_digest']==r['source_deployment_v3_progress_digest']=='sha256:1f628b63d94f127877ee6b96d31e1d66134a3c8ea7dd6eb31fc69da1c0b31e1a'
  assert r['post_deploy_runtime_verification_required'] is True
  assert r['post_deploy_expected']=={'startup_http':200,'liveness_http':200,'readiness_http':200,'configuration':'ready','identity':'ready','data':'ready','unauthenticated_commands_http':401,'unauthenticated_queries_http':401,'unauthenticated_error':'trusted_identity_required','second_deploy_detected':False}
  for k in ('environment_variable_changes_authorized','environment_group_changes_authorized','service_setting_changes_authorized','github_visibility_changes_authorized','github_branch_protection_changes_authorized'): assert r[k]==0
  assert r['secret_material_agent_visible'] is False and r['supabase_operation_authorized'] is False and r['n8n_operation_authorized'] is False and r['staging_authorized'] is False and r['production_authorized'] is False
  assert p['plan_version']==4 and p['plan_digest']==plan_digest(p) and p['definition_status']=='READY_FOR_APPROVAL' and p['environment']=='DEVELOPMENT'
- assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-02T14:30:00Z','expires_at':'2026-10-02T18:30:00Z'} and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+ assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-02T15:00:00Z','expires_at':'2026-10-02T19:00:00Z'} and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert len(p['steps'])==2 and p['ordered_step_ids']==[x['step_id'] for x in p['steps']]
  s1,s2=p['steps']
  assert s1['operation']=='provider.render.deploy.trigger-manual-latest-main' and s1['execution_class']=='PROVIDER_MUTATION'

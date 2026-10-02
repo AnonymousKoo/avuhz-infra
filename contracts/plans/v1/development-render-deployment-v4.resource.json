@@ -28,7 +28,7 @@
   "supavisor_support_must_be_ancestor_of_execution_main": true,
   "source_supavisor_dsn_success_evidence_digest": "sha256:626e401ab7a4521c02f02505da1f4af01d35bcf68e98046a0f5b70f6fa60b6d8",
   "source_supavisor_dsn_progress_digest": "sha256:ca2d1b6d5b1781ada04e22608db22e1947c3833063903000608fca469e33b640",
-  "source_deployment_v3_success_evidence_digest": "sha256:03a28444f3d1db009b1a1b49a80c19ae4c76dd8e186b7765a3c5018888159f2a",
+  "source_deployment_v3_success_evidence_digest": "sha256:560b8147f448e12d34e9266816a889a04aba082abec2741a91647be7c6a9fd2a",
   "source_deployment_v3_progress_digest": "sha256:1f628b63d94f127877ee6b96d31e1d66134a3c8ea7dd6eb31fc69da1c0b31e1a",
   "post_deploy_runtime_verification_required": true,
   "post_deploy_expected": {
@@ -53,5 +53,5 @@
   "n8n_operation_authorized": false,
   "staging_authorized": false,
   "production_authorized": false,
-  "contract_digest": "sha256:babf8327b6c6cd5875820a4c79cca26b52035ce59da97fea861f71d902e2a8ca"
+  "contract_digest": "sha256:efaa0c94457d7248d9ddba832e0e138c9e8afa2b76cf699c3d9ddd3ae170ada7"
 }

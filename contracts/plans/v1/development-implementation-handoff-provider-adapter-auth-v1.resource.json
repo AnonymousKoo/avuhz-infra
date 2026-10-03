@@ -7,11 +7,11 @@
   "project_name": "DEVELOPMENT AUTH",
   "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
   "service_audience": "audience.avuhz.command-service.development",
-  "identity_reference": "identity.development.provider-adapter.sekinfra",
-  "target_email": "avuhz-sekinfra-provider-adapter-development@example.invalid",
+  "identity_reference": "identity.development.provider-adapter.implementation-handoff",
+  "target_email": "avuhz-implementation-handoff-provider-adapter-development@example.invalid",
   "email_confirmed_required": true,
   "provider_identity_create_count_authorized": 1,
-  "future_principal_reference": "provider-adapter.sekinfra-development",
+  "future_principal_reference": "provider-adapter.implementation-handoff-development",
   "future_caller_type": "PROVIDER_ADAPTER",
   "future_capabilities": [
     "implementation_handoff:accept"
@@ -27,7 +27,7 @@
     "session_count": 0,
     "refresh_token_count": 0
   },
-  "required_preparation_evidence_digest": "sha256:2975123e25e255084f8db09d3ec208a6a5971aafab4e146a063f8f9dc1c4fba0",
+  "required_preparation_evidence_digest": "sha256:e4c194acf40408cff3b0063654dbead723d247415823777fc35cc2c077ac7456",
   "required_hook_success_evidence_digest": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c",
   "required_provider_adapter_policy_commit": "86413b7bbbf8f4532f56962f9d4c45a2b84cc2f0",
   "password_creation_authorized": false,
@@ -46,5 +46,5 @@
   "production_authorized": false,
   "raw_provider_subject_persistence_authorized": false,
   "credential_material_persistence_authorized": false,
-  "contract_digest": "sha256:150e8c7bcc683ad6dc57dee80c8e8994365e621057637a08d5822644059cdb9c"
+  "contract_digest": "sha256:fd3c01a78d49a500dd576f888cc4ad60d2da1af304286cd844f4a8b40a362510"
 }

@@ -6,16 +6,16 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
 from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_service.development_supabase_identity import DEVELOPMENT_IDENTITY_ALLOWLIST
-B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-sekinfra-provider-adapter-auth-v1'
-PLAN_ID='454c2d06-731b-4351-bf7c-35403ce9198e'
-PLAN_DIGEST='sha256:aa657cb8c3664935e55e5919ccd9807d685bcf5d4f7c8b661c37343dbbdb180b'
-PROGRESS_ID='43c31bb8-828d-4eb0-a89a-852e430a45f9'
-PROGRESS_DIGEST='sha256:dc7397686520dcb0ff0adf9b82e79c0d1715d12e50fdc031fe7f2d8192c4296a'
-RESOURCE_DIGEST='sha256:150e8c7bcc683ad6dc57dee80c8e8994365e621057637a08d5822644059cdb9c'
-PREP='sha256:2975123e25e255084f8db09d3ec208a6a5971aafab4e146a063f8f9dc1c4fba0'
+B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-implementation-handoff-provider-adapter-auth-v1'
+PLAN_ID='644f239b-c7cb-4c30-85a4-95efbfe85ae4'
+PLAN_DIGEST='sha256:67b9ebbcd55612edbfbdc3f51f6b8288abd92d3ecef2c35c88cddfa72f5d49fb'
+PROGRESS_ID='3f600043-dc92-46a4-bdcf-db5d7924adc2'
+PROGRESS_DIGEST='sha256:59dc64ce68a40e234e1426fc3cd0ee8ede0ce36509817e1ca65709777995cda1'
+RESOURCE_DIGEST='sha256:fd3c01a78d49a500dd576f888cc4ad60d2da1af304286cd844f4a8b40a362510'
+PREP='sha256:e4c194acf40408cff3b0063654dbead723d247415823777fc35cc2c077ac7456'
 V28='sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c'
 POLICY='86413b7bbbf8f4532f56962f9d4c45a2b84cc2f0'
-EMAIL='avuhz-sekinfra-provider-adapter-development@example.invalid'
+EMAIL='avuhz-implementation-handoff-provider-adapter-development@example.invalid'
 def load(n): return json.loads((B/n).read_text())
 def raw(n): return 'sha256:'+hashlib.sha256((B/n).read_bytes()).hexdigest()
 def main():
@@ -26,7 +26,7 @@ def main():
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['project_reference']=='pwlhruwutoitnieactol' and r['responsibility']=='AUTH' and r['target_email']==EMAIL
  assert r['provider_identity_create_count_authorized']==1 and r['email_confirmed_required'] is True
- assert r['future_principal_reference']=='provider-adapter.sekinfra-development' and r['future_caller_type']=='PROVIDER_ADAPTER'
+ assert r['future_principal_reference']=='provider-adapter.implementation-handoff-development' and r['future_caller_type']=='PROVIDER_ADAPTER'
  assert r['future_capabilities']==['implementation_handoff:accept'] and r['future_authority_roles']==[]
  assert r['future_tenant_binding']=='SEPARATE_AUTHORIZATION_REQUIRED'
  assert r['fresh_preflight_expected']=={'auth_user_count':1,'target_identity_count':0,'known_synthetic_user_count':1,'other_auth_user_count':0,'canonical_tenant_bound_user_count':1,'session_count':0,'refresh_token_count':0}
@@ -39,7 +39,7 @@ def main():
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert len(p['steps'])==1; s=p['steps'][0]
  assert s['operation']=='provider.auth-identity.create-one' and s['execution_class']=='PROVIDER_MUTATION'
- assert s['resource']=={'resource_type':'auth.provider-adapter-identity','resource_reference':'identity.development.provider-adapter.sekinfra','binding_state':'BOUND','exact_version':'version.1','exact_digest':RESOURCE_DIGEST}
+ assert s['resource']=={'resource_type':'auth.provider-adapter-identity','resource_reference':'identity.development.provider-adapter.implementation-handoff','binding_state':'BOUND','exact_version':'version.1','exact_digest':RESOURCE_DIGEST}
  assert s['required_evidence']==[
   {'evidence_type':'auth.provider-adapter.preparation.observed','source_step_id':None,'binding_state':'BOUND','exact_digest':PREP},
   {'evidence_type':'hook.enablement.verified','source_step_id':None,'binding_state':'BOUND','exact_digest':V28},
@@ -49,12 +49,12 @@ def main():
  for x in ('password.set','password-hash.set','tenant-metadata.bind','server-allowlist.bind','token.issue','session.issue','data.operation','render.operation','n8n.operation','production.target','credential.persist','credential.expose','credential.log','credential.return','credential.digest','credential.copy','credential.create','credential.rotate','credential.export'): assert x in s['prohibited_actions']
  for x in ('target.identity.already-exists','auth-user-count.mismatch','known-synthetic-identity.mismatch','canonical-tenant-binding.mismatch','session-state.drift','refresh-token-state.drift','hook-state.drift','allowlist-state.drift','provider-adapter-policy.not-ancestor-of-main','executor-capability.attestation.missing','credential-material.observed'): assert x in s['stop_conditions']
  b={x['binding_id']:x for x in s['binding_declarations']}
- assert b['binding.development.sekinfra.provider-adapter-auth-v1.preparation']['preapproval_value']['value']==PREP
- assert b['binding.development.sekinfra.provider-adapter-auth-v1.hook-v28']['preapproval_value']['value']==V28
- assert b['binding.development.sekinfra.provider-adapter-auth-v1.policy-commit']['preapproval_value']['value']=='git.commit.'+POLICY
- assert b['binding.development.sekinfra.provider-adapter-auth-v1.admin-executor-capability']['phase']=='RESOLVED_BY_STEP_PREFLIGHT'
- assert b['binding.development.sekinfra.provider-adapter-auth-v1.identity-create-preflight']['phase']=='RESOLVED_BY_STEP_PREFLIGHT'
- assert b['binding.development.sekinfra.provider-adapter-auth-v1.identity']['phase']=='PRODUCED_BY_CURRENT_STEP'
+ assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.preparation']['preapproval_value']['value']==PREP
+ assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.hook-v28']['preapproval_value']['value']==V28
+ assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.policy-commit']['preapproval_value']['value']=='git.commit.'+POLICY
+ assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.admin-executor-capability']['phase']=='RESOLVED_BY_STEP_PREFLIGHT'
+ assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.identity-create-preflight']['phase']=='RESOLVED_BY_STEP_PREFLIGHT'
+ assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.identity']['phase']=='PRODUCED_BY_CURRENT_STEP'
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
  assert len(DEVELOPMENT_IDENTITY_ALLOWLIST)==1 and DEVELOPMENT_IDENTITY_ALLOWLIST[0].caller_type=='HUMAN' and DEVELOPMENT_IDENTITY_ALLOWLIST[0].capabilities==frozenset({'engagement:read'})
  o=prep['observation']
@@ -69,6 +69,6 @@ def main():
  assert all(v is False for v in prep['security_state'].values())
  rendered=''.join((B/(N+suf)).read_text() for suf in ('.resource.json','.plan.json','.progress.json','-preparation.evidence.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://','service_role_key','sb_secret_'): assert forbidden not in rendered
- print('DEVELOPMENT Sekinfra provider-adapter Auth v1: PASS (READY_FOR_APPROVAL; one passwordless confirmed AUTH identity only; no tenant/allowlist/password/token/session/downstream provider effect)')
+ print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v1: PASS (READY_FOR_APPROVAL; one passwordless confirmed AUTH identity only; no tenant/allowlist/password/token/session/downstream provider effect)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

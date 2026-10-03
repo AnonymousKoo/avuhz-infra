@@ -41,7 +41,8 @@
     "first_provider_mutation_scope": "CREATE_PASSWORDLESS_CONFIRMED_IDENTITY_ONLY",
     "credential_binding_deferred": true,
     "tenant_binding_deferred": true,
-    "server_allowlist_binding_deferred": true
+    "server_allowlist_binding_deferred": true,
+    "shared_core_identity_not_vertical_specific": true
   },
   "security_state": {
     "credential_material_observed": false,
@@ -55,6 +56,6 @@
     "staging_resource_touched": false,
     "production_resource_touched": false
   },
-  "record_basis": "READ_ONLY_AUTH_AGGREGATES_PLUS_PUBLIC_OIDC_DISCOVERY_PLUS_LIVE_FUNCTION_ACL_PLUS_CANONICAL_V28_HOOK_ENABLEMENT",
-  "recorded_at": "2026-10-03T02:41:07Z"
+  "record_basis": "READ_ONLY_AUTH_AGGREGATES_PLUS_PUBLIC_OIDC_DISCOVERY_PLUS_LIVE_FUNCTION_ACL_PLUS_CANONICAL_V28_HOOK_ENABLEMENT_AND_PROVIDER_NEUTRAL_CORE_BOUNDARY",
+  "recorded_at": "2026-10-03T02:46:05Z"
 }

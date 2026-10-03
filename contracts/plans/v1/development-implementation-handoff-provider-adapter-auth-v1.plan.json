@@ -1,7 +1,7 @@
 {
-  "plan_id": "454c2d06-731b-4351-bf7c-35403ce9198e",
+  "plan_id": "644f239b-c7cb-4c30-85a4-95efbfe85ae4",
   "plan_version": 1,
-  "plan_digest": "sha256:aa657cb8c3664935e55e5919ccd9807d685bcf5d4f7c8b661c37343dbbdb180b",
+  "plan_digest": "sha256:67b9ebbcd55612edbfbdc3f51f6b8288abd92d3ecef2c35c88cddfa72f5d49fb",
   "definition_status": "READY_FOR_APPROVAL",
   "environment": "DEVELOPMENT",
   "target": {
@@ -13,25 +13,25 @@
     "audience_reference": "audience.avuhz.command-service.development"
   },
   "owner_identity": "github:AnonymousKoo",
-  "created_at": "2026-10-03T02:34:25Z",
+  "created_at": "2026-10-03T02:46:05Z",
   "authorization_window": {
     "binding_state": "BOUND",
     "starts_at": "2026-10-03T03:30:00Z",
     "expires_at": "2026-10-03T07:30:00Z"
   },
   "ordered_step_ids": [
-    "development.sekinfra.provider-adapter-auth-v1.step.01.create-passwordless-identity"
+    "development.implementation-handoff.provider-adapter-auth-v1.step.01.create-passwordless-identity"
   ],
   "steps": [
     {
-      "step_id": "development.sekinfra.provider-adapter-auth-v1.step.01.create-passwordless-identity",
+      "step_id": "development.implementation-handoff.provider-adapter-auth-v1.step.01.create-passwordless-identity",
       "ordinal": 1,
       "resource": {
         "resource_type": "auth.provider-adapter-identity",
-        "resource_reference": "identity.development.provider-adapter.sekinfra",
+        "resource_reference": "identity.development.provider-adapter.implementation-handoff",
         "binding_state": "BOUND",
         "exact_version": "version.1",
-        "exact_digest": "sha256:150e8c7bcc683ad6dc57dee80c8e8994365e621057637a08d5822644059cdb9c"
+        "exact_digest": "sha256:fd3c01a78d49a500dd576f888cc4ad60d2da1af304286cd844f4a8b40a362510"
       },
       "operation": "provider.auth-identity.create-one",
       "dependency_step_ids": [],
@@ -40,7 +40,7 @@
           "evidence_type": "auth.provider-adapter.preparation.observed",
           "source_step_id": null,
           "binding_state": "BOUND",
-          "exact_digest": "sha256:2975123e25e255084f8db09d3ec208a6a5971aafab4e146a063f8f9dc1c4fba0"
+          "exact_digest": "sha256:e4c194acf40408cff3b0063654dbead723d247415823777fc35cc2c077ac7456"
         },
         {
           "evidence_type": "hook.enablement.verified",
@@ -49,7 +49,7 @@
           "exact_digest": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c"
         }
       ],
-      "expected_postcondition": "One confirmed passwordless DEVELOPMENT Auth identity is created for the exact Sekinfra provider-adapter email; total Auth users becomes 2 while the existing HUMAN identity, canonical tenant binding, sessions, refresh tokens, hook state, and active server allowlist remain unchanged. No password/password hash, user metadata, non-provider app metadata, tenant binding, allowlist binding, token/session, DATA, Render, n8n, staging, or production change occurs. Only a digest-bound reference to the provider-assigned subject may persist; raw provider subject and credential material do not.",
+      "expected_postcondition": "One confirmed passwordless DEVELOPMENT Auth identity is created for the exact shared ImplementationHandoff provider-adapter email; total Auth users becomes 2 while the existing HUMAN identity, canonical tenant binding, sessions, refresh tokens, hook state, and active server allowlist remain unchanged. No password/password hash, user metadata, non-provider app metadata, tenant binding, allowlist binding, token/session, DATA, Render, n8n, staging, or production change occurs. Only a digest-bound reference to the provider-assigned subject may persist; raw provider subject and credential material do not.",
       "prohibited_actions": [
         "credential.persist",
         "credential.expose",
@@ -117,7 +117,7 @@
       "unresolved_bindings": [],
       "binding_declarations": [
         {
-          "binding_id": "binding.development.sekinfra.provider-adapter-auth-v1.preparation",
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.preparation",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "CONTENT_DIGEST",
           "source_step_id": null,
@@ -125,12 +125,12 @@
           "digest_policy": "REQUIRED",
           "persistence_policy": "DIGEST_ONLY",
           "preapproval_value": {
-            "value": "sha256:2975123e25e255084f8db09d3ec208a6a5971aafab4e146a063f8f9dc1c4fba0",
-            "exact_digest": "sha256:d48343f9eef07ff95e3ce75ee68f43366bbd392ab43d23799dad445f8d546b29"
+            "value": "sha256:e4c194acf40408cff3b0063654dbead723d247415823777fc35cc2c077ac7456",
+            "exact_digest": "sha256:053b46b821a2551773b2b0ec896f37bdd788c6caf4645d26df48d39e62a0483d"
           }
         },
         {
-          "binding_id": "binding.development.sekinfra.provider-adapter-auth-v1.hook-v28",
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.hook-v28",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "CONTENT_DIGEST",
           "source_step_id": null,
@@ -143,7 +143,7 @@
           }
         },
         {
-          "binding_id": "binding.development.sekinfra.provider-adapter-auth-v1.policy-commit",
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.policy-commit",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "STABLE_REFERENCE",
           "source_step_id": null,
@@ -156,7 +156,7 @@
           }
         },
         {
-          "binding_id": "binding.development.sekinfra.provider-adapter-auth-v1.admin-executor-capability",
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.admin-executor-capability",
           "phase": "RESOLVED_BY_STEP_PREFLIGHT",
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
@@ -165,7 +165,7 @@
           "persistence_policy": "DIGEST_ONLY"
         },
         {
-          "binding_id": "binding.development.sekinfra.provider-adapter-auth-v1.identity-create-preflight",
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.identity-create-preflight",
           "phase": "RESOLVED_BY_STEP_PREFLIGHT",
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
@@ -174,7 +174,7 @@
           "persistence_policy": "DIGEST_ONLY"
         },
         {
-          "binding_id": "binding.development.sekinfra.provider-adapter-auth-v1.hook-preflight",
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.hook-preflight",
           "phase": "RESOLVED_BY_STEP_PREFLIGHT",
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
@@ -183,7 +183,7 @@
           "persistence_policy": "DIGEST_ONLY"
         },
         {
-          "binding_id": "binding.development.sekinfra.provider-adapter-auth-v1.identity",
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.identity",
           "phase": "PRODUCED_BY_CURRENT_STEP",
           "value_class": "STABLE_REFERENCE",
           "source_step_id": null,
@@ -196,7 +196,7 @@
         {
           "evidence_type": "auth.provider-adapter-identity.created",
           "established_binding_ids": [
-            "binding.development.sekinfra.provider-adapter-auth-v1.identity"
+            "binding.development.implementation-handoff.provider-adapter-auth-v1.identity"
           ],
           "digest_policy": "REQUIRED"
         }

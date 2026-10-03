@@ -21,6 +21,8 @@ from avuhz_service.development_supabase_identity import (
 
 PROVIDER_SUBJECT = "11111111-1111-4111-8111-111111111111"
 TENANT = "22222222-2222-4222-8222-222222222222"
+PROVIDER_ADAPTER_SUBJECT = "33333333-3333-4333-8333-333333333333"
+PROVIDER_ADAPTER_TENANT = "44444444-4444-4444-8444-444444444444"
 TOKEN = "synthetic.jwt." + ("x" * 64)
 
 
@@ -91,6 +93,37 @@ class DevelopmentSupabaseIdentityVerifierTests(unittest.TestCase):
         self.assertEqual(evidence.authenticated_at, "2030-01-15T14:00:00Z")
         self.assertEqual(evidence.expires_at, "2030-01-15T16:00:00Z")
 
+    def test_verified_provider_adapter_maps_only_to_handoff_accept_authority(self):
+        provider_entry = entry(
+            subject_digest=digest(PROVIDER_ADAPTER_SUBJECT),
+            principal_reference="provider-adapter.sekinfra",
+            tenant_id=PROVIDER_ADAPTER_TENANT,
+            caller_type="PROVIDER_ADAPTER",
+            capabilities=frozenset({"implementation_handoff:accept"}),
+        )
+        cryptographic = FakeCryptographicVerifier(
+            claims(
+                sub=PROVIDER_ADAPTER_SUBJECT,
+                avuhz_tenant_id=PROVIDER_ADAPTER_TENANT,
+            )
+        )
+        verifier = DevelopmentSupabaseIdentityVerifier(
+            cryptographic,
+            allowlist=(entry(), provider_entry),
+        )
+
+        evidence = verifier.verify(TOKEN)
+
+        self.assertEqual(evidence.subject, "provider-adapter.sekinfra")
+        self.assertEqual(evidence.tenant_id, PROVIDER_ADAPTER_TENANT)
+        self.assertEqual(evidence.caller_type, "PROVIDER_ADAPTER")
+        self.assertEqual(
+            evidence.capabilities,
+            frozenset({"implementation_handoff:accept"}),
+        )
+        self.assertNotIn("engagement:read", evidence.capabilities)
+        self.assertEqual(evidence.authority_roles, frozenset())
+
     def test_provider_subject_and_tenant_must_match_server_allowlist(self):
         for invalid_claims in (
             claims(sub="33333333-3333-4333-8333-333333333333"),
@@ -133,11 +166,50 @@ class DevelopmentSupabaseIdentityVerifierTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             verifier.verify("wrong.jwt." + ("z" * 64))
 
-    def test_allowlist_shape_is_exact_and_single_entry(self):
+    def test_provider_adapter_policy_maps_to_exact_single_handoff_capability(self):
+        provider_subject = "33333333-3333-4333-8333-333333333333"
+        provider_entry = DevelopmentIdentityAllowlistEntry(
+            subject_digest=digest(provider_subject),
+            principal_reference="provider-adapter.sekinfra-development",
+            tenant_id=TENANT,
+            caller_type="PROVIDER_ADAPTER",
+            capabilities=frozenset({"implementation_handoff:accept"}),
+        )
+        verifier = DevelopmentSupabaseIdentityVerifier(
+            FakeCryptographicVerifier(claims(sub=provider_subject)),
+            allowlist=(entry(), provider_entry),
+        )
+
+        evidence = verifier.verify(TOKEN)
+
+        self.assertEqual(evidence.subject, "provider-adapter.sekinfra-development")
+        self.assertEqual(evidence.tenant_id, TENANT)
+        self.assertEqual(evidence.caller_type, "PROVIDER_ADAPTER")
+        self.assertEqual(evidence.capabilities, frozenset({"implementation_handoff:accept"}))
+        self.assertEqual(evidence.authority_roles, frozenset())
+        self.assertEqual(evidence.authentication_strength, "STANDARD")
+
+    def test_allowlist_shape_is_bounded_unique_and_caller_capabilities_are_exact(self):
+        provider_subject = "33333333-3333-4333-8333-333333333333"
+        provider_entry = DevelopmentIdentityAllowlistEntry(
+            subject_digest=digest(provider_subject),
+            principal_reference="provider-adapter.sekinfra-development",
+            tenant_id=TENANT,
+            caller_type="PROVIDER_ADAPTER",
+            capabilities=frozenset({"implementation_handoff:accept"}),
+        )
+        with self.assertRaises(ValueError):
+            DevelopmentSupabaseIdentityVerifier(FakeCryptographicVerifier(claims()), allowlist=())
         with self.assertRaises(ValueError):
             DevelopmentSupabaseIdentityVerifier(
                 FakeCryptographicVerifier(claims()),
-                allowlist=(),
+                allowlist=(entry(), provider_entry, DevelopmentIdentityAllowlistEntry(
+                    subject_digest=digest("44444444-4444-4444-8444-444444444444"),
+                    principal_reference="provider-adapter.second-development",
+                    tenant_id="55555555-5555-4555-8555-555555555555",
+                    caller_type="PROVIDER_ADAPTER",
+                    capabilities=frozenset({"implementation_handoff:accept"}),
+                )),
             )
         with self.assertRaises(ValueError):
             DevelopmentSupabaseIdentityVerifier(
@@ -148,6 +220,10 @@ class DevelopmentSupabaseIdentityVerifierTests(unittest.TestCase):
             {"subject_digest": "sha256:not-a-digest"},
             {"principal_reference": "INVALID SUBJECT"},
             {"tenant_id": "not-a-tenant"},
+            {"caller_type": "INTERNAL_SERVICE"},
+            {"capabilities": frozenset({"implementation_handoff:accept"})},
+            {"caller_type": "PROVIDER_ADAPTER", "capabilities": frozenset({"engagement:read"})},
+            {"caller_type": "PROVIDER_ADAPTER", "capabilities": frozenset({"implementation_handoff:accept", "engagement:read"})},
         ):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 entry(**changes)

@@ -28,6 +28,7 @@ from avuhz_service.development import (
     DEVELOPMENT_SERVICE_AUDIENCE,
 )
 from avuhz_service.development_supabase_identity import (
+    DEVELOPMENT_IDENTITY_ALLOWLIST,
     DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
     DEVELOPMENT_SYNTHETIC_READ_ONLY_POLICY_DIGEST,
     DevelopmentIdentityAllowlistEntry,
@@ -341,6 +342,9 @@ def main() -> int:
     assert entry.tenant_id == TENANT_ID
     assert DEVELOPMENT_SYNTHETIC_READ_ONLY_POLICY_DIGEST == POLICY_DIGEST
     assert DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST == (entry,)
+    assert DEVELOPMENT_IDENTITY_ALLOWLIST == DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST
+    assert DEVELOPMENT_IDENTITY_ALLOWLIST[0].caller_type == "HUMAN"
+    assert DEVELOPMENT_IDENTITY_ALLOWLIST[0].capabilities == frozenset({"engagement:read"})
     bound_policy = {
         "issuer": DEVELOPMENT_AUTH_ISSUER,
         "audience": DEVELOPMENT_SERVICE_AUDIENCE,
@@ -356,7 +360,7 @@ def main() -> int:
     for fragment in (
         '_READ_ONLY_CAPABILITIES = frozenset({"engagement:read"})',
         '_SYNTHETIC_CALLER_TYPE = "HUMAN"',
-        'len(allowlist) != 1',
+        'not 1 <= len(allowlist) <= 2',
         'authority_roles=frozenset()',
     ):
         assert fragment in identity_policy, fragment

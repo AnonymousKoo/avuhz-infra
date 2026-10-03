@@ -221,7 +221,7 @@ def main() -> int:
     for fragment in (
         '_READ_ONLY_CAPABILITIES = frozenset({"engagement:read"})',
         '_SYNTHETIC_CALLER_TYPE = "HUMAN"',
-        'len(allowlist) != 1',
+        'not 1 <= len(allowlist) <= 2',
         'hmac.compare_digest(entry.subject_digest, digest)',
         'and entry.tenant_id == tenant_id',
         'authority_roles=frozenset()',

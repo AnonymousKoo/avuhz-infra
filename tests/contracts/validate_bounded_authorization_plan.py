@@ -323,6 +323,12 @@ RENDER_DEPLOYMENT_V8_APPROVAL_PATH = (
 RENDER_DEPLOYMENT_V8_APPROVAL_FILE_DIGEST = (
     "sha256:c515021103ea04203c393fbfd9dca762928c7185fef4b40d89cc0eaa3da3f104"
 )
+RENDER_DEPLOYMENT_V10_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-render-deployment-v10.approval.json"
+)
+RENDER_DEPLOYMENT_V10_APPROVAL_FILE_DIGEST = (
+    "sha256:a8f7019a7eb489bcf605ff568a7d34aa9861ff71ae287557bd4f458ac3e879c9"
+)
 RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-render-runtime-config-repair-v1.approval.json"
 )
@@ -470,6 +476,8 @@ def main() -> int:
         expected_approval_paths.add(RENDER_DEPLOYMENT_V7_APPROVAL_PATH)
     if RENDER_DEPLOYMENT_V8_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_DEPLOYMENT_V8_APPROVAL_PATH)
+    if RENDER_DEPLOYMENT_V10_APPROVAL_PATH.exists():
+        expected_approval_paths.add(RENDER_DEPLOYMENT_V10_APPROVAL_PATH)
     if RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
     if RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH.exists():
@@ -507,7 +515,7 @@ def main() -> int:
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized AUTH v8-v16 plus v19/v21/v22, optional exact v24, exact v25/v26/v27/v28, optional exact v31, exact v32, exact v32 session inspection v1, exact v32 owner-interactive session attribution v1, exact cleanup-v1, credential-repair-v1, cleanup-v2, session-state rebaseline v1, and DATA v1-v3 and DATA search-path-repair v1 approvals"
+            "approval artifact set differs from the exact authorized canonical AUTH/DATA/Render approval inventory, including DEVELOPMENT Render deployment v10 when present"
         )
     if (
         RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_PATH.exists()
@@ -721,6 +729,12 @@ def main() -> int:
     ):
         raise SystemExit("DEVELOPMENT Render deployment v8 approval file digest mismatch")
     if (
+        RENDER_DEPLOYMENT_V10_APPROVAL_PATH.exists()
+        and file_digest(RENDER_DEPLOYMENT_V10_APPROVAL_PATH)
+        != RENDER_DEPLOYMENT_V10_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("DEVELOPMENT Render deployment v10 approval file digest mismatch")
+    if (
         RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists()
         and file_digest(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
         != RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_FILE_DIGEST
@@ -817,6 +831,7 @@ def main() -> int:
                 | ({RENDER_DEPLOYMENT_V5_APPROVAL_PATH} if RENDER_DEPLOYMENT_V5_APPROVAL_PATH.exists() else set())
                 | ({RENDER_DEPLOYMENT_V7_APPROVAL_PATH} if RENDER_DEPLOYMENT_V7_APPROVAL_PATH.exists() else set())
                 | ({RENDER_DEPLOYMENT_V8_APPROVAL_PATH} if RENDER_DEPLOYMENT_V8_APPROVAL_PATH.exists() else set())
+                | ({RENDER_DEPLOYMENT_V10_APPROVAL_PATH} if RENDER_DEPLOYMENT_V10_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH.exists() else set())

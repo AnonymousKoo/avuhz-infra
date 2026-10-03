@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib,json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-implementation-handoff-provider-adapter-auth-credential-repair-v1'
 PLAN_ID='b2b5dbda-4731-4719-bbea-eda18500a500'
@@ -17,15 +17,19 @@ SECRET='AVUHZ_DEVELOPMENT_SUPABASE_AUTH_IMPLEMENTATION_HANDOFF_ADAPTER_V2_EPHEME
 def load(n): return json.loads((B/n).read_text())
 def raw(n): return 'sha256:'+hashlib.sha256((B/n).read_bytes()).hexdigest()
 def main():
- p=load(N+'.plan.json'); g=load(N+'.progress.json'); prep=load(N+'-preparation.evidence.json'); v1=load('development-implementation-handoff-provider-adapter-auth-v1.execution-progress.json')
- validate_plan(p,S); validate_progress(p,g,S)
- assert not (B/(N+'.approval.json')).exists()
+ p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); prep=load(N+'-preparation.evidence.json'); v1=load('development-implementation-handoff-provider-adapter-auth-v1.execution-progress.json')
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert raw(N+'-preparation.evidence.json')==PREP
  assert raw('development-implementation-handoff-provider-adapter-auth-v1-step01-failure.evidence.json')==FAIL
  assert v1['overall_state']=='STOPPED' and v1['progress_digest']==V1_PROGRESS
  assert v1['step_states'][0]['authorization_state']=='CONSUMED' and v1['step_states'][0]['execution_state']=='FAILED' and v1['step_states'][0]['authorization_consumed'] is True
  assert p['plan_id']==PLAN_ID and p['plan_version']==1 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+ assert a['plan_id']==PLAN_ID and a['plan_version']==1 and a['plan_digest']==PLAN_DIGEST
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-03T11:30:00Z' and a['expires_at']=='2026-10-03T15:30:00Z'
+ assert a['approved_at']=='2026-10-03T10:14:43Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T11:30:00Z','expires_at':'2026-10-03T15:30:00Z'}
  assert len(p['steps'])==4 and p['ordered_step_ids']==[x['step_id'] for x in p['steps']]
  s1,s2,s3,s4=p['steps']
@@ -54,13 +58,13 @@ def main():
  assert prep['auth_observation']=={'auth_user_count':1,'target_identity_count':0,'session_count':0,'refresh_token_count':0}
  assert prep['design_consequence']['retired_bootstrap_reuse_allowed'] is False and prep['design_consequence']['fresh_dedicated_key_required'] is True and prep['design_consequence']['identity_creation_deferred'] is True and prep['design_consequence']['retirement_required_after_continuation'] is True
  assert all(v is False for v in prep['security_state'].values())
- rendered=''.join((B/(N+suf)).read_text() for suf in ('.plan.json','.progress.json','-preparation.evidence.json'))
+ rendered=''.join((B/(N+suf)).read_text() for suf in ('.plan.json','.progress.json','.approval.json','-preparation.evidence.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://','sb_secret_'):
   if forbidden=='sb_secret_':
    # shape-only contract mention is allowed; no credential value may exist.
    assert rendered.count('sb_secret_*')>=1 and 'sb_secret_' not in rendered.replace('sb_secret_*','')
   else: assert forbidden not in rendered
  assert 'sekinfra' not in rendered.lower()
- print('DEVELOPMENT ImplementationHandoff provider-adapter Auth credential repair v1: PASS (READY_FOR_APPROVAL; new dedicated key + one GitHub binding + names-only verification + retirement obligation; identity creation deferred)')
+ print('DEVELOPMENT ImplementationHandoff provider-adapter Auth credential repair v1: PASS (APPROVED; new dedicated key + one GitHub binding + names-only verification + retirement obligation; identity creation deferred)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

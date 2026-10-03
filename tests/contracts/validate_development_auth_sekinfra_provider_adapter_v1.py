@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import hashlib,json,sys
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
+from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_runtime.implementation_handoff import canonical_digest
+B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-auth-sekinfra-provider-adapter-v1'
+PLAN_ID='3f2a8206-0048-4464-b27d-9ee04b55c708'; PLAN_DIGEST='sha256:00243db1b1083c7f057cab93a57325a2cf9474239612c3a35b9af93698d38dd8'
+PROGRESS_ID='af632d1a-ac92-4197-8130-58690341eede'; PROGRESS_DIGEST='sha256:0ff9161501b02cb34063c8e301adee40593fd85935bddbee82c327df066faaee'
+RESOURCE_DIGEST='sha256:ea70bf4df5e61eb27256425c3a9a0c6c07ca0eae8fa18b3a39f9551838cb9e61'
+ALLOWLIST='sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba'
+HOOK='sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c'
+RUNTIME='sha256:fd0e493b53cdbe2a19b3ae7f59eaab9f495d5e75868ca8ea1f8a554fede82c26'
+POLICY_COMMIT='86413b7bbbf8f4532f56962f9d4c45a2b84cc2f0'
+def load(name): return json.loads((B/name).read_text())
+def raw(name): return 'sha256:'+hashlib.sha256((B/name).read_bytes()).hexdigest()
+def main():
+ r=load(N+'.resource.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json')
+ validate_plan(p,S); validate_progress(p,g,S)
+ assert not (B/(N+'.approval.json')).exists()
+ assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
+ assert r['environment']=='DEVELOPMENT' and r['provider']=='supabase' and r['responsibility']=='AUTH'
+ assert r['project_reference']=='pwlhruwutoitnieactol'
+ assert r['resource_reference']=='identity.development.sekinfra-provider-adapter'
+ assert r['target_email']=='sekinfra-development-provider-adapter@example.invalid'
+ assert r['provider_adapter_principal_reference']=='provider-adapter.sekinfra-development'
+ assert r['target_caller_type']=='PROVIDER_ADAPTER'
+ assert r['future_capability_exact']==['implementation_handoff:accept'] and r['future_authority_roles']==[]
+ assert r['tenant_metadata_bound_by_this_plan'] is False and r['server_allowlist_bound_by_this_plan'] is False
+ assert r['session_or_token_issue_authorized'] is False and r['hook_change_authorized'] is False
+ assert r['data_operation_authorized'] is False and r['render_operation_authorized'] is False and r['n8n_operation_authorized'] is False
+ assert r['staging_authorized'] is False and r['production_authorized'] is False
+ assert r['required_provider_adapter_policy_commit']==POLICY_COMMIT
+ assert raw('development-auth-step1-v26-success.evidence.json')==r['required_current_allowlist_evidence_digest']==ALLOWLIST
+ assert raw('development-auth-step1-v28-success.evidence.json')==r['required_enabled_hook_evidence_digest']==HOOK
+ assert raw('development-render-deployment-v10-step02-success.evidence.json')==r['required_live_handoff_runtime_evidence_digest']==RUNTIME
+ assert r['password_material_policy']=={'required':True,'source':'OWNER_APPROVED_VAULT','agent_visibility':'PROHIBITED','repository_persistence':'PROHIBITED','logging':'PROHIBITED','digest':'PROHIBITED','return':'PROHIBITED','provider_entry':'OWNER_INTERACTIVE_ONLY'}
+ assert p['plan_id']==PLAN_ID and p['plan_version']==1 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
+ assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+ assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T03:30:00Z','expires_at':'2026-10-03T07:00:00Z'}
+ assert len(p['steps'])==1 and p['ordered_step_ids']==[p['steps'][0]['step_id']]
+ s=p['steps'][0]
+ assert s['operation']=='provider.auth-identity.create-one' and s['execution_class']=='PROVIDER_MUTATION'
+ assert s['credential_policy']=={'permitted':True,'allowed_classes':['OWNER_INTERACTIVE_SESSION'],'values_stored':False}
+ assert s['resource']=={'resource_type':'auth.provider-adapter-identity','resource_reference':'identity.development.sekinfra-provider-adapter','binding_state':'BOUND','exact_version':'version.1','exact_digest':RESOURCE_DIGEST}
+ assert [e['exact_digest'] for e in s['required_evidence']]==[
+   raw('development-auth-integration-v26.execution-progress.json'),ALLOWLIST,HOOK,RUNTIME]
+ for forbidden in ('tenant-metadata.bind','server-allowlist.bind','token.issue','session.issue','data.operation','render.operation','n8n.operation','production.target'):
+  assert forbidden in s['prohibited_actions']
+ for stop in ('identity.target-exists','session-state.drift','refresh-token-state.drift','hook.state.drift','allowlist.state.drift','password.vault-source-unconfirmed','credential-material.agent-visible'):
+  assert stop in s['stop_conditions']
+ b={x['binding_id']:x for x in s['binding_declarations']}
+ assert b['binding.development.auth.sekinfra-provider-adapter-v1.current-allowlist']['preapproval_value']['value']==ALLOWLIST
+ assert b['binding.development.auth.sekinfra-provider-adapter-v1.enabled-hook']['preapproval_value']['value']==HOOK
+ assert b['binding.development.auth.sekinfra-provider-adapter-v1.live-handoff-runtime']['preapproval_value']['value']==RUNTIME
+ assert b['binding.development.auth.sekinfra-provider-adapter-v1.policy-commit']['preapproval_value']['value']=='git.commit.'+POLICY_COMMIT
+ assert b['binding.development.auth.sekinfra-provider-adapter-v1.live-preflight']['phase']=='RESOLVED_BY_STEP_PREFLIGHT'
+ assert b['binding.development.auth.sekinfra-provider-adapter-v1.provider-subject']['phase']=='PRODUCED_BY_CURRENT_STEP'
+ assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
+ assert all(x['authorization_state']=='PENDING' and x['execution_state']=='NOT_STARTED' and not x['authorization_consumed'] for x in g['step_states'])
+ rendered=''.join((B/(N+suf)).read_text() for suf in ('.resource.json','.plan.json','.progress.json'))
+ for forbidden in ('password=','postgresql://','postgres://','sb_secret_','op://'): assert forbidden not in rendered
+ print('DEVELOPMENT Sekinfra provider-adapter identity v1: PASS (READY_FOR_APPROVAL; one dormant AUTH identity only; Vault/owner-interactive password; no tenant/allowlist/session/token/provider-spillover)')
+ return 0
+if __name__=='__main__': raise SystemExit(main())

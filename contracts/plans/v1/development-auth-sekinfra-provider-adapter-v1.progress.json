@@ -1,0 +1,23 @@
+{
+  "progress_id": "af632d1a-ac92-4197-8130-58690341eede",
+  "plan_id": "3f2a8206-0048-4464-b27d-9ee04b55c708",
+  "plan_version": 1,
+  "plan_digest": "sha256:00243db1b1083c7f057cab93a57325a2cf9474239612c3a35b9af93698d38dd8",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.auth.sekinfra-provider-adapter-v1.step.01.create-dormant-identity",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-03T02:28:53Z",
+  "progress_digest": "sha256:0ff9161501b02cb34063c8e301adee40593fd85935bddbee82c327df066faaee"
+}

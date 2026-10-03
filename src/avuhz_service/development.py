@@ -90,7 +90,7 @@ def create_development_application(
     # DEVELOPMENT constants defined by this module.
     from .development_identity import DevelopmentTrustedIdentityResolver
     from .development_supabase_identity import (
-        DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
+        DEVELOPMENT_IDENTITY_ALLOWLIST,
         DevelopmentSupabaseIdentityVerifier,
     )
     from .development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
@@ -108,7 +108,7 @@ def create_development_application(
     identity_resolver = DevelopmentTrustedIdentityResolver(
         DevelopmentSupabaseIdentityVerifier(
             DevelopmentSupabaseEs256JwtVerifier(),
-            allowlist=DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
+            allowlist=DEVELOPMENT_IDENTITY_ALLOWLIST,
         )
     )
     return create_service_application(

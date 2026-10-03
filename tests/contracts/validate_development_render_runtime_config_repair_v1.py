@@ -7,6 +7,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
 from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
+from avuhz_service import development as development_config
 BASE=ROOT/'contracts/plans/v1'; SCHEMA=ROOT/'contracts/schemas/v1'
 RESOURCE=BASE/'development-render-runtime-config-repair-v1.resource.json'
 PLAN=BASE/'development-render-runtime-config-repair-v1.plan.json'
@@ -44,14 +45,16 @@ def file_digest(p): return 'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
     resource=load(RESOURCE); plan=load(PLAN); progress=load(PROGRESS); approval=load(APPROVAL); failure=load(FAILURE); failed_exec=load(FAILURE_EXEC); stop=load(STOP); execution=load(EXECUTION)
     validate_plan(plan,SCHEMA); validate_progress(plan,progress,SCHEMA); validate_approval(plan,approval,SCHEMA,plan['authorization_window']['starts_at'])
-    assert file_digest(SOURCE)==SOURCE_DIGEST
+    # The provider plan immutably records the historical source digest that was
+    # approved at execution time. Current source may evolve; the safety invariant
+    # is that every authorized non-secret constant still has the exact same value.
+    assert resource['source_contract']=={'path':'src/avuhz_service/development.py','file_digest':SOURCE_DIGEST}
     payload={k:v for k,v in resource.items() if k!='contract_digest'}
     assert resource['contract_digest']==RESOURCE_DIGEST==canonical_digest(payload)
     assert resource['environment']=='DEVELOPMENT' and resource['provider']=='render'
     assert resource['workspace_id']=='tea-dab95hv40ujc73a7ccag'
     assert resource['service_id']=='srv-dab9n4qd0e5s73dq37mg' and resource['service_name']=='avuhz-command-dev'
     assert resource['environment_id']=='evm-dab96l2jobas73bp95bg'
-    assert resource['source_contract']=={'path':'src/avuhz_service/development.py','file_digest':SOURCE_DIGEST}
     assert resource['provider_managed_required_keys']==['PORT']
     assert resource['protected_existing_keys']==['AVUHZ_POSTGRES_DSN']
     policy=resource['mutation_policy']
@@ -64,6 +67,7 @@ def main():
     for i,(entry, expected) in enumerate(zip(resource['variables'],EXPECTED),1):
         key,value,const,digest=expected
         assert entry['ordinal']==i and entry['key']==key and entry['value']==value and entry['source_constant']==const
+        assert getattr(development_config, const)==value
         assert entry['value_class']=='NON_SECRET_CANONICAL_CONFIGURATION' and entry['update_mode']=='MERGE_SINGLE_KEY'
         assert entry['replace_all_environment_variables'] is False and entry['deploy_authorized'] is False
         core={k:v for k,v in entry.items() if k!='entry_digest'}

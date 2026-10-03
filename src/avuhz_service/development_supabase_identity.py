@@ -22,7 +22,10 @@ _CANONICAL_UUID = re.compile(
 _OPAQUE_REFERENCE = re.compile(r"^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$")
 _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 _READ_ONLY_CAPABILITIES = frozenset({"engagement:read"})
+_PROVIDER_ADAPTER_CAPABILITIES = frozenset({"implementation_handoff:accept"})
 _SYNTHETIC_CALLER_TYPE = "HUMAN"
+_PROVIDER_ADAPTER_CALLER_TYPE = "PROVIDER_ADAPTER"
+_ALLOWED_POLICY_CALLER_TYPES = frozenset({_SYNTHETIC_CALLER_TYPE, _PROVIDER_ADAPTER_CALLER_TYPE})
 
 
 class DevelopmentSupabaseJwtVerifier(Protocol):
@@ -38,6 +41,8 @@ class DevelopmentIdentityAllowlistEntry:
     subject_digest: str
     principal_reference: str
     tenant_id: str
+    caller_type: str = _SYNTHETIC_CALLER_TYPE
+    capabilities: frozenset[str] = _READ_ONLY_CAPABILITIES
 
     def __post_init__(self):
         if not isinstance(self.subject_digest, str) or not _SHA256.fullmatch(self.subject_digest):
@@ -49,6 +54,17 @@ class DevelopmentIdentityAllowlistEntry:
             raise ValueError("valid provider-neutral principal reference is required")
         if not isinstance(self.tenant_id, str) or not _CANONICAL_UUID.fullmatch(self.tenant_id):
             raise ValueError("valid canonical tenant id is required")
+        if self.caller_type not in _ALLOWED_POLICY_CALLER_TYPES:
+            raise ValueError("bounded DEVELOPMENT caller type is required")
+        if type(self.capabilities) is not frozenset:
+            raise ValueError("bounded DEVELOPMENT capabilities are required")
+        expected = (
+            _READ_ONLY_CAPABILITIES
+            if self.caller_type == _SYNTHETIC_CALLER_TYPE
+            else _PROVIDER_ADAPTER_CAPABILITIES
+        )
+        if self.capabilities != expected:
+            raise ValueError("exact caller capability policy is required")
 
 
 DEVELOPMENT_SYNTHETIC_READ_ONLY_POLICY_DIGEST = "sha256:864019b6d904f790fab298f0142989e067af65fa735094edc28ffa756de406f6"
@@ -59,6 +75,9 @@ DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST = (
         tenant_id="1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
     ),
 )
+# Active DEVELOPMENT policy remains exactly the historical one-entry HUMAN/read-only
+# allowlist until a separately authorized provider-adapter identity is bound.
+DEVELOPMENT_IDENTITY_ALLOWLIST = DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST
 
 
 def _subject_digest(subject: str) -> str:
@@ -87,10 +106,26 @@ class DevelopmentSupabaseIdentityVerifier:
     ):
         if jwt_verifier is None or not callable(getattr(jwt_verifier, "verify", None)):
             raise ValueError("trusted Supabase JWT verifier is required")
-        if type(allowlist) is not tuple or len(allowlist) != 1:
-            raise ValueError("exactly one DEVELOPMENT identity allowlist entry is required")
-        if type(allowlist[0]) is not DevelopmentIdentityAllowlistEntry:
-            raise ValueError("valid DEVELOPMENT identity allowlist entry is required")
+        if type(allowlist) is not tuple or not 1 <= len(allowlist) <= 2:
+            raise ValueError("one or two DEVELOPMENT identity allowlist entries are required")
+        if any(type(entry) is not DevelopmentIdentityAllowlistEntry for entry in allowlist):
+            raise ValueError("valid DEVELOPMENT identity allowlist entries are required")
+        if len({entry.subject_digest for entry in allowlist}) != len(allowlist):
+            raise ValueError("DEVELOPMENT provider subjects must be unique")
+        if len({entry.principal_reference for entry in allowlist}) != len(allowlist):
+            raise ValueError("DEVELOPMENT principal references must be unique")
+        if len({(entry.tenant_id, entry.caller_type) for entry in allowlist}) != len(allowlist):
+            raise ValueError("DEVELOPMENT tenant/caller policies must be unique")
+        synthetic_entries = tuple(
+            entry for entry in allowlist if entry.caller_type == _SYNTHETIC_CALLER_TYPE
+        )
+        provider_adapter_entries = tuple(
+            entry for entry in allowlist if entry.caller_type == _PROVIDER_ADAPTER_CALLER_TYPE
+        )
+        if len(synthetic_entries) != 1 or len(provider_adapter_entries) > 1:
+            raise ValueError("exact DEVELOPMENT identity policy composition is required")
+        if len(allowlist) == 2 and len(provider_adapter_entries) != 1:
+            raise ValueError("second DEVELOPMENT identity must be a provider adapter")
         self._jwt_verifier = jwt_verifier
         self._allowlist = allowlist
 
@@ -144,8 +179,8 @@ class DevelopmentSupabaseIdentityVerifier:
             audience=DEVELOPMENT_SERVICE_AUDIENCE,
             subject=entry.principal_reference,
             tenant_id=entry.tenant_id,
-            caller_type=_SYNTHETIC_CALLER_TYPE,
-            capabilities=_READ_ONLY_CAPABILITIES,
+            caller_type=entry.caller_type,
+            capabilities=entry.capabilities,
             authority_roles=frozenset(),
             environment=DEVELOPMENT_ENVIRONMENT,
             authentication_strength="STANDARD",

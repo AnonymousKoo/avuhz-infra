@@ -8,9 +8,9 @@ from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
 N='development-implementation-handoff-provider-adapter-auth-v2-password-hash-correction-v1'
 PLAN_ID='45028cec-447f-42c9-a6fa-86e23c72dc85'
-PLAN_DIGEST='sha256:b4bc8d8b13cc7822a788ec46f85ee7d98a2b99862d708f5f6f09fbff00b2a8d9'
+PLAN_DIGEST='sha256:a5ee9341d0ccd9410ec617536cfbc83e2e7db5fe6fb6d667a21f8406bcce23eb'
 PROGRESS_ID='7e84979b-5f57-447d-8c27-d783b1d67d30'
-PROGRESS_DIGEST='sha256:7e739d704fcff60307367489338c0143d6a75ef9ec919f86acb4627e2b8c5415'
+PROGRESS_DIGEST='sha256:9ee8094fbba26924f87947ebb783a17d1e91bbbead7b85194ffaad7a5a7767dc'
 V2_STOPPED='sha256:4982f77e54f43b348b560ca2a6440370240a69ac0d463b2c886df7af08b4fc9d'
 V2_EVIDENCE_RAW='sha256:27223a97cdb9943ddff839826f035d4db883a78c3531ab6575a649fec87a028d'
 RETIREMENT='sha256:bd660fa458b2b83918c8f90a68bbb8a79c5be83768be819c2b4c7e1f7aa4007a'
@@ -23,7 +23,7 @@ def main():
  assert p['plan_id']==PLAN_ID and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert p['target']['project_reference']==PROJECT and p['target']['responsibility']=='AUTH'
- assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T20:00:00Z','expires_at':'2026-10-04T00:00:00Z'}
+ assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T21:00:00Z','expires_at':'2026-10-04T03:00:00Z'}
  assert len(p['steps'])==2 and p['ordered_step_ids']==[x['step_id'] for x in p['steps']]
  assert not (B/(N+'.approval.json')).exists()
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at'])

@@ -1,13 +1,13 @@
 {
-  "progress_id": "af632d1a-ac92-4197-8130-58690341eede",
-  "plan_id": "3f2a8206-0048-4464-b27d-9ee04b55c708",
+  "progress_id": "d8f07b0b-d24a-4f1e-8931-9a00cbfe0696",
+  "plan_id": "0e746458-4dd6-4403-8db5-3d90c1acb2ec",
   "plan_version": 1,
-  "plan_digest": "sha256:00243db1b1083c7f057cab93a57325a2cf9474239612c3a35b9af93698d38dd8",
+  "plan_digest": "sha256:f86abc53c689a57f66ac298253ba9bcbefd0c02b7f4ae2a98a85669d082267d7",
   "record_version": 1,
   "overall_state": "NOT_STARTED",
   "step_states": [
     {
-      "step_id": "development.auth.sekinfra-provider-adapter-v1.step.01.create-dormant-identity",
+      "step_id": "development.auth.implementation-handoff-provider-adapter-v1.step.01.create-dormant-identity",
       "authorization_state": "PENDING",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
@@ -19,5 +19,5 @@
     }
   ],
   "updated_at": "2026-10-03T02:28:53Z",
-  "progress_digest": "sha256:0ff9161501b02cb34063c8e301adee40593fd85935bddbee82c327df066faaee"
+  "progress_digest": "sha256:186252d445347da21b7ac524b956f1a1fec55a3ab097f4ac29a94bc65bc79205"
 }

@@ -7,10 +7,10 @@
   "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
   "audience_reference": "audience.avuhz.command-service.development",
   "resource_type": "auth.provider-adapter-identity",
-  "resource_reference": "identity.development.sekinfra-provider-adapter",
-  "target_email": "sekinfra-development-provider-adapter@example.invalid",
+  "resource_reference": "identity.development.implementation-handoff-provider-adapter",
+  "target_email": "avuhz-development-implementation-handoff-adapter@example.invalid",
   "provider_managed_email_confirmed": true,
-  "provider_adapter_principal_reference": "provider-adapter.sekinfra-development",
+  "provider_adapter_principal_reference": "provider-adapter.implementation-handoff-development",
   "target_caller_type": "PROVIDER_ADAPTER",
   "future_capability_exact": [
     "implementation_handoff:accept"
@@ -40,5 +40,5 @@
   "required_enabled_hook_evidence_digest": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c",
   "required_live_handoff_runtime_evidence_digest": "sha256:fd0e493b53cdbe2a19b3ae7f59eaab9f495d5e75868ca8ea1f8a554fede82c26",
   "required_provider_adapter_policy_commit": "86413b7bbbf8f4532f56962f9d4c45a2b84cc2f0",
-  "contract_digest": "sha256:ea70bf4df5e61eb27256425c3a9a0c6c07ca0eae8fa18b3a39f9551838cb9e61"
+  "contract_digest": "sha256:3b3892b99824f5c737cd52a44359aa8ad12d7027e0532cc8023c620119bf6c48"
 }

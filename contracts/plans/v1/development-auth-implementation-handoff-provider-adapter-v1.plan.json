@@ -1,7 +1,7 @@
 {
-  "plan_id": "3f2a8206-0048-4464-b27d-9ee04b55c708",
+  "plan_id": "0e746458-4dd6-4403-8db5-3d90c1acb2ec",
   "plan_version": 1,
-  "plan_digest": "sha256:00243db1b1083c7f057cab93a57325a2cf9474239612c3a35b9af93698d38dd8",
+  "plan_digest": "sha256:f86abc53c689a57f66ac298253ba9bcbefd0c02b7f4ae2a98a85669d082267d7",
   "definition_status": "READY_FOR_APPROVAL",
   "environment": "DEVELOPMENT",
   "target": {
@@ -20,18 +20,18 @@
     "expires_at": "2026-10-03T07:00:00Z"
   },
   "ordered_step_ids": [
-    "development.auth.sekinfra-provider-adapter-v1.step.01.create-dormant-identity"
+    "development.auth.implementation-handoff-provider-adapter-v1.step.01.create-dormant-identity"
   ],
   "steps": [
     {
-      "step_id": "development.auth.sekinfra-provider-adapter-v1.step.01.create-dormant-identity",
+      "step_id": "development.auth.implementation-handoff-provider-adapter-v1.step.01.create-dormant-identity",
       "ordinal": 1,
       "resource": {
         "resource_type": "auth.provider-adapter-identity",
-        "resource_reference": "identity.development.sekinfra-provider-adapter",
+        "resource_reference": "identity.development.implementation-handoff-provider-adapter",
         "binding_state": "BOUND",
         "exact_version": "version.1",
-        "exact_digest": "sha256:ea70bf4df5e61eb27256425c3a9a0c6c07ca0eae8fa18b3a39f9551838cb9e61"
+        "exact_digest": "sha256:3b3892b99824f5c737cd52a44359aa8ad12d7027e0532cc8023c620119bf6c48"
       },
       "operation": "provider.auth-identity.create-one",
       "dependency_step_ids": [],
@@ -61,7 +61,7 @@
           "exact_digest": "sha256:fd0e493b53cdbe2a19b3ae7f59eaab9f495d5e75868ca8ea1f8a554fede82c26"
         }
       ],
-      "expected_postcondition": "Exactly one new dormant DEVELOPMENT Auth identity exists in AUTH project pwlhruwutoitnieactol for sekinfra-development-provider-adapter@example.invalid, created through the owner-interactive Supabase dashboard using a password sourced directly from the owner-approved Vault and never made agent-visible. The identity is email-confirmed and has provider-managed email identity metadata only. No avuhz_tenant_id, user metadata, non-provider app metadata, Avuhz allowlist entry, session, refresh token, access token, hook change, DATA change, Render change, n8n change, staging change, or production change occurs. The new provider subject is retained only as a digest-bound reference for the next separately authorized tenant/allowlist binding boundary; the raw provider subject and password are not persisted.",
+      "expected_postcondition": "Exactly one new dormant DEVELOPMENT Auth identity exists in AUTH project pwlhruwutoitnieactol for avuhz-development-implementation-handoff-adapter@example.invalid, created through the owner-interactive Supabase dashboard using a password sourced directly from the owner-approved Vault and never made agent-visible. The identity is email-confirmed and has provider-managed email identity metadata only. No avuhz_tenant_id, user metadata, non-provider app metadata, Avuhz allowlist entry, session, refresh token, access token, hook change, DATA change, Render change, n8n change, staging change, or production change occurs. The new provider subject is retained only as a digest-bound reference for the next separately authorized tenant/allowlist binding boundary; the raw provider subject and password are not persisted.",
       "prohibited_actions": [
         "customer.identity.create",
         "identity.bulk-create",
@@ -114,7 +114,7 @@
       "unresolved_bindings": [],
       "binding_declarations": [
         {
-          "binding_id": "binding.development.auth.sekinfra-provider-adapter-v1.current-allowlist",
+          "binding_id": "binding.development.auth.implementation-handoff-provider-adapter-v1.current-allowlist",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "CONTENT_DIGEST",
           "source_step_id": null,
@@ -127,7 +127,7 @@
           }
         },
         {
-          "binding_id": "binding.development.auth.sekinfra-provider-adapter-v1.enabled-hook",
+          "binding_id": "binding.development.auth.implementation-handoff-provider-adapter-v1.enabled-hook",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "CONTENT_DIGEST",
           "source_step_id": null,
@@ -140,7 +140,7 @@
           }
         },
         {
-          "binding_id": "binding.development.auth.sekinfra-provider-adapter-v1.live-handoff-runtime",
+          "binding_id": "binding.development.auth.implementation-handoff-provider-adapter-v1.live-handoff-runtime",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "CONTENT_DIGEST",
           "source_step_id": null,
@@ -153,7 +153,7 @@
           }
         },
         {
-          "binding_id": "binding.development.auth.sekinfra-provider-adapter-v1.policy-commit",
+          "binding_id": "binding.development.auth.implementation-handoff-provider-adapter-v1.policy-commit",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "STABLE_REFERENCE",
           "source_step_id": null,
@@ -166,7 +166,7 @@
           }
         },
         {
-          "binding_id": "binding.development.auth.sekinfra-provider-adapter-v1.target-email",
+          "binding_id": "binding.development.auth.implementation-handoff-provider-adapter-v1.target-email",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "STABLE_REFERENCE",
           "source_step_id": null,
@@ -174,12 +174,12 @@
           "digest_policy": "REQUIRED",
           "persistence_policy": "SANITIZED_VALUE_ALLOWED",
           "preapproval_value": {
-            "value": "identity-email.sekinfra-development-provider-adapter-example-invalid",
-            "exact_digest": "sha256:6bab534fcb6ad1a801e4c5d6a412bf92ff44be3c4e07a347f185efeb66d94423"
+            "value": "identity-email.avuhz-development-implementation-handoff-adapter-example-invalid",
+            "exact_digest": "sha256:aec4b119d1488e2476a260347e7a4e94fc01dcd234962c9084fd9bed108af4a1"
           }
         },
         {
-          "binding_id": "binding.development.auth.sekinfra-provider-adapter-v1.live-preflight",
+          "binding_id": "binding.development.auth.implementation-handoff-provider-adapter-v1.live-preflight",
           "phase": "RESOLVED_BY_STEP_PREFLIGHT",
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
@@ -188,7 +188,7 @@
           "persistence_policy": "DIGEST_ONLY"
         },
         {
-          "binding_id": "binding.development.auth.sekinfra-provider-adapter-v1.provider-subject",
+          "binding_id": "binding.development.auth.implementation-handoff-provider-adapter-v1.provider-subject",
           "phase": "PRODUCED_BY_CURRENT_STEP",
           "value_class": "CONTENT_DIGEST",
           "source_step_id": null,
@@ -201,7 +201,7 @@
         {
           "evidence_type": "auth.provider-adapter-identity.created",
           "established_binding_ids": [
-            "binding.development.auth.sekinfra-provider-adapter-v1.provider-subject"
+            "binding.development.auth.implementation-handoff-provider-adapter-v1.provider-subject"
           ],
           "digest_policy": "REQUIRED"
         }

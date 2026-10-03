@@ -329,6 +329,12 @@ RENDER_DEPLOYMENT_V10_APPROVAL_PATH = (
 RENDER_DEPLOYMENT_V10_APPROVAL_FILE_DIGEST = (
     "sha256:a8f7019a7eb489bcf605ff568a7d34aa9861ff71ae287557bd4f458ac3e879c9"
 )
+IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-implementation-handoff-provider-adapter-auth-v1.approval.json"
+)
+IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_FILE_DIGEST = (
+    "sha256:c97daa6aea89024328ef01aec5a2147b91e5ea1e193966196de22aa9645b267e"
+)
 RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-render-runtime-config-repair-v1.approval.json"
 )
@@ -478,6 +484,8 @@ def main() -> int:
         expected_approval_paths.add(RENDER_DEPLOYMENT_V8_APPROVAL_PATH)
     if RENDER_DEPLOYMENT_V10_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_DEPLOYMENT_V10_APPROVAL_PATH)
+    if IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_PATH.exists():
+        expected_approval_paths.add(IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_PATH)
     if RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists():
         expected_approval_paths.add(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
     if RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH.exists():
@@ -515,7 +523,7 @@ def main() -> int:
     actual_approval_paths = set(approvals_root.glob("*approval*.json"))
     if actual_approval_paths != expected_approval_paths:
         raise SystemExit(
-            "approval artifact set differs from the exact authorized canonical AUTH/DATA/Render approval inventory, including DEVELOPMENT Render deployment v10 when present"
+            "approval artifact set differs from the exact authorized canonical AUTH/DATA/Render/shared-adapter approval inventory"
         )
     if (
         RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_PATH.exists()
@@ -735,6 +743,12 @@ def main() -> int:
     ):
         raise SystemExit("DEVELOPMENT Render deployment v10 approval file digest mismatch")
     if (
+        IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_PATH.exists()
+        and file_digest(IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_PATH)
+        != IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_FILE_DIGEST
+    ):
+        raise SystemExit("DEVELOPMENT ImplementationHandoff provider-adapter Auth v1 approval file digest mismatch")
+    if (
         RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH.exists()
         and file_digest(RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_PATH)
         != RENDER_RUNTIME_CONFIG_REPAIR_V1_APPROVAL_FILE_DIGEST
@@ -832,6 +846,7 @@ def main() -> int:
                 | ({RENDER_DEPLOYMENT_V7_APPROVAL_PATH} if RENDER_DEPLOYMENT_V7_APPROVAL_PATH.exists() else set())
                 | ({RENDER_DEPLOYMENT_V8_APPROVAL_PATH} if RENDER_DEPLOYMENT_V8_APPROVAL_PATH.exists() else set())
                 | ({RENDER_DEPLOYMENT_V10_APPROVAL_PATH} if RENDER_DEPLOYMENT_V10_APPROVAL_PATH.exists() else set())
+                | ({IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_PATH} if IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V1_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V4_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_REPAIR_V6_APPROVAL_PATH.exists() else set())
                 | ({RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH} if RENDER_RUNTIME_CONFIG_FINAL_VERIFICATION_V1_APPROVAL_PATH.exists() else set())

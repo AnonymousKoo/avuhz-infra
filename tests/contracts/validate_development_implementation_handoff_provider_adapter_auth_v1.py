@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib,json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_service.development_supabase_identity import DEVELOPMENT_IDENTITY_ALLOWLIST
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-implementation-handoff-provider-adapter-auth-v1'
@@ -19,9 +19,8 @@ EMAIL='avuhz-implementation-handoff-provider-adapter-development@example.invalid
 def load(n): return json.loads((B/n).read_text())
 def raw(n): return 'sha256:'+hashlib.sha256((B/n).read_bytes()).hexdigest()
 def main():
- r=load(N+'.resource.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); prep=load(N+'-preparation.evidence.json'); v28=load('development-auth-step1-v28-success.evidence.json')
- validate_plan(p,S); validate_progress(p,g,S)
- assert not (B/(N+'.approval.json')).exists()
+ r=load(N+'.resource.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); prep=load(N+'-preparation.evidence.json'); v28=load('development-auth-step1-v28-success.evidence.json')
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert raw(N+'-preparation.evidence.json')==PREP==r['required_preparation_evidence_digest']
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['project_reference']=='pwlhruwutoitnieactol' and r['responsibility']=='AUTH' and r['target_email']==EMAIL
@@ -37,6 +36,11 @@ def main():
  assert p['plan_id']==PLAN_ID and p['plan_version']==1 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T03:30:00Z','expires_at':'2026-10-03T07:30:00Z'}
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+ assert a['plan_id']==PLAN_ID and a['plan_version']==1 and a['plan_digest']==PLAN_DIGEST
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-03T03:30:00Z' and a['expires_at']=='2026-10-03T07:30:00Z'
+ assert a['approved_at']=='2026-10-03T03:02:57Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert len(p['steps'])==1; s=p['steps'][0]
  assert s['operation']=='provider.auth-identity.create-one' and s['execution_class']=='PROVIDER_MUTATION'
  assert s['resource']=={'resource_type':'auth.provider-adapter-identity','resource_reference':'identity.development.provider-adapter.implementation-handoff','binding_state':'BOUND','exact_version':'version.1','exact_digest':RESOURCE_DIGEST}
@@ -67,8 +71,8 @@ def main():
  assert o['oidc_issuer']=='https://pwlhruwutoitnieactol.supabase.co/auth/v1' and o['oidc_grant_types_supported']==['authorization_code','refresh_token'] and o['oidc_response_types_supported']==['code'] and o['oidc_client_credentials_supported'] is False
  d=prep['design_consequence']; assert d['existing_synthetic_human_identity_reused'] is False and d['credential_binding_deferred'] is True and d['tenant_binding_deferred'] is True and d['server_allowlist_binding_deferred'] is True
  assert all(v is False for v in prep['security_state'].values())
- rendered=''.join((B/(N+suf)).read_text() for suf in ('.resource.json','.plan.json','.progress.json','-preparation.evidence.json'))
+ rendered=''.join((B/(N+suf)).read_text() for suf in ('.resource.json','.plan.json','.progress.json','.approval.json','-preparation.evidence.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://','service_role_key','sb_secret_'): assert forbidden not in rendered
- print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v1: PASS (READY_FOR_APPROVAL; one passwordless confirmed AUTH identity only; no tenant/allowlist/password/token/session/downstream provider effect)')
+ print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v1: PASS (APPROVED; one passwordless confirmed AUTH identity only; no tenant/allowlist/password/token/session/downstream provider effect)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

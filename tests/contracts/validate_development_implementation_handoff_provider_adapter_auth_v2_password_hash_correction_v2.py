@@ -3,7 +3,7 @@ from __future__ import annotations
 import json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
 N='development-implementation-handoff-provider-adapter-auth-v2-password-hash-correction-v2'
@@ -18,13 +18,17 @@ DIAG_PROGRESS='sha256:b5dcd300960d453745c367533d843e1b36e1665fae6d1211cec7b930f8
 PROJECT='pwlhruwutoitnieactol'; TARGET='avuhz-implementation-handoff-provider-adapter-development@example.invalid'
 def load(n): return json.loads((B/n).read_text())
 def main():
- r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json')
- validate_plan(p,S); validate_progress(p,g,S)
+ r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json')
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,'2026-10-03T23:30:00Z')
  assert p['plan_id']==PLAN_ID and p['plan_digest']==PLAN_DIGEST==plan_digest(p) and p['plan_version']==2
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert p['target']['project_reference']==PROJECT and p['target']['responsibility']=='AUTH'
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T23:30:00Z','expires_at':'2026-10-04T03:00:00Z'}
- assert not (B/(N+'.approval.json')).exists()
+ assert a['plan_id']==PLAN_ID and a['plan_version']==2 and a['plan_digest']==PLAN_DIGEST
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-03T23:30:00Z' and a['expires_at']=='2026-10-04T03:00:00Z'
+ assert a['approved_at']=='2026-10-03T23:01:48Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['project_reference']==PROJECT and r['target_email']==TARGET and r['contract_version']=='v2'
@@ -54,7 +58,7 @@ def main():
  for action in ('identity.create','identity.delete','identity.recreate','user-metadata.read','user-metadata.bind','tenant-metadata.bind','server-allowlist.bind','token.issue','session.issue','data.operation','render.operation','n8n.operation','staging.target','production.target','provider-adapter-auth-v2-password-hash-correction-v1.retry'):
   assert action in p['prohibited_actions']
  assert 'provider.mutation' in s2['prohibited_actions'] and 'raw-row.read' in s2['prohibited_actions']
- rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+ rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
  for secret_shape in ('postgresql://','postgres://','password=','sb_secret_','service_role'): assert secret_shape not in rendered
- print('DEVELOPMENT provider-adapter password-hash correction v2: PASS (READY_FOR_APPROVAL; pristine; user metadata excluded from read/precondition; exact one-column mutation + separate read-only verification)')
+ print('DEVELOPMENT provider-adapter password-hash correction v2: PASS (APPROVED; pristine; user metadata excluded from read/precondition; exact one-column mutation + separate read-only verification)')
 if __name__=='__main__': main()

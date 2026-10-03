@@ -3,7 +3,7 @@ from __future__ import annotations
 import json, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
 N='development-implementation-handoff-provider-adapter-auth-v2-password-hash-correction-preflight-diagnostic-v2'
@@ -19,14 +19,18 @@ PROJECT='pwlhruwutoitnieactol'
 FIELDS=['auth_user_count','known_synthetic_user_count','canonical_tenant_bound_user_count','target_identity_count','target_bcrypt_like_count','target_password_null_count','target_tenant_bound_count','target_provider_metadata_exact_count','target_user_metadata_exact_count','target_email_identity_count','session_count','refresh_token_count']
 def load(name): return json.loads((B/name).read_text())
 def main():
- r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json')
- validate_plan(p,S); validate_progress(p,g,S)
+ r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json')
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,'2026-10-03T22:30:00Z')
  assert p['plan_id']==PLAN_ID and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert p['environment']=='DEVELOPMENT' and p['target']['project_reference']==PROJECT and p['target']['responsibility']=='AUTH'
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T22:30:00Z','expires_at':'2026-10-04T02:00:00Z'}
+ assert a['plan_id']==PLAN_ID and a['plan_version']==2 and a['plan_digest']==PLAN_DIGEST
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-03T22:30:00Z' and a['expires_at']=='2026-10-04T02:00:00Z'
+ assert a['approved_at']=='2026-10-03T22:08:39Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert len(p['steps'])==1 and p['ordered_step_ids']==[p['steps'][0]['step_id']]
- assert not (B/(N+'.approval.json')).exists()
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['interaction_surface']=='supabase.dashboard.sql-editor' and r['diagnostic_method']=='ONE_EXACT_AGGREGATE_ONLY_AUTH_PREFLIGHT_SELECT'
@@ -57,7 +61,7 @@ def main():
  assert step['required_evidence'][0]['exact_digest']==PREP_DIGEST and step['required_evidence'][1]['exact_digest']==PRIOR_FAILURE and step['required_evidence'][2]['exact_digest']=='sha256:f7aaf62c9fd79377a26fc5c2ac2ff74a44639a8ba20500e112401c2b224fa159'
  for action in ('provider.mutation','identity.modify','password.set','password-hash.set','password-hash.clear','password-hash.read','tenant-metadata.bind','server-allowlist.bind','token.issue','session.issue','data.operation','render.operation','n8n.operation','staging.target','production.target','raw-row.read','prior-correction.retry','additional-sql.execute'):
   assert action in p['prohibited_actions']
- rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+ rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
  for secret_shape in ('postgresql://','postgres://','password=','sb_secret_','service_role'): assert secret_shape not in rendered
- print('DEVELOPMENT provider-adapter password-hash correction preflight diagnostic v2: PASS (READY_FOR_APPROVAL; forward-only timing correction; same aggregate SELECT; no mutation/retry authority)')
+ print('DEVELOPMENT provider-adapter password-hash correction preflight diagnostic v2: PASS (APPROVED; pristine; forward-only timing correction; same aggregate SELECT; no mutation/retry authority)')
 if __name__=='__main__': main()

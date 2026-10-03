@@ -6,8 +6,8 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
 from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-auth-implementation-handoff-provider-adapter-v1'
-PLAN_ID='d9355efd-9d44-4702-93f6-c4a1edbe35b2'; PLAN_DIGEST='sha256:e321c789f7297da00167fefbab98cb1b1590ad51b20a9bafc90e9f9c87205bdb'
-PROGRESS_ID='f9001e59-4d71-4ff3-a610-cc2f2bacae8e'; PROGRESS_DIGEST='sha256:8bbf60d38ef8b18e6c91cea5a9d31a1d454d55d03e3a58d504f0c0783ca2caf3'
+PLAN_ID='d9355efd-9d44-4702-93f6-c4a1edbe35b2'; PLAN_DIGEST='sha256:826cac9129d82c3f317f6bcd7cdda1ac984fe6c5f4614cd46ea542463d6e78dc'
+PROGRESS_ID='f9001e59-4d71-4ff3-a610-cc2f2bacae8e'; PROGRESS_DIGEST='sha256:005d7c85bb829fd406eb66b6af287604da4737ae608936ccc47269f8818dd201'
 RESOURCE_DIGEST='sha256:8f2400b60c7eab426333397ee3c57fe471e91cd0e14a37d2bcca602b9ed6e7d1'
 ALLOWLIST='sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba'
 HOOK='sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c'
@@ -38,6 +38,8 @@ def main():
  assert r['password_material_policy']=={'required':True,'source':'OWNER_APPROVED_VAULT','agent_visibility':'PROHIBITED','repository_persistence':'PROHIBITED','logging':'PROHIBITED','digest':'PROHIBITED','return':'PROHIBITED','provider_entry':'OWNER_INTERACTIVE_ONLY'}
  assert p['plan_id']==PLAN_ID and p['plan_version']==1 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+ assert p['created_at']=='2026-10-03T02:45:11Z' and p['created_at'] < p['authorization_window']['starts_at']
+ assert prep['recorded_at'] < p['created_at']
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T03:30:00Z','expires_at':'2026-10-03T07:00:00Z'}
  assert len(p['steps'])==1 and p['ordered_step_ids']==[p['steps'][0]['step_id']]
  s=p['steps'][0]

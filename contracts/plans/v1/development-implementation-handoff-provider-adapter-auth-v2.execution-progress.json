@@ -1,0 +1,83 @@
+{
+  "progress_id": "2cd99bc6-ac29-4d11-b6ed-b60a10cb9385",
+  "plan_id": "305d2d98-0d87-42bc-90a4-f0cd5e66ea7c",
+  "plan_version": 2,
+  "plan_digest": "sha256:bef8d098f593a67bf476a17e76fcf17fbda9986c76ac765c2e2253d5904672b4",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-auth-v2.step.01.create-passwordless-identity",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-identity.created",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-auth-v2-step01-stopped.evidence.json",
+          "evidence_digest": "sha256:27223a97cdb9943ddff839826f035d4db883a78c3531ab6575a649fec87a028d",
+          "recorded_at": "2026-10-03T15:14:23Z"
+        }
+      ],
+      "observed_postcondition": "One confirmed DEVELOPMENT Auth identity was created for the exact shared ImplementationHandoff provider-adapter email, but Supabase Admin Create User generated an internal random password and stored a bcrypt hash even though the executor supplied no password. Total Auth users is 2; the existing HUMAN identity, canonical tenant binding, sessions, refresh tokens, custom hook, and active server allowlist remain unchanged. The target has provider-managed email metadata only and no Avuhz tenant binding. The required passwordless postcondition is not satisfied; retry is unauthorized.",
+      "safe_error_code": "SUPABASE_ADMIN_CREATE_USER_GENERATED_RANDOM_PASSWORD",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v2.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "evidence_digest": "sha256:fde01371c87524bb32aa1bfeb6dd41760f661f29c694bfeb0a262de41e77d0dd",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:fde01371c87524bb32aa1bfeb6dd41760f661f29c694bfeb0a262de41e77d0dd",
+          "recorded_at": "2026-10-03T15:14:23Z"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v2.identity-create-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-identity.create-preflight.observed",
+          "evidence_digest": "sha256:af259c6c8cb05adc03705fd54934047b658bbe8fe27bb822e6c5b0aa37219500",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:af259c6c8cb05adc03705fd54934047b658bbe8fe27bb822e6c5b0aa37219500",
+          "recorded_at": "2026-10-03T15:14:23Z"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v2.hook-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.custom-access-token-hook.preflight.observed",
+          "evidence_digest": "sha256:d9bf78f272f10a900c5e87d424bd43879db36e93051d8631b4d0dece1acf4ab9",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:d9bf78f272f10a900c5e87d424bd43879db36e93051d8631b4d0dece1acf4ab9",
+          "recorded_at": "2026-10-03T15:14:23Z"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v2.credential-binding-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-admin-github-binding.preflight.observed",
+          "evidence_digest": "sha256:6487f6ac0b7dba21ead76698c2645413881b7cc6f33a262a3d10b7fab13d80ff",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:6487f6ac0b7dba21ead76698c2645413881b7cc6f33a262a3d10b7fab13d80ff",
+          "recorded_at": "2026-10-03T15:14:23Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-03T15:14:23Z",
+  "progress_digest": "sha256:4982f77e54f43b348b560ca2a6440370240a69ac0d463b2c886df7af08b4fc9d"
+}

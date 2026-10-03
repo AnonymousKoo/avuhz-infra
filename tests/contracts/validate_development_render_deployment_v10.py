@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib,json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-render-deployment-v10'
 RESOURCE_DIGEST='sha256:449ce1a8dd59013d58212e784310a927c9f3fa12a666ee64c40b4506a399007a'
@@ -13,9 +13,8 @@ V9_PLAN='sha256:29dcfed8c41ac1d1806055ccf6b9b40c64832e5f48bbdb3ce7891c4360d012ba
 V9_PROGRESS='sha256:13e90f432f6cc205bc0063438725784bfa0ebfd190970867ba681daa87c02e10'
 def load(n): return json.load(open(B/n))
 def main():
- r=load(N+'.resource.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); p9=load('development-render-deployment-v9.plan.json'); g9=load('development-render-deployment-v9.progress.json')
- validate_plan(p,S); validate_progress(p,g,S)
- assert not (B/(N+'.approval.json')).exists()
+ r=load(N+'.resource.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); p9=load('development-render-deployment-v9.plan.json'); g9=load('development-render-deployment-v9.progress.json')
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert not (B/'development-render-deployment-v9.approval.json').exists()
  assert r['contract_version']=='v10' and r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['supersedes_v9']=={'plan_id':p9['plan_id'],'plan_digest':p9['plan_digest'],'progress_digest':g9['progress_digest'],'progress_state':'NOT_STARTED','reason':'owner approval was issued after the v9 effective_at boundary; v9 remains pristine and unexecuted; forward-only v10 shifts only the authorization window'}
@@ -25,6 +24,11 @@ def main():
  assert p['plan_id']==PLAN_ID and p['plan_version']==10 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T02:00:00Z','expires_at':'2026-10-03T06:00:00Z'}
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+ assert a['plan_id']==PLAN_ID and a['plan_version']==10 and a['plan_digest']==PLAN_DIGEST
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-03T02:00:00Z' and a['expires_at']=='2026-10-03T06:00:00Z'
+ assert a['approved_at']=='2026-10-03T00:34:14Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert r['workspace_id']=='tea-dab95hv40ujc73a7ccag' and r['service_id']=='srv-dab9n4qd0e5s73dq37mg' and r['service_name']=='avuhz-command-dev'
  assert r['current_live_deploy_id']=='dep-db01n2navr4c73dq8700' and r['current_live_commit']=='b4cd44412e6ab02c5f7f9f7ac6eeeb7c72db2f5c'
  assert r['manual_deploy_count_authorized']==1 and r['clear_cache_authorized'] is False
@@ -44,8 +48,8 @@ def main():
  assert 'v9-outcome.mismatch' in s1['stop_conditions'] and len(s1['stop_conditions'])<=16
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
  assert all(x['authorization_state']=='PENDING' and x['execution_state']=='NOT_STARTED' and not x['authorization_consumed'] for x in g['step_states'])
- rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','.plan.json','.progress.json'))
+ rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','.plan.json','.progress.json','.approval.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://'): assert forbidden not in rendered
- print('DEVELOPMENT Render deployment v10: PASS (READY_FOR_APPROVAL; forward-only timing correction from pristine v9; identical one-deploy/handoff-aware verification scope)')
+ print('DEVELOPMENT Render deployment v10: PASS (APPROVED; forward-only timing correction from pristine v9; identical one-deploy/handoff-aware verification scope)')
  return 0
 if __name__=='__main__': raise SystemExit(main())

@@ -16,8 +16,8 @@
         {
           "evidence_type": "auth.provider-adapter-identity.created",
           "evidence_reference": "development-implementation-handoff-provider-adapter-auth-v2-step01-stopped.evidence.json",
-          "evidence_digest": "sha256:27223a97cdb9943ddff839826f035d4db883a78c3531ab6575a649fec87a028d",
-          "recorded_at": "2026-10-03T15:14:23Z"
+          "evidence_digest": "sha256:b8e3f446c67882eb76d5d59e214b4b243019f75eca078e720d7967fa71151577",
+          "recorded_at": "2026-10-03T15:18:58Z"
         }
       ],
       "observed_postcondition": "One confirmed DEVELOPMENT Auth identity was created for the exact shared ImplementationHandoff provider-adapter email, but Supabase Admin Create User generated an internal random password and stored a bcrypt hash even though the executor supplied no password. Total Auth users is 2; the existing HUMAN identity, canonical tenant binding, sessions, refresh tokens, custom hook, and active server allowlist remain unchanged. The target has provider-managed email metadata only and no Avuhz tenant binding. The required passwordless postcondition is not satisfied; retry is unauthorized.",
@@ -29,11 +29,11 @@
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
           "evidence_type": "auth.admin-executor-capability.observed",
-          "evidence_digest": "sha256:fde01371c87524bb32aa1bfeb6dd41760f661f29c694bfeb0a262de41e77d0dd",
+          "evidence_digest": "sha256:5b9e2cf1250ba383596c43f33988ac380f76157252880baf332f793d34e3df75",
           "digest_policy": "REQUIRED",
           "persistence_policy": "DIGEST_ONLY",
           "sanitized_value": null,
-          "value_digest": "sha256:fde01371c87524bb32aa1bfeb6dd41760f661f29c694bfeb0a262de41e77d0dd",
+          "value_digest": "sha256:5b9e2cf1250ba383596c43f33988ac380f76157252880baf332f793d34e3df75",
           "recorded_at": "2026-10-03T15:14:23Z"
         },
         {
@@ -42,11 +42,11 @@
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
           "evidence_type": "auth.provider-adapter-identity.create-preflight.observed",
-          "evidence_digest": "sha256:af259c6c8cb05adc03705fd54934047b658bbe8fe27bb822e6c5b0aa37219500",
+          "evidence_digest": "sha256:7a92004836b4801d5299eaaf79d617ba4f86a1bfa6763fa32f2265293e5fac06",
           "digest_policy": "REQUIRED",
           "persistence_policy": "DIGEST_ONLY",
           "sanitized_value": null,
-          "value_digest": "sha256:af259c6c8cb05adc03705fd54934047b658bbe8fe27bb822e6c5b0aa37219500",
+          "value_digest": "sha256:7a92004836b4801d5299eaaf79d617ba4f86a1bfa6763fa32f2265293e5fac06",
           "recorded_at": "2026-10-03T15:14:23Z"
         },
         {
@@ -55,11 +55,11 @@
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
           "evidence_type": "auth.custom-access-token-hook.preflight.observed",
-          "evidence_digest": "sha256:d9bf78f272f10a900c5e87d424bd43879db36e93051d8631b4d0dece1acf4ab9",
+          "evidence_digest": "sha256:a05542c67a62cf238d082b247a6a8d2ac75e2475e99da49797faf5797b9454c8",
           "digest_policy": "REQUIRED",
           "persistence_policy": "DIGEST_ONLY",
           "sanitized_value": null,
-          "value_digest": "sha256:d9bf78f272f10a900c5e87d424bd43879db36e93051d8631b4d0dece1acf4ab9",
+          "value_digest": "sha256:a05542c67a62cf238d082b247a6a8d2ac75e2475e99da49797faf5797b9454c8",
           "recorded_at": "2026-10-03T15:14:23Z"
         },
         {
@@ -68,16 +68,16 @@
           "value_class": "CONFIGURATION_REFERENCE",
           "source_step_id": null,
           "evidence_type": "auth.provider-adapter-admin-github-binding.preflight.observed",
-          "evidence_digest": "sha256:6487f6ac0b7dba21ead76698c2645413881b7cc6f33a262a3d10b7fab13d80ff",
+          "evidence_digest": "sha256:77d4575be55ca25b77968a0e10d0b5b35c6152cc70245f34246dbc2fae9e58d7",
           "digest_policy": "REQUIRED",
           "persistence_policy": "DIGEST_ONLY",
           "sanitized_value": null,
-          "value_digest": "sha256:6487f6ac0b7dba21ead76698c2645413881b7cc6f33a262a3d10b7fab13d80ff",
+          "value_digest": "sha256:77d4575be55ca25b77968a0e10d0b5b35c6152cc70245f34246dbc2fae9e58d7",
           "recorded_at": "2026-10-03T15:14:23Z"
         }
       ]
     }
   ],
-  "updated_at": "2026-10-03T15:14:23Z",
-  "progress_digest": "sha256:4982f77e54f43b348b560ca2a6440370240a69ac0d463b2c886df7af08b4fc9d"
+  "updated_at": "2026-10-03T15:18:58Z",
+  "progress_digest": "sha256:4ae34da4500d8be37b829d54bdffacbabddfa925f4ace20cd563dadecea162d5"
 }

@@ -31,7 +31,9 @@
     "credential_material_observed_by_control_plane": false,
     "provider_subject_digest": "sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a",
     "execution_configuration_reference_digest": "sha256:af6ccfa5ad6382fc6b5a4b08ca869750bf352a4a249d1080843744591f22bf6f",
-    "admin_executor_configuration_reference_digest": "sha256:756e27143afe80967d61d3292f1c8aa7c2ec6c6a411fd643fcb373e24827347c"
+    "admin_executor_configuration_reference_digest": "sha256:756e27143afe80967d61d3292f1c8aa7c2ec6c6a411fd643fcb373e24827347c",
+    "executed_at": "2026-10-03T15:14:23Z",
+    "password_hash_supplied_by_executor": false
   },
   "duplicate_dispatch_observation": {
     "workflow_run_id": 37132575309,
@@ -41,7 +43,8 @@
     "provider_preflight_failed": true,
     "create_step_skipped": true,
     "provider_mutation_attempted": false,
-    "retry_performed": false
+    "retry_performed": false,
+    "observed_at": "2026-10-03T15:15:13Z"
   },
   "postcondition_observation": {
     "auth_user_count": 2,
@@ -91,5 +94,5 @@
     "production_touched": false
   },
   "record_basis": "GITHUB_ACTIONS_SANITIZED_EXECUTION_ATTESTATIONS_PLUS_READ_ONLY_AUTH_POSTCONDITION_PLUS_UPSTREAM_SUPABASE_AUTH_IMPLEMENTATION_REVIEW",
-  "recorded_at": "2026-10-03T15:14:23Z"
+  "recorded_at": "2026-10-03T15:18:58Z"
 }

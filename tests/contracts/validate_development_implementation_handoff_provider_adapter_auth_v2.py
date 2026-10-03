@@ -11,8 +11,8 @@ PLAN_ID='305d2d98-0d87-42bc-90a4-f0cd5e66ea7c'
 PLAN_DIGEST='sha256:bef8d098f593a67bf476a17e76fcf17fbda9986c76ac765c2e2253d5904672b4'
 PROGRESS_ID='2cd99bc6-ac29-4d11-b6ed-b60a10cb9385'
 PROGRESS_DIGEST='sha256:b154f17aa4046480231c842409644bb02869d18500994c5bab51623e173aaea2'
-EXECUTION_PROGRESS_DIGEST='sha256:4982f77e54f43b348b560ca2a6440370240a69ac0d463b2c886df7af08b4fc9d'
-STOPPED_EVIDENCE_DIGEST='sha256:27223a97cdb9943ddff839826f035d4db883a78c3531ab6575a649fec87a028d'
+EXECUTION_PROGRESS_DIGEST='sha256:4ae34da4500d8be37b829d54bdffacbabddfa925f4ace20cd563dadecea162d5'
+STOP_EVIDENCE_DIGEST='sha256:b8e3f446c67882eb76d5d59e214b4b243019f75eca078e720d7967fa71151577'
 PREP='sha256:87d896a8d669124728e1456f7a72cce2ceb0a38f666fee60ce9a7592de8a8ee1'
 RESOURCE='sha256:aeb1e2d03130dc5d08c8fd733fd119149371ab695cd98e1c59b6326cdb4336ce'
 REPAIR='sha256:6855a85f4d83696cab4d1de32af7f748ff443cb424f8330ad7cdd6e091219d1c'
@@ -71,21 +71,22 @@ def main():
  assert b['binding.development.implementation-handoff.provider-adapter-auth-v2.execution-secret-reference']['preapproval_value']['value']==SECRET
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at'])
  assert g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
- assert execp['overall_state']=='STOPPED' and execp['progress_digest']==EXECUTION_PROGRESS_DIGEST and execp['record_version']==3
+ assert execp['overall_state']=='STOPPED' and execp['record_version']==3 and execp['progress_digest']==EXECUTION_PROGRESS_DIGEST
  st=execp['step_states'][0]
  assert st['authorization_state']=='CONSUMED' and st['execution_state']=='SUCCEEDED' and st['verification_state']=='FAIL' and st['authorization_consumed'] is True
  assert st['safe_error_code']=='SUPABASE_ADMIN_CREATE_USER_GENERATED_RANDOM_PASSWORD'
- assert raw(N+'-step01-stopped.evidence.json')==STOPPED_EVIDENCE_DIGEST
- assert st['evidence'][0]['evidence_digest']==STOPPED_EVIDENCE_DIGEST
- assert stopped['classification']=='IDENTITY_CREATED_WITH_PROVIDER_GENERATED_PASSWORD_HASH'
- assert stopped['primary_execution']['provider_mutation_succeeded'] is True and stopped['primary_execution']['password_supplied_by_executor'] is False
- assert stopped['duplicate_dispatch_observation']['create_step_skipped'] is True and stopped['duplicate_dispatch_observation']['provider_mutation_attempted'] is False
- assert stopped['postcondition_observation']['auth_user_count']==2 and stopped['postcondition_observation']['target_identity_count']==1
- assert stopped['postcondition_observation']['session_count']==0 and stopped['postcondition_observation']['refresh_token_count']==0
- assert stopped['postcondition_observation']['target_bcrypt_like_count']==1 and stopped['postcondition_observation']['target_encrypted_password_length']==60
+ assert len(st['evidence'])==1 and st['evidence'][0]['evidence_digest']==STOP_EVIDENCE_DIGEST
+ assert raw(N+'-step01-stopped.evidence.json')==STOP_EVIDENCE_DIGEST
+ assert stopped['outcome']=='SUCCEEDED_VERIFICATION_FAILED' and stopped['classification']=='IDENTITY_CREATED_WITH_PROVIDER_GENERATED_PASSWORD_HASH'
+ assert stopped['primary_execution']['workflow_run_id']==37132526932 and stopped['primary_execution']['workflow_job_id']==111230320171
+ assert stopped['primary_execution']['provider_mutation_succeeded'] is True and stopped['primary_execution']['password_supplied_by_executor'] is False and stopped['primary_execution']['password_hash_supplied_by_executor'] is False
+ assert stopped['duplicate_dispatch_observation']['workflow_run_id']==37132575309 and stopped['duplicate_dispatch_observation']['provider_preflight_failed'] is True and stopped['duplicate_dispatch_observation']['create_step_skipped'] is True and stopped['duplicate_dispatch_observation']['provider_mutation_attempted'] is False
+ assert stopped['postcondition_observation']['auth_user_count']==2 and stopped['postcondition_observation']['target_identity_count']==1 and stopped['postcondition_observation']['session_count']==0 and stopped['postcondition_observation']['refresh_token_count']==0
+ assert stopped['postcondition_observation']['target_password_null_count']==0 and stopped['postcondition_observation']['target_password_empty_count']==0 and stopped['postcondition_observation']['target_bcrypt_like_count']==1 and stopped['postcondition_observation']['target_encrypted_password_length']==60
  assert stopped['postcondition_observation']['target_tenant_bound_count']==0
- assert stopped['implementation_behavior']['admin_create_user_without_password_generates_random_password'] is True
- assert stopped['implementation_behavior']['generated_password_observed'] is False and stopped['implementation_behavior']['generated_password_hash_value_observed'] is False
+ assert stopped['implementation_behavior']['admin_create_user_without_password_generates_random_password'] is True and stopped['implementation_behavior']['generated_password_observed'] is False and stopped['implementation_behavior']['generated_password_hash_value_observed'] is False
+ assert stopped['authority_state']=={'step_authorization':'CONSUMED','authorization_consumed':True,'retry_authorized':False}
+ assert all(v is False for v in stopped['security_state'].values())
  assert prep['auth_observation']=={'auth_user_count':1,'target_identity_count':0,'known_synthetic_user_count':1,'other_auth_user_count':0,'canonical_tenant_bound_user_count':1,'session_count':0,'refresh_token_count':0}
  assert prep['credential_repair_observation']['overall_state']=='COMPLETED'
  assert prep['credential_repair_observation']['all_steps_consumed_succeeded_pass'] is True

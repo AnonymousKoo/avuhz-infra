@@ -10,7 +10,8 @@ N='development-implementation-handoff-provider-adapter-auth-v2-password-hash-cor
 PLAN_ID='45028cec-447f-42c9-a6fa-86e23c72dc85'
 PLAN_DIGEST='sha256:a5ee9341d0ccd9410ec617536cfbc83e2e7db5fe6fb6d667a21f8406bcce23eb'
 PROGRESS_ID='7e84979b-5f57-447d-8c27-d783b1d67d30'
-PROGRESS_DIGEST='sha256:9ee8094fbba26924f87947ebb783a17d1e91bbbead7b85194ffaad7a5a7767dc'
+PROGRESS_DIGEST='sha256:8fcfe94d1bfabbca542c6f86f98d92f1b34d4237eac74c166fe255b749a6ab3f'
+FAILURE_EVIDENCE='sha256:7a4a6c721e426af2d88fdc75d97528474129f6e75bc1a787ebbeea1cecf7490e'
 V2_STOPPED='sha256:4982f77e54f43b348b560ca2a6440370240a69ac0d463b2c886df7af08b4fc9d'
 V2_EVIDENCE_RAW='sha256:27223a97cdb9943ddff839826f035d4db883a78c3531ab6575a649fec87a028d'
 RETIREMENT='sha256:bd660fa458b2b83918c8f90a68bbb8a79c5be83768be819c2b4c7e1f7aa4007a'
@@ -18,7 +19,7 @@ PROJECT='pwlhruwutoitnieactol'
 TARGET='avuhz-implementation-handoff-provider-adapter-development@example.invalid'
 def load(name): return json.loads((B/name).read_text())
 def main():
- r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json')
+ r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); failure=load(N+'-step01-failure.evidence.json')
  validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,'2026-10-03T21:00:00Z')
  assert p['plan_id']==PLAN_ID and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
@@ -30,9 +31,18 @@ def main():
  assert a['approved_at']=='2026-10-03T19:40:36Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
  assert a['approval_digest']==approval_digest(a)
  assert len(p['steps'])==2 and p['ordered_step_ids']==[x['step_id'] for x in p['steps']]
- assert g==initial_progress(p,S,PROGRESS_ID,p['created_at'])
- assert g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
- assert all(x['authorization_state']=='PENDING' and x['execution_state']=='NOT_STARTED' and x['verification_state']=='NOT_STARTED' and x['authorization_consumed'] is False for x in g['step_states'])
+ assert g['progress_id']==PROGRESS_ID and g['progress_digest']==PROGRESS_DIGEST and g['record_version']==3 and g['overall_state']=='STOPPED'
+ s1state,s2state=g['step_states']
+ assert s1state['authorization_state']=='CONSUMED' and s1state['execution_state']=='FAILED' and s1state['verification_state']=='FAIL' and s1state['authorization_consumed'] is True
+ assert s1state['safe_error_code']=='AVUHZ_PROVIDER_ADAPTER_PASSWORD_HASH_CORRECTION_PREFLIGHT_FAILED'
+ assert s1state['evidence']==[{'evidence_type':'auth.provider-adapter-passwordless-state.corrected','evidence_reference':N+'-step01-failure.evidence.json','evidence_digest':FAILURE_EVIDENCE,'recorded_at':'2026-10-03T21:26:12Z'}]
+ assert s2state['authorization_state']=='BLOCKED' and s2state['execution_state']=='NOT_STARTED' and s2state['verification_state']=='NOT_STARTED' and s2state['authorization_consumed'] is False
+ assert failure['evidence_digest']==FAILURE_EVIDENCE==canonical_digest({k:v for k,v in failure.items() if k!='evidence_digest'})
+ assert failure['safe_error_code']=='AVUHZ_PROVIDER_ADAPTER_PASSWORD_HASH_CORRECTION_PREFLIGHT_FAILED' and failure['classification']=='PASSWORD_HASH_CORRECTION_PRECONDITION_DRIFT_DETECTED'
+ assert failure['execution_observation']['preflight_guard_failed'] is True and failure['execution_observation']['authorized_update_reached'] is False
+ assert failure['execution_observation']['provider_mutation_attempted'] is False and failure['execution_observation']['provider_mutation_committed'] is False and failure['execution_observation']['retry_performed'] is False
+ assert failure['authority_state']['authorization_consumed'] is True and failure['authority_state']['retry_authorized'] is False
+ assert all(v is False for k,v in failure['security_state'].items() if isinstance(v,bool))
  assert r['contract_digest']==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['project_reference']==PROJECT and r['target_email']==TARGET
  assert r['interaction_surface']=='supabase.dashboard.sql-editor'
@@ -82,7 +92,7 @@ def main():
  assert 'provider.mutation' in s2['prohibited_actions'] and 'raw-row.read' in s2['prohibited_actions']
  assert not list((ROOT/'.github/workflows').glob('*provider-adapter-auth-v2-password-hash-correction-v1*'))
  assert not list((ROOT/'scripts').glob('*provider-adapter-auth-v2-password-hash-correction-v1*'))
- rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
+ rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step01-failure.evidence.json'))
  for secret_shape in ('postgresql://','postgres://','password=','sb_secret_','service_role'): assert secret_shape not in rendered
- print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v2 password-hash correction v1: PASS (APPROVED; pristine; exact one-column mutation + separate read-only verification; no provider effect)')
+ print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v2 password-hash correction v1: PASS (STOPPED; Step 1 preflight failed closed before mutation; Step 2 blocked; retry unauthorized)')
 if __name__=='__main__': main()

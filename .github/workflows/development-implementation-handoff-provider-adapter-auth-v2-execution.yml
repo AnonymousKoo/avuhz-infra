@@ -1,0 +1,172 @@
+name: DEVELOPMENT ImplementationHandoff Provider Adapter Auth v2 Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type EXECUTE_IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V2
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-implementation-handoff-provider-adapter-auth-v2-execution
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+    env:
+      AVUHZ_PROJECT_REF: pwlhruwutoitnieactol
+      AVUHZ_PLAN_ID: 305d2d98-0d87-42bc-90a4-f0cd5e66ea7c
+      AVUHZ_PLAN_VERSION: '2'
+      AVUHZ_PLAN_DIGEST: sha256:bef8d098f593a67bf476a17e76fcf17fbda9986c76ac765c2e2253d5904672b4
+      AVUHZ_APPROVAL_ID: 56d784cb-195b-4c26-91a3-b9d4978a2acc
+      AVUHZ_APPROVAL_DIGEST: sha256:db637c44ca9976669dfb9345904504725c2892896b20acd1615a334a95614504
+      AVUHZ_WINDOW_START: '2026-10-03T15:00:00Z'
+      AVUHZ_WINDOW_END: '2026-10-03T19:00:00Z'
+      AVUHZ_TARGET_EMAIL: avuhz-implementation-handoff-provider-adapter-development@example.invalid
+      AVUHZ_EXISTING_EMAIL: avuhz-development-synthetic@example.invalid
+      SUPABASE_AUTH_ADMIN_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_IMPLEMENTATION_HANDOFF_ADAPTER_V2_EPHEMERAL }}
+
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify exact authority and executor boundary
+        shell: bash
+        env:
+          AVUHZ_DISPATCH_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          [[ "${AVUHZ_DISPATCH_CONFIRMATION}" == "EXECUTE_IMPLEMENTATION_HANDOFF_PROVIDER_ADAPTER_AUTH_V2" ]]
+          [[ -n "${SUPABASE_AUTH_ADMIN_EPHEMERAL:-}" ]]
+          [[ "${SUPABASE_AUTH_ADMIN_EPHEMERAL}" == sb_secret_* ]]
+          now="$(date -u +%s)"; start="$(date -u -d "${AVUHZ_WINDOW_START}" +%s)"; end="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"
+          (( now >= start && now < end ))
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          base=Path('contracts/plans/v1')
+          plan=json.loads((base/'development-implementation-handoff-provider-adapter-auth-v2.plan.json').read_text())
+          approval=json.loads((base/'development-implementation-handoff-provider-adapter-auth-v2.approval.json').read_text())
+          progress=json.loads((base/'development-implementation-handoff-provider-adapter-auth-v2.progress.json').read_text())
+          assert plan['plan_id']==os.environ['AVUHZ_PLAN_ID']
+          assert str(plan['plan_version'])==os.environ['AVUHZ_PLAN_VERSION']
+          assert plan['plan_digest']==os.environ['AVUHZ_PLAN_DIGEST']
+          assert plan['target']=={'provider_class':'identity.provider','provider_reference':'supabase','project_reference':os.environ['AVUHZ_PROJECT_REF'],'responsibility':'AUTH','issuer_reference':'https://pwlhruwutoitnieactol.supabase.co/auth/v1','audience_reference':'audience.avuhz.command-service.development'}
+          assert plan['authorization_window']=={'binding_state':'BOUND','starts_at':os.environ['AVUHZ_WINDOW_START'],'expires_at':os.environ['AVUHZ_WINDOW_END']}
+          assert len(plan['steps'])==1
+          step=plan['steps'][0]
+          assert step['operation']=='provider.auth-identity.create-one'
+          assert step['execution_class']=='PROVIDER_MUTATION'
+          assert step['credential_policy']['allowed_classes']==['SUPABASE_AUTH_ADMIN_EPHEMERAL']
+          assert step['credential_policy']['values_stored'] is False
+          assert approval['approval_id']==os.environ['AVUHZ_APPROVAL_ID']
+          assert approval['plan_id']==os.environ['AVUHZ_PLAN_ID']
+          assert approval['plan_digest']==os.environ['AVUHZ_PLAN_DIGEST']
+          assert approval['approval_digest']==os.environ['AVUHZ_APPROVAL_DIGEST']
+          assert approval['decision']=='APPROVE' and approval['status']=='ACTIVE'
+          assert approval['effective_at']==os.environ['AVUHZ_WINDOW_START'] and approval['expires_at']==os.environ['AVUHZ_WINDOW_END']
+          assert approval['authority_scope']=='EXACT_PLAN_ONLY'
+          assert progress['overall_state']=='NOT_STARTED' and len(progress['step_states'])==1
+          state=progress['step_states'][0]
+          assert state['authorization_state']=='PENDING' and state['execution_state']=='NOT_STARTED' and state['authorization_consumed'] is False
+          PY
+          echo authority_verified=true
+          echo credential_material_observed_by_control_plane=false
+
+      - name: Preflight exact Auth-admin capability and identity state
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          response="$(mktemp)"; trap 'rm -f "$response"' EXIT
+          status="$(curl --silent --show-error --connect-timeout 10 --max-time 30 --output "$response" --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users?page=1&per_page=1000")"
+          [[ "$status" == "200" ]]
+          python3 - "$response" <<'PY'
+          import json, os, sys
+          payload=json.load(open(sys.argv[1], encoding='utf-8'))
+          users=payload.get('users') if isinstance(payload,dict) else None
+          assert isinstance(users,list) and len(users)==1
+          user=users[0]
+          assert user.get('email')==os.environ['AVUHZ_EXISTING_EMAIL']
+          assert not any(u.get('email')==os.environ['AVUHZ_TARGET_EMAIL'] for u in users)
+          PY
+          ref='github-actions://AnonymousKoo/avuhz-infra/.github/workflows/development-implementation-handoff-provider-adapter-auth-v2-execution.yml@main#environment=development;project=pwlhruwutoitnieactol;operation=auth.admin.listUsers;expected_users=1;target_absent=true'
+          echo "admin_executor_configuration_reference_digest=sha256:$(printf '%s' "$ref" | sha256sum | awk '{print $1}')"
+          echo auth_admin_read_capability_verified=true
+          echo identity_preflight_verified=true
+          echo provider_mutation_attempted=false
+
+      - name: Create and verify exactly one confirmed passwordless adapter identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          now="$(date -u +%s)"; end="$(date -u -d "${AVUHZ_WINDOW_END}" +%s)"; (( now < end ))
+          body="$(mktemp)"; create="$(mktemp)"; verify="$(mktemp)"; trap 'rm -f "$body" "$create" "$verify"' EXIT
+          python3 - "$body" <<'PY'
+          import json, os, sys
+          body={'email':os.environ['AVUHZ_TARGET_EMAIL'],'email_confirm':True}
+          assert set(body)=={'email','email_confirm'}
+          json.dump(body,open(sys.argv[1],'w',encoding='utf-8'),separators=(',',':'))
+          PY
+          create_status="$(curl --silent --show-error --connect-timeout 10 --max-time 30 --output "$create" --write-out '%{http_code}' --request POST \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" --header 'Accept: application/json' --header 'Content-Type: application/json' \
+            --data-binary "@$body" "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users")"
+          [[ "$create_status" == "200" || "$create_status" == "201" ]]
+          subject_digest="$(python3 - "$create" <<'PY'
+          import hashlib,json,os,sys,uuid
+          payload=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert isinstance(payload,dict) and not any(k in payload for k in ('access_token','refresh_token','session'))
+          user=payload.get('user') if isinstance(payload.get('user'),dict) else payload
+          uid=user.get('id'); uuid.UUID(uid)
+          assert user.get('email')==os.environ['AVUHZ_TARGET_EMAIL']
+          assert user.get('email_confirmed_at') or user.get('confirmed_at')
+          assert user.get('user_metadata')=={'email_verified':True}
+          assert user.get('app_metadata')=={'provider':'email','providers':['email']}
+          print('sha256:'+hashlib.sha256(uid.encode()).hexdigest())
+          PY
+          )"
+          verify_status="$(curl --silent --show-error --connect-timeout 10 --max-time 30 --output "$verify" --write-out '%{http_code}' \
+            --header "apikey: ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" --header "Authorization: Bearer ${SUPABASE_AUTH_ADMIN_EPHEMERAL}" --header 'Accept: application/json' \
+            "https://${AVUHZ_PROJECT_REF}.supabase.co/auth/v1/admin/users?page=1&per_page=1000")"
+          [[ "$verify_status" == "200" ]]
+          python3 - "$verify" <<'PY'
+          import json,os,sys
+          users=json.load(open(sys.argv[1],encoding='utf-8')).get('users')
+          assert isinstance(users,list) and len(users)==2
+          by_email={u.get('email'):u for u in users}
+          assert set(by_email)=={os.environ['AVUHZ_EXISTING_EMAIL'],os.environ['AVUHZ_TARGET_EMAIL']}
+          user=by_email[os.environ['AVUHZ_TARGET_EMAIL']]
+          assert user.get('email_confirmed_at') or user.get('confirmed_at')
+          assert user.get('user_metadata')=={'email_verified':True}
+          assert user.get('app_metadata')=={'provider':'email','providers':['email']}
+          PY
+          ref='github-actions://AnonymousKoo/avuhz-infra/.github/workflows/development-implementation-handoff-provider-adapter-auth-v2-execution.yml@main#environment=development;project=pwlhruwutoitnieactol;operation=auth.admin.createUser;email_confirm=true;password=false;metadata=false'
+          echo "execution_configuration_reference_digest=sha256:$(printf '%s' "$ref" | sha256sum | awk '{print $1}')"
+          echo "provider_adapter_identity_subject_digest=${subject_digest}"
+          echo provider_mutation_attempted=true
+          echo provider_mutation_succeeded=true
+          echo password_supplied=false
+          echo user_metadata_supplied=false
+          echo app_metadata_supplied=false
+          echo tenant_metadata_supplied=false
+          echo session_or_token_requested=false
+          echo credential_material_observed_by_control_plane=false

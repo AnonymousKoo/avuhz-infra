@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib,json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-implementation-handoff-provider-adapter-auth-v2-credential-retirement-v1'
 PLAN_ID='daffe337-37e8-468e-a913-e751ccd282be'
 PLAN_DIGEST='sha256:24b47e7b19e9471c333ac26720e9f82555aa670b4440277001ecc82211864972'
@@ -19,13 +19,17 @@ KEY='implementation-handoff-provider-adapter-auth-v2-ephemeral'
 def load(n): return json.loads((B/n).read_text())
 def raw(n): return 'sha256:'+hashlib.sha256((B/n).read_bytes()).hexdigest()
 def main():
- p=load(N+'.plan.json'); g=load(N+'.progress.json'); prep=load(N+'-preparation.evidence.json')
- validate_plan(p,S); validate_progress(p,g,S)
- assert not (B/(N+'.approval.json')).exists()
+ p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); prep=load(N+'-preparation.evidence.json')
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert raw(N+'-preparation.evidence.json')==PREP
  assert p['plan_id']==PLAN_ID and p['plan_version']==1 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-03T16:00:00Z','expires_at':'2026-10-03T20:00:00Z'}
+ assert a['plan_id']==PLAN_ID and a['plan_version']==1 and a['plan_digest']==PLAN_DIGEST
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-03T16:00:00Z' and a['expires_at']=='2026-10-03T20:00:00Z'
+ assert a['approved_at']=='2026-10-03T15:50:52Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']==approval_digest(a)
  assert len(p['steps'])==4 and p['ordered_step_ids']==[s['step_id'] for s in p['steps']]
  s1,s2,s3,s4=p['steps']
  assert s1['operation']=='provider.auth-admin-credential.delete-dedicated-secret-key' and s1['execution_class']=='PROVIDER_MUTATION'
@@ -47,9 +51,9 @@ def main():
  assert prep['credential_reference']['supabase_key_label']==KEY and prep['credential_reference']['github_secret_reference']==SECRET and prep['credential_reference']['github_exact_reference_count']==1
  assert prep['credential_reference']['secret_value_requested'] is False and prep['credential_reference']['secret_value_observed'] is False and prep['credential_reference']['credential_material_digest_recorded'] is False
  assert all(v is False for v in prep['security_state'].values())
- rendered=''.join((B/(N+suf)).read_text() for suf in ('.plan.json','.progress.json','-preparation.evidence.json'))
+ rendered=''.join((B/(N+suf)).read_text() for suf in ('.plan.json','.progress.json','.approval.json','-preparation.evidence.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://','sb_secret_'):
   assert forbidden not in rendered
  assert 'sekinfra' not in rendered.lower()
- print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v2 credential retirement v1: PASS (READY_FOR_APPROVAL; four-step exact retirement; identity untouched)')
+ print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v2 credential retirement v1: PASS (APPROVED; four-step exact retirement; identity untouched)')
 if __name__=='__main__': main()

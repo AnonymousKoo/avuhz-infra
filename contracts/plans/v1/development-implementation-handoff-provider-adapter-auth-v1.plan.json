@@ -1,0 +1,245 @@
+{
+  "plan_id": "644f239b-c7cb-4c30-85a4-95efbfe85ae4",
+  "plan_version": 1,
+  "plan_digest": "sha256:67b9ebbcd55612edbfbdc3f51f6b8288abd92d3ecef2c35c88cddfa72f5d49fb",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-03T02:46:05Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-03T03:30:00Z",
+    "expires_at": "2026-10-03T07:30:00Z"
+  },
+  "ordered_step_ids": [
+    "development.implementation-handoff.provider-adapter-auth-v1.step.01.create-passwordless-identity"
+  ],
+  "steps": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-auth-v1.step.01.create-passwordless-identity",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.provider-adapter-identity",
+        "resource_reference": "identity.development.provider-adapter.implementation-handoff",
+        "binding_state": "BOUND",
+        "exact_version": "version.1",
+        "exact_digest": "sha256:fd3c01a78d49a500dd576f888cc4ad60d2da1af304286cd844f4a8b40a362510"
+      },
+      "operation": "provider.auth-identity.create-one",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter.preparation.observed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:e4c194acf40408cff3b0063654dbead723d247415823777fc35cc2c077ac7456"
+        },
+        {
+          "evidence_type": "hook.enablement.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c"
+        }
+      ],
+      "expected_postcondition": "One confirmed passwordless DEVELOPMENT Auth identity is created for the exact shared ImplementationHandoff provider-adapter email; total Auth users becomes 2 while the existing HUMAN identity, canonical tenant binding, sessions, refresh tokens, hook state, and active server allowlist remain unchanged. No password/password hash, user metadata, non-provider app metadata, tenant binding, allowlist binding, token/session, DATA, Render, n8n, staging, or production change occurs. Only a digest-bound reference to the provider-assigned subject may persist; raw provider subject and credential material do not.",
+      "prohibited_actions": [
+        "credential.persist",
+        "credential.expose",
+        "credential.log",
+        "credential.return",
+        "credential.digest",
+        "credential.copy",
+        "credential.create",
+        "credential.rotate",
+        "credential.export",
+        "customer.identity.create",
+        "identity.bulk-create",
+        "password.set",
+        "password-hash.set",
+        "invitation.send",
+        "user-metadata.bind",
+        "app-metadata.bind",
+        "tenant-metadata.bind",
+        "server-allowlist.bind",
+        "token.issue",
+        "session.issue",
+        "hook.modify",
+        "data.operation",
+        "render.operation",
+        "n8n.operation",
+        "staging.target",
+        "production.target"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "provider.preflight.failed",
+        "target.identity.already-exists",
+        "auth-user-count.mismatch",
+        "provider-adapter-policy.not-ancestor-of-main",
+        "executor-capability.attestation.missing",
+        "credential-material.observed",
+        "scope.drift",
+        "outcome.ambiguous",
+        "known-synthetic-identity.mismatch",
+        "canonical-tenant-binding.mismatch",
+        "session-state.drift",
+        "refresh-token-state.drift",
+        "hook-state.drift",
+        "allowlist-state.drift"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+        ],
+        "values_stored": false,
+        "ephemeral_handling": {
+          "material_source": "APPROVED_ENVIRONMENT_SECRET_BOUNDARY",
+          "material_residency": "SERVER_EXECUTOR_MEMORY_ONLY",
+          "control_plane_visibility": "CLASS_LABEL_ONLY",
+          "material_digest": "PROHIBITED",
+          "persistence": "PROHIBITED",
+          "logging": "PROHIBITED",
+          "return_policy": "PROHIBITED",
+          "proof_policy": "NON_SECRET_EXECUTOR_CAPABILITY_ATTESTATION"
+        }
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.preparation",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:e4c194acf40408cff3b0063654dbead723d247415823777fc35cc2c077ac7456",
+            "exact_digest": "sha256:053b46b821a2551773b2b0ec896f37bdd788c6caf4645d26df48d39e62a0483d"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.hook-v28",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:d756b6baa3fbd4fc743b80d436e6578e66806658855b3c669690eb95dc79814c",
+            "exact_digest": "sha256:78282de2683a5d2cff2b46d6e9c29af1f7bb74d8658d0443872cd585df15c5c8"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.policy-commit",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "git.commit.86413b7bbbf8f4532f56962f9d4c45a2b84cc2f0",
+            "exact_digest": "sha256:d65a5bf533056b5bf208dce7a7723a0b4a704107b10f405b212892f63cfd30da"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.identity-create-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-identity.create-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.hook-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.custom-access-token-hook.preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-auth-v1.identity",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-identity.created",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-identity.created",
+          "established_binding_ids": [
+            "binding.development.implementation-handoff.provider-adapter-auth-v1.identity"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "credential.persist",
+    "credential.expose",
+    "credential.log",
+    "credential.return",
+    "credential.digest",
+    "credential.copy",
+    "credential.create",
+    "credential.rotate",
+    "credential.export",
+    "customer.identity.create",
+    "identity.bulk-create",
+    "password.set",
+    "password-hash.set",
+    "invitation.send",
+    "user-metadata.bind",
+    "app-metadata.bind",
+    "tenant-metadata.bind",
+    "server-allowlist.bind",
+    "token.issue",
+    "session.issue",
+    "hook.modify",
+    "data.operation",
+    "render.operation",
+    "n8n.operation",
+    "staging.target",
+    "production.target"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "authorization.unbound",
+    "security.validation.failed",
+    "credential-material.observed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

@@ -1,0 +1,23 @@
+{
+  "progress_id": "3f600043-dc92-46a4-bdcf-db5d7924adc2",
+  "plan_id": "644f239b-c7cb-4c30-85a4-95efbfe85ae4",
+  "plan_version": 1,
+  "plan_digest": "sha256:67b9ebbcd55612edbfbdc3f51f6b8288abd92d3ecef2c35c88cddfa72f5d49fb",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-auth-v1.step.01.create-passwordless-identity",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-03T02:46:05Z",
+  "progress_digest": "sha256:59dc64ce68a40e234e1426fc3cd0ee8ede0ce36509817e1ca65709777995cda1"
+}

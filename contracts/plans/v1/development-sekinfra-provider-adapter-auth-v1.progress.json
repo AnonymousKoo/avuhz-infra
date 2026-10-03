@@ -1,0 +1,23 @@
+{
+  "progress_id": "43c31bb8-828d-4eb0-a89a-852e430a45f9",
+  "plan_id": "454c2d06-731b-4351-bf7c-35403ce9198e",
+  "plan_version": 1,
+  "plan_digest": "sha256:aa657cb8c3664935e55e5919ccd9807d685bcf5d4f7c8b661c37343dbbdb180b",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.sekinfra.provider-adapter-auth-v1.step.01.create-passwordless-identity",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-03T02:34:25Z",
+  "progress_digest": "sha256:dc7397686520dcb0ff0adf9b82e79c0d1715d12e50fdc031fe7f2d8192c4296a"
+}

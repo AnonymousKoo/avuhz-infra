@@ -1,0 +1,60 @@
+{
+  "evidence_type": "auth.provider-adapter.preparation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "project_name": "DEVELOPMENT AUTH",
+  "observation": {
+    "auth_user_count": 1,
+    "target_identity_count": 0,
+    "known_synthetic_user_count": 1,
+    "other_auth_user_count": 0,
+    "canonical_tenant_bound_user_count": 1,
+    "session_count": 0,
+    "refresh_token_count": 0,
+    "custom_access_token_hook_latest_canonical_state": "ENABLED_V28",
+    "custom_access_token_hook_live_function": "public.avuhz_development_custom_access_token_hook_v1(jsonb)",
+    "custom_access_token_hook_live_function_owner": "avuhz_migration_service_dev",
+    "custom_access_token_hook_live_search_path": "pg_catalog",
+    "custom_access_token_hook_live_security_definer": false,
+    "custom_access_token_hook_live_volatility": "STABLE",
+    "custom_access_token_hook_auth_admin_execute": true,
+    "custom_access_token_hook_anon_execute": false,
+    "custom_access_token_hook_authenticated_execute": false,
+    "custom_access_token_hook_service_role_execute": false,
+    "custom_access_token_hook_public_execute": false,
+    "oidc_issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "oidc_grant_types_supported": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "oidc_response_types_supported": [
+      "code"
+    ],
+    "oidc_client_credentials_supported": false
+  },
+  "design_consequence": {
+    "native_oauth_client_credentials_assumed": false,
+    "provider_adapter_identity_must_be_distinct": true,
+    "existing_synthetic_human_identity_reused": false,
+    "first_provider_mutation_scope": "CREATE_PASSWORDLESS_CONFIRMED_IDENTITY_ONLY",
+    "credential_binding_deferred": true,
+    "tenant_binding_deferred": true,
+    "server_allowlist_binding_deferred": true
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "raw_provider_subject_retained": false,
+    "real_person_pii_retained": false,
+    "auth_rows_returned": false,
+    "provider_mutation_performed": false,
+    "data_resource_touched": false,
+    "render_resource_touched": false,
+    "n8n_resource_touched": false,
+    "staging_resource_touched": false,
+    "production_resource_touched": false
+  },
+  "record_basis": "READ_ONLY_AUTH_AGGREGATES_PLUS_PUBLIC_OIDC_DISCOVERY_PLUS_LIVE_FUNCTION_ACL_PLUS_CANONICAL_V28_HOOK_ENABLEMENT",
+  "recorded_at": "2026-10-03T02:41:07Z"
+}

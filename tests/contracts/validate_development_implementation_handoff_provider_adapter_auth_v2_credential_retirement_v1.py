@@ -8,7 +8,8 @@ B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-imple
 PLAN_ID='daffe337-37e8-468e-a913-e751ccd282be'
 PLAN_DIGEST='sha256:24b47e7b19e9471c333ac26720e9f82555aa670b4440277001ecc82211864972'
 PROGRESS_ID='184f1b29-4141-4351-8b00-5dbbb5469546'
-PROGRESS_DIGEST='sha256:ae42881f755c27a8df216d2821d8fb1dd21b1e847eb32249895eeccdca9a1df0'
+PROGRESS_DIGEST='sha256:8a11f1d965fec58268807eb6ed24ae822c176bf2cbb8d2cbb983eb7c5f930795'
+STEP2_EVIDENCE='sha256:ec4db17b63fc408e17fea3a266f2094c24c3eac3625e6fcdcbeccdce476bccf2'
 STEP1_EVIDENCE='sha256:dabc212c5294062f269d67a27ac5b8f657305a38f8f5dd00203d6200b756e521'
 PREP='sha256:1711c63785c277ddd44e16a2b7f3f23db62ec0cf2c84749b7fc63ccc57cbe68e'
 V2='sha256:4982f77e54f43b348b560ca2a6440370240a69ac0d463b2c886df7af08b4fc9d'
@@ -20,7 +21,7 @@ KEY='implementation-handoff-provider-adapter-auth-v2-ephemeral'
 def load(n): return json.loads((B/n).read_text())
 def raw(n): return 'sha256:'+hashlib.sha256((B/n).read_bytes()).hexdigest()
 def main():
- p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); prep=load(N+'-preparation.evidence.json'); e1=load(N+'-step01-success.evidence.json')
+ p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); prep=load(N+'-preparation.evidence.json'); e1=load(N+'-step01-success.evidence.json'); e2=load(N+'-step02-success.evidence.json')
  validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,p['authorization_window']['starts_at'])
  assert raw(N+'-preparation.evidence.json')==PREP
  assert p['plan_id']==PLAN_ID and p['plan_version']==1 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
@@ -44,25 +45,34 @@ def main():
   for forbidden in ('identity.create','identity.delete','identity.modify','token.issue','session.issue','tenant-metadata.modify','data.operation','render.operation','n8n.operation','production.target'):
    assert forbidden in s['prohibited_actions']
  assert 'provider-adapter-auth-v2.retry' in p['prohibited_actions'] and 'provider-adapter-auth-correction.execute' in p['prohibited_actions']
- assert g['progress_id']==PROGRESS_ID and g['progress_digest']==PROGRESS_DIGEST and g['record_version']==3 and g['overall_state']=='IN_PROGRESS'
+ assert g['progress_id']==PROGRESS_ID and g['progress_digest']==PROGRESS_DIGEST and g['record_version']==5 and g['overall_state']=='IN_PROGRESS'
  st1,st2,st3,st4=g['step_states']
  assert st1['authorization_state']=='CONSUMED' and st1['execution_state']=='SUCCEEDED' and st1['verification_state']=='PASS' and st1['authorization_consumed'] is True
  assert st1['evidence']==[{'evidence_type':'auth.provider-adapter-admin-credential.retired','evidence_reference':N+'-step01-success.evidence.json','evidence_digest':STEP1_EVIDENCE,'recorded_at':'2026-10-03T16:13:47Z'}]
  assert st1['safe_error_code'] is None and st1['observed_postcondition']==s1['expected_postcondition']
- assert all(st['authorization_state']=='PENDING' and st['execution_state']=='NOT_STARTED' and st['verification_state']=='NOT_STARTED' and st['authorization_consumed'] is False and st['evidence']==[] for st in (st2,st3,st4))
+ assert st2['authorization_state']=='CONSUMED' and st2['execution_state']=='SUCCEEDED' and st2['verification_state']=='PASS' and st2['authorization_consumed'] is True
+ assert st2['evidence']==[{'evidence_type':'auth.provider-adapter-admin-github-binding.retired','evidence_reference':N+'-step02-success.evidence.json','evidence_digest':STEP2_EVIDENCE,'recorded_at':'2026-10-03T16:23:20Z'}]
+ assert st2['safe_error_code'] is None and st2['observed_postcondition']==s2['expected_postcondition']
+ assert all(st['authorization_state']=='PENDING' and st['execution_state']=='NOT_STARTED' and st['verification_state']=='NOT_STARTED' and st['authorization_consumed'] is False and st['evidence']==[] for st in (st3,st4))
  assert e1['evidence_digest']==STEP1_EVIDENCE==canonical_digest({k:v for k,v in e1.items() if k!='evidence_digest'})
  assert e1['project_reference']=='pwlhruwutoitnieactol' and e1['exact_key_name']==KEY and e1['owner_confirmed_deleted'] is True
  assert e1['postcondition_screenshot_observed'] is True and e1['provider_mutation_observed_by_agent'] is False and e1['other_key_mutation_observed'] is False
  assert e1['credential_material_read'] is False and e1['credential_material_retained'] is False and e1['credential_fragments_retained'] is False and e1['pii_retained'] is False and e1['screenshot_retained'] is False
+ assert e2['evidence_digest']==STEP2_EVIDENCE==canonical_digest({k:v for k,v in e2.items() if k!='evidence_digest'})
+ assert e2['repository']=='AnonymousKoo/avuhz-infra' and e2['environment_name']=='development' and e2['exact_secret_name']==SECRET
+ assert e2['classification']=='EXACT_GITHUB_ENVIRONMENT_SECRET_ALREADY_ABSENT_AT_STEP2_PREFLIGHT'
+ assert e2['exact_secret_reference_observed_absent'] is True and e2['delete_command_issued'] is False and e2['delete_command_accepted'] is False
+ assert e2['independent_absence_verified'] is False and e2['other_secret_mutation_performed'] is False and e2['names_only_inspection'] is True
+ assert e2['credential_material_read'] is False and e2['credential_material_retained'] is False and e2['pii_retained'] is False and e2['retry_performed'] is False
  assert prep['v2_observation']['overall_state']=='STOPPED' and prep['v2_observation']['progress_digest']==V2 and prep['v2_observation']['safe_error_code']=='SUPABASE_ADMIN_CREATE_USER_GENERATED_RANDOM_PASSWORD'
  assert prep['v2_observation']['identity_exists'] is True and prep['v2_observation']['identity_mutation_authorized_by_retirement'] is False
  assert prep['retirement_obligation']['evidence_digest']==OBLIGATION and prep['retirement_obligation']['trigger_satisfied']=='provider-adapter-auth-v2-permanently-stopped'
  assert prep['credential_reference']['supabase_key_label']==KEY and prep['credential_reference']['github_secret_reference']==SECRET and prep['credential_reference']['github_exact_reference_count']==1
  assert prep['credential_reference']['secret_value_requested'] is False and prep['credential_reference']['secret_value_observed'] is False and prep['credential_reference']['credential_material_digest_recorded'] is False
  assert all(v is False for v in prep['security_state'].values())
- rendered=''.join((B/(N+suf)).read_text() for suf in ('.plan.json','.progress.json','.approval.json','-preparation.evidence.json','-step01-success.evidence.json'))
+ rendered=''.join((B/(N+suf)).read_text() for suf in ('.plan.json','.progress.json','.approval.json','-preparation.evidence.json','-step01-success.evidence.json','-step02-success.evidence.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://','sb_secret_'):
   assert forbidden not in rendered
  assert 'sekinfra' not in rendered.lower()
- print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v2 credential retirement v1: PASS (STEP 1 CONSUMED/SUCCEEDED/PASS; Step 2 pending; identity untouched)')
+ print('DEVELOPMENT ImplementationHandoff provider-adapter Auth v2 credential retirement v1: PASS (STEPS 1-2 CONSUMED/SUCCEEDED/PASS; Steps 3-4 pending; identity untouched)')
 if __name__=='__main__': main()

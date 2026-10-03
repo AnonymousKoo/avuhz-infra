@@ -1,0 +1,30 @@
+{
+  "progress_id": "3f600043-dc92-46a4-bdcf-db5d7924adc2",
+  "plan_id": "644f239b-c7cb-4c30-85a4-95efbfe85ae4",
+  "plan_version": 1,
+  "plan_digest": "sha256:67b9ebbcd55612edbfbdc3f51f6b8288abd92d3ecef2c35c88cddfa72f5d49fb",
+  "record_version": 3,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-auth-v1.step.01.create-passwordless-identity",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-identity.created",
+          "evidence_reference": "github.actions.run.37094133061.step1.attempt1.failed-credential-unavailable",
+          "evidence_digest": "sha256:1e31607337b069824b2a444313c7394c4ade0575139e90d9726b0a651bf44956",
+          "recorded_at": "2026-10-03T03:43:14Z"
+        }
+      ],
+      "observed_postcondition": "The exact executor stopped at the required admin credential presence guard. Provider preflight and provider contact were not reached; the target identity was not created. Retry is unauthorized and continuation requires fresh authority.",
+      "safe_error_code": "AUTH_ADMIN_EXECUTOR_CREDENTIAL_UNAVAILABLE",
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-03T03:43:14Z",
+  "progress_digest": "sha256:f4c4a299b032e3cb4460bf6d6c756de88a34cfad6d52e5cf9f645158e49d50fd"
+}

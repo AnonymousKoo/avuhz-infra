@@ -1,0 +1,72 @@
+{
+  "evidence_type": "auth.provider-adapter-identity.created",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "644f239b-c7cb-4c30-85a4-95efbfe85ae4",
+  "plan_version": 1,
+  "plan_digest": "sha256:67b9ebbcd55612edbfbdc3f51f6b8288abd92d3ecef2c35c88cddfa72f5d49fb",
+  "approval_id": "61aeb5e6-c274-4586-933f-1f01d17359b5",
+  "approval_digest": "sha256:2e5fa18fbeb36fb87b629f6141254472262966efe641f6150458f77a45f01478",
+  "step_id": "development.implementation-handoff.provider-adapter-auth-v1.step.01.create-passwordless-identity",
+  "attempt": 1,
+  "outcome": "FAILED_UNVERIFIED",
+  "safe_error_code": "AUTH_ADMIN_EXECUTOR_CREDENTIAL_UNAVAILABLE",
+  "classification": "PROVIDER_IDENTITY_NOT_CREATED",
+  "execution_observation": {
+    "workflow_run_id": 37094133061,
+    "workflow_job_id": 111120462045,
+    "execution_sha": "f4dd0121eeeb2c0a2770888a61a21f9e028de7a7",
+    "execution_class": "PROVIDER_MUTATION",
+    "workflow_dispatch_attempts": 1,
+    "canonical_main_binding_passed": true,
+    "dispatch_confirmation_passed": true,
+    "credential_presence_check_passed": false,
+    "credential_format_check_reached": false,
+    "authorization_window_check_reached": false,
+    "plan_binding_reached": false,
+    "admin_executor_capability_probe_reached": false,
+    "provider_preflight_reached": false,
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "identity_create_attempted": false,
+    "target_identity_created": false
+  },
+  "runtime_binding_observation": {
+    "admin_credential_reference": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_ADMIN_EPHEMERAL",
+    "admin_credential_status": "UNBOUND_OR_EMPTY",
+    "credential_values_observed": false,
+    "credential_digests_recorded": false
+  },
+  "failure_observation": {
+    "identity_state": "UNCHANGED_BY_EXECUTOR",
+    "provider_preflight_completed": false,
+    "provider_identity_created": false,
+    "continuation_requires_fresh_credential_binding_and_fresh_authority": true
+  },
+  "authority_state": {
+    "step_authorization": "CONSUMED",
+    "authorization_consumed": true,
+    "retry_authorized": false
+  },
+  "credential_material_retained": false,
+  "pii_retained": false,
+  "security_state": {
+    "secret_material_recorded": false,
+    "credential_material_recorded": false,
+    "credential_digest_recorded": false,
+    "token_material_recorded": false,
+    "raw_provider_response_recorded": false,
+    "raw_provider_rows_recorded": false,
+    "pii_recorded": false,
+    "data_resource_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "execution_time_source": "GITHUB_ACTIONS_RUN_METADATA",
+  "record_basis": "GITHUB_ACTIONS_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-10-03T03:43:14Z"
+}

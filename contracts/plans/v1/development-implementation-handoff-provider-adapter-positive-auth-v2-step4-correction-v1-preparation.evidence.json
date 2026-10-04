@@ -1,0 +1,69 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.prepared",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1",
+  "observed_at": "2026-10-04T06:19:58Z",
+  "action_class": "REPOSITORY_LOCAL",
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED",
+  "lineage": {
+    "v2_plan_id": "58c9c75c-6488-54e2-924e-d87c3d99432b",
+    "v2_plan_digest": "sha256:03cb244d3ee92cde2e279c27f74a6d6ac36d22ed83d988e5c06bcd5ebd320edd",
+    "v2_approval_id": "af3e10e7-2319-5462-9b6c-a17063a29206",
+    "v2_approval_digest": "sha256:faf96f4b6bac4e62fa96f7739c5e47959eed9f29a6ee0f5a5d4b629210ea5f10",
+    "v2_execution_progress_digest_after_steps_1_3": "sha256:656af77ba698ebaf159b0ce812f627e4a54e26472fd0ba69d0bdf97f52ed4060",
+    "v2_step3_verified_github_binding_evidence_digest": "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5"
+  },
+  "selected_diagnostic": {
+    "resource_digest": "sha256:290d903ca9b96e6325f05698c86f050a60f5f052344703be018cea40231a0fd0",
+    "interaction_surface": "supabase.dashboard.sql-editor",
+    "query_count": 1,
+    "aggregate_only": true,
+    "aggregate_fields": [
+      "auth_user_count",
+      "target_identity_count",
+      "target_password_null_count",
+      "target_tenant_exact_count",
+      "session_count",
+      "refresh_token_count"
+    ],
+    "expected_result": {
+      "auth_user_count": 2,
+      "target_identity_count": 1,
+      "target_password_null_count": 1,
+      "target_tenant_exact_count": 1,
+      "session_count": 0,
+      "refresh_token_count": 0
+    },
+    "mutation_authorized": false,
+    "retry_authorized": false,
+    "follow_up_sql_authorized": false
+  },
+  "result_use": "Separately authorized correction evidence only. A later forward-only positive-auth continuation may consume it under fresh exact authorization; never record it as v2 Step 4 success or advance v2 progress.",
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "identity_mutation_performed": false,
+    "password_hash_value_observed": false,
+    "credential_material_observed": false,
+    "raw_provider_subject_observed": false,
+    "tenant_binding_changed": false,
+    "allowlist_changed": false,
+    "token_or_session_issued": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false,
+    "existing_credential_read_or_changed": false,
+    "existing_github_binding_read_verified_or_changed": false,
+    "v2_progress_advanced": false,
+    "approval_created": false,
+    "execution_progress_created": false,
+    "secret_value_digest_recorded": false
+  },
+  "evidence_digest": "sha256:14a15edda3d731c46bd75ff949a7889191c4018fb5e51be31bd5fc4710d905a5"
+}

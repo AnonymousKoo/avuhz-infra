@@ -1,0 +1,264 @@
+{
+  "plan_id": "6b458b63-542c-5eb5-8b24-1e3b781f5957",
+  "plan_version": 1,
+  "plan_digest": "sha256:13937ab14140c977dca4829342c6237988ef11106306012082dce01321ff2430",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-04T06:19:58Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-04T06:45:00Z",
+    "expires_at": "2026-10-04T10:45:00Z"
+  },
+  "ordered_step_ids": [
+    "development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v1.step.01.inspect-preflight-counts-read-only"
+  ],
+  "steps": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v1.step.01.inspect-preflight-counts-read-only",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.provider-adapter-positive-auth-step4-correction",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:auth:provider-adapter-positive-auth-v2-step4-correction-v1",
+        "binding_state": "BOUND",
+        "exact_version": "positive-auth-v2-step4-correction.v1",
+        "exact_digest": "sha256:290d903ca9b96e6325f05698c86f050a60f5f052344703be018cea40231a0fd0"
+      },
+      "operation": "provider.auth-identity.inspect-positive-auth-step4-counts-read-only",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.prepared",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:14a15edda3d731c46bd75ff949a7889191c4018fb5e51be31bd5fc4710d905a5"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5"
+        }
+      ],
+      "expected_postcondition": "After separate exact owner approval, in one OWNER_INTERACTIVE_SESSION at the DEVELOPMENT AUTH Supabase Dashboard SQL Editor, execute exactly the resource-bound aggregate SELECT once and return exactly auth_user_count=2, target_identity_count=1, target_password_null_count=1, target_tenant_exact_count=1, session_count=0, refresh_token_count=0. Stop on any deviation. No follow-up SQL, retry, mutation, raw row, PII, credential or existing-binding access is authorized. Separately authorized correction evidence only. A later forward-only positive-auth continuation may consume it under fresh exact authorization; never record it as v2 Step 4 success or advance v2 progress.",
+      "prohibited_actions": [
+        "credential.persist",
+        "credential.expose",
+        "credential.log",
+        "provider.mutation",
+        "identity.modify",
+        "password.set",
+        "password-hash.read",
+        "tenant-metadata.bind",
+        "server-allowlist.bind",
+        "token.issue",
+        "session.issue",
+        "hook.modify",
+        "data.operation",
+        "render.operation",
+        "n8n.operation",
+        "staging.target",
+        "production.target",
+        "raw-row.read",
+        "raw-provider-subject.persist",
+        "additional-sql.execute",
+        "credential.read",
+        "credential.verify",
+        "credential.retire",
+        "credential.recreate",
+        "github-binding.read",
+        "github-binding.verify",
+        "github-binding.modify",
+        "query.retry",
+        "positive-auth-v2.progress.advance",
+        "positive-auth-v2.step4.mark-success",
+        "positive-auth.step5-or-later.execute"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "sql.text.mismatch",
+        "result-fields.mismatch",
+        "count.malformed",
+        "count.non-integer",
+        "count.negative",
+        "count.mismatch",
+        "raw-row.returned",
+        "sensitive-value.returned",
+        "result.unavailable",
+        "verification.ambiguous",
+        "provider.effect.unexpected",
+        "additional-sql.requested",
+        "additional-sql.detected",
+        "scope.drift"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v1.preparation",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:14a15edda3d731c46bd75ff949a7889191c4018fb5e51be31bd5fc4710d905a5",
+            "exact_digest": "sha256:aea5498fb5148b0c5e5a06c05a2cfe6f571dc8a21e6806ee12097d09bf853ce0"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v1.dashboard-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.counts-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.v2-plan-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:03cb244d3ee92cde2e279c27f74a6d6ac36d22ed83d988e5c06bcd5ebd320edd",
+            "exact_digest": "sha256:ffdb18b94d82dc169ea02a583dc82daf1e41e815aaad726f053c2cfb986e3210"
+          }
+        },
+        {
+          "binding_id": "binding.development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.v2-approval-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:faf96f4b6bac4e62fa96f7739c5e47959eed9f29a6ee0f5a5d4b629210ea5f10",
+            "exact_digest": "sha256:16e24bfb06d5f6e91727c45520569c5ca28e55c9f36ab732a2981053322f8cb4"
+          }
+        },
+        {
+          "binding_id": "binding.development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.v2-execution-progress-digest-after-steps-1-3",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:656af77ba698ebaf159b0ce812f627e4a54e26472fd0ba69d0bdf97f52ed4060",
+            "exact_digest": "sha256:b2d7aca806ede33dff7bb1b8327ccc560f245ffd480195c4871f8e19cd8fc02f"
+          }
+        },
+        {
+          "binding_id": "binding.development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.v2-step3-verified-github-binding-evidence-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5",
+            "exact_digest": "sha256:7479aa0c4b5fe0696f3dff8879240f3b6dbbbb61f29e3bb6183bea5e52739955"
+          }
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.counts-verified",
+          "established_binding_ids": [
+            "binding.development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v1.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "credential.persist",
+    "credential.expose",
+    "credential.log",
+    "provider.mutation",
+    "identity.modify",
+    "password.set",
+    "password-hash.read",
+    "tenant-metadata.bind",
+    "server-allowlist.bind",
+    "token.issue",
+    "session.issue",
+    "hook.modify",
+    "data.operation",
+    "render.operation",
+    "n8n.operation",
+    "staging.target",
+    "production.target",
+    "raw-row.read",
+    "raw-provider-subject.persist",
+    "additional-sql.execute",
+    "credential.read",
+    "credential.verify",
+    "credential.retire",
+    "credential.recreate",
+    "github-binding.read",
+    "github-binding.verify",
+    "github-binding.modify",
+    "query.retry",
+    "positive-auth-v2.progress.advance",
+    "positive-auth-v2.step4.mark-success",
+    "positive-auth.step5-or-later.execute"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "authorization.unbound",
+    "project.mismatch",
+    "sql.text.mismatch",
+    "result-fields.mismatch",
+    "sensitive-value.returned",
+    "security.validation.failed",
+    "count.malformed",
+    "count.non-integer",
+    "count.negative",
+    "count.mismatch",
+    "raw-row.returned",
+    "result.unavailable",
+    "verification.ambiguous",
+    "provider.effect.unexpected",
+    "additional-sql.requested",
+    "additional-sql.detected"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

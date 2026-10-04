@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B = ROOT / "contracts/plans/v1"
@@ -24,6 +24,10 @@ PROGRESS_ID = "4f301e2f-34dc-5dc3-9373-e46e8dc9d830"
 PROGRESS_DIGEST = "sha256:3e05c70c7ac1938f6ac9f2dab7fdde3910c215517cc542e1dec63de8c5b42474"
 RESOURCE_DIGEST = "sha256:d89ae6b20765a47dbd76b19761fbee832947e18591333a0a1cc3aa25c45fa9c9"
 PREP_DIGEST = "sha256:c97bf6eeebed0df9259a07904d72d9e5101b72a3fa33d173bd7c084d9417bc16"
+APPROVAL_ID = "f69cb520-1336-5281-ae51-13bdb242ee7d"
+APPROVAL_DIGEST = "sha256:e79e433af146c5260368087833e56ce98f16babc018ccd477515f0fc09a8b672"
+APPROVAL_FILE_DIGEST = "sha256:2897f44696c7f2bf857bcf4f5039064bc9913f328f13b4177d2011bded6b09ba"
+APPROVED_AT = "2026-10-04T20:18:23Z"
 QUERY_DIGEST = "sha256:0d785af10877d43bd4d886a534438dc21a6dd4471ac80194630feef29af73f8e"
 CREATED_AT = "2026-10-04T19:53:50Z"
 WINDOW_START = "2026-10-04T20:30:00Z"
@@ -60,9 +64,11 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, WINDOW_START)
 
     assert p["plan_id"] == PLAN_ID
     assert p["plan_version"] == 3
@@ -76,7 +82,14 @@ def main() -> int:
     assert p["authorization_window"] == {
         "binding_state": "BOUND", "starts_at": WINDOW_START, "expires_at": WINDOW_END,
     }
-    assert not (B / (N + ".approval.json")).exists()
+    assert raw(B / (N + ".approval.json")) == APPROVAL_FILE_DIGEST
+    assert a["approval_id"] == APPROVAL_ID
+    assert a["plan_id"] == PLAN_ID and a["plan_version"] == 3 and a["plan_digest"] == PLAN_DIGEST
+    assert a["owner_identity"] == "github:AnonymousKoo" and a["decision"] == "APPROVE"
+    assert a["environment"] == "DEVELOPMENT" and a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["effective_at"] == WINDOW_START and a["expires_at"] == WINDOW_END
+    assert a["approved_at"] == APPROVED_AT and a["status"] == "ACTIVE"
+    assert a["approval_digest"] == APPROVAL_DIGEST == approval_digest(a)
     assert not (B / (N + ".execution-progress.json")).exists()
     assert not list(B.glob(N + "-step*-*.evidence.json"))
 
@@ -221,7 +234,7 @@ def main() -> int:
     )
 
     rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
-        ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json"
+        ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json"
     ))
     for forbidden in ("Bearer eyJ", '"access_token":', '"refresh_token":', "service_role_key"):
         assert forbidden not in rendered
@@ -230,7 +243,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v3: PASS "
-        "(READY_FOR_APPROVAL; pristine; exact Step-4 SQL bound; fresh v3 credential lifecycle; "
+        "(APPROVED; pristine; exact Step-4 SQL bound; fresh v3 credential lifecycle; "
         "safe-code-only failure diagnostics; failed v1 continuation immutable; corrective cleanup complete; no provider execution)"
     )
     return 0

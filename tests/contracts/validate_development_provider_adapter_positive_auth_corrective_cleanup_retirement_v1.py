@@ -36,7 +36,7 @@ STEP1_RECORDED_AT = "2026-10-04T17:31:31Z"
 STEP1_EVIDENCE_DIGEST = "sha256:5a4183d202fc94f948b25e9c60a59136e9b81687728bf02ecb116ceba25709d1"
 STEP1_AUTHORIZATION_DIGEST = "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
 STEP1_RESULT_DIGEST = "sha256:3e2e7abda1b4491314952227804dc17fc293978ecf7f0ab8a5be8158bb954473"
-EXECUTION_PROGRESS_DIGEST = "sha256:c09fa78c7581721b38ffef1faaeaa6d0f32ac29d4a9e006b75ca3691ce1287c2"
+EXECUTION_PROGRESS_DIGEST = "sha256:e48fe89e45b47e31b5439ccefe2240ab0edc3e9f2e377d10c2f799e617bc08a4"
 STEP2_RECORDED_AT = "2026-10-04T17:49:55Z"
 STEP2_EVIDENCE_DIGEST = "sha256:3459f2907d318fe014e195baff9d057f455690bcab36a83c52c913550a6c6efc"
 STEP2_AUTHORIZATION_DIGEST = "sha256:c4a806f7584a855b1484b03aeaec68e057ebbb170667fc6c28d8f56ff5238c0a"
@@ -49,6 +49,10 @@ STEP4_RECORDED_AT = "2026-10-04T19:10:21Z"
 STEP4_EVIDENCE_DIGEST = "sha256:338e9648389d857871c816d9e4ad5c814300c3a92de45671da77e2564274a60f"
 STEP4_AUTHORIZATION_DIGEST = "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854"
 STEP4_RESULT_DIGEST = "sha256:93835c878e90750738900167e02005df9577d9864b317fcf2422f20ada278199"
+STEP5_RECORDED_AT = "2026-10-04T19:39:13Z"
+STEP5_EVIDENCE_DIGEST = "sha256:318709e7c83d2e701552b4daaa9769120ccade381c3aeaf179132489f9ff3de4"
+STEP5_AUTHORIZATION_DIGEST = "sha256:c77d5d601bef711d7a8418ef992fc0053d52e279d9fa041c5e3497908d7a7ca7"
+STEP5_RESULT_DIGEST = "sha256:d4d35d0ec1efee069c7a80f2c0b0743133cba71ea3e30a1ee1e1359bb15e6149"
 
 PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
@@ -91,6 +95,7 @@ def main() -> int:
     step2_success = load(N + "-step2-success.evidence.json")
     step3_success = load(N + "-step3-success.evidence.json")
     step4_success = load(N + "-step4-success.evidence.json")
+    step5_success = load(N + "-step5-success.evidence.json")
     execution = load(N + ".execution-progress.json")
 
     validate_plan(plan, S)
@@ -286,8 +291,8 @@ def main() -> int:
     assert not any(success["security_state"].values())
 
     assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
-    assert execution["overall_state"] == "IN_PROGRESS"
-    assert execution["updated_at"] == STEP4_RECORDED_AT
+    assert execution["overall_state"] == "COMPLETED"
+    assert execution["updated_at"] == STEP5_RECORDED_AT
     step1_state = execution["step_states"][0]
     assert (
         step1_state["authorization_state"],
@@ -343,8 +348,8 @@ def main() -> int:
     assert not any(step2_success["security_state"].values())
 
     assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
-    assert execution["overall_state"] == "IN_PROGRESS"
-    assert execution["updated_at"] == STEP4_RECORDED_AT
+    assert execution["overall_state"] == "COMPLETED"
+    assert execution["updated_at"] == STEP5_RECORDED_AT
     step2_state = execution["step_states"][1]
     assert (
         step2_state["authorization_state"],
@@ -513,12 +518,101 @@ def main() -> int:
     assert step4_state["binding_assertions"][2]["binding_id"] == "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.fresh-key-absence"
     assert step4_state["binding_assertions"][2]["evidence_digest"] == STEP4_EVIDENCE_DIGEST
     assert step4_state["binding_assertions"][2]["value_digest"] == STEP4_RESULT_DIGEST
+    step5_path = B / (N + "-step5-success.evidence.json")
+    assert raw(step5_path) == STEP5_EVIDENCE_DIGEST
+    assert step5_success["evidence_type"] == "auth.provider-adapter-positive-auth.github-binding.absence-verified"
+    assert step5_success["environment"] == "DEVELOPMENT"
+    assert step5_success["responsibility"] == "AUTH"
+    assert step5_success["provider_reference"] == "github"
+    assert step5_success["repository"] == "AnonymousKoo/avuhz-infra"
+    assert step5_success["github_environment"] == "development"
+    assert step5_success["plan_id"] == PLAN_ID
+    assert step5_success["plan_digest"] == PLAN_DIGEST
+    assert step5_success["approval_id"] == APPROVAL_ID
+    assert step5_success["approval_digest"] == APPROVAL_DIGEST
+    assert step5_success["step_id"] == steps[4]["step_id"]
+    assert step5_success["attempt"] == 1
+    assert step5_success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step5_success["classification"] == "EXACT_GITHUB_ENVIRONMENT_SECRET_ABSENCE_INDEPENDENTLY_VERIFIED"
+    assert step5_success["authorization_observation_digest"] == STEP5_AUTHORIZATION_DIGEST
+    assert step5_success["authorization_observation"] == {
+        "interaction_surface": "github.api.repository-environment-secrets.names-only",
+        "repository": "AnonymousKoo/avuhz-infra",
+        "environment": "development",
+        "responsibility": "AUTH",
+        "approval_exact": True,
+        "authorization_window_execution_owner_confirmed": True,
+        "credential_class": "OWNER_INTERACTIVE_SESSION",
+        "secret_value_requested": False,
+        "secret_value_observed": False,
+        "provider_mutation_attempted": False,
+    }
+    assert step5_success["sanitized_result"] == {
+        "repository": "AnonymousKoo/avuhz-infra",
+        "environment": "development",
+        "secret_name": GH_SECRET,
+        "exact_secret_reference_count": 0,
+        "absent": True,
+        "secret_value_requested": False,
+        "secret_value_observed": False,
+        "provider_mutation_performed": False,
+    }
+    assert step5_success["result_digest"] == STEP5_RESULT_DIGEST
+    assert step5_success["record_basis"] == "OWNER_AUTHORIZED_SANITIZED_NAMES_ONLY_READ_OUTCOME"
+    assert step5_success["recorded_at"] == STEP5_RECORDED_AT
+    assert step5_success["execution_observation"] == {
+        "execution_class": "PROVIDER_READ",
+        "execution_timestamp_retained": False,
+        "recorded_at_is_execution_timestamp": False,
+        "approved_absence_read_attempts": 1,
+        "secret_value_requested": False,
+        "secret_value_read": False,
+        "provider_mutation_attempted": False,
+        "retry_occurred": False,
+    }
+    assert step5_success["security_state"] == {
+        "secret_value_observed": False,
+        "credential_material_observed": False,
+        "credential_material_retained": False,
+        "credential_material_digest_recorded": False,
+        "token_material_retained": False,
+        "pii_retained": False,
+        "provider_key_changed": False,
+        "github_secret_changed": False,
+        "data_touched": False,
+        "render_touched": False,
+        "n8n_touched": False,
+        "staging_touched": False,
+        "production_touched": False,
+    }
+    assert canonical_digest(step5_success["authorization_observation"]) == STEP5_AUTHORIZATION_DIGEST
+    assert canonical_digest(step5_success["sanitized_result"]) == STEP5_RESULT_DIGEST
+
+    step5_state = execution["step_states"][4]
     assert (
-        execution["step_states"][4]["authorization_state"],
-        execution["step_states"][4]["execution_state"],
-        execution["step_states"][4]["verification_state"],
-        execution["step_states"][4]["authorization_consumed"],
-    ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
+        step5_state["authorization_state"],
+        step5_state["execution_state"],
+        step5_state["verification_state"],
+        step5_state["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert step5_state["safe_error_code"] is None
+    assert step5_state["observed_postcondition"] == steps[4]["expected_postcondition"]
+    assert step5_state["evidence"] == [{
+        "evidence_type": "auth.provider-adapter-positive-auth.github-binding.absence-verified",
+        "evidence_reference": N + "-step5-success.evidence.json",
+        "evidence_digest": STEP5_EVIDENCE_DIGEST,
+        "recorded_at": STEP5_RECORDED_AT,
+    }]
+    assert len(step5_state["binding_assertions"]) == 3
+    assert step5_state["binding_assertions"][0]["binding_id"] == "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.fresh-key-absence"
+    assert step5_state["binding_assertions"][0]["evidence_digest"] == STEP4_EVIDENCE_DIGEST
+    assert step5_state["binding_assertions"][0]["value_digest"] == STEP4_RESULT_DIGEST
+    assert step5_state["binding_assertions"][1]["binding_id"] == "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step5-owner-session"
+    assert step5_state["binding_assertions"][1]["evidence_digest"] == STEP5_AUTHORIZATION_DIGEST
+    assert step5_state["binding_assertions"][1]["value_digest"] == STEP5_AUTHORIZATION_DIGEST
+    assert step5_state["binding_assertions"][2]["binding_id"] == "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.github-binding-absence"
+    assert step5_state["binding_assertions"][2]["evidence_digest"] == STEP5_EVIDENCE_DIGEST
+    assert step5_state["binding_assertions"][2]["value_digest"] == STEP5_RESULT_DIGEST
 
     cont = "development-implementation-handoff-provider-adapter-positive-auth-continuation-v1"
     assert raw(B / (cont + ".plan.json")) == CONT_PLAN_RAW
@@ -539,7 +633,7 @@ def main() -> int:
     rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
         ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json",
         "-step1-success.evidence.json", "-step2-success.evidence.json", "-step3-success.evidence.json",
-        "-step4-success.evidence.json", ".execution-progress.json"
+        "-step4-success.evidence.json", "-step5-success.evidence.json", ".execution-progress.json"
     ))
     for forbidden in ("sb_secret_", "Bearer eyJ", "service_role_key", '"access_token":', '"refresh_token":'):
         assert forbidden not in rendered
@@ -547,9 +641,9 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth corrective cleanup/retirement v1: PASS "
-        "(IN_PROGRESS; Steps 1-4 CONSUMED/SUCCEEDED/PASS; zero session/refresh state verified; "
-        "ephemeral AUTH key and GitHub binding retired; Supabase key absence independently verified; "
-        "Step 5 GitHub-binding absence verification next)"
+        "(COMPLETED; Steps 1-5 CONSUMED/SUCCEEDED/PASS; zero session/refresh state verified; "
+        "ephemeral AUTH key and GitHub binding retired; Supabase key and GitHub binding absence "
+        "independently verified; cleanup boundary complete)"
     )
     return 0
 

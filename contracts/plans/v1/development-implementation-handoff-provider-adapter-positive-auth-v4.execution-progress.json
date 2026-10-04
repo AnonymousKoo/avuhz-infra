@@ -4,7 +4,7 @@
   "plan_version": 4,
   "plan_digest": "sha256:77d92723177eae2dc690566496710c3a7520bf3d329926ddf1b5894929d7ed5a",
   "record_version": 1,
-  "overall_state": "IN_PROGRESS",
+  "overall_state": "STOPPED",
   "step_states": [
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.01.create-fresh-auth-admin-key",
@@ -130,18 +130,39 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.04.verify-fresh-auth-preflight",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
-      "binding_assertions": []
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.preflight.verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v4-step04-scope-drift.evidence.json",
+          "evidence_digest": "sha256:bfb0ae62fdfbcf81fe2b7929d6ceef35a5b11f7ef5f65f68ed070fe108dac202",
+          "recorded_at": "2026-10-04T23:46:54Z"
+        }
+      ],
+      "observed_postcondition": "The exact one-row six-count aggregate result matched 2/1/1/1/0/0, but the read used supabase.connector.execute_sql instead of the resource-bound supabase.dashboard.sql-editor / OWNER_INTERACTIVE_SESSION surface. Step 4 therefore failed closed on interaction-surface scope drift; retry is unauthorized and Steps 5-10 are blocked.",
+      "safe_error_code": "AUTH_PREFLIGHT_INTERACTION_SURFACE_SCOPE_DRIFT",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v4.github-binding-verified",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.03.verify-github-binding-presence",
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "evidence_digest": "sha256:b32dba957f080e4f0df22d3dd572afd2e2172c0f63c157f1a8328ca11a9aea0d",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:0a1369cf1caa19e9fc5f52889ad643c7f65f97db9e378978d2ae45aeb662c1f3",
+          "recorded_at": "2026-10-04T23:46:54Z"
+        }
+      ]
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.05.authenticate-live-and-logout-global",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -152,7 +173,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.06.verify-zero-session-refresh-state",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -163,7 +184,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.07.retire-fresh-auth-admin-key",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -174,7 +195,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.08.retire-github-secret-binding",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -185,7 +206,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.09.verify-fresh-auth-admin-key-absent",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -196,7 +217,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.10.verify-github-secret-binding-absent",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -206,6 +227,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-04T23:31:35Z",
-  "progress_digest": "sha256:16a6dff912571af47cff95c57218ed31b53014bb82c0c6d8bc999eb8ee35d554"
+  "updated_at": "2026-10-04T23:46:54Z",
+  "progress_digest": "sha256:095af0e7b85091e4cc0cba61b5cf7ec12a579587183c2f412f07bead2040f779"
 }

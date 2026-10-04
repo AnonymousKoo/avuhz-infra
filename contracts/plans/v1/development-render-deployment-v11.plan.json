@@ -1,0 +1,370 @@
+{
+  "plan_id": "33ef8a51-ac40-4a8b-b6cb-9da7d8babdd3",
+  "plan_version": 11,
+  "plan_digest": "sha256:a33038cd0bed5bf62c6c1f2d2f4c9f42db48f48d57dc6c2845882c492c569102",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "runtime.provider",
+    "provider_reference": "render",
+    "project_reference": "srv-dab9n4qd0e5s73dq37mg",
+    "responsibility": "RUNTIME",
+    "issuer_reference": null,
+    "audience_reference": null
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-04T02:35:17Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-04T03:15:00Z",
+    "expires_at": "2026-10-04T05:30:00Z"
+  },
+  "ordered_step_ids": [
+    "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
+    "development.render.deployment-v11.step.02.verify-runtime-ready-fail-closed"
+  ],
+  "steps": [
+    {
+      "step_id": "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "render.service.deployment",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:deployment",
+        "binding_state": "BOUND",
+        "exact_version": "render.manual-provider-adapter-allowlist-main.v11",
+        "exact_digest": "sha256:7ea724bdb17c2c5d8fae035296a3ffdacc5a5900821f83839304d3a94c674599"
+      },
+      "operation": "provider.render.deploy.trigger-manual-exact-main",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:9839e66d5d3b7a56e59a1d3c51c3d43d4bebcff4c70a2aea7f0c9cfa4881dc85"
+        },
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:fd0e493b53cdbe2a19b3ae7f59eaab9f495d5e75868ca8ea1f8a554fede82c26"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:46728452864e373d87c12b97bf0300719607a33e09579719f07bec89a9574f24"
+        },
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:eef423d8cd118abf87da1d2d1f7b2a56c78570dab306cf8c94113ab923774a9c"
+        }
+      ],
+      "expected_postcondition": "Fresh preflight binds exact current main, proves commits e4ee9c6016bca59d1e55b35ca616803bad91409e and d7cf12b8a18330898bec48edf3dcd3d633006e89 are ancestors, and confirms DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg is main/auto-deploy off with live deploy dep-db0645gu01pc73911b4g at 604e68ef8d563b28397552e4a34ce9cfe8f1b688. Trigger one clearCache=false deploy; it must reach live at the bound SHA. No retry, second deploy, config/secret/Supabase/token/session/n8n/staging/production action.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "deployment.retry",
+        "deployment.second-trigger",
+        "environment-group.modify",
+        "environment-variable.create",
+        "environment-variable.delete",
+        "environment-variable.modify",
+        "render.auto-deploy.modify",
+        "render.branch.modify",
+        "render.build-command.modify",
+        "render.clear-cache",
+        "render.service-setting.modify",
+        "render.start-command.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.log",
+        "secret.return",
+        "supabase.operation",
+        "token.issue",
+        "session.issue",
+        "provider-adapter.positive-auth-test",
+        "n8n.operation",
+        "staging.target",
+        "production.target",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "canonical-main.head-changed-after-binding",
+        "allowlist-evidence.mismatch",
+        "allowlist-progress.mismatch",
+        "current-live-deploy.mismatch",
+        "current-live-commit.mismatch",
+        "deployment.commit-mismatch",
+        "deployment.failed",
+        "provider.preflight.failed",
+        "scope.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.deployment-v11.provider-adapter-allowlist-commit",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "git.commit.e4ee9c6016bca59d1e55b35ca616803bad91409e",
+            "exact_digest": "sha256:7790861a1fa5b37831bf42ef390ff5a871631255593243aaa498b909aa2daf5f"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.build-state-commit",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "git.commit.d7cf12b8a18330898bec48edf3dcd3d633006e89",
+            "exact_digest": "sha256:b0046e07efe715ff8acf1f5682f58680b502c3c3300781c7b07585600d76f320"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.v10-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:46728452864e373d87c12b97bf0300719607a33e09579719f07bec89a9574f24",
+            "exact_digest": "sha256:abb4ed06af2dd8058d4872741d4f30d4f86aedf7950d3c7f5366ddfb382e2562"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.allowlist-evidence",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325",
+            "exact_digest": "sha256:bff5aee04529df9208c17c605c4bc91248f5465128a5b4066c733da91e1b2fe2"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.allowlist-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:eef423d8cd118abf87da1d2d1f7b2a56c78570dab306cf8c94113ab923774a9c",
+            "exact_digest": "sha256:a82922e12fdc202900c778fca1d5f8fccab7fd43eb295c5ff41dcaf6be13a6bc"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.service",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "render.service.srv-dab9n4qd0e5s73dq37mg",
+            "exact_digest": "sha256:17c18bfcd5a64df5f732d0d9ccefa7d10ab1d8404d11af359071cafde2761517"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.workspace",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "render.workspace.tea-dab95hv40ujc73a7ccag",
+            "exact_digest": "sha256:6024d0d3a97f3a0e84f03d16e82624ecd054b752ccc5372b56e35ab0737d6b1e"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.deployment.completed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "established_binding_ids": [
+            "binding.development.render.deployment-v11.result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.deployment-v11.step.02.verify-runtime-ready-fail-closed",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "render.service.post-deploy-runtime-verification",
+        "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:post-deploy-runtime",
+        "binding_state": "BOUND",
+        "exact_version": "render.post-deploy-provider-adapter-allowlist-runtime.v11",
+        "exact_digest": "sha256:7ea724bdb17c2c5d8fae035296a3ffdacc5a5900821f83839304d3a94c674599"
+      },
+      "operation": "provider.render.verify-post-deploy-runtime-use",
+      "dependency_step_ids": [
+        "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "source_step_id": "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Read-only verification confirms the Step 1 deploy is latest/live at the exact bound commit; startup/live/ready are HTTP 200 with configuration, identity, and DATA ready; unauthenticated commands, queries, and AcceptImplementationHandoff-shaped command are HTTP 401 trusted_identity_required. No positive adapter auth test, mutation, secret read, retry, second deploy, Supabase, n8n, staging, or production action.",
+      "prohibited_actions": [
+        "provider.mutation",
+        "deployment.retry",
+        "deployment.second-trigger",
+        "environment-variable.read",
+        "environment-variable.modify",
+        "environment-group.modify",
+        "secret.agent-visible",
+        "secret.digest",
+        "secret.log",
+        "secret.return",
+        "supabase.operation",
+        "token.issue",
+        "session.issue",
+        "provider-adapter.positive-auth-test",
+        "n8n.operation",
+        "staging.target",
+        "production.target",
+        "vertical.infrastructure"
+      ],
+      "stop_conditions": [
+        "deployment.latest-mismatch",
+        "deployment.commit-mismatch",
+        "deployment.not-live",
+        "second-deploy.detected",
+        "startup.not-200",
+        "liveness.not-200",
+        "readiness.not-200",
+        "readiness.configuration-not-ready",
+        "readiness.identity-not-ready",
+        "readiness.data-not-ready",
+        "commands.anonymous-not-401",
+        "queries.anonymous-not-401",
+        "implementation-handoff.anonymous-not-401",
+        "provider.preflight.failed",
+        "scope.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.render.deployment-v11.result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
+          "evidence_type": "runtime.render.deployment.completed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.runtime-verification",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "established_binding_ids": [
+            "binding.development.render.deployment-v11.runtime-verification"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "authorization.scope-widen",
+    "batch.mutation",
+    "production.target",
+    "secret.agent-visible",
+    "staging.target"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift",
+    "unexpected.provider-effect"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

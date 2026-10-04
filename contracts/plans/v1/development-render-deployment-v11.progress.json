@@ -1,0 +1,34 @@
+{
+  "progress_id": "b7efd116-ec46-42a8-a6da-793a1da6f0c8",
+  "plan_id": "33ef8a51-ac40-4a8b-b6cb-9da7d8babdd3",
+  "plan_version": 11,
+  "plan_digest": "sha256:a33038cd0bed5bf62c6c1f2d2f4c9f42db48f48d57dc6c2845882c492c569102",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.render.deployment-v11.step.02.verify-runtime-ready-fail-closed",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-04T02:35:17Z",
+  "progress_digest": "sha256:0fe904fff35adfde151a0002744adb03e1c5e39256da3bc5c5eeb3849cebc31a"
+}

@@ -1,0 +1,20 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.corrective-admin-credential.retired",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider": "Supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "resource_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v1_ephemeral",
+  "exact_key_name": "impl_handoff_provider_adapter_positive_auth_v1_ephemeral",
+  "owner_confirmed_deleted": true,
+  "provider_mutation_observed_by_agent": false,
+  "other_key_mutation_observed": false,
+  "credential_material_read": false,
+  "credential_material_retained": false,
+  "credential_fragments_retained": false,
+  "pii_retained": false,
+  "screenshot_retained": false,
+  "record_basis": "OWNER_CONFIRMED_IN_CURRENT_CHAT",
+  "recorded_at": "2026-10-04T04:50:00Z",
+  "evidence_digest": "sha256:6013b08f1e11475d368a0a34c1d347d5d87d1a3baff04cbdf236c9dc88e917bc"
+}

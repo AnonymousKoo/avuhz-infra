@@ -242,5 +242,6 @@ python3 tests/contracts/validate_development_render_deployment_v8.py
 python3 tests/contracts/validate_development_render_deployment_v8_execution.py
 python3 tests/contracts/validate_development_render_deployment_v11.py
 python3 tests/contracts/validate_development_provider_adapter_positive_auth_v1.py
+python3 tests/contracts/validate_development_provider_adapter_positive_auth_v2.py
 
 python3 tests/contracts/validate_development_render_deployment_v3_execution.py

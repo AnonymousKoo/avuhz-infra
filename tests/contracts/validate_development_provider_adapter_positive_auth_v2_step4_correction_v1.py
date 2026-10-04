@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'src'))
 from avuhz_engineering.authorization_plan import (
-    approval_digest, initial_progress, plan_digest, progress_digest, validate_plan, validate_progress,
+    approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress,
 )
 from avuhz_runtime.implementation_handoff import canonical_digest
 
@@ -25,6 +25,9 @@ PROGRESS_ID = '221ec3e1-7852-5c0e-b141-f65bd21216ed'
 PROGRESS_DIGEST = 'sha256:40f5f9f92cf023acf73ac21ebd200d99115afa953894929953d4091693287860'
 RESOURCE_DIGEST = 'sha256:290d903ca9b96e6325f05698c86f050a60f5f052344703be018cea40231a0fd0'
 PREP_DIGEST = 'sha256:14a15edda3d731c46bd75ff949a7889191c4018fb5e51be31bd5fc4710d905a5'
+APPROVAL_ID = '472c2bfb-8430-57f0-aeca-a1b6db954c74'
+APPROVAL_DIGEST = 'sha256:7ec0d0eefb249767a422d6e3df302ba3a877a74667e8cbab33f73f65e11a36d7'
+APPROVED_AT = '2026-10-04T06:32:26Z'
 PROJECT = 'pwlhruwutoitnieactol'
 EXPECTED = dict(auth_user_count=2, target_identity_count=1, target_password_null_count=1,
                 target_tenant_exact_count=1, session_count=0, refresh_token_count=0)
@@ -80,10 +83,11 @@ def expect_rejected(check, value):
 
 
 def main():
-    r, prep, p, g = (load(N + suffix) for suffix in
-                     ('.resource.json', '-preparation.evidence.json', '.plan.json', '.progress.json'))
+    r, prep, p, g, a = (load(N + suffix) for suffix in
+                        ('.resource.json', '-preparation.evidence.json', '.plan.json', '.progress.json', '.approval.json'))
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, '2026-10-04T06:45:00Z')
     assert p['plan_id'] == PLAN_ID and p['plan_digest'] == PLAN_DIGEST == plan_digest(p)
     assert p['definition_status'] == 'READY_FOR_APPROVAL'
     assert p['authority_effect'] == 'NONE_UNTIL_SEPARATELY_APPROVED'
@@ -91,7 +95,23 @@ def main():
     assert len(p['steps']) == 1 and p['ordered_step_ids'] == [p['steps'][0]['step_id']]
     assert g == initial_progress(p, S, PROGRESS_ID, p['created_at'])
     assert g['progress_digest'] == PROGRESS_DIGEST and g['overall_state'] == 'NOT_STARTED'
-    assert not (B / (N + '.approval.json')).exists()
+    assert a == {
+        'approval_id': APPROVAL_ID,
+        'plan_id': PLAN_ID,
+        'plan_version': 1,
+        'plan_digest': PLAN_DIGEST,
+        'owner_identity': 'github:AnonymousKoo',
+        'decision': 'APPROVE',
+        'environment': 'DEVELOPMENT',
+        'effective_at': '2026-10-04T06:45:00Z',
+        'expires_at': '2026-10-04T10:45:00Z',
+        'approved_at': APPROVED_AT,
+        'status': 'ACTIVE',
+        'authority_scope': 'EXACT_PLAN_ONLY',
+        'approval_digest': APPROVAL_DIGEST,
+    }
+    assert approval_digest(a) == APPROVAL_DIGEST
+    assert APPROVED_AT < a['effective_at']
     assert not (B / (N + '.execution-progress.json')).exists()
     assert not list(B.glob(N + '-step*-*.evidence.json'))
     for obj in (r, prep, p):
@@ -152,7 +172,7 @@ def main():
         changed['diagnostic_sql'] = query
         expect_rejected(check_query_contract, changed)
     check_result_shape([EXPECTED])
-    print('DEVELOPMENT positive-auth v2 Step 4 correction v1: PASS (READY_FOR_APPROVAL; pristine; exact six-count SELECT; v2 unchanged; synthetic denial cases pass; no provider authority)')
+    print('DEVELOPMENT positive-auth v2 Step 4 correction v1: PASS (APPROVED; pristine; exact six-count SELECT; v2 unchanged; synthetic denial cases pass; provider read not yet executed)')
 
 
 if __name__ == '__main__':

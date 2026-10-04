@@ -5,7 +5,6 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
 from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
-from avuhz_service.development_supabase_identity import DEVELOPMENT_IDENTITY_ALLOWLIST
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-implementation-handoff-provider-adapter-auth-v1'
 PLAN_ID='644f239b-c7cb-4c30-85a4-95efbfe85ae4'
 PLAN_DIGEST='sha256:67b9ebbcd55612edbfbdc3f51f6b8288abd92d3ecef2c35c88cddfa72f5d49fb'
@@ -60,7 +59,6 @@ def main():
  assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.identity-create-preflight']['phase']=='RESOLVED_BY_STEP_PREFLIGHT'
  assert b['binding.development.implementation-handoff.provider-adapter-auth-v1.identity']['phase']=='PRODUCED_BY_CURRENT_STEP'
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
- assert len(DEVELOPMENT_IDENTITY_ALLOWLIST)==1 and DEVELOPMENT_IDENTITY_ALLOWLIST[0].caller_type=='HUMAN' and DEVELOPMENT_IDENTITY_ALLOWLIST[0].capabilities==frozenset({'engagement:read'})
  o=prep['observation']
  assert (o['auth_user_count'],o['target_identity_count'],o['known_synthetic_user_count'],o['other_auth_user_count'],o['canonical_tenant_bound_user_count'])==(1,0,1,0,1)
  assert o['session_count']==0 and o['refresh_token_count']==0

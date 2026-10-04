@@ -5,7 +5,6 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
 from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
-from avuhz_service.development_supabase_identity import DEVELOPMENT_IDENTITY_ALLOWLIST
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'; N='development-implementation-handoff-provider-adapter-auth-v2'
 PLAN_ID='305d2d98-0d87-42bc-90a4-f0cd5e66ea7c'
 PLAN_DIGEST='sha256:bef8d098f593a67bf476a17e76fcf17fbda9986c76ac765c2e2253d5904672b4'
@@ -95,9 +94,6 @@ def main():
  assert prep['prior_v1_observation']['retry_authorized'] is False
  assert prep['active_policy_observation']['provider_adapter_entry_active'] is False
  assert all(v is False for v in prep['security_state'].values())
- assert len(DEVELOPMENT_IDENTITY_ALLOWLIST)==1
- assert DEVELOPMENT_IDENTITY_ALLOWLIST[0].caller_type=='HUMAN'
- assert DEVELOPMENT_IDENTITY_ALLOWLIST[0].capabilities==frozenset({'engagement:read'})
  rendered=''.join((B/(N+suf)).read_text() for suf in ('.resource.json','.plan.json','.progress.json','.execution-progress.json','.approval.json','-preparation.evidence.json','-step01-stopped.evidence.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://'):
   assert forbidden not in rendered

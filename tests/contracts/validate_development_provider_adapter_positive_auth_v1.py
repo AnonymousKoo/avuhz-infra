@@ -10,8 +10,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
+    approval_digest,
     initial_progress,
     plan_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -57,10 +59,11 @@ def main() -> None:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
-    assert not (B / (N + ".approval.json")).exists()
+    validate_approval(p, a, S, "2026-10-04T04:30:00Z")
     assert not (B / (N + ".execution-progress.json")).exists()
 
     assert p["plan_id"] == PLAN_ID
@@ -82,6 +85,12 @@ def main() -> None:
         "starts_at": "2026-10-04T04:30:00Z",
         "expires_at": "2026-10-04T07:30:00Z",
     }
+    assert a["approval_id"] == "0bd15ca5-8088-4303-aaca-19391ef51fe1"
+    assert a["plan_id"] == PLAN_ID and a["plan_version"] == 1 and a["plan_digest"] == PLAN_DIGEST
+    assert a["owner_identity"] == "github:AnonymousKoo" and a["decision"] == "APPROVE" and a["environment"] == "DEVELOPMENT"
+    assert a["effective_at"] == "2026-10-04T04:30:00Z" and a["expires_at"] == "2026-10-04T07:30:00Z"
+    assert a["approved_at"] == "2026-10-04T04:09:38Z" and a["status"] == "ACTIVE" and a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["approval_digest"] == "sha256:391a35b11be069dfb41cb21b9c4a12ce0fc79d924888f335ae4f0a50b1671436" == approval_digest(a)
 
     assert r["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
         {k: v for k, v in r.items() if k != "contract_digest"}
@@ -225,6 +234,7 @@ def main() -> None:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            ".approval.json",
         )
     )
     for forbidden in (
@@ -240,7 +250,7 @@ def main() -> None:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v1: PASS "
-        "(READY_FOR_APPROVAL; 10 ordered resource steps; one temporary session; "
+        "(APPROVED; pristine; 10 ordered resource steps; one temporary session; "
         "live 400 identity proof; mandatory cleanup and credential retirement; "
         "no ImplementationHandoff execution)"
     )

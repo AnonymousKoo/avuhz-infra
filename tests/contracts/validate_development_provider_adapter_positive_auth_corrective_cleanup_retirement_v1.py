@@ -36,7 +36,11 @@ STEP1_RECORDED_AT = "2026-10-04T17:31:31Z"
 STEP1_EVIDENCE_DIGEST = "sha256:5a4183d202fc94f948b25e9c60a59136e9b81687728bf02ecb116ceba25709d1"
 STEP1_AUTHORIZATION_DIGEST = "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
 STEP1_RESULT_DIGEST = "sha256:3e2e7abda1b4491314952227804dc17fc293978ecf7f0ab8a5be8158bb954473"
-EXECUTION_PROGRESS_DIGEST = "sha256:2446e6b8b2189f8c371cf46b382d3dd7e43964f8f150d7bcef28df0ac0c454b1"
+EXECUTION_PROGRESS_DIGEST = "sha256:c705cc312aba7ab299361c9145b04dd132f07ee2b8711b0b71b954956984a0c9"
+STEP2_RECORDED_AT = "2026-10-04T17:49:55Z"
+STEP2_EVIDENCE_DIGEST = "sha256:3459f2907d318fe014e195baff9d057f455690bcab36a83c52c913550a6c6efc"
+STEP2_AUTHORIZATION_DIGEST = "sha256:c4a806f7584a855b1484b03aeaec68e057ebbb170667fc6c28d8f56ff5238c0a"
+STEP2_RESULT_DIGEST = "sha256:16504d80fa4d87b1bfed74a201c45cc6d0cf538e457b63504d8f1160efb33d21"
 
 PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
@@ -76,6 +80,7 @@ def main() -> int:
     progress = load(N + ".progress.json")
     approval = load(N + ".approval.json")
     success = load(N + "-step1-success.evidence.json")
+    step2_success = load(N + "-step2-success.evidence.json")
     execution = load(N + ".execution-progress.json")
 
     validate_plan(plan, S)
@@ -272,7 +277,7 @@ def main() -> int:
 
     assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
     assert execution["overall_state"] == "IN_PROGRESS"
-    assert execution["updated_at"] == STEP1_RECORDED_AT
+    assert execution["updated_at"] == STEP2_RECORDED_AT
     step1_state = execution["step_states"][0]
     assert (
         step1_state["authorization_state"],
@@ -291,12 +296,70 @@ def main() -> int:
     assert step1_state["binding_assertions"][0]["evidence_digest"] == STEP1_AUTHORIZATION_DIGEST
     assert step1_state["binding_assertions"][1]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
     assert step1_state["binding_assertions"][1]["value_digest"] == STEP1_RESULT_DIGEST
+    step2_path = B / (N + "-step2-success.evidence.json")
+    assert raw(step2_path) == STEP2_EVIDENCE_DIGEST
+    assert step2_success["evidence_type"] == "auth.provider-adapter-positive-auth.admin-credential.retired"
+    assert step2_success["environment"] == "DEVELOPMENT"
+    assert step2_success["responsibility"] == "AUTH"
+    assert step2_success["provider_reference"] == "supabase"
+    assert step2_success["project_reference"] == PROJECT
+    assert step2_success["plan_id"] == PLAN_ID
+    assert step2_success["plan_digest"] == PLAN_DIGEST
+    assert step2_success["approval_id"] == APPROVAL_ID
+    assert step2_success["approval_digest"] == APPROVAL_DIGEST
+    assert step2_success["step_id"] == steps[1]["step_id"]
+    assert step2_success["attempt"] == 1
+    assert step2_success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step2_success["classification"] == "EXACT_EPHEMERAL_AUTH_KEY_RETIRED"
+    assert step2_success["authorization_observation_digest"] == STEP2_AUTHORIZATION_DIGEST
+    assert step2_success["sanitized_result"] == {
+        "key_name": KEY_NAME,
+        "retired": True,
+        "credential_material_observed": False,
+        "other_key_changed": False,
+    }
+    assert step2_success["result_digest"] == STEP2_RESULT_DIGEST
+    assert step2_success["record_basis"] == "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME"
+    assert step2_success["recorded_at"] == STEP2_RECORDED_AT
+    assert step2_success["execution_observation"] == {
+        "execution_class": "PROVIDER_MUTATION",
+        "execution_timestamp_retained": False,
+        "recorded_at_is_execution_timestamp": False,
+        "approved_delete_attempts": 1,
+        "credential_value_read": False,
+        "other_key_mutation_attempted": False,
+        "retry_occurred": False,
+    }
+    assert not any(step2_success["security_state"].values())
+
+    assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    assert execution["overall_state"] == "IN_PROGRESS"
+    assert execution["updated_at"] == STEP2_RECORDED_AT
+    step2_state = execution["step_states"][1]
+    assert (
+        step2_state["authorization_state"],
+        step2_state["execution_state"],
+        step2_state["verification_state"],
+        step2_state["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert step2_state["safe_error_code"] is None
+    assert step2_state["evidence"] == [{
+        "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+        "evidence_reference": N + "-step2-success.evidence.json",
+        "evidence_digest": STEP2_EVIDENCE_DIGEST,
+        "recorded_at": STEP2_RECORDED_AT,
+    }]
+    assert len(step2_state["binding_assertions"]) == 3
+    assert step2_state["binding_assertions"][0]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
+    assert step2_state["binding_assertions"][1]["evidence_digest"] == STEP2_AUTHORIZATION_DIGEST
+    assert step2_state["binding_assertions"][2]["evidence_digest"] == STEP2_EVIDENCE_DIGEST
+    assert step2_state["binding_assertions"][2]["value_digest"] == STEP2_RESULT_DIGEST
     assert all(
         (
             x["authorization_state"], x["execution_state"],
             x["verification_state"], x["authorization_consumed"]
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
-        for x in execution["step_states"][1:]
+        for x in execution["step_states"][2:]
     )
 
     cont = "development-implementation-handoff-provider-adapter-positive-auth-continuation-v1"
@@ -317,7 +380,7 @@ def main() -> int:
 
     rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
         ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json",
-        "-step1-success.evidence.json", ".execution-progress.json"
+        "-step1-success.evidence.json", "-step2-success.evidence.json", ".execution-progress.json"
     ))
     for forbidden in ("sb_secret_", "Bearer eyJ", "service_role_key", '"access_token":', '"refresh_token":'):
         assert forbidden not in rendered
@@ -325,8 +388,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth corrective cleanup/retirement v1: PASS "
-        "(IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS with zero session/refresh state; "
-        "Step 2 retirement dependency now satisfied; failed live-auth retry prohibited)"
+        "(IN_PROGRESS; Steps 1-2 CONSUMED/SUCCEEDED/PASS; zero session/refresh state verified; "
+        "exact ephemeral AUTH key retired; Step 3 GitHub binding retirement next)"
     )
     return 0
 

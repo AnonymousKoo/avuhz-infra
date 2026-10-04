@@ -1,0 +1,58 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "dfce4d99-3e6c-5c63-b3cc-be1cdbe24d26",
+  "plan_version": 1,
+  "plan_digest": "sha256:a16bd85523ba1b7f5d32be5baea851c474b8ad885b6e75a003e2901c25639e43",
+  "approval_id": "1e60f413-f385-53a0-a03f-ccbceb2fcb55",
+  "approval_digest": "sha256:144d51d1786baf662e21b1bc6bde41abe7040e0b5070c984d3ed3ec5cd8c432c",
+  "step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.02.retire-fresh-auth-admin-key",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "EXACT_EPHEMERAL_AUTH_KEY_RETIRED",
+  "authorization_observation": {
+    "interaction_surface": "supabase.dashboard.settings.api-keys",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "approval_exact": true,
+    "authorization_window_execution_owner_confirmed": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "credential_material_observed": false
+  },
+  "authorization_observation_digest": "sha256:c4a806f7584a855b1484b03aeaec68e057ebbb170667fc6c28d8f56ff5238c0a",
+  "sanitized_result": {
+    "key_name": "impl_handoff_provider_adapter_positive_auth_v1_ephemeral",
+    "retired": true,
+    "credential_material_observed": false,
+    "other_key_changed": false
+  },
+  "result_digest": "sha256:16504d80fa4d87b1bfed74a201c45cc6d0cf538e457b63504d8f1160efb33d21",
+  "execution_observation": {
+    "execution_class": "PROVIDER_MUTATION",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_delete_attempts": 1,
+    "credential_value_read": false,
+    "other_key_mutation_attempted": false,
+    "retry_occurred": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "other_provider_key_changed": false,
+    "github_binding_changed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-10-04T17:49:55Z"
+}

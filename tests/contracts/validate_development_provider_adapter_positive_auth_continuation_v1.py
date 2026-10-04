@@ -42,6 +42,9 @@ RESOURCE_ID = "671c545d-5424-5f69-881e-fe49f2f19706"
 RESOURCE_DIGEST = "sha256:adc0c8b7f220135f858040c473a40ce52583f919e98ba250744b914b735aaa6e"
 PREP_DIGEST = "sha256:490e82d0bd9aa847607b86e0f9b9097c486487265c3725af35fe5b977284f93b"
 CREATED_AT = "2026-10-04T13:49:57Z"
+APPROVAL_ID = "5a10b05e-db2d-5359-995d-8bcb168e5863"
+APPROVAL_DIGEST = "sha256:ce6351e9e06f7bb875fa50fb04d3f56455c34296368598f1a1188cf6ed280f65"
+APPROVED_AT = "2026-10-04T13:58:14Z"
 WINDOW_START = "2026-10-04T16:00:00Z"
 WINDOW_END = "2026-10-04T20:00:00Z"
 PROJECT = "pwlhruwutoitnieactol"
@@ -164,12 +167,14 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     plan = load(N + ".plan.json")
     progress = load(N + ".progress.json")
+    approval = load(N + ".approval.json")
     old_plan = load(OLD + ".plan.json")
     old_exec = load(OLD + ".execution-progress.json")
     correction_exec = load(CORRECTION + ".execution-progress.json")
 
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
+    validate_approval(plan, approval, S, WINDOW_START)
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
     assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
@@ -279,7 +284,23 @@ def main() -> int:
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
         for state in progress["step_states"]
     )
-    assert not (B / (N + ".approval.json")).exists()
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW_START
     assert not (B / (N + ".execution-progress.json")).exists()
     assert not list(B.glob(N + "-step*-*.evidence.json"))
 
@@ -323,8 +344,6 @@ def main() -> int:
     assert correction_exec["progress_digest"] == CORRECTION_PROGRESS
 
     executor._validate_boundary(plan, resource, progress)
-    approval = synthetic_approval(plan)
-    validate_approval(plan, approval, S, WINDOW_START)
     request = step1_request(plan)
     assertion = step1_assertion(resource, WINDOW_START)
     authorized = authorize_step(
@@ -341,6 +360,12 @@ def main() -> int:
     denied(
         lambda: authorize_step(plan, approval, progress, request, S, WINDOW_END,
                                trusted_preflight_assertions=[assertion]),
+        "PLAN_AUTHORIZATION_EXPIRED",
+    )
+    late = dict(approval, approved_at="2026-10-04T16:00:01Z")
+    late["approval_digest"] = approval_digest(late)
+    denied(
+        lambda: validate_approval(plan, late, S, "2026-10-04T16:00:02Z"),
         "PLAN_AUTHORIZATION_EXPIRED",
     )
     wrong_project = copy.deepcopy(request)
@@ -393,7 +418,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth continuation v1: PASS "
-        "(READY_FOR_APPROVAL; pristine six-step continuation; correction-v2 bound; "
+        "(APPROVED; pristine six-step continuation; correction-v2 bound; "
         "original v2 Step 4 unchanged; exact Step 1 executor/workflow and Step 2 SQL bound; "
         "retirement mandatory; no provider authority)"
     )

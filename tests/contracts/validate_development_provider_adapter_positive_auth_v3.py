@@ -53,9 +53,10 @@ PREWINDOW_RETIREMENT_PLAN_DIGEST = "sha256:4b70a82966dad56ca9ff4c9c680356dbfa6bb
 PREWINDOW_RETIREMENT_PROGRESS_DIGEST = "sha256:54e65db1c2a3a84b3c19d233072df1488eba1ca320610f9f6054c9a2ab46a1ae"
 PREWINDOW_RETIREMENT_APPROVAL_DIGEST = "sha256:229c3617af12c6ffad91b261364beb8ed46a71ae7936ebf080186c8471783a18"
 PREWINDOW_RETIREMENT_APPROVAL_FILE_DIGEST = "sha256:dcaf061267208e9fec4f376b53b43cd0254613b217ba9b9285511fcfe019f392"
-PREWINDOW_RETIREMENT_EXECUTION_PROGRESS_DIGEST = "sha256:6eebedbf6a11077e20074455e75b305693bce5af59e9f651efbc8f43c59d86bd"
+PREWINDOW_RETIREMENT_EXECUTION_PROGRESS_DIGEST = "sha256:5ac3af0f64d33027fd62b54a5c4c34d8a2255dc94f377080225b03034655c143"
 PREWINDOW_RETIREMENT_STEP1_EVIDENCE_DIGEST = "sha256:23791e31d64420458293042c433cc4c52fe20040bddbc4de78e7f783ebd4f3a2"
 PREWINDOW_RETIREMENT_STEP2_EVIDENCE_DIGEST = "sha256:aca3e9d6fc8532cf1e0368bb2b9cfd8dc2bc42d99fc4b7836d90b6752957c495"
+PREWINDOW_RETIREMENT_STEP3_EVIDENCE_DIGEST = "sha256:8fe9637d3b9c559063eca8e732a7b3a07b694d696a44315f3ac8eca24dd2c5bd"
 
 
 def load(name: str) -> dict:
@@ -118,12 +119,13 @@ def main() -> int:
     assert prewindow_approval["approval_digest"] == PREWINDOW_RETIREMENT_APPROVAL_DIGEST
     assert prewindow_approval["status"] == "ACTIVE" and prewindow_approval["decision"] == "APPROVE"
     assert prewindow_execution["progress_digest"] == PREWINDOW_RETIREMENT_EXECUTION_PROGRESS_DIGEST == progress_digest(prewindow_execution)
-    assert prewindow_execution["overall_state"] == "IN_PROGRESS"
+    assert prewindow_execution["overall_state"] == "COMPLETED"
     assert (prewindow_execution["step_states"][0]["authorization_state"], prewindow_execution["step_states"][0]["execution_state"], prewindow_execution["step_states"][0]["verification_state"], prewindow_execution["step_states"][0]["authorization_consumed"]) == ("CONSUMED","SUCCEEDED","PASS",True)
     assert prewindow_execution["step_states"][0]["evidence"][0]["evidence_digest"] == PREWINDOW_RETIREMENT_STEP1_EVIDENCE_DIGEST
     assert (prewindow_execution["step_states"][1]["authorization_state"], prewindow_execution["step_states"][1]["execution_state"], prewindow_execution["step_states"][1]["verification_state"], prewindow_execution["step_states"][1]["authorization_consumed"]) == ("CONSUMED","SUCCEEDED","PASS",True)
     assert prewindow_execution["step_states"][1]["evidence"][0]["evidence_digest"] == PREWINDOW_RETIREMENT_STEP2_EVIDENCE_DIGEST
-    assert (prewindow_execution["step_states"][2]["authorization_state"],prewindow_execution["step_states"][2]["execution_state"],prewindow_execution["step_states"][2]["verification_state"],prewindow_execution["step_states"][2]["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False)
+    assert (prewindow_execution["step_states"][2]["authorization_state"],prewindow_execution["step_states"][2]["execution_state"],prewindow_execution["step_states"][2]["verification_state"],prewindow_execution["step_states"][2]["authorization_consumed"]) == ("CONSUMED","SUCCEEDED","PASS",True)
+    assert prewindow_execution["step_states"][2]["evidence"][0]["evidence_digest"] == PREWINDOW_RETIREMENT_STEP3_EVIDENCE_DIGEST
 
     assert r["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
         {k: v for k, v in r.items() if k != "contract_digest"}
@@ -275,8 +277,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v3: PASS "
-        "(APPROVED / BLOCKED_BY_IN_PROGRESS_PREWINDOW_RETIREMENT; retirement Steps 1-2 PASS; Step 3 pending; "
-        "premature key creation remains non-recordable as authorized v3 Step 1)"
+        "(APPROVED / BLOCKED_AFTER_COMPLETED_PREWINDOW_RETIREMENT; retirement Steps 1-3 PASS; "
+        "premature key creation remains non-recordable and v3 Step 1 is non-retryable; fresh forward-only plan required)"
     )
     return 0
 

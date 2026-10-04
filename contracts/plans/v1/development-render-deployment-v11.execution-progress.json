@@ -3,8 +3,8 @@
   "plan_id": "33ef8a51-ac40-4a8b-b6cb-9da7d8babdd3",
   "plan_version": 11,
   "plan_digest": "sha256:a33038cd0bed5bf62c6c1f2d2f4c9f42db48f48d57dc6c2845882c492c569102",
-  "record_version": 3,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
@@ -66,16 +66,50 @@
     },
     {
       "step_id": "development.render.deployment-v11.step.02.verify-runtime-ready-fail-closed",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "evidence_reference": "development-render-deployment-v11-step02-success.evidence.json",
+          "evidence_digest": "sha256:f49f6882f2e6ec0274935137a52c7b7c942bfbe0bc72baebca143a90aedc5345",
+          "recorded_at": "2026-10-04T03:30:02Z"
+        }
+      ],
+      "observed_postcondition": "Read-only verification confirms the Step 1 deploy is latest/live at the exact bound commit; startup/live/ready are HTTP 200 with configuration, identity, and DATA ready; unauthenticated commands, queries, and AcceptImplementationHandoff-shaped command are HTTP 401 trusted_identity_required. No positive adapter auth test, mutation, secret read, retry, second deploy, Supabase, n8n, staging, or production action.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v11.result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:dcbfc3328794da93c8d660145968f3fdfa84c2a42ea0abab32293221c3157806",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:dcbfc3328794da93c8d660145968f3fdfa84c2a42ea0abab32293221c3157806",
+          "recorded_at": "2026-10-04T03:27:59Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.runtime-verification",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "evidence_digest": "sha256:f49f6882f2e6ec0274935137a52c7b7c942bfbe0bc72baebca143a90aedc5345",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:f49f6882f2e6ec0274935137a52c7b7c942bfbe0bc72baebca143a90aedc5345",
+          "recorded_at": "2026-10-04T03:30:02Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-10-04T03:19:27Z",
-  "progress_digest": "sha256:915122e3b9ea397b442793742ededebb24c945d2b9b449c9027dc618ba91a6dc"
+  "updated_at": "2026-10-04T03:30:02Z",
+  "progress_digest": "sha256:762fc38748aeb4483a5b26179a703e687bab13e7f5c73160b29a3a77d4480e5c"
 }

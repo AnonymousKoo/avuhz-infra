@@ -1,7 +1,7 @@
 {
   "plan_id": "33ef8a51-ac40-4a8b-b6cb-9da7d8babdd3",
   "plan_version": 11,
-  "plan_digest": "sha256:394f976eb8cf1d1d31e3c975f575c39167750fccb43fbe0b63aa7a8ce2f8a5d5",
+  "plan_digest": "sha256:a33038cd0bed5bf62c6c1f2d2f4c9f42db48f48d57dc6c2845882c492c569102",
   "definition_status": "READY_FOR_APPROVAL",
   "environment": "DEVELOPMENT",
   "target": {
@@ -16,8 +16,8 @@
   "created_at": "2026-10-04T02:35:17Z",
   "authorization_window": {
     "binding_state": "BOUND",
-    "starts_at": "2026-10-04T02:45:00Z",
-    "expires_at": "2026-10-04T05:00:00Z"
+    "starts_at": "2026-10-04T03:15:00Z",
+    "expires_at": "2026-10-04T05:30:00Z"
   },
   "ordered_step_ids": [
     "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
@@ -32,7 +32,7 @@
         "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:deployment",
         "binding_state": "BOUND",
         "exact_version": "render.manual-provider-adapter-allowlist-main.v11",
-        "exact_digest": "sha256:b7b72adf3de69ce4377146f8443859e32e5893307f297e570db9465ce3d4b541"
+        "exact_digest": "sha256:7ea724bdb17c2c5d8fae035296a3ffdacc5a5900821f83839304d3a94c674599"
       },
       "operation": "provider.render.deploy.trigger-manual-exact-main",
       "dependency_step_ids": [],
@@ -68,7 +68,7 @@
           "exact_digest": "sha256:eef423d8cd118abf87da1d2d1f7b2a56c78570dab306cf8c94113ab923774a9c"
         }
       ],
-      "expected_postcondition": "After fresh preflight confirms canonical main is exactly d7cf12b8a18330898bec48edf3dcd3d633006e89, Render service srv-dab9n4qd0e5s73dq37mg remains main/auto-deploy off, and current live deploy is dep-db0645gu01pc73911b4g at 604e68ef8d563b28397552e4a34ce9cfe8f1b688, trigger exactly one manual deploy with clearCache=false. It must become live at exact commit d7cf12b8a18330898bec48edf3dcd3d633006e89. No retry, second deploy, config/secret/Supabase/token/session/n8n/staging/production action.",
+      "expected_postcondition": "Fresh preflight binds exact current main, proves commits e4ee9c6016bca59d1e55b35ca616803bad91409e and d7cf12b8a18330898bec48edf3dcd3d633006e89 are ancestors, and confirms DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg is main/auto-deploy off with live deploy dep-db0645gu01pc73911b4g at 604e68ef8d563b28397552e4a34ce9cfe8f1b688. Trigger one clearCache=false deploy; it must reach live at the bound SHA. No retry, second deploy, config/secret/Supabase/token/session/n8n/staging/production action.",
       "prohibited_actions": [
         "batch.mutation",
         "deployment.retry",
@@ -98,7 +98,7 @@
       ],
       "stop_conditions": [
         "authorization.window-inactive",
-        "canonical-main.head-mismatch",
+        "canonical-main.head-changed-after-binding",
         "allowlist-evidence.mismatch",
         "allowlist-progress.mismatch",
         "current-live-deploy.mismatch",
@@ -121,7 +121,20 @@
       "unresolved_bindings": [],
       "binding_declarations": [
         {
-          "binding_id": "binding.development.render.deployment-v11.target-main",
+          "binding_id": "binding.development.render.deployment-v11.provider-adapter-allowlist-commit",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "git.commit.e4ee9c6016bca59d1e55b35ca616803bad91409e",
+            "exact_digest": "sha256:7790861a1fa5b37831bf42ef390ff5a871631255593243aaa498b909aa2daf5f"
+          }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.build-state-commit",
           "phase": "PREAPPROVAL_BOUND",
           "value_class": "STABLE_REFERENCE",
           "source_step_id": null,
@@ -132,6 +145,15 @@
             "value": "git.commit.d7cf12b8a18330898bec48edf3dcd3d633006e89",
             "exact_digest": "sha256:b0046e07efe715ff8acf1f5682f58680b502c3c3300781c7b07585600d76f320"
           }
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED"
         },
         {
           "binding_id": "binding.development.render.deployment-v11.v10-progress",
@@ -235,7 +257,7 @@
         "resource_reference": "render:srv-dab9n4qd0e5s73dq37mg:post-deploy-runtime",
         "binding_state": "BOUND",
         "exact_version": "render.post-deploy-provider-adapter-allowlist-runtime.v11",
-        "exact_digest": "sha256:b7b72adf3de69ce4377146f8443859e32e5893307f297e570db9465ce3d4b541"
+        "exact_digest": "sha256:7ea724bdb17c2c5d8fae035296a3ffdacc5a5900821f83839304d3a94c674599"
       },
       "operation": "provider.render.verify-post-deploy-runtime-use",
       "dependency_step_ids": [

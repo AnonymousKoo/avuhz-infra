@@ -10,7 +10,6 @@
   "branch": "main",
   "auto_deploy_expected": "no",
   "auto_deploy_trigger_expected": "off",
-  "required_canonical_main_commit": "d7cf12b8a18330898bec48edf3dcd3d633006e89",
   "current_live_deploy_expected": "dep-db0645gu01pc73911b4g",
   "current_live_commit_expected": "604e68ef8d563b28397552e4a34ce9cfe8f1b688",
   "required_v10_deployment_evidence_digest": "sha256:9839e66d5d3b7a56e59a1d3c51c3d43d4bebcff4c70a2aea7f0c9cfa4881dc85",
@@ -47,5 +46,10 @@
   "staging_authorized": false,
   "production_authorized": false,
   "workspace_confirmation_required_at_execution": true,
-  "contract_digest": "sha256:b7b72adf3de69ce4377146f8443859e32e5893307f297e570db9465ce3d4b541"
+  "contract_digest": "sha256:7ea724bdb17c2c5d8fae035296a3ffdacc5a5900821f83839304d3a94c674599",
+  "deployment_head_binding": "RESOLVED_BY_STEP_PREFLIGHT",
+  "required_provider_adapter_allowlist_commit": "e4ee9c6016bca59d1e55b35ca616803bad91409e",
+  "provider_adapter_allowlist_commit_requirement": "ANCESTOR_OF_EXECUTION_MAIN",
+  "required_build_state_commit": "d7cf12b8a18330898bec48edf3dcd3d633006e89",
+  "build_state_commit_requirement": "ANCESTOR_OF_EXECUTION_MAIN"
 }

@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib,json,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'src'))
-from avuhz_engineering.authorization_plan import initial_progress,plan_digest,validate_plan,validate_progress
+from avuhz_engineering.authorization_plan import approval_digest,initial_progress,plan_digest,validate_approval,validate_plan,validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
 N='development-implementation-handoff-provider-adapter-allowlist-binding-v1'
@@ -23,13 +23,17 @@ PROJECT='pwlhruwutoitnieactol'
 def load(n): return json.loads((B/n).read_text())
 def rawsha(p): return 'sha256:'+hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def main():
- r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json')
- validate_plan(p,S); validate_progress(p,g,S)
+ r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json')
+ validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,'2026-10-04T02:15:00Z')
  assert p['plan_id']==PLAN_ID and p['plan_digest']==PLAN_DIGEST==plan_digest(p) and p['plan_version']==1
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert p['target']['project_reference']==PROJECT and p['target']['responsibility']=='AUTH'
  assert p['authorization_window']=={'binding_state':'BOUND','starts_at':'2026-10-04T02:15:00Z','expires_at':'2026-10-04T04:30:00Z'}
- assert not (B/(N+'.approval.json')).exists()
+ assert a['plan_id']==PLAN_ID and a['plan_version']==1 and a['plan_digest']==PLAN_DIGEST
+ assert a['owner_identity']=='github:AnonymousKoo' and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+ assert a['effective_at']=='2026-10-04T02:15:00Z' and a['expires_at']=='2026-10-04T04:30:00Z'
+ assert a['approved_at']=='2026-10-04T02:09:36Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+ assert a['approval_digest']=='sha256:95d81aebcf5fa0d3d16919debc0e537f6411b24b84d20134bdfe5ad15754f2bb'==approval_digest(a)
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['project_reference']==PROJECT and r['provider_subject_digest']==SUBJECT and r['canonical_tenant_id']==TENANT
@@ -63,7 +67,7 @@ def main():
  assert len(step['required_evidence'])==4
  for action in ('provider.read','provider.mutation','credential.use','human-policy.modify','capability.add-extra','authority-role.add','render.operation','render.deployment','data.operation','n8n.operation','staging.target','production.target'):
   assert action in step['prohibited_actions'] and action in p['prohibited_actions']
- rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+ rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
  for secret in ('postgresql://','postgres://','password=','sb_secret_','service_role'): assert secret not in rendered
- print('DEVELOPMENT provider-adapter allowlist binding v1: PASS (READY_FOR_APPROVAL; pristine; one exact LOCAL_ONLY server policy entry; no provider/deploy authority)')
+ print('DEVELOPMENT provider-adapter allowlist binding v1: PASS (APPROVED; pristine; one exact LOCAL_ONLY server policy entry; no provider/deploy authority)')
 if __name__=='__main__': main()

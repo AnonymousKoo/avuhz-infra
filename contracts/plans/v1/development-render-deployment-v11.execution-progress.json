@@ -1,0 +1,81 @@
+{
+  "progress_id": "b7efd116-ec46-42a8-a6da-793a1da6f0c8",
+  "plan_id": "33ef8a51-ac40-4a8b-b6cb-9da7d8babdd3",
+  "plan_version": 11,
+  "plan_digest": "sha256:a33038cd0bed5bf62c6c1f2d2f4c9f42db48f48d57dc6c2845882c492c569102",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development.render.deployment-v11.step.01.deploy-provider-adapter-allowlist-main",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_reference": "development-render-deployment-v11-step01-success.evidence.json",
+          "evidence_digest": "sha256:dcbfc3328794da93c8d660145968f3fdfa84c2a42ea0abab32293221c3157806",
+          "recorded_at": "2026-10-04T03:19:27Z"
+        }
+      ],
+      "observed_postcondition": "Fresh preflight binds exact current main, proves commits e4ee9c6016bca59d1e55b35ca616803bad91409e and d7cf12b8a18330898bec48edf3dcd3d633006e89 are ancestors, and confirms DEVELOPMENT Render service srv-dab9n4qd0e5s73dq37mg is main/auto-deploy off with live deploy dep-db0645gu01pc73911b4g at 604e68ef8d563b28397552e4a34ce9cfe8f1b688. Trigger one clearCache=false deploy; it must reach live at the bound SHA. No retry, second deploy, config/secret/Supabase/token/session/n8n/staging/production action.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.render.deployment-v11.canonical-main-head",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "github.canonical-main-head.observed",
+          "evidence_digest": "sha256:f5f3fdcbe09e5f13fbb3aa233c8bbcde4d7d6dfa791ff193e41bc4888ef51de6",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "sanitized_value": "github.commit.sha-8e96e486d1173039a444c67849e26048282d6e9c",
+          "value_digest": "sha256:e5d6d50a3f5e2241a26cf3182c0df499e5bbfb026c9ca6b62d9d4f5065b4d292",
+          "recorded_at": "2026-10-04T03:16:23Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.render-service-preflight",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.render-service-preflight.observed",
+          "evidence_digest": "sha256:6e77ce08283e9faf7ee2425fbd8d9979167b58ebe7d5970b40a562ee88617bbb",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:6e77ce08283e9faf7ee2425fbd8d9979167b58ebe7d5970b40a562ee88617bbb",
+          "recorded_at": "2026-10-04T03:16:23Z"
+        },
+        {
+          "binding_id": "binding.development.render.deployment-v11.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "runtime.render.deployment.completed",
+          "evidence_digest": "sha256:dcbfc3328794da93c8d660145968f3fdfa84c2a42ea0abab32293221c3157806",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:dcbfc3328794da93c8d660145968f3fdfa84c2a42ea0abab32293221c3157806",
+          "recorded_at": "2026-10-04T03:19:27Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.render.deployment-v11.step.02.verify-runtime-ready-fail-closed",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-04T03:19:27Z",
+  "progress_digest": "sha256:915122e3b9ea397b442793742ededebb24c945d2b9b449c9027dc618ba91a6dc"
+}

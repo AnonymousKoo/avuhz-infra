@@ -180,14 +180,13 @@ Because the bounded authorization progress schema has no `SKIPPED` state or cond
 
 ## Next task
 
-The shared DEVELOPMENT backbone, DATA readiness, ImplementationHandoff intake, provider-adapter identity/passwordless state, canonical tenant binding, and exact two-entry server-owned identity policy are complete at the repository/code boundary. The live Render service remains on verified v10 commit `604e68ef8d563b28397552e4a34ce9cfe8f1b688`, so the provider-adapter allowlist activation is not yet live-hosted.
+The shared DEVELOPMENT backbone, DATA readiness, ImplementationHandoff intake, provider-adapter identity/passwordless state, canonical tenant binding, exact two-entry server-owned identity policy, and Render v11 hosted-runtime deployment are complete. DEVELOPMENT deploy `dep-db0saps9v7es73cqjuc0` is live at bound commit `8e96e486d1173039a444c67849e26048282d6e9c`; startup/live/ready are HTTP 200 with configuration, identity, and DATA ready, and anonymous commands, queries, and `AcceptImplementationHandoff` fail closed with HTTP 401 `trusted_identity_required`.
 
 The intended sequence is now:
 
-1. v11 deployment and read-only runtime verification are complete.
-2. prepare a separate DEVELOPMENT AUTH boundary for one positive provider-adapter authentication test; any token/session issuance and cleanup belong to that boundary.
-3. only after positive provider-adapter authentication is independently certified should a governed end-to-end `AcceptImplementationHandoff` execution be considered. Any token/session issuance or cleanup belongs to that separate boundary;
-5. only after positive provider-adapter authentication is independently certified should a governed end-to-end `AcceptImplementationHandoff` execution be considered.
+1. prepare a separate DEVELOPMENT AUTH boundary for one positive provider-adapter authentication test; any token/session issuance and cleanup belong to that boundary.
+2. execute and independently certify that positive authentication boundary without widening the provider-adapter capability or tenant scope.
+3. only after positive provider-adapter authentication is independently certified should a governed end-to-end `AcceptImplementationHandoff` execution be considered.
 
 Each item remains a separate bounded resource/action boundary.
 
@@ -200,7 +199,7 @@ Each item remains a separate bounded resource/action boundary.
 - Do not widen the allowlist beyond the exact two-entry DEVELOPMENT composition: one `HUMAN` / `engagement:read` entry and one `PROVIDER_ADAPTER` / `implementation_handoff:accept` entry, both with empty authority roles.
 - Do not disable, retarget, duplicate, or otherwise modify the enabled custom access-token hook without a new exact plan.
 - Do not retry AUTH v31, AUTH v32, consumed `development-auth-v32-session-inspection-v1`, cleanup-v1, or consumed cleanup-v2 Step 2. Cleanup-v2 Step 3 is blocked. Do not prepare v33, issue another synthetic token, or reuse any consumed credential/authority. Any correction or continuation requires a fresh forward-only plan.
-- Do not deploy the newly activated provider-adapter allowlist to Render outside a fresh exact deployment plan, and do not run a positive provider-adapter authentication test or issue a token/session without a separate AUTH authorization boundary.
+- Do not redeploy or modify the live provider-adapter allowlist runtime outside a fresh exact Render boundary, and do not run a positive provider-adapter authentication test or issue a token/session without a separate AUTH authorization boundary.
 - Do not alter RLS, tenant policy, command-service grants, migration ownership, or sealed role membership without a new exact plan.
 - Do not create staging or production resources.
 - Do not begin Phase 6.

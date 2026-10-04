@@ -53,6 +53,8 @@ PREWINDOW_RETIREMENT_PLAN_DIGEST = "sha256:4b70a82966dad56ca9ff4c9c680356dbfa6bb
 PREWINDOW_RETIREMENT_PROGRESS_DIGEST = "sha256:54e65db1c2a3a84b3c19d233072df1488eba1ca320610f9f6054c9a2ab46a1ae"
 PREWINDOW_RETIREMENT_APPROVAL_DIGEST = "sha256:229c3617af12c6ffad91b261364beb8ed46a71ae7936ebf080186c8471783a18"
 PREWINDOW_RETIREMENT_APPROVAL_FILE_DIGEST = "sha256:dcaf061267208e9fec4f376b53b43cd0254613b217ba9b9285511fcfe019f392"
+PREWINDOW_RETIREMENT_EXECUTION_PROGRESS_DIGEST = "sha256:01a186c84fa434f4570aa4b840d2436813f2f1fdaf97994cf752c1d217e67f0a"
+PREWINDOW_RETIREMENT_STEP1_EVIDENCE_DIGEST = "sha256:23791e31d64420458293042c433cc4c52fe20040bddbc4de78e7f783ebd4f3a2"
 
 
 def load(name: str) -> dict:
@@ -102,6 +104,7 @@ def main() -> int:
     prewindow_plan = load(PREWINDOW_RETIREMENT_N + ".plan.json")
     prewindow_progress = load(PREWINDOW_RETIREMENT_N + ".progress.json")
     prewindow_approval = load(PREWINDOW_RETIREMENT_N + ".approval.json")
+    prewindow_execution = load(PREWINDOW_RETIREMENT_N + ".execution-progress.json")
     assert prewindow_incident["evidence_digest"] == PREWINDOW_INCIDENT_DIGEST
     assert prewindow_incident["authorization_assessment"]["v3_step1_recordable_as_authorized"] is False
     assert prewindow_incident["authorization_assessment"]["v3_must_remain_blocked_until_retirement_complete"] is True
@@ -113,7 +116,11 @@ def main() -> int:
     assert raw(B / (PREWINDOW_RETIREMENT_N + ".approval.json")) == PREWINDOW_RETIREMENT_APPROVAL_FILE_DIGEST
     assert prewindow_approval["approval_digest"] == PREWINDOW_RETIREMENT_APPROVAL_DIGEST
     assert prewindow_approval["status"] == "ACTIVE" and prewindow_approval["decision"] == "APPROVE"
-    assert not (B / (PREWINDOW_RETIREMENT_N + ".execution-progress.json")).exists()
+    assert prewindow_execution["progress_digest"] == PREWINDOW_RETIREMENT_EXECUTION_PROGRESS_DIGEST == progress_digest(prewindow_execution)
+    assert prewindow_execution["overall_state"] == "IN_PROGRESS"
+    assert (prewindow_execution["step_states"][0]["authorization_state"], prewindow_execution["step_states"][0]["execution_state"], prewindow_execution["step_states"][0]["verification_state"], prewindow_execution["step_states"][0]["authorization_consumed"]) == ("CONSUMED","SUCCEEDED","PASS",True)
+    assert prewindow_execution["step_states"][0]["evidence"][0]["evidence_digest"] == PREWINDOW_RETIREMENT_STEP1_EVIDENCE_DIGEST
+    assert all((x["authorization_state"],x["execution_state"],x["verification_state"],x["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False) for x in prewindow_execution["step_states"][1:])
 
     assert r["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
         {k: v for k, v in r.items() if k != "contract_digest"}
@@ -265,8 +272,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v3: PASS "
-        "(APPROVED / BLOCKED_BY_APPROVED_PREWINDOW_RETIREMENT; pristine execution progress; exact Step-4 SQL bound; "
-        "premature key creation is not recordable as authorized Step 1; fresh retirement v1 is required before any continuation)"
+        "(APPROVED / BLOCKED_BY_IN_PROGRESS_PREWINDOW_RETIREMENT; retirement Step 1 PASS; Steps 2-3 pending; "
+        "premature key creation remains non-recordable as authorized v3 Step 1)"
     )
     return 0
 

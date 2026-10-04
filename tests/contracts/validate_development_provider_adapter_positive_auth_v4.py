@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / 'src'))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B = ROOT / 'contracts/plans/v1'
@@ -45,6 +45,10 @@ CLEAN_PROGRESS = 'sha256:e48fe89e45b47e31b5439ccefe2240ab0edc3e9f2e377d10c2f799e
 V3_INCIDENT_RAW = 'sha256:1626e91cafb4bdffd60553c6b0b6805bf5a97d5ba70d02670627999bf231a8b3'
 V3_RETIRE_GH_ABSENT_RAW = 'sha256:8fe9637d3b9c559063eca8e732a7b3a07b694d696a44315f3ac8eca24dd2c5bd'
 V3_RETIRE_PROGRESS = 'sha256:5ac3af0f64d33027fd62b54a5c4c34d8a2255dc94f377080225b03034655c143'
+APPROVAL_ID = '976971bf-f20c-5dc3-8895-d4e7cd2d1d16'
+APPROVAL_DIGEST = 'sha256:31ede5908db0a9b29a21f27602ca3dd7708bdbaafcb9bb5ae25c829999eb81d6'
+APPROVAL_FILE_DIGEST = 'sha256:321091ca7bfa7727eb35fd5df30bbb6845cbfab317e3ddd5c90cd42619f18141'
+APPROVED_AT = '2026-10-04T21:57:20Z'
 
 
 def load(name: str) -> dict:
@@ -62,9 +66,11 @@ def main() -> int:
     prep = load(N + '-preparation.evidence.json')
     p = load(N + '.plan.json')
     g = load(N + '.progress.json')
+    a = load(N + '.approval.json')
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, WINDOW_START)
     assert p['plan_id'] == PLAN_ID and p['plan_version'] == 4
     assert p['plan_digest'] == PLAN_DIGEST == plan_digest(p)
     assert p['definition_status'] == 'READY_FOR_APPROVAL'
@@ -73,7 +79,15 @@ def main() -> int:
     assert p['target']['project_reference'] == PROJECT and p['target']['responsibility'] == 'AUTH'
     assert p['created_at'] == CREATED_AT
     assert p['authorization_window'] == {'binding_state':'BOUND','starts_at':WINDOW_START,'expires_at':WINDOW_END}
-    assert not (B / (N + '.approval.json')).exists()
+    assert raw(B / (N + '.approval.json')) == APPROVAL_FILE_DIGEST
+    assert a['approval_id'] == APPROVAL_ID
+    assert a['plan_id'] == PLAN_ID and a['plan_version'] == 4 and a['plan_digest'] == PLAN_DIGEST
+    assert a['owner_identity'] == 'github:AnonymousKoo' and a['decision'] == 'APPROVE'
+    assert a['environment'] == 'DEVELOPMENT' and a['authority_scope'] == 'EXACT_PLAN_ONLY'
+    assert a['effective_at'] == WINDOW_START and a['expires_at'] == WINDOW_END
+    assert a['approved_at'] == APPROVED_AT and a['status'] == 'ACTIVE'
+    assert a['approval_digest'] == APPROVAL_DIGEST == approval_digest(a)
+    assert APPROVED_AT < WINDOW_START
     assert not (B / (N + '.execution-progress.json')).exists()
     assert not list(B.glob(N + '-step*-*.evidence.json'))
 
@@ -174,12 +188,12 @@ def main() -> int:
     assert g['overall_state'] == 'NOT_STARTED'
     assert all((s['authorization_state'],s['execution_state'],s['verification_state'],s['authorization_consumed']) == ('PENDING','NOT_STARTED','NOT_STARTED',False) and not s['evidence'] and not s['binding_assertions'] for s in g['step_states'])
 
-    rendered='\n'.join((B/(N+suffix)).read_text() for suffix in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+    rendered='\n'.join((B/(N+suffix)).read_text() for suffix in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
     for forbidden in ('Bearer eyJ','"access_token":','"refresh_token":','service_role_key'): assert forbidden not in rendered
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert re.search(r'postgres(?:ql)?://[^\s/:]+:[^\s/@]+@',rendered,re.I) is None
 
-    print('DEVELOPMENT provider-adapter positive-auth v4: PASS (READY_FOR_APPROVAL; pristine; 7-11 PM ET window; v3 retirement complete and bound; fresh v4 credential lifecycle; no provider execution)')
+    print('DEVELOPMENT provider-adapter positive-auth v4: PASS (APPROVED; pristine; effective 7-11 PM ET; v3 retirement complete and bound; fresh v4 credential lifecycle; no provider execution)')
     return 0
 
 if __name__ == '__main__':

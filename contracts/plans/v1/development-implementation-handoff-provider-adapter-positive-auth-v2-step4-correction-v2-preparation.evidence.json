@@ -1,0 +1,112 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.prepared",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v2",
+  "observed_at": "2026-10-04T12:17:01Z",
+  "action_class": "REPOSITORY_LOCAL",
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED",
+  "lineage": {
+    "v2_plan_id": "58c9c75c-6488-54e2-924e-d87c3d99432b",
+    "v2_plan_digest": "sha256:03cb244d3ee92cde2e279c27f74a6d6ac36d22ed83d988e5c06bcd5ebd320edd",
+    "v2_approval_id": "af3e10e7-2319-5462-9b6c-a17063a29206",
+    "v2_approval_digest": "sha256:faf96f4b6bac4e62fa96f7739c5e47959eed9f29a6ee0f5a5d4b629210ea5f10",
+    "v2_execution_progress_digest_after_steps_1_3": "sha256:656af77ba698ebaf159b0ce812f627e4a54e26472fd0ba69d0bdf97f52ed4060",
+    "v2_step3_verified_github_binding_evidence_digest": "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5",
+    "correction_v1_plan_id": "6b458b63-542c-5eb5-8b24-1e3b781f5957",
+    "correction_v1_plan_digest": "sha256:13937ab14140c977dca4829342c6237988ef11106306012082dce01321ff2430",
+    "correction_v1_approval_id": "472c2bfb-8430-57f0-aeca-a1b6db954c74",
+    "correction_v1_approval_digest": "sha256:7ec0d0eefb249767a422d6e3df302ba3a877a74667e8cbab33f73f65e11a36d7",
+    "correction_v1_pristine_progress_digest": "sha256:40f5f9f92cf023acf73ac21ebd200d99115afa953894929953d4091693287860",
+    "correction_v1_resource_digest": "sha256:290d903ca9b96e6325f05698c86f050a60f5f052344703be018cea40231a0fd0"
+  },
+  "selected_diagnostic": {
+    "resource_digest": "sha256:290d903ca9b96e6325f05698c86f050a60f5f052344703be018cea40231a0fd0",
+    "interaction_surface": "supabase.dashboard.sql-editor",
+    "query_count": 1,
+    "aggregate_only": true,
+    "aggregate_fields": [
+      "auth_user_count",
+      "target_identity_count",
+      "target_password_null_count",
+      "target_tenant_exact_count",
+      "session_count",
+      "refresh_token_count"
+    ],
+    "expected_result": {
+      "auth_user_count": 2,
+      "target_identity_count": 1,
+      "target_password_null_count": 1,
+      "target_tenant_exact_count": 1,
+      "session_count": 0,
+      "refresh_token_count": 0
+    },
+    "mutation_authorized": false,
+    "retry_authorized": false,
+    "follow_up_sql_authorized": false
+  },
+  "result_use": "Separately authorized correction evidence only. A later forward-only positive-auth continuation may consume it under fresh exact authorization; never record it as v2 Step 4 success or advance v2 progress.",
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "identity_mutation_performed": false,
+    "password_hash_value_observed": false,
+    "credential_material_observed": false,
+    "raw_provider_subject_observed": false,
+    "tenant_binding_changed": false,
+    "allowlist_changed": false,
+    "token_or_session_issued": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false,
+    "existing_credential_read_or_changed": false,
+    "existing_github_binding_read_verified_or_changed": false,
+    "v2_progress_advanced": false,
+    "approval_created": false,
+    "execution_progress_created": false,
+    "secret_value_digest_recorded": false
+  },
+  "evidence_digest": "sha256:e81a6f58dfdbddd83ef73f51f62a7f27c798d96f237a71f6c093699f87d8dc93",
+  "timing_replacement": {
+    "reason": "Expired but pristine correction v1; forward-only timing replacement only. Its approval remains unchanged and cannot authorize this boundary.",
+    "prior_window": {
+      "binding_state": "BOUND",
+      "starts_at": "2026-10-04T06:45:00Z",
+      "expires_at": "2026-10-04T10:45:00Z"
+    },
+    "prior_overall_state": "NOT_STARTED",
+    "prior_approval_expired_at_observation": true,
+    "prior_execution_progress_exists": false,
+    "prior_step_result_evidence_exists": false,
+    "new_window": {
+      "binding_state": "BOUND",
+      "starts_at": "2026-10-04T13:00:00Z",
+      "expires_at": "2026-10-04T17:00:00Z"
+    },
+    "resource_path": "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.resource.json",
+    "resource_reuse_reason": "The existing resource contract contains no authorization window or correction-v1 plan/approval identity. Exact resource reference, version, digest, SQL, result contract and original positive-auth v2 lineage are reused unchanged; only the new plan and preparation evidence bind replacement lineage.",
+    "owner_approval_requirement": "Separate exact owner approval bound to the new plan ID, version and digest must be issued no later than the new window start. Provider read is denied before that start and at or after expiry, and without that approval."
+  },
+  "preserved_artifact_sha256": {
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-corrective-retirement.evidence.json": "sha256:b81a5cd09986e53e215bfb436840d1ce37d5d53d2975dbb5588eb285df2a2efc",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-preparation.evidence.json": "sha256:8f3435190b7e0f4ca045246aaf01578de3c1e11bb11dc1e01fc472ba7218238a",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step01-success.evidence.json": "sha256:1afa5a5b2129364ca63f458e63211b1aa2201f004c1acc131f90aa1cd15c4a42",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step02-success.evidence.json": "sha256:9cf39e54d31c6c861607df0750df4f80ae920040ebc15ae664c94d67ebc7a7dd",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step03-success.evidence.json": "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1-preparation.evidence.json": "sha256:0c53c4808f5614f9cc9690013234221eb86a66fe65407bc9e89797cdde227cab",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.approval.json": "sha256:85bd88ae210cd4cdc9e06a412a9f384cd190571f14cd48d3328a4defce34a1ea",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.plan.json": "sha256:f03e0207f92662afdae51b4aaf26fb4e64a06d201feed7c0702bc3bdef5eaee2",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.progress.json": "sha256:c6cd6c4ef22d28736a04df46c581d351ef58916476c6f46aa6d20615cceb5d83",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v1.resource.json": "sha256:54770772f2194d25de6a9e23524f152400db584f16a253d99357dfe33a7b6ae1",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2.approval.json": "sha256:59d74b6698e2ab6dac91b8b353e6d4d65f7c7b8e5cf46d1a527018bf80fdffb9",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2.execution-progress.json": "sha256:d77a38d14ef854d2cea67845192a304cf0e9f282de1fd2d46958bd1da0d006ac",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2.plan.json": "sha256:19642f38cbebc8993db6c231de8deb38e767bdd9ed7ddc625afb6c45711fa080",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2.progress.json": "sha256:e98aa533ebd8bfb97871c791fc43f728bd0413f0d245e93dfb92235817d1314c",
+    "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v2.resource.json": "sha256:7d43d5612ec0a71b491e9a911c6efeda1045b50799d124201834024f398cf4a6"
+  }
+}

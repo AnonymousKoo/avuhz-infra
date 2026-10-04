@@ -1,0 +1,23 @@
+{
+  "progress_id": "faf51c2d-4af0-54d2-8f43-e1d0d5f2936c",
+  "plan_id": "d9e3cdb3-f889-5264-92b5-0d83db9f6b38",
+  "plan_version": 2,
+  "plan_digest": "sha256:d82b740665733e825d28c980c5753e6eb38970690167fc785298cc6d0e09fc2b",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v2.step.01.inspect-preflight-counts-read-only",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-04T12:17:01Z",
+  "progress_digest": "sha256:2328b9f70e5525a120e82c25a0f1a8ddd35e1aa8c3f43456329c9c8da8189325"
+}

@@ -3,7 +3,7 @@
   "plan_id": "dfce4d99-3e6c-5c63-b3cc-be1cdbe24d26",
   "plan_version": 1,
   "plan_digest": "sha256:a16bd85523ba1b7f5d32be5baea851c474b8ad885b6e75a003e2901c25639e43",
-  "record_version": 3,
+  "record_version": 5,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -53,14 +53,61 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.02.retire-fresh-auth-admin-key",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-corrective-cleanup-retirement-v1-step2-success.evidence.json",
+          "evidence_digest": "sha256:3459f2907d318fe014e195baff9d057f455690bcab36a83c52c913550a6c6efc",
+          "recorded_at": "2026-10-04T17:49:55Z"
+        }
+      ],
+      "observed_postcondition": "Using only the resource-bound owner-interactive DEVELOPMENT AUTH surface, delete exactly the existing impl_handoff_provider_adapter_positive_auth_v1_ephemeral key by name. Do not reveal, copy, export, log, hash, rotate, recreate, or return its material. Delete no other key. Record only a sanitized name-only outcome.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.cleanup-verified",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.01.verify-zero-session-refresh-state",
+          "evidence_type": "auth.provider-adapter-positive-auth.cleanup.verified",
+          "evidence_digest": "sha256:5a4183d202fc94f948b25e9c60a59136e9b81687728bf02ecb116ceba25709d1",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:3e2e7abda1b4491314952227804dc17fc293978ecf7f0ab8a5be8158bb954473",
+          "recorded_at": "2026-10-04T17:49:55Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step2-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:c4a806f7584a855b1484b03aeaec68e057ebbb170667fc6c28d8f56ff5238c0a",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:c4a806f7584a855b1484b03aeaec68e057ebbb170667fc6c28d8f56ff5238c0a",
+          "recorded_at": "2026-10-04T17:49:55Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.fresh-key-retired",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_digest": "sha256:3459f2907d318fe014e195baff9d057f455690bcab36a83c52c913550a6c6efc",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:16504d80fa4d87b1bfed74a201c45cc6d0cf538e457b63504d8f1160efb33d21",
+          "recorded_at": "2026-10-04T17:49:55Z"
+        }
+      ]
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.03.retire-github-secret-binding",
@@ -96,6 +143,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-04T17:31:31Z",
-  "progress_digest": "sha256:2446e6b8b2189f8c371cf46b382d3dd7e43964f8f150d7bcef28df0ac0c454b1"
+  "updated_at": "2026-10-04T17:49:55Z",
+  "progress_digest": "sha256:c705cc312aba7ab299361c9145b04dd132f07ee2b8711b0b71b954956984a0c9"
 }

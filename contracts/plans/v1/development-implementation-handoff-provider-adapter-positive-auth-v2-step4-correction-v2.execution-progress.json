@@ -1,0 +1,57 @@
+{
+  "progress_id": "faf51c2d-4af0-54d2-8f43-e1d0d5f2936c",
+  "plan_id": "d9e3cdb3-f889-5264-92b5-0d83db9f6b38",
+  "plan_version": 2,
+  "plan_digest": "sha256:d82b740665733e825d28c980c5753e6eb38970690167fc785298cc6d0e09fc2b",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v2.step.01.inspect-preflight-counts-read-only",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.counts-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v2-step4-correction-v2-success.evidence.json",
+          "evidence_digest": "sha256:29b5a66afbae1a36ef4893917d8c7ccbe43537c04523111380884e6c26892fa9",
+          "recorded_at": "2026-10-04T13:07:36Z"
+        }
+      ],
+      "observed_postcondition": "After separate exact owner approval, in one OWNER_INTERACTIVE_SESSION at the DEVELOPMENT AUTH Supabase Dashboard SQL Editor, execute exactly the resource-bound aggregate SELECT once and return exactly auth_user_count=2, target_identity_count=1, target_password_null_count=1, target_tenant_exact_count=1, session_count=0, refresh_token_count=0. Stop on any deviation. No follow-up SQL, retry, mutation, raw row, PII, credential or existing-binding access is authorized. Separately authorized correction evidence only. A later forward-only positive-auth continuation may consume it under fresh exact authorization; never record it as v2 Step 4 success or advance v2 progress.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v2.dashboard-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "evidence_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102",
+          "recorded_at": "2026-10-04T13:07:36Z"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-positive-auth-v2-step4-correction-v2.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.counts-verified",
+          "evidence_digest": "sha256:29b5a66afbae1a36ef4893917d8c7ccbe43537c04523111380884e6c26892fa9",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:7ab8f21ff7442882eca413794bfc85c1145bc9d1856648fd3482d9b554f8edbb",
+          "recorded_at": "2026-10-04T13:07:36Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-04T13:07:36Z",
+  "progress_digest": "sha256:d12057f621c8ee3b7d0d998a0b8d1865467e84dd796511558ee510d4d09636e6"
+}

@@ -169,14 +169,61 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.04.verify-fresh-auth-admin-key-absent",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-corrective-cleanup-retirement-v1-step4-success.evidence.json",
+          "evidence_digest": "sha256:338e9648389d857871c816d9e4ad5c814300c3a92de45671da77e2564274a60f",
+          "recorded_at": "2026-10-04T19:10:21Z"
+        }
+      ],
+      "observed_postcondition": "Using only the resource-bound owner-interactive DEVELOPMENT AUTH names-only surface, independently prove impl_handoff_provider_adapter_positive_auth_v1_ephemeral is absent. Do not reveal key material or make any provider mutation. Ambiguous or present state stops progression without retry.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.github-binding-retired",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.03.retire-github-secret-binding",
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "evidence_digest": "sha256:e6145a74d3cc8a8de3dbc53ca6a547d13e76aa4643ad37c5213b75c4b52cdb48",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:54c30896031fcbefe3613ae9a72acb4305189c39e41ea46acc28578c54e21e18",
+          "recorded_at": "2026-10-04T19:10:21Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step4-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854",
+          "recorded_at": "2026-10-04T19:10:21Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.fresh-key-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_digest": "sha256:338e9648389d857871c816d9e4ad5c814300c3a92de45671da77e2564274a60f",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:93835c878e90750738900167e02005df9577d9864b317fcf2422f20ada278199",
+          "recorded_at": "2026-10-04T19:10:21Z"
+        }
+      ]
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.05.verify-github-secret-binding-absent",
@@ -190,6 +237,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-04T18:02:46Z",
-  "progress_digest": "sha256:97eae3711a324a05ca88a9cccca26d321a833a907970e32a427a8568f9d94441"
+  "updated_at": "2026-10-04T19:10:21Z",
+  "progress_digest": "sha256:c09fa78c7581721b38ffef1faaeaa6d0f32ac29d4a9e006b75ca3691ce1287c2"
 }

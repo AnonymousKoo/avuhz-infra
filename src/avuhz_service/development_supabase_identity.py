@@ -75,9 +75,18 @@ DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST = (
         tenant_id="1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
     ),
 )
-# Active DEVELOPMENT policy remains exactly the historical one-entry HUMAN/read-only
-# allowlist until a separately authorized provider-adapter identity is bound.
-DEVELOPMENT_IDENTITY_ALLOWLIST = DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST
+DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_POLICY_DIGEST = "sha256:e82ca947658c1366e468ff9b0d069f148c175c3b1f7b896c8bb5683ecb9ce483"
+DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_ENTRY = DevelopmentIdentityAllowlistEntry(
+    subject_digest="sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a",
+    principal_reference="provider-adapter.implementation-handoff-development",
+    tenant_id="1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+    caller_type=_PROVIDER_ADAPTER_CALLER_TYPE,
+    capabilities=_PROVIDER_ADAPTER_CAPABILITIES,
+)
+DEVELOPMENT_IDENTITY_ALLOWLIST = (
+    *DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
+    DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_ENTRY,
+)
 
 
 def _subject_digest(subject: str) -> str:

@@ -1,0 +1,238 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+
+import validate_development_provider_adapter_positive_auth_continuation_v1 as continuation
+from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_runtime.implementation_handoff import canonical_digest
+
+B = ROOT / "contracts/plans/v1"
+S = ROOT / "contracts/schemas/v1"
+N = "development-implementation-handoff-provider-adapter-positive-auth-corrective-cleanup-retirement-v1"
+
+PLAN_ID = "dfce4d99-3e6c-5c63-b3cc-be1cdbe24d26"
+PLAN_DIGEST = "sha256:a16bd85523ba1b7f5d32be5baea851c474b8ad885b6e75a003e2901c25639e43"
+RESOURCE_ID = "01459d6c-c7c9-5215-8fff-73921a2edfc4"
+RESOURCE_DIGEST = "sha256:34169dc4cd6c72420f32c3dfb00844f1b22cb9466f16a3b6276bbf964fa066b7"
+PREP_DIGEST = "sha256:d54f8cdda1501d263c3c47798ca844977a29fe0e8783b6629a32ce5bfcf8c13b"
+PROGRESS_ID = "1d4ba8ef-6d9a-5b11-9e3d-80bb6e32d79d"
+PROGRESS_DIGEST = "sha256:8dce889a527959d91cf03cc05e4e5cba7965670f2cc0513cfe7d3c3e806c5a39"
+CREATED_AT = "2026-10-04T16:18:30Z"
+WINDOW_START = "2026-10-04T17:00:00Z"
+WINDOW_END = "2026-10-04T21:00:00Z"
+
+PROJECT = "pwlhruwutoitnieactol"
+DATA_PROJECT = "gnuqaefotwgkwurjpyik"
+KEY_NAME = "impl_handoff_provider_adapter_positive_auth_v1_ephemeral"
+GH_SECRET = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL"
+FAILURE_DIGEST = "sha256:a4678fb87107b7544b60e6349acda6c6232ef300e334d667836318c495f0b531"
+STOPPED_DIGEST = "sha256:730f4c0a7b6393223c85cd5746472e1227bb9c77d174e8644075c4dc1722bd6b"
+KEY_CREATED = "sha256:1afa5a5b2129364ca63f458e63211b1aa2201f004c1acc131f90aa1cd15c4a42"
+GH_CREATED = "sha256:9cf39e54d31c6c861607df0750df4f80ae920040ebc15ae664c94d67ebc7a7dd"
+GH_VERIFIED = "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5"
+CONT_PLAN_RAW = "sha256:dbfd225d78584e4b902d58e37155708d5398061ad0ce7b0acb8baf1cf96538b9"
+CONT_APPROVAL_RAW = "sha256:9bcd2fc871e71ce8a8ee55307220088f8b490a70d109fde8a0e67799aa304424"
+CONT_FAILURE_RAW = "sha256:27c324aa9f0c155fb5c75125cdc4ce24bb160e1bf06af1fd2d08bd75039180c9"
+CONT_EXEC_RAW = "sha256:cd108d65ddd1ed95bc4307e1736d694460331318546b72418b6a36e7e5013ae7"
+
+QUERY = """select
+  (select count(*) from auth.sessions) as session_count,
+  (select count(*) from auth.refresh_tokens) as refresh_token_count;"""
+
+
+def load(name: str) -> dict:
+    value = json.loads((B / name).read_text())
+    assert isinstance(value, dict)
+    return value
+
+
+def raw(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    continuation.main()
+
+    resource = load(N + ".resource.json")
+    prep = load(N + "-preparation.evidence.json")
+    plan = load(N + ".plan.json")
+    progress = load(N + ".progress.json")
+
+    validate_plan(plan, S)
+    validate_progress(plan, progress, S)
+
+    assert plan["plan_id"] == PLAN_ID
+    assert plan["plan_version"] == 1
+    assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
+    assert plan["definition_status"] == "READY_FOR_APPROVAL"
+    assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+    assert plan["environment"] == "DEVELOPMENT"
+    assert plan["target"]["project_reference"] == PROJECT
+    assert plan["target"]["responsibility"] == "AUTH"
+    assert plan["authorization_window"] == {
+        "binding_state": "BOUND",
+        "starts_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+    }
+
+    assert resource["resource_id"] == RESOURCE_ID
+    assert resource["resource_version"] == "provider-adapter-positive-auth-corrective-cleanup-retirement.v1"
+    assert resource["contract_digest"] == RESOURCE_DIGEST
+    resource_without_digest = dict(resource)
+    resource_without_digest.pop("contract_digest")
+    assert canonical_digest(resource_without_digest) == RESOURCE_DIGEST
+    assert resource["project_reference"] == PROJECT
+    assert DATA_PROJECT not in json.dumps(resource)
+    assert resource["fresh_provider_key_reference"] == KEY_NAME
+    assert resource["github_secret_binding_name"] == GH_SECRET
+    assert resource["session_state_verification"]["query"] == QUERY
+    assert resource["session_state_verification"]["query_count"] == 1
+    assert resource["session_state_verification"]["result_fields"] == ["session_count", "refresh_token_count"]
+    assert resource["session_state_verification"]["expected_result"] == {"session_count": 0, "refresh_token_count": 0}
+    assert resource["session_state_verification"]["aggregate_only"] is True
+    assert resource["session_state_verification"]["raw_rows_authorized"] is False
+    assert resource["session_state_verification"]["additional_sql_authorized"] is False
+    assert resource["session_state_verification"]["retry_authorized"] is False
+    assert resource["failure_handling"]["unknown_session_state_at_entry"] is True
+    assert resource["failure_handling"]["zero_state_required_before_retirement"] is True
+    assert resource["failure_handling"]["retirement_after_nonzero_or_ambiguous_state_authorized"] is False
+    assert resource["failure_handling"]["retry_failed_positive_auth_authorized"] is False
+    assert resource["authorized_counts"] == {
+        "session_state_aggregate_read": 1,
+        "supabase_key_delete": 1,
+        "github_environment_secret_delete": 1,
+        "supabase_key_absence_read": 1,
+        "github_secret_absence_read": 1,
+        "session_cleanup_mutation": 0,
+        "positive_auth_retry": 0,
+        "new_authentication": 0,
+        "session_issue": 0,
+        "token_issue": 0,
+        "implementation_handoff_execute": 0,
+    }
+    assert all(value is False for value in resource["security_rules"].values())
+
+    assert prep["evidence_type"] == "auth.provider-adapter-positive-auth.corrective-cleanup-retirement.prepared"
+    assert prep["evidence_digest"] == PREP_DIGEST
+    prep_without_digest = dict(prep)
+    prep_without_digest.pop("evidence_digest")
+    assert canonical_digest(prep_without_digest) == PREP_DIGEST
+    assert prep["provider_authority"] == "NONE"
+    assert prep["external_provider_contact"] == "PROHIBITED"
+    assert prep["security_state"] == {
+        "provider_contact_performed": False,
+        "provider_mutation_performed": False,
+        "credential_material_observed": False,
+        "credential_material_digest_recorded": False,
+        "secret_value_read": False,
+        "raw_rows_observed": False,
+        "pii_observed": False,
+        "history_rewritten": False,
+        "approval_created": False,
+        "execution_progress_created": False,
+        "result_evidence_created": False,
+    }
+
+    steps = plan["steps"]
+    assert len(steps) == 5
+    assert [s["ordinal"] for s in steps] == [1, 2, 3, 4, 5]
+    assert [s["execution_class"] for s in steps] == [
+        "PROVIDER_READ", "PROVIDER_MUTATION", "PROVIDER_MUTATION", "PROVIDER_READ", "PROVIDER_READ"
+    ]
+    assert [s["operation"] for s in steps] == [
+        "provider.auth-session-state.inspect-read-only",
+        "provider.auth-admin-credential.delete-dedicated-secret-key",
+        "provider.auth-secret-binding.delete-github-environment-reference",
+        "provider.auth-admin-credential.verify-dedicated-secret-key-absent",
+        "provider.auth-secret-binding.verify-github-environment-reference-absent",
+    ]
+    assert all(s["resource"]["exact_digest"] == RESOURCE_DIGEST for s in steps)
+    assert all(s["resource"]["exact_version"] == "provider-adapter-positive-auth-corrective-cleanup-retirement.v1" for s in steps)
+    assert all(s["credential_policy"] == {
+        "permitted": True, "allowed_classes": ["OWNER_INTERACTIVE_SESSION"], "values_stored": False
+    } for s in steps)
+    assert steps[0]["dependency_step_ids"] == []
+    for idx in range(1, 5):
+        assert steps[idx]["dependency_step_ids"] == [steps[idx - 1]["step_id"]]
+
+    first_required = {(x["evidence_type"], x["exact_digest"]) for x in steps[0]["required_evidence"]}
+    for item in (
+        ("auth.provider-adapter-positive-auth.live-verified-logout-accepted", FAILURE_DIGEST),
+        ("authorization-plan.execution-progress", STOPPED_DIGEST),
+        ("auth.provider-adapter-positive-auth.admin-credential.created", KEY_CREATED),
+        ("auth.provider-adapter-positive-auth.github-binding.created", GH_CREATED),
+        ("auth.provider-adapter-positive-auth.github-binding.verified", GH_VERIFIED),
+        ("auth.provider-adapter-positive-auth.corrective-cleanup-retirement.prepared", PREP_DIGEST),
+    ):
+        assert item in first_required
+
+    assert "Both must equal 0 before any retirement mutation may proceed" in steps[0]["expected_postcondition"]
+    assert "count.nonzero" in steps[0]["stop_conditions"]
+    assert "result.unavailable" in steps[0]["stop_conditions"]
+    assert "provider.mutation" in steps[0]["prohibited_actions"]
+    assert "provider.retry" in steps[0]["prohibited_actions"]
+    assert KEY_NAME in steps[1]["resource"]["resource_reference"]
+    assert GH_SECRET in steps[2]["resource"]["resource_reference"]
+    assert KEY_NAME in steps[3]["resource"]["resource_reference"]
+    assert GH_SECRET in steps[4]["resource"]["resource_reference"]
+
+    for forbidden in (
+        "implementation-handoff.execute", "session.issue", "token.issue", "token.refresh",
+        "logout.execute", "recovery-credential.generate", "positive-auth-continuation-v1.retry",
+    ):
+        assert forbidden in plan["prohibited_actions"]
+
+    assert progress == initial_progress(plan, S, PROGRESS_ID, CREATED_AT)
+    assert progress["progress_digest"] == PROGRESS_DIGEST == progress_digest(progress)
+    assert progress["overall_state"] == "NOT_STARTED"
+    assert all(
+        (x["authorization_state"], x["execution_state"], x["verification_state"], x["authorization_consumed"])
+        == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
+        for x in progress["step_states"]
+    )
+    assert not (B / (N + ".approval.json")).exists()
+    assert not (B / (N + ".execution-progress.json")).exists()
+    assert not list(B.glob(N + "-step*.evidence.json"))
+
+    cont = "development-implementation-handoff-provider-adapter-positive-auth-continuation-v1"
+    assert raw(B / (cont + ".plan.json")) == CONT_PLAN_RAW
+    assert raw(B / (cont + ".approval.json")) == CONT_APPROVAL_RAW
+    assert raw(B / (cont + "-step1-failure.evidence.json")) == CONT_FAILURE_RAW
+    assert raw(B / (cont + ".execution-progress.json")) == CONT_EXEC_RAW
+    stopped = load(cont + ".execution-progress.json")
+    assert stopped["overall_state"] == "STOPPED"
+    assert stopped["progress_digest"] == STOPPED_DIGEST
+    assert (
+        stopped["step_states"][0]["authorization_state"],
+        stopped["step_states"][0]["execution_state"],
+        stopped["step_states"][0]["verification_state"],
+        stopped["step_states"][0]["authorization_consumed"],
+    ) == ("CONSUMED", "FAILED", "FAIL", True)
+    assert all(x["authorization_state"] == "BLOCKED" for x in stopped["step_states"][1:])
+
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
+        ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json"
+    ))
+    for forbidden in ("sb_secret_", "Bearer eyJ", "service_role_key", '"access_token":', '"refresh_token":'):
+        assert forbidden not in rendered
+    assert re.search(r"postgres(?:ql)?://[^\s/:]+:[^\s/@]+@", rendered, re.I) is None
+
+    print(
+        "DEVELOPMENT provider-adapter positive-auth corrective cleanup/retirement v1: PASS "
+        "(READY_FOR_APPROVAL; pristine five-step boundary; zero-state required before retirement; "
+        "failed live-auth retry prohibited; no provider authority)"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

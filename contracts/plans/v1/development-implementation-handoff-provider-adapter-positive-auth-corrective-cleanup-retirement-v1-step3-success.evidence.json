@@ -1,0 +1,63 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "github",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "github_environment": "development",
+  "plan_id": "dfce4d99-3e6c-5c63-b3cc-be1cdbe24d26",
+  "plan_version": 1,
+  "plan_digest": "sha256:a16bd85523ba1b7f5d32be5baea851c474b8ad885b6e75a003e2901c25639e43",
+  "approval_id": "1e60f413-f385-53a0-a03f-ccbceb2fcb55",
+  "approval_digest": "sha256:144d51d1786baf662e21b1bc6bde41abe7040e0b5070c984d3ed3ec5cd8c432c",
+  "step_id": "development.implementation-handoff.provider-adapter-positive-auth-corrective-cleanup-retirement-v1.step.03.retire-github-secret-binding",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "EXACT_GITHUB_ENVIRONMENT_SECRET_BINDING_RETIRED",
+  "authorization_observation": {
+    "interaction_surface": "github.repository.settings.environments.development.secrets",
+    "repository": "AnonymousKoo/avuhz-infra",
+    "environment": "development",
+    "responsibility": "AUTH",
+    "approval_exact": true,
+    "authorization_window_execution_owner_confirmed": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "secret_value_observed": false
+  },
+  "authorization_observation_digest": "sha256:16582e6c75cfa36516494662f57f8e9470d188cf4a3eb843387a1f4e6fe7d8f1",
+  "sanitized_result": {
+    "repository": "AnonymousKoo/avuhz-infra",
+    "environment": "development",
+    "secret_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL",
+    "retired": true,
+    "secret_value_observed": false,
+    "other_secret_changed": false
+  },
+  "result_digest": "sha256:54c30896031fcbefe3613ae9a72acb4305189c39e41ea46acc28578c54e21e18",
+  "execution_observation": {
+    "execution_class": "PROVIDER_MUTATION",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_delete_attempts": 1,
+    "secret_value_read": false,
+    "other_secret_mutation_attempted": false,
+    "retry_occurred": false
+  },
+  "security_state": {
+    "secret_value_observed": false,
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "other_github_secret_changed": false,
+    "provider_key_changed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-10-04T18:02:46Z"
+}

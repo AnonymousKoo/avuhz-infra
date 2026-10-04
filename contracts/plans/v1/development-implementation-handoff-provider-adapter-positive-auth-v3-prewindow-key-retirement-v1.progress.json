@@ -1,0 +1,45 @@
+{
+  "progress_id": "a6685fa8-651e-57d3-9c65-f766ba4a41fa",
+  "plan_id": "2f0af2ef-f17b-544e-9be0-22498b3c628a",
+  "plan_version": 1,
+  "plan_digest": "sha256:4b70a82966dad56ca9ff4c9c680356dbfa6bba48a71acc3780655a84da15ff2b",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step.01.retire-prewindow-auth-admin-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step.02.verify-prewindow-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step.03.verify-github-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-04T20:31:26Z",
+  "progress_digest": "sha256:54e65db1c2a3a84b3c19d233072df1488eba1ca320610f9f6054c9a2ab46a1ae"
+}

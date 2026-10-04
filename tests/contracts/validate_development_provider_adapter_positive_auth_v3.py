@@ -47,6 +47,10 @@ CLEAN_ZERO = "sha256:5a4183d202fc94f948b25e9c60a59136e9b81687728bf02ecb116ceba25
 CLEAN_KEY_ABSENT = "sha256:338e9648389d857871c816d9e4ad5c814300c3a92de45671da77e2564274a60f"
 CLEAN_GH_ABSENT = "sha256:318709e7c83d2e701552b4daaa9769120ccade381c3aeaf179132489f9ff3de4"
 CLEAN_PROGRESS = "sha256:e48fe89e45b47e31b5439ccefe2240ab0edc3e9f2e377d10c2f799e617bc08a4"
+PREWINDOW_RETIREMENT_N = "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1"
+PREWINDOW_INCIDENT_DIGEST = "sha256:38bd6282b4da2453e100335b5666cb7edac65d8d91216b6e175315b7d99ac39a"
+PREWINDOW_RETIREMENT_PLAN_DIGEST = "sha256:4b70a82966dad56ca9ff4c9c680356dbfa6bba48a71acc3780655a84da15ff2b"
+PREWINDOW_RETIREMENT_PROGRESS_DIGEST = "sha256:54e65db1c2a3a84b3c19d233072df1488eba1ca320610f9f6054c9a2ab46a1ae"
 
 
 def load(name: str) -> dict:
@@ -92,6 +96,19 @@ def main() -> int:
     assert a["approval_digest"] == APPROVAL_DIGEST == approval_digest(a)
     assert not (B / (N + ".execution-progress.json")).exists()
     assert not list(B.glob(N + "-step*-*.evidence.json"))
+    prewindow_incident = load(PREWINDOW_RETIREMENT_N + "-incident.evidence.json")
+    prewindow_plan = load(PREWINDOW_RETIREMENT_N + ".plan.json")
+    prewindow_progress = load(PREWINDOW_RETIREMENT_N + ".progress.json")
+    assert prewindow_incident["evidence_digest"] == PREWINDOW_INCIDENT_DIGEST
+    assert prewindow_incident["authorization_assessment"]["v3_step1_recordable_as_authorized"] is False
+    assert prewindow_incident["authorization_assessment"]["v3_must_remain_blocked_until_retirement_complete"] is True
+    assert prewindow_plan["plan_digest"] == PREWINDOW_RETIREMENT_PLAN_DIGEST
+    assert prewindow_plan["definition_status"] == "READY_FOR_APPROVAL"
+    assert prewindow_plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+    assert prewindow_progress["progress_digest"] == PREWINDOW_RETIREMENT_PROGRESS_DIGEST
+    assert prewindow_progress["overall_state"] == "NOT_STARTED"
+    assert not (B / (PREWINDOW_RETIREMENT_N + ".approval.json")).exists()
+    assert not (B / (PREWINDOW_RETIREMENT_N + ".execution-progress.json")).exists()
 
     assert r["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
         {k: v for k, v in r.items() if k != "contract_digest"}
@@ -243,8 +260,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v3: PASS "
-        "(APPROVED; pristine; exact Step-4 SQL bound; fresh v3 credential lifecycle; "
-        "safe-code-only failure diagnostics; failed v1 continuation immutable; corrective cleanup complete; no provider execution)"
+        "(APPROVED / BLOCKED_BY_PREWINDOW_KEY; pristine execution progress; exact Step-4 SQL bound; "
+        "premature key creation is not recordable as authorized Step 1; fresh retirement v1 is required before any continuation)"
     )
     return 0
 

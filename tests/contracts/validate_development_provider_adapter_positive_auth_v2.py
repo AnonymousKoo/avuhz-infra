@@ -34,6 +34,9 @@ CORRECTIVE_RETIREMENT_DIGEST = "sha256:6013b08f1e11475d368a0a34c1d347d5d87d1a3ba
 STEP1_EVIDENCE_DIGEST = "sha256:1afa5a5b2129364ca63f458e63211b1aa2201f004c1acc131f90aa1cd15c4a42"
 STEP1_EXECUTION_PROGRESS_DIGEST = "sha256:078c4a661971ad36fba7039f59d63fc830c079a8c531da212b63192c3e4b4112"
 STEP1_RECORDED_AT = "2026-10-04T05:30:46Z"
+STEP2_EVIDENCE_DIGEST = "sha256:9cf39e54d31c6c861607df0750df4f80ae920040ebc15ae664c94d67ebc7a7dd"
+STEP2_EXECUTION_PROGRESS_DIGEST = "sha256:60a393bb7d85cdbd05d36f8fbbae63590964f191e52987f7ab8f6db4d6840b11"
+STEP2_RECORDED_AT = "2026-10-04T05:44:45Z"
 KEY_NAME = "impl_handoff_provider_adapter_positive_auth_v1_ephemeral"
 INVALID_OLD_KEY_NAME = "implementation-handoff-provider-adapter-positive-auth-v1-ephemeral"
 
@@ -54,6 +57,7 @@ def main() -> None:
     g = load(N + ".progress.json")
     a = load(N + ".approval.json")
     e1 = load(N + "-step01-success.evidence.json")
+    e2 = load(N + "-step02-success.evidence.json")
     x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
@@ -153,10 +157,20 @@ def main() -> None:
     assert e1["security_state"]["credential_value_committed"] is False
     assert raw(B / (N + "-step01-success.evidence.json")) == STEP1_EVIDENCE_DIGEST
 
-    assert x["record_version"] == 3
+    assert e2["evidence_type"] == "auth.provider-adapter-positive-auth.github-binding.created"
+    assert e2["repository"] == "AnonymousKoo/avuhz-infra"
+    assert e2["environment_reference"] == "development"
+    assert e2["sanitized_result"]["secret_name"] == "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL"
+    assert e2["credential_material_retained"] is False
+    assert e2["credential_material_digest_recorded"] is False
+    assert e2["security_state"]["credential_value_provided_to_agent"] is False
+    assert e2["security_state"]["credential_value_committed"] is False
+    assert raw(B / (N + "-step02-success.evidence.json")) == STEP2_EVIDENCE_DIGEST
+
+    assert x["record_version"] == 5
     assert x["overall_state"] == "IN_PROGRESS"
-    assert x["updated_at"] == STEP1_RECORDED_AT
-    assert x["progress_digest"] == STEP1_EXECUTION_PROGRESS_DIGEST
+    assert x["updated_at"] == STEP2_RECORDED_AT
+    assert x["progress_digest"] == STEP2_EXECUTION_PROGRESS_DIGEST
     step1 = x["step_states"][0]
     assert (
         step1["authorization_state"],
@@ -169,13 +183,26 @@ def main() -> None:
     assert step1["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
     assert len(step1["binding_assertions"]) == 1
     assert step1["binding_assertions"][0]["value_digest"] == RESOURCE_DIGEST
+    step2 = x["step_states"][1]
+    assert (
+        step2["authorization_state"],
+        step2["execution_state"],
+        step2["verification_state"],
+        step2["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert step2["safe_error_code"] is None
+    assert len(step2["evidence"]) == 1
+    assert step2["evidence"][0]["evidence_digest"] == STEP2_EVIDENCE_DIGEST
+    assert len(step2["binding_assertions"]) == 2
+    assert {a["phase"] for a in step2["binding_assertions"]} == {"DERIVED_FROM_SOURCE_STEP", "PRODUCED_BY_CURRENT_STEP"}
+    assert all(a["value_digest"] == RESOURCE_DIGEST for a in step2["binding_assertions"])
     assert all(
         state["authorization_state"] == "PENDING"
         and state["execution_state"] == "NOT_STARTED"
         and state["verification_state"] == "NOT_STARTED"
         and state["authorization_consumed"] is False
         and not state["evidence"]
-        for state in x["step_states"][1:]
+        for state in x["step_states"][2:]
     )
 
     rendered = "".join(
@@ -188,6 +215,7 @@ def main() -> None:
             ".progress.json",
             ".approval.json",
             "-step01-success.evidence.json",
+            "-step02-success.evidence.json",
             ".execution-progress.json",
         )
     )
@@ -206,8 +234,8 @@ def main() -> None:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v2: PASS "
-        "(APPROVED; Step 1 CONSUMED/SUCCEEDED/PASS; exact key reference only; "
-        "credential material never retained; Step 2 pending)"
+        "(APPROVED; Steps 1-2 CONSUMED/SUCCEEDED/PASS; exact GitHub development binding present by name; "
+        "credential material never retained; Step 3 pending)"
     )
 
 

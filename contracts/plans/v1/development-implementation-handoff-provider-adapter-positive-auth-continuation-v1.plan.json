@@ -1,0 +1,939 @@
+{
+  "plan_id": "2ae4014b-99da-52c4-a5ce-2707245a8971",
+  "plan_version": 1,
+  "plan_digest": "sha256:256693b1f188441e288ec29b861b3b1b144acc57324eca922736a2f3ce584994",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-04T13:49:57Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-04T16:00:00Z",
+    "expires_at": "2026-10-04T20:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.01.authenticate-live-and-logout-global",
+    "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.02.verify-zero-session-refresh-state",
+    "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.03.retire-fresh-auth-admin-key",
+    "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.04.retire-github-secret-binding",
+    "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.05.verify-fresh-auth-admin-key-absent",
+    "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.06.verify-github-secret-binding-absent"
+  ],
+  "steps": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.01.authenticate-live-and-logout-global",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "auth.provider-adapter-positive-auth-lifecycle",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:provider-adapter-positive-auth-continuation-v1-live-lifecycle",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-continuation.v1",
+        "exact_digest": "sha256:adc0c8b7f220135f858040c473a40ce52583f919e98ba250744b914b735aaa6e"
+      },
+      "operation": "provider.auth-session.provider-adapter-recover-validate-live-probe-and-logout-global",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth-v2.step4-correction.counts-verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:29b5a66afbae1a36ef4893917d8c7ccbe43537c04523111380884e6c26892fa9"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:d12057f621c8ee3b7d0d998a0b8d1865467e84dd796511558ee510d4d09636e6"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:656af77ba698ebaf159b0ce812f627e4a54e26472fd0ba69d0bdf97f52ed4060"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:1afa5a5b2129364ca63f458e63211b1aa2201f004c1acc131f90aa1cd15c4a42"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:9cf39e54d31c6c861607df0750df4f80ae920040ebc15ae664c94d67ebc7a7dd"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5"
+        },
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325"
+        },
+        {
+          "evidence_type": "runtime.render.post-deploy-runtime.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:f49f6882f2e6ec0274935137a52c7b7c942bfbe0bc72baebca143a90aedc5345"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth-continuation.prepared",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:490e82d0bd9aa847607b86e0f9b9097c486487265c3725af35fe5b977284f93b"
+        }
+      ],
+      "expected_postcondition": "Consume the completed correction-v2 aggregate evidence while original v2 Step 4 remains pending. Using only the existing dedicated Auth-admin binding in GitHub Actions memory, issue one temporary recovery session, validate the bound JWT and provider-adapter policy, require the live /v1/queries probe to return 400 invalid_query, then request global logout once. No handoff or retry. Any failure or unverified logout stops normal progression and requires fresh corrective cleanup/retirement authority.",
+      "prohibited_actions": [
+        "additional.session.issue",
+        "allowlist.modify",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "credential.rotate",
+        "data.operation",
+        "github-secret.mutate",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "password.modify",
+        "production.target",
+        "provider-key.mutate",
+        "provider.retry",
+        "raw-provider-payload.persist",
+        "raw-provider-subject.persist",
+        "render.mutation",
+        "session.persist",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue.additional",
+        "token.persist",
+        "token.refresh"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "credential.unavailable",
+        "recovery-generation.failed",
+        "recovery-verification.failed",
+        "jwt.policy-mismatch",
+        "live-auth-probe.not-400-invalid-query",
+        "global-logout.failed",
+        "scope.drift",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "SUPABASE_AUTH_ADMIN_EPHEMERAL"
+        ],
+        "values_stored": false,
+        "ephemeral_handling": {
+          "material_source": "APPROVED_ENVIRONMENT_SECRET_BOUNDARY",
+          "material_residency": "SERVER_EXECUTOR_MEMORY_ONLY",
+          "control_plane_visibility": "CLASS_LABEL_ONLY",
+          "material_digest": "PROHIBITED",
+          "persistence": "PROHIBITED",
+          "logging": "PROHIBITED",
+          "return_policy": "PROHIBITED",
+          "proof_policy": "NON_SECRET_EXECUTOR_CAPABILITY_ATTESTATION"
+        }
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.admin-executor-capability",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.admin-executor-capability.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.live-auth-result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.live-verified-logout-accepted",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.original-v2-plan-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:03cb244d3ee92cde2e279c27f74a6d6ac36d22ed83d988e5c06bcd5ebd320edd",
+            "exact_digest": "sha256:ffdb18b94d82dc169ea02a583dc82daf1e41e815aaad726f053c2cfb986e3210"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.original-v2-approval-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:faf96f4b6bac4e62fa96f7739c5e47959eed9f29a6ee0f5a5d4b629210ea5f10",
+            "exact_digest": "sha256:16e24bfb06d5f6e91727c45520569c5ca28e55c9f36ab732a2981053322f8cb4"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.original-v2-execution-progress-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:656af77ba698ebaf159b0ce812f627e4a54e26472fd0ba69d0bdf97f52ed4060",
+            "exact_digest": "sha256:b2d7aca806ede33dff7bb1b8327ccc560f245ffd480195c4871f8e19cd8fc02f"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.original-v2-step1-evidence-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:1afa5a5b2129364ca63f458e63211b1aa2201f004c1acc131f90aa1cd15c4a42",
+            "exact_digest": "sha256:5c3a71be8f40cbba5274d363a627ae17a2d2f1019f64a4ae9d32a044a6a9e1fa"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.original-v2-step2-evidence-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:9cf39e54d31c6c861607df0750df4f80ae920040ebc15ae664c94d67ebc7a7dd",
+            "exact_digest": "sha256:efdce054e42789f6fa3ad84ba1cf78e1bed0aa6acae2a29894bc72563ba3ced2"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.original-v2-step3-evidence-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5",
+            "exact_digest": "sha256:7479aa0c4b5fe0696f3dff8879240f3b6dbbbb61f29e3bb6183bea5e52739955"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.correction-v2-plan-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:d82b740665733e825d28c980c5753e6eb38970690167fc785298cc6d0e09fc2b",
+            "exact_digest": "sha256:bef2b2633a329bffd7bebaef3083b2e91a50ead5737f50fae52634c2b485bea5"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.correction-v2-approval-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:6c19f7b444f1824ad6e53be2987f22efc3aabc3e44c272816ed49ade882f15ca",
+            "exact_digest": "sha256:7e964da450d1dc925b5555ff296ecc4dc27b71fb89a54cff0273203295703cdc"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.correction-v2-success-evidence-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:29b5a66afbae1a36ef4893917d8c7ccbe43537c04523111380884e6c26892fa9",
+            "exact_digest": "sha256:eac52382ffc1a4b4d59b962d06f9056c1a97ba350985ceb31da64e4f0b331a1c"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.correction-v2-execution-progress-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:d12057f621c8ee3b7d0d998a0b8d1865467e84dd796511558ee510d4d09636e6",
+            "exact_digest": "sha256:6e8f1f9d25412a790759c330616380f9a63b79ee1fcf2c33a23682d21be252d7"
+          }
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.preparation-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:490e82d0bd9aa847607b86e0f9b9097c486487265c3725af35fe5b977284f93b",
+            "exact_digest": "sha256:a03595f415984443232151accb2d1ee7727936046b6ab4da2d8a4e2b1b9befa5"
+          }
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.live-verified-logout-accepted",
+          "established_binding_ids": [
+            "binding.development.provider-adapter-positive-auth-continuation-v1.live-auth-result"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.02.verify-zero-session-refresh-state",
+      "ordinal": 2,
+      "resource": {
+        "resource_type": "auth.session-refresh-zero-verification",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:provider-adapter-positive-auth-continuation-v1-session-refresh-zero-verification",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-continuation.v1",
+        "exact_digest": "sha256:adc0c8b7f220135f858040c473a40ce52583f919e98ba250744b914b735aaa6e"
+      },
+      "operation": "provider.auth-session-state.inspect-read-only",
+      "dependency_step_ids": [
+        "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.01.authenticate-live-and-logout-global"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.live-verified-logout-accepted",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.01.authenticate-live-and-logout-global",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "In one owner-interactive DEVELOPMENT AUTH SQL Editor read, execute exactly the resource-bound aggregate query once and return only session_count and refresh_token_count. Both must equal 0. Nonzero, malformed, missing, extra, unavailable, or ambiguous output stops normal progression and requires fresh corrective cleanup/retirement authority. No raw rows, identifiers, PII, mutation, extra SQL, or retry.",
+      "prohibited_actions": [
+        "additional.sql.execute",
+        "allowlist.modify",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "data.operation",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "password.modify",
+        "production.target",
+        "provider.mutation",
+        "raw-provider-payload.persist",
+        "raw-provider-subject.persist",
+        "raw-row.read",
+        "render.mutation",
+        "session.issue",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.refresh"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "count.invalid",
+        "result-fields.mismatch",
+        "raw-row.returned",
+        "sql.text.mismatch",
+        "unexpected.provider-effect"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.live-auth-result",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.01.authenticate-live-and-logout-global",
+          "evidence_type": "auth.provider-adapter-positive-auth.live-verified-logout-accepted",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.cleanup-verified",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.cleanup.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.step2-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.cleanup.verified",
+          "established_binding_ids": [
+            "binding.development.provider-adapter-positive-auth-continuation-v1.cleanup-verified"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.03.retire-fresh-auth-admin-key",
+      "ordinal": 3,
+      "resource": {
+        "resource_type": "auth.admin-credential",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v1_ephemeral",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-continuation.v1",
+        "exact_digest": "sha256:adc0c8b7f220135f858040c473a40ce52583f919e98ba250744b914b735aaa6e"
+      },
+      "operation": "provider.auth-admin-credential.delete-dedicated-secret-key",
+      "dependency_step_ids": [
+        "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.02.verify-zero-session-refresh-state"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.cleanup.verified",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.02.verify-zero-session-refresh-state",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Using only the resource-bound owner-interactive DEVELOPMENT AUTH surface, delete exactly the existing impl_handoff_provider_adapter_positive_auth_v1_ephemeral key by name. Do not reveal, copy, export, log, hash, rotate, recreate, or return its material. Delete no other key. Record only a sanitized name-only outcome.",
+      "prohibited_actions": [
+        "allowlist.modify",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "credential.rotate",
+        "data.operation",
+        "github-secret.mutate",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "password.modify",
+        "production.target",
+        "provider-key.other.delete",
+        "raw-provider-payload.persist",
+        "raw-provider-subject.persist",
+        "render.mutation",
+        "session.issue",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.refresh"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "key-name.mismatch",
+        "credential-material.visible",
+        "multiple-matching-keys",
+        "other-key-change-requested",
+        "outcome.ambiguous"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.cleanup-verified",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.02.verify-zero-session-refresh-state",
+          "evidence_type": "auth.provider-adapter-positive-auth.cleanup.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.fresh-key-retired",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.step3-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "established_binding_ids": [
+            "binding.development.provider-adapter-positive-auth-continuation-v1.fresh-key-retired"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.04.retire-github-secret-binding",
+      "ordinal": 4,
+      "resource": {
+        "resource_type": "github.environment-secret-binding",
+        "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-continuation.v1",
+        "exact_digest": "sha256:adc0c8b7f220135f858040c473a40ce52583f919e98ba250744b914b735aaa6e"
+      },
+      "operation": "provider.auth-secret-binding.delete-github-environment-reference",
+      "dependency_step_ids": [
+        "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.03.retire-fresh-auth-admin-key"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.03.retire-fresh-auth-admin-key",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Using only the resource-bound GitHub repository environment surface, delete exactly AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL from environment development by name. Do not read its value or change any other secret. Record only a sanitized name-only outcome.",
+      "prohibited_actions": [
+        "allowlist.modify",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "data.operation",
+        "github-secret.other.delete",
+        "github-secret.other.mutate",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "password.modify",
+        "production.target",
+        "provider-key.mutate",
+        "raw-provider-payload.persist",
+        "raw-provider-subject.persist",
+        "render.mutation",
+        "session.issue",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.refresh"
+      ],
+      "stop_conditions": [
+        "environment.mismatch",
+        "repository.mismatch",
+        "secret-name.mismatch",
+        "secret-value.requested",
+        "other-secret.change-requested"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.fresh-key-retired",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.03.retire-fresh-auth-admin-key",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.github-binding-retired",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.step4-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "established_binding_ids": [
+            "binding.development.provider-adapter-positive-auth-continuation-v1.github-binding-retired"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.05.verify-fresh-auth-admin-key-absent",
+      "ordinal": 5,
+      "resource": {
+        "resource_type": "auth.admin-credential-reference",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v1_ephemeral",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-continuation.v1",
+        "exact_digest": "sha256:adc0c8b7f220135f858040c473a40ce52583f919e98ba250744b914b735aaa6e"
+      },
+      "operation": "provider.auth-admin-credential.verify-dedicated-secret-key-absent",
+      "dependency_step_ids": [
+        "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.04.retire-github-secret-binding"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.04.retire-github-secret-binding",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.03.retire-fresh-auth-admin-key",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Using only the resource-bound owner-interactive DEVELOPMENT AUTH names-only surface, independently prove impl_handoff_provider_adapter_positive_auth_v1_ephemeral is absent. Do not reveal key material or make any provider mutation. Ambiguous or present state stops progression without retry.",
+      "prohibited_actions": [
+        "allowlist.modify",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "data.operation",
+        "github-secret.mutate",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "password.modify",
+        "production.target",
+        "provider.mutation",
+        "raw-provider-payload.persist",
+        "raw-provider-subject.persist",
+        "render.mutation",
+        "session.issue",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.refresh"
+      ],
+      "stop_conditions": [
+        "project.mismatch",
+        "key-reference.present",
+        "credential-material.visible",
+        "verification.ambiguous"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.github-binding-retired",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.04.retire-github-secret-binding",
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.fresh-key-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.step5-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "established_binding_ids": [
+            "binding.development.provider-adapter-positive-auth-continuation-v1.fresh-key-absence"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.06.verify-github-secret-binding-absent",
+      "ordinal": 6,
+      "resource": {
+        "resource_type": "github.environment-secret-binding-reference",
+        "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-continuation.v1",
+        "exact_digest": "sha256:adc0c8b7f220135f858040c473a40ce52583f919e98ba250744b914b735aaa6e"
+      },
+      "operation": "provider.auth-secret-binding.verify-github-environment-reference-absent",
+      "dependency_step_ids": [
+        "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.05.verify-fresh-auth-admin-key-absent"
+      ],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.05.verify-fresh-auth-admin-key-absent",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.04.retire-github-secret-binding",
+          "binding_state": "DERIVED_FROM_SOURCE_STEP",
+          "exact_digest": null
+        }
+      ],
+      "expected_postcondition": "Using only the resource-bound GitHub environment names-only surface, independently prove AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL is absent from environment development. Do not request a value or mutate any secret. Ambiguous or present state stops without retry.",
+      "prohibited_actions": [
+        "allowlist.modify",
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "data.operation",
+        "github-secret.mutate",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "password.modify",
+        "production.target",
+        "provider-key.mutate",
+        "provider.mutation",
+        "raw-provider-payload.persist",
+        "raw-provider-subject.persist",
+        "render.mutation",
+        "session.issue",
+        "staging.target",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.refresh"
+      ],
+      "stop_conditions": [
+        "environment.mismatch",
+        "repository.mismatch",
+        "secret-reference.present",
+        "secret-value.requested",
+        "verification.ambiguous"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.fresh-key-absence",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-continuation-v1.step.05.verify-fresh-auth-admin-key-absent",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.github-binding-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.absence-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-continuation-v1.step6-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.absence-verified",
+          "established_binding_ids": [
+            "binding.development.provider-adapter-positive-auth-continuation-v1.github-binding-absence"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "credential.persist",
+    "credential.expose",
+    "credential.log",
+    "credential.return",
+    "credential.digest",
+    "credential.copy",
+    "credential.create",
+    "credential.rotate",
+    "credential.export",
+    "data.operation",
+    "implementation-handoff.execute",
+    "n8n.operation",
+    "production.target",
+    "raw-provider-subject.persist",
+    "render.mutation",
+    "staging.target",
+    "token.refresh",
+    "billing.operation",
+    "identity.create",
+    "identity.delete",
+    "positive-auth-v2.progress.advance",
+    "positive-auth-v2.step4.mark-success",
+    "provider.retry"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift",
+    "unexpected.provider-effect",
+    "outcome.ambiguous",
+    "workflow.interrupted",
+    "cleanup.state-unverified",
+    "retirement.unverified"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

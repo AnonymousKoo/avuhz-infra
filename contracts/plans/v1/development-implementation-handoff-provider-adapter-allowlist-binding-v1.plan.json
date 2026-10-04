@@ -1,0 +1,287 @@
+{
+  "plan_id": "cce4289e-d441-40f3-8d46-196355d093bc",
+  "plan_version": 1,
+  "plan_digest": "sha256:7852e2c59abe083986d7e7add98e2f350460d76cf448aa9bb47b88603ad876fe",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-04T02:00:26Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-04T02:15:00Z",
+    "expires_at": "2026-10-04T04:30:00Z"
+  },
+  "ordered_step_ids": [
+    "development.implementation-handoff.provider-adapter-allowlist-binding-v1.step.01.activate-exact-server-policy-entry"
+  ],
+  "steps": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-allowlist-binding-v1.step.01.activate-exact-server-policy-entry",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "server.capability-policy-entry",
+        "resource_reference": "policy.development.provider-adapter.implementation-handoff",
+        "binding_state": "BOUND",
+        "exact_version": "allowlist-binding.v1",
+        "exact_digest": "sha256:30b1b24646e2934bafafdf0bb574fda2a269af53dd5fce668ecdbdf89c2ea553"
+      },
+      "operation": "local.capability-policy.activate-provider-adapter-exact-entry",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "server.provider-adapter-allowlist-binding-v1.preparation.observed",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:221ad2d264c64a4d89ade5171d76a60d342cdd49100ffc7adaeebbd40348b120"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-passwordless-state.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:26a90c35357ac14b23d1b7f17e18762e958248462d53aed168985dba249cbb10"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-tenant-metadata.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:42a33b97e8ab5c8fd9c7972d5d4a9cad57d06135ea9a05952ed6f669026c3936"
+        },
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba"
+        }
+      ],
+      "expected_postcondition": "Only src/avuhz_service/development_supabase_identity.py changes to the exact target digest. The existing HUMAN / engagement:read entry remains unchanged. Exactly one PROVIDER_ADAPTER entry is added for provider-adapter.implementation-handoff-development, tenant 1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0, with only implementation_handoff:accept and empty authority roles. Tests pass; no provider, credential, DATA, Render/deploy, n8n, staging, or production action occurs.",
+      "prohibited_actions": [
+        "batch.mutation",
+        "provider.read",
+        "provider.mutation",
+        "credential.use",
+        "credential.create",
+        "credential.persist",
+        "credential.expose",
+        "identity.create",
+        "identity.delete",
+        "identity.recreate",
+        "tenant-metadata.bind",
+        "user-metadata.read",
+        "user-metadata.bind",
+        "hook.modify",
+        "token.issue",
+        "session.issue",
+        "capability.wildcard",
+        "capability.add-extra",
+        "authority-role.add",
+        "caller-authority.trust",
+        "human-policy.modify",
+        "raw-provider-subject.persist",
+        "cross-environment.bind",
+        "data.operation",
+        "render.operation",
+        "render.deployment",
+        "n8n.operation",
+        "staging.target",
+        "production.target"
+      ],
+      "stop_conditions": [
+        "scope.drift",
+        "target.drift",
+        "evidence.missing",
+        "authorization.unbound",
+        "current-source-digest.mismatch",
+        "target-source-digest.mismatch",
+        "target-policy-digest.mismatch",
+        "existing-human-policy.mismatch",
+        "provider-adapter-policy.mismatch",
+        "tenant.mismatch",
+        "principal-reference.mismatch",
+        "subject-digest.mismatch",
+        "capability.mismatch",
+        "provider-contact.requested",
+        "credential.requested",
+        "tests.failed"
+      ],
+      "correction_reference": "correction.local-policy-revision-no-provider-contact",
+      "execution_class": "LOCAL_ONLY",
+      "credential_policy": {
+        "permitted": false,
+        "allowed_classes": [
+          "NONE"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.preparation",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:221ad2d264c64a4d89ade5171d76a60d342cdd49100ffc7adaeebbd40348b120",
+            "exact_digest": "sha256:5734c0575ccd1e57a30900c8952175de3f0c3df06d8cce1e40ef249879170b4e"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.subject-digest",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a",
+            "exact_digest": "sha256:9921368d6f86700bae032bf35bef2782e04715f15127dcf49457708d0f61e5c5"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.canonical-tenant",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "UUID_IDENTIFIER",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+            "exact_digest": "sha256:49e84286f672440b033fef648e8efd8cd0be5a3e4697bb19fbfab360e8e51748"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.principal-reference",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "STABLE_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "SANITIZED_VALUE_ALLOWED",
+          "preapproval_value": {
+            "value": "provider-adapter.implementation-handoff-development",
+            "exact_digest": "sha256:fa48278642ec87e6eda118714df5288fcc617951feac85bc765b7403e6a8e83b"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.current-source",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:17894ed10e4faa26616b8843df96f10a3e65de77fc6c5d85007970ceabd4a367",
+            "exact_digest": "sha256:a4091721526cf0fc40a00271ac6c8ab6ce793fd5be6cdbe2ad58b3aa26908e70"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.target-source",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:bbdf9c44c683118adedd42645bfb6b3c40617bbe8e402ce4bb65b20a7b1f6189",
+            "exact_digest": "sha256:e538c60e7655d83d1ce2f65b085995cdd9140062b34d8368e641a19d752181d9"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.target-policy",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": null,
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:7ed1565c16e150b4495509de36f98150f4f70b3898323789e306f2d5c831ce36",
+            "exact_digest": "sha256:cd2aee37e4edab000aade87a97a71402c1ee6c9d3a8614dffc986fe089f40673"
+          }
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.server-capability-policy",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "server.capability-policy.verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "established_binding_ids": [
+            "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.server-capability-policy"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "batch.mutation",
+    "provider.read",
+    "provider.mutation",
+    "credential.use",
+    "credential.create",
+    "credential.persist",
+    "credential.expose",
+    "identity.create",
+    "identity.delete",
+    "identity.recreate",
+    "tenant-metadata.bind",
+    "user-metadata.read",
+    "user-metadata.bind",
+    "hook.modify",
+    "token.issue",
+    "session.issue",
+    "capability.wildcard",
+    "capability.add-extra",
+    "authority-role.add",
+    "caller-authority.trust",
+    "human-policy.modify",
+    "raw-provider-subject.persist",
+    "cross-environment.bind",
+    "data.operation",
+    "render.operation",
+    "render.deployment",
+    "n8n.operation",
+    "staging.target",
+    "production.target"
+  ],
+  "stop_conditions": [
+    "scope.drift",
+    "target.drift",
+    "evidence.missing",
+    "authorization.unbound",
+    "current-source-digest.mismatch",
+    "target-source-digest.mismatch",
+    "target-policy-digest.mismatch",
+    "existing-human-policy.mismatch",
+    "provider-adapter-policy.mismatch",
+    "tenant.mismatch",
+    "principal-reference.mismatch",
+    "subject-digest.mismatch",
+    "capability.mismatch",
+    "provider-contact.requested",
+    "credential.requested",
+    "tests.failed"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

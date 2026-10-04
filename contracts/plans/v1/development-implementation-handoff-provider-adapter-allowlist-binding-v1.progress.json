@@ -1,0 +1,23 @@
+{
+  "progress_id": "9934545c-77ee-4218-aace-6a23bc3ce9c3",
+  "plan_id": "cce4289e-d441-40f3-8d46-196355d093bc",
+  "plan_version": 1,
+  "plan_digest": "sha256:7852e2c59abe083986d7e7add98e2f350460d76cf448aa9bb47b88603ad876fe",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-allowlist-binding-v1.step.01.activate-exact-server-policy-entry",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-04T02:00:26Z",
+  "progress_digest": "sha256:2b0204b13f6d6a4cd257417b31c83cf5d6b323a6d95ea0e7078df5132dd21fc7"
+}

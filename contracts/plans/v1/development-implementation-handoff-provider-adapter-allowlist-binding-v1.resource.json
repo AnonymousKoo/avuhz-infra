@@ -1,0 +1,61 @@
+{
+  "contract_version": "v1",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+  "service_audience": "audience.avuhz.command-service.development",
+  "source_path": "src/avuhz_service/development_supabase_identity.py",
+  "current_source_digest": "sha256:17894ed10e4faa26616b8843df96f10a3e65de77fc6c5d85007970ceabd4a367",
+  "target_source_digest": "sha256:bbdf9c44c683118adedd42645bfb6b3c40617bbe8e402ce4bb65b20a7b1f6189",
+  "provider_subject_digest": "sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a",
+  "canonical_tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+  "principal_reference": "provider-adapter.implementation-handoff-development",
+  "caller_type": "PROVIDER_ADAPTER",
+  "capabilities": [
+    "implementation_handoff:accept"
+  ],
+  "authority_roles": [],
+  "existing_policy": {
+    "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience": "audience.avuhz.command-service.development",
+    "subject_digest": "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5",
+    "principal_reference": "subject.development-synthetic-user",
+    "tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+    "caller_type": "HUMAN",
+    "capabilities": [
+      "engagement:read"
+    ],
+    "authority_roles": []
+  },
+  "provider_adapter_policy": {
+    "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience": "audience.avuhz.command-service.development",
+    "subject_digest": "sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a",
+    "principal_reference": "provider-adapter.implementation-handoff-development",
+    "tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+    "caller_type": "PROVIDER_ADAPTER",
+    "capabilities": [
+      "implementation_handoff:accept"
+    ],
+    "authority_roles": []
+  },
+  "target_policy_digest": "sha256:7ed1565c16e150b4495509de36f98150f4f70b3898323789e306f2d5c831ce36",
+  "authorized_source_before": "# Active DEVELOPMENT policy remains exactly the historical one-entry HUMAN/read-only\n# allowlist until a separately authorized provider-adapter identity is bound.\nDEVELOPMENT_IDENTITY_ALLOWLIST = DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST",
+  "authorized_source_after": "DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_POLICY_DIGEST = \"sha256:e82ca947658c1366e468ff9b0d069f148c175c3b1f7b896c8bb5683ecb9ce483\"\nDEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_ENTRY = DevelopmentIdentityAllowlistEntry(\n    subject_digest=\"sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a\",\n    principal_reference=\"provider-adapter.implementation-handoff-development\",\n    tenant_id=\"1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0\",\n    caller_type=_PROVIDER_ADAPTER_CALLER_TYPE,\n    capabilities=_PROVIDER_ADAPTER_CAPABILITIES,\n)\nDEVELOPMENT_IDENTITY_ALLOWLIST = (\n    *DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,\n    DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_ENTRY,\n)",
+  "required_identity_creation_evidence_digest": "sha256:27223a97cdb9943ddff839826f035d4db883a78c3531ab6575a649fec87a028d",
+  "required_passwordless_evidence_digest": "sha256:26a90c35357ac14b23d1b7f17e18762e958248462d53aed168985dba249cbb10",
+  "required_tenant_verification_evidence_digest": "sha256:42a33b97e8ab5c8fd9c7972d5d4a9cad57d06135ea9a05952ed6f669026c3936",
+  "required_existing_allowlist_evidence_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba",
+  "target_entry_count": 2,
+  "provider_contact_authorized": false,
+  "credential_use_authorized": false,
+  "provider_mutation_authorized": false,
+  "render_deployment_authorized": false,
+  "data_operation_authorized": false,
+  "n8n_operation_authorized": false,
+  "staging_authorized": false,
+  "production_authorized": false,
+  "contract_digest": "sha256:30b1b24646e2934bafafdf0bb574fda2a269af53dd5fce668ecdbdf89c2ea553"
+}

@@ -53,7 +53,10 @@ STEP1_RECORDED_AT = '2026-10-04T23:10:20Z'
 STEP1_EVIDENCE_DIGEST = 'sha256:69cfb113f70f7e87ac681c7c0123dc338808f129a9f2fe534661b98805796302'
 STEP1_AUTHORIZATION_DIGEST = 'sha256:08285ad0e00ea50fe36dec45db8eb61b9ca9792a976a1e9fe09246f78e8f08f1'
 STEP1_RESULT_DIGEST = 'sha256:9017a727b7bebe151e0c7a23492201a7f3127c74ede0c691022fbfb393098378'
-EXECUTION_PROGRESS_DIGEST = 'sha256:16a6dff912571af47cff95c57218ed31b53014bb82c0c6d8bc999eb8ee35d554'
+EXECUTION_PROGRESS_DIGEST = 'sha256:89597fb31105b2398295ba8c0be4534c7de80e7813b673e108db83a57a301c9c'
+STEP4_RECORDED_AT = '2026-10-04T23:51:42Z'
+STEP4_EVIDENCE_DIGEST = 'sha256:15548bdd48fa9df3f78b2a8b84888c3b191fcd510c07c50db0ce64fded5ae6d3'
+STEP4_RESULT_DIGEST = 'sha256:9cdd1a5df610cc4e193da53e03a74b108a0ebb0875cb16dc82bf6320516d846e'
 STEP3_RECORDED_AT = '2026-10-04T23:31:35Z'
 STEP3_EVIDENCE_DIGEST = 'sha256:b32dba957f080e4f0df22d3dd572afd2e2172c0f63c157f1a8328ca11a9aea0d'
 STEP3_AUTHORIZATION_DIGEST = 'sha256:3363c1267d54552f2639006ab032148c1f806edd9d198c9f19f96935ca5cd1fa'
@@ -83,6 +86,7 @@ def main() -> int:
     step1 = load(N + '-step01-success.evidence.json')
     step2 = load(N + '-step02-success.evidence.json')
     step3 = load(N + '-step03-success.evidence.json')
+    step4_drift = load(N + '-step04-scope-drift.evidence.json')
     execution = load(N + '.execution-progress.json')
 
     validate_plan(p, S)
@@ -108,8 +112,8 @@ def main() -> int:
     assert APPROVED_AT < WINDOW_START
     assert raw(B / (N + '-step01-success.evidence.json')) == STEP1_EVIDENCE_DIGEST
     assert execution['progress_digest'] == EXECUTION_PROGRESS_DIGEST == progress_digest(execution)
-    assert execution['overall_state'] == 'IN_PROGRESS'
-    assert execution['updated_at'] == STEP3_RECORDED_AT
+    assert execution['overall_state'] == 'STOPPED'
+    assert execution['updated_at'] == STEP4_RECORDED_AT
 
     assert r['contract_digest'] == RESOURCE_DIGEST == canonical_digest({k:v for k,v in r.items() if k != 'contract_digest'})
     assert r['resource_version'] == 'provider-adapter-positive-auth.v4' and r['boundary'] == N
@@ -298,14 +302,45 @@ def main() -> int:
     assert e3['binding_assertions'][0]['evidence_digest'] == STEP2_EVIDENCE_DIGEST and e3['binding_assertions'][0]['value_digest'] == STEP2_RESULT_DIGEST
     assert e3['binding_assertions'][1]['binding_id'] == 'binding.development.provider-adapter-positive-auth-v4.github-binding-verified'
     assert e3['binding_assertions'][1]['evidence_digest'] == STEP3_EVIDENCE_DIGEST and e3['binding_assertions'][1]['value_digest'] == STEP3_RESULT_DIGEST
-    assert all((x['authorization_state'],x['execution_state'],x['verification_state'],x['authorization_consumed']) == ('PENDING','NOT_STARTED','NOT_STARTED',False) for x in execution['step_states'][3:])
+    assert raw(B / (N + '-step04-scope-drift.evidence.json')) == STEP4_EVIDENCE_DIGEST
+    assert step4_drift['evidence_type'] == 'auth.provider-adapter-positive-auth.preflight.verified'
+    assert step4_drift['provider_reference'] == 'supabase' and step4_drift['project_reference'] == PROJECT
+    assert step4_drift['plan_id'] == PLAN_ID and step4_drift['plan_version'] == 4 and step4_drift['plan_digest'] == PLAN_DIGEST
+    assert step4_drift['approval_id'] == APPROVAL_ID and step4_drift['approval_digest'] == APPROVAL_DIGEST
+    assert step4_drift['step_id'] == p['steps'][3]['step_id'] and step4_drift['attempt'] == 1
+    assert step4_drift['outcome'] == 'FAILED_SCOPE_DRIFT' and step4_drift['safe_error_code'] == 'AUTHORITY_INVALID'
+    assert step4_drift['classification'] == 'PROVIDER_ADAPTER_POSITIVE_AUTH_V4_PREFLIGHT_INTERACTION_SURFACE_SCOPE_DRIFT'
+    assert step4_drift['authorized_contract']['interaction_surface'] == 'supabase.dashboard.sql-editor'
+    assert step4_drift['authorized_contract']['credential_class'] == 'OWNER_INTERACTIVE_SESSION'
+    assert step4_drift['authorized_contract']['query_sha256'] == QUERY_DIGEST
+    assert step4_drift['actual_execution']['interaction_surface'] == 'supabase.mcp.execute_sql'
+    assert step4_drift['actual_execution']['query_count'] == 1 and step4_drift['actual_execution']['query_text_exact'] is True and step4_drift['actual_execution']['query_sha256_exact'] is True
+    assert step4_drift['actual_execution']['aggregate_only'] is True and step4_drift['actual_execution']['counts_match_expected'] is True
+    assert step4_drift['actual_execution']['raw_auth_rows_returned'] is False and step4_drift['actual_execution']['provider_mutation_attempted'] is False
+    assert step4_drift['actual_execution']['additional_sql_attempted'] is False and step4_drift['actual_execution']['retry_occurred'] is False
+    assert step4_drift['actual_execution']['credential_class_certified_as_owner_interactive_session'] is False
+    assert step4_drift['sanitized_result']['counts'] == pre['expected_result']
+    assert step4_drift['sanitized_result']['interaction_surface_match'] is False
+    assert step4_drift['sanitized_result']['preflight_certified'] is False
+    assert step4_drift['result_digest'] == STEP4_RESULT_DIGEST == canonical_digest(step4_drift['sanitized_result'])
+    assert step4_drift['verification_observation'] == {'data_postcondition_matched':True,'authority_postcondition_matched':False,'scope_drift':True,'step_postcondition_certified':False,'step5_may_continue':False}
+    assert all(value is False for value in step4_drift['security_state'].values())
+    assert step4_drift['recorded_at'] == STEP4_RECORDED_AT
 
-    rendered='\n'.join((B/(N+suffix)).read_text() for suffix in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step01-success.evidence.json','-step02-success.evidence.json','-step03-success.evidence.json','.execution-progress.json'))
+    e4=execution['step_states'][3]
+    assert (e4['authorization_state'],e4['execution_state'],e4['verification_state'],e4['authorization_consumed']) == ('CONSUMED','FAILED','FAIL',True)
+    assert e4['safe_error_code'] == 'AUTHORITY_INVALID'
+    assert e4['evidence'] == [{'evidence_type':'auth.provider-adapter-positive-auth.preflight.verified','evidence_reference':N + '-step04-scope-drift.evidence.json','evidence_digest':STEP4_EVIDENCE_DIGEST,'recorded_at':STEP4_RECORDED_AT}]
+    assert e4['binding_assertions'] == []
+    assert 'supabase.mcp.execute_sql' in e4['observed_postcondition'] and 'Step 5 is blocked' in e4['observed_postcondition']
+    assert all(x['authorization_state'] == 'BLOCKED' and x['execution_state'] == 'NOT_STARTED' and x['verification_state'] == 'NOT_STARTED' and x['authorization_consumed'] is False for x in execution['step_states'][4:])
+
+    rendered='\n'.join((B/(N+suffix)).read_text() for suffix in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step01-success.evidence.json','-step02-success.evidence.json','-step03-success.evidence.json','-step04-scope-drift.evidence.json','.execution-progress.json'))
     for forbidden in ('Bearer eyJ','"access_token":','"refresh_token":','service_role_key'): assert forbidden not in rendered
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert re.search(r'postgres(?:ql)?://[^\s/:]+:[^\s/@]+@',rendered,re.I) is None
 
-    print('DEVELOPMENT provider-adapter positive-auth v4: PASS (IN_PROGRESS; Steps 1-3 CONSUMED/SUCCEEDED/PASS; Steps 4-10 PENDING; GitHub binding independently verified by name only)')
+    print('DEVELOPMENT provider-adapter positive-auth v4: PASS (STOPPED; Steps 1-3 PASS; Step 4 CONSUMED/FAILED/FAIL on interaction-surface scope drift; Steps 5-10 BLOCKED; retry unauthorized)')
     return 0
 
 if __name__ == '__main__':

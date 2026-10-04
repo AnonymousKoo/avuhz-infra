@@ -45,6 +45,15 @@ CREATED_AT = "2026-10-04T13:49:57Z"
 APPROVAL_ID = "5a10b05e-db2d-5359-995d-8bcb168e5863"
 APPROVAL_DIGEST = "sha256:ce6351e9e06f7bb875fa50fb04d3f56455c34296368598f1a1188cf6ed280f65"
 APPROVED_AT = "2026-10-04T13:58:14Z"
+WORKFLOW_RUN_ID = 37215166186
+EXECUTION_SHA = "c46c857af2c8e0996a12b854e70d4eab56ad8684"
+PREFLIGHT_AT = "2026-10-04T16:00:54Z"
+FAILURE_AT = "2026-10-04T16:01:16Z"
+RECORDED_AT = "2026-10-04T16:03:26Z"
+SAFE_ERROR_CODE = "STOP_REQUIRES_FORWARD_ONLY_CORRECTIVE_CLEANUP_AND_RETIREMENT"
+CAPABILITY_DIGEST = "sha256:20521b09c1cfed2fe394386f9195a40da2f094ec8ab449f87668e8aa7fe6ad8a"
+FAILURE_DIGEST = "sha256:a4678fb87107b7544b60e6349acda6c6232ef300e334d667836318c495f0b531"
+EXECUTION_PROGRESS_DIGEST = "sha256:730f4c0a7b6393223c85cd5746472e1227bb9c77d174e8644075c4dc1722bd6b"
 WINDOW_START = "2026-10-04T16:00:00Z"
 WINDOW_END = "2026-10-04T20:00:00Z"
 PROJECT = "pwlhruwutoitnieactol"
@@ -168,6 +177,8 @@ def main() -> int:
     plan = load(N + ".plan.json")
     progress = load(N + ".progress.json")
     approval = load(N + ".approval.json")
+    failure = load(N + "-step1-failure.evidence.json")
+    execution = load(N + ".execution-progress.json")
     old_plan = load(OLD + ".plan.json")
     old_exec = load(OLD + ".execution-progress.json")
     correction_exec = load(CORRECTION + ".execution-progress.json")
@@ -175,6 +186,7 @@ def main() -> int:
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
     validate_approval(plan, approval, S, WINDOW_START)
+    validate_progress(plan, execution, S)
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
     assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
@@ -301,8 +313,102 @@ def main() -> int:
     }
     assert approval_digest(approval) == APPROVAL_DIGEST
     assert APPROVED_AT < WINDOW_START
-    assert not (B / (N + ".execution-progress.json")).exists()
-    assert not list(B.glob(N + "-step*-*.evidence.json"))
+    assert canonical_digest(failure) == FAILURE_DIGEST
+    assert failure["evidence_type"] == "auth.provider-adapter-positive-auth.live-verified-logout-accepted"
+    assert failure["environment"] == "DEVELOPMENT"
+    assert failure["responsibility"] == "AUTH"
+    assert failure["provider_reference"] == "supabase"
+    assert failure["project_reference"] == PROJECT
+    assert failure["plan_id"] == PLAN_ID
+    assert failure["plan_version"] == 1
+    assert failure["plan_digest"] == PLAN_DIGEST
+    assert failure["approval_id"] == APPROVAL_ID
+    assert failure["approval_digest"] == APPROVAL_DIGEST
+    assert failure["step_id"] == plan["steps"][0]["step_id"]
+    assert failure["attempt"] == 1
+    assert failure["outcome"] == "FAILED_UNVERIFIED"
+    assert failure["safe_error_code"] == SAFE_ERROR_CODE
+    assert failure["classification"] == SAFE_ERROR_CODE
+    assert failure["execution_observation"] == {
+        "workflow_run_id": WORKFLOW_RUN_ID,
+        "execution_sha": EXECUTION_SHA,
+        "workflow_event": "workflow_dispatch",
+        "run_attempt": 1,
+        "conclusion": "failure",
+        "workflow_started_at": "2026-10-04T16:00:43Z",
+        "job_started_at": "2026-10-04T16:00:49Z",
+        "authorization_preflight_passed_at": PREFLIGHT_AT,
+        "execution_step_started_at": "2026-10-04T16:00:54Z",
+        "failure_observed_at": FAILURE_AT,
+        "canonical_main_binding_passed": True,
+        "dispatch_confirmation_passed": True,
+        "plan_binding_passed": True,
+        "authorization_window_check_passed": True,
+        "executor_source_binding_passed": True,
+        "authorization_preflight_passed_before_runtime_secret_resolution": True,
+        "executor_entered": True,
+        "provider_mutation_attempted": True,
+        "retry_occurred": False,
+    }
+    assert failure["sanitized_runtime_outcome"] == {
+        "cleanup_verified": False,
+        "credential_retirement_obligation_remains": True,
+        "global_logout_acceptance_proven": False,
+        "global_logout_accepted": False,
+        "ordinary_later_steps_authorized": False,
+        "retry_authorized": False,
+        "separately_authorized_corrective_cleanup_required": True,
+        "temporary_session_state": "UNKNOWN",
+    }
+    assert failure["authority_state"] == {
+        "step1_authorization": "CONSUMED",
+        "authorization_consumed": True,
+        "retry_authorized": False,
+        "ordinary_later_steps_authorized": False,
+    }
+    assert failure["credential_material_retained"] is False
+    assert failure["token_material_retained"] is False
+    assert failure["pii_retained"] is False
+    assert not any(failure["security_state"].values())
+    assert failure["recorded_at"] == RECORDED_AT
+
+    assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    assert execution["record_version"] == 3
+    assert execution["overall_state"] == "STOPPED"
+    assert execution["updated_at"] == RECORDED_AT
+    executed = execution["step_states"][0]
+    assert (
+        executed["authorization_state"],
+        executed["execution_state"],
+        executed["verification_state"],
+        executed["authorization_consumed"],
+        executed["safe_error_code"],
+    ) == ("CONSUMED", "FAILED", "FAIL", True, SAFE_ERROR_CODE)
+    assert executed["evidence"] == [{
+        "evidence_type": failure["evidence_type"],
+        "evidence_reference": f"github.actions.run.{WORKFLOW_RUN_ID}.step1.attempt1.failed-unverified",
+        "evidence_digest": FAILURE_DIGEST,
+        "recorded_at": RECORDED_AT,
+    }]
+    assert "temporary session state UNKNOWN" in executed["observed_postcondition"]
+    assert len(executed["binding_assertions"]) == 1
+    binding = executed["binding_assertions"][0]
+    assert binding["binding_id"].endswith(".admin-executor-capability")
+    assert binding["phase"] == "RESOLVED_BY_STEP_PREFLIGHT"
+    assert binding["evidence_type"] == "auth.admin-executor-capability.observed"
+    assert binding["evidence_digest"] == CAPABILITY_DIGEST
+    assert binding["value_digest"] == CAPABILITY_DIGEST
+    assert binding["sanitized_value"] is None
+    assert binding["recorded_at"] == PREFLIGHT_AT
+    assert all(
+        (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False)
+        for state in execution["step_states"][1:]
+    )
 
     assert len(plan["steps"]) == 6
     assert [step["operation"] for step in plan["steps"]] == [
@@ -411,6 +517,9 @@ def main() -> int:
             N + "-preparation.evidence.json",
             N + ".plan.json",
             N + ".progress.json",
+            N + ".approval.json",
+            N + "-step1-failure.evidence.json",
+            N + ".execution-progress.json",
         )
     )
     for forbidden in ("sb_secret_", "Bearer eyJ", "service_role_key", "\"access_token\":", "\"refresh_token\":"):
@@ -418,9 +527,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth continuation v1: PASS "
-        "(APPROVED; pristine six-step continuation; correction-v2 bound; "
-        "original v2 Step 4 unchanged; exact Step 1 executor/workflow and Step 2 SQL bound; "
-        "retirement mandatory; no provider authority)"
+        "(STOPPED; Step 1 CONSUMED/FAILED/FAIL; one authorized run; session state UNKNOWN; "
+        "logout unproven; retry prohibited; Steps 2-6 BLOCKED; corrective cleanup/retirement required)"
     )
     return 0
 

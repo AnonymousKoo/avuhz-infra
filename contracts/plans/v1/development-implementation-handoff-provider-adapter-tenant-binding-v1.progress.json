@@ -1,0 +1,34 @@
+{
+  "progress_id": "6e5177b5-3c9e-445d-b4be-3b1e2793d4d9",
+  "plan_id": "7c5828c6-dd2e-4dd2-a163-9e8c99d35bcb",
+  "plan_version": 1,
+  "plan_digest": "sha256:c9b22999181030d87d2e1d3e58cbe8d75eef33d708b3eac9233fbeaebfbd3bac",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-tenant-binding-v1.step.01.bind-canonical-tenant",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-tenant-binding-v1.step.02.verify-canonical-tenant",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-04T00:29:27Z",
+  "progress_digest": "sha256:e612b0d0cf69fdefcf32a3fe0d77afd5b54e63f56e3f3ee9ced1d163451b882d"
+}

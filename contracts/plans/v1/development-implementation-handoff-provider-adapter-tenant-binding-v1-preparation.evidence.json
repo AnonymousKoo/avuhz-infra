@@ -1,0 +1,60 @@
+{
+  "evidence_type": "auth.provider-adapter-tenant-binding-v1.preparation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "observed_at": "2026-10-04T00:29:27Z",
+  "identity_observation": {
+    "provider_subject_digest": "sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a",
+    "identity_creation_evidence_digest": "sha256:27223a97cdb9943ddff839826f035d4db883a78c3531ab6575a649fec87a028d",
+    "passwordless_verification_evidence_digest": "sha256:26a90c35357ac14b23d1b7f17e18762e958248462d53aed168985dba249cbb10",
+    "passwordless_state_verified": true,
+    "target_tenant_bound_count": 0,
+    "session_count": 0,
+    "refresh_token_count": 0
+  },
+  "canonical_tenant_observation": {
+    "tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+    "synthetic_tenant_binding_evidence_digest": "sha256:41614e42a7a65b6686affef494ad5ea00894c4fee2507331430ec35c0f80488e",
+    "existing_canonical_tenant_bound_user_count": 1
+  },
+  "active_policy_observation": {
+    "source_path": "src/avuhz_service/development_supabase_identity.py",
+    "source_digest": "sha256:17894ed10e4faa26616b8843df96f10a3e65de77fc6c5d85007970ceabd4a367",
+    "allowlist_evidence_digest": "sha256:15d05b54d2f337ead4b4ed6f9881aef33c6063de29ed4501a805255e7999c2ba",
+    "entry_count": 1,
+    "provider_adapter_entry_active": false,
+    "existing_caller_type": "HUMAN",
+    "existing_capabilities": [
+      "engagement:read"
+    ],
+    "existing_authority_roles": []
+  },
+  "selected_binding": {
+    "resource_digest": "sha256:6918d0117202b883c22931c3747fd3f27f9bf7ce015af3fc5e13ed63ddfa7d7c",
+    "authorized_table": "auth.users",
+    "authorized_column": "raw_app_meta_data",
+    "authorized_json_key": "avuhz_tenant_id",
+    "authorized_target_count": 1,
+    "canonical_tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+    "owner_interactive_only": true,
+    "separate_read_only_verification_required": true
+  },
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "raw_provider_subject_observed": false,
+    "raw_user_metadata_observed": false,
+    "pii_retained": false,
+    "allowlist_changed": false,
+    "token_or_session_mutated": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "evidence_digest": "sha256:9c6ae4cc7e8fa0ba20ac021b94d14eb71cdaf738a2986c65d9757710fc98e01c"
+}

@@ -18,12 +18,14 @@ V10_STEP2='sha256:fd0e493b53cdbe2a19b3ae7f59eaab9f495d5e75868ca8ea1f8a554fede82c
 V10_PROGRESS='sha256:46728452864e373d87c12b97bf0300719607a33e09579719f07bec89a9574f24'
 ALLOWLIST_EVIDENCE='sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325'
 ALLOWLIST_PROGRESS='sha256:eef423d8cd118abf87da1d2d1f7b2a56c78570dab306cf8c94113ab923774a9c'
+STEP1_EVIDENCE_DIGEST='sha256:dcbfc3328794da93c8d660145968f3fdfa84c2a42ea0abab32293221c3157806'
+EXECUTION_PROGRESS_DIGEST='sha256:915122e3b9ea397b442793742ededebb24c945d2b9b449c9027dc618ba91a6dc'
+BOUND_HEAD='8e96e486d1173039a444c67849e26048282d6e9c'
 def load(n): return json.loads((B/n).read_text())
 def raw(n): return 'sha256:'+hashlib.sha256((B/n).read_bytes()).hexdigest()
 def main():
- r=load(N+'.resource.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json')
+ r=load(N+'.resource.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); a=load(N+'.approval.json'); e=load(N+'-step01-success.evidence.json'); x=load(N+'.execution-progress.json')
  validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,'2026-10-04T03:15:00Z')
- assert not (B/(N+'.execution-progress.json')).exists()
  assert p['plan_id']==PLAN_ID and p['plan_version']==11 and p['plan_digest']==PLAN_DIGEST==plan_digest(p)
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
  assert a['plan_id']==PLAN_ID and a['plan_version']==11 and a['plan_digest']==PLAN_DIGEST
@@ -66,7 +68,18 @@ def main():
  assert b['binding.development.render.deployment-v11.allowlist-progress']['preapproval_value']['value']==ALLOWLIST_PROGRESS
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
  assert all(s['authorization_state']=='PENDING' and s['execution_state']=='NOT_STARTED' and s['verification_state']=='NOT_STARTED' and s['authorization_consumed'] is False for s in g['step_states'])
- rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','.plan.json','.progress.json','.approval.json'))
+ assert x['progress_id']==PROGRESS_ID and x['progress_digest']==EXECUTION_PROGRESS_DIGEST and x['overall_state']=='IN_PROGRESS' and x['record_version']==3
+ xs1,xs2=x['step_states']
+ assert xs1['authorization_state']=='CONSUMED' and xs1['execution_state']=='SUCCEEDED' and xs1['verification_state']=='PASS' and xs1['authorization_consumed'] is True and xs1['safe_error_code'] is None
+ assert xs2['authorization_state']=='PENDING' and xs2['execution_state']=='NOT_STARTED' and xs2['verification_state']=='NOT_STARTED' and xs2['authorization_consumed'] is False
+ assert raw(N+'-step01-success.evidence.json')==STEP1_EVIDENCE_DIGEST
+ assert e['outcome']=='SUCCEEDED_VERIFIED' and e['classification']=='MANUAL_RENDER_DEPLOYMENT_LIVE_EXACT_PREFLIGHT_BOUND_MAIN_PROVIDER_ADAPTER_ALLOWLIST_RUNTIME'
+ assert e['preflight']['canonical_main_head']==BOUND_HEAD and e['preflight']['provider_adapter_allowlist_is_ancestor'] is True and e['preflight']['build_state_is_ancestor'] is True
+ assert e['deployment_observation']['deploy_id']=='dep-db0saps9v7es73cqjuc0' and e['deployment_observation']['commit_id']==BOUND_HEAD and e['deployment_observation']['status']=='live'
+ assert e['deployment_observation']['clear_cache'] is False and e['deployment_observation']['retry_attempted'] is False and e['deployment_observation']['second_deploy_triggered'] is False
+ assert e['post_deploy_provider_state']['previous_live_deploy_id']=='dep-db0645gu01pc73911b4g' and e['post_deploy_provider_state']['previous_live_deploy_status']=='deactivated' and e['post_deploy_provider_state']['second_new_deploy_detected'] is False
+ assert all(v is False for v in e['security_state'].values())
+ rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','.plan.json','.progress.json','.approval.json','-step01-success.evidence.json','.execution-progress.json'))
  for forbidden in ('postgresql://','postgres://','password=','op://','sb_secret_','service_role'): assert forbidden not in rendered
- print('DEVELOPMENT Render deployment v11: PASS (APPROVED; pristine; preflight-bound main with e4ee9c60/d7cf12b8 ancestors; one deploy + read-only verification; positive adapter auth excluded)')
+ print('DEVELOPMENT Render deployment v11: PASS (IN_PROGRESS; Step 1 consumed/succeeded/pass; Step 2 pending; one deploy/no retry; positive adapter auth excluded)')
 if __name__=='__main__': main()

@@ -10,7 +10,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import (
+    approval_digest,
+    initial_progress,
+    plan_digest,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B = ROOT / "contracts/plans/v1"
@@ -42,11 +49,18 @@ def main() -> None:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, "2026-10-04T05:30:00Z")
 
-    assert not (B / (N + ".approval.json")).exists()
+    assert a["approval_id"] == "af3e10e7-2319-5462-9b6c-a17063a29206"
+    assert a["plan_id"] == PLAN_ID and a["plan_version"] == 2 and a["plan_digest"] == PLAN_DIGEST
+    assert a["owner_identity"] == "github:AnonymousKoo" and a["decision"] == "APPROVE" and a["environment"] == "DEVELOPMENT"
+    assert a["effective_at"] == "2026-10-04T05:30:00Z" and a["expires_at"] == "2026-10-04T08:30:00Z"
+    assert a["approved_at"] == "2026-10-04T04:59:32Z" and a["status"] == "ACTIVE" and a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["approval_digest"] == "sha256:faf96f4b6bac4e62fa96f7739c5e47959eed9f29a6ee0f5a5d4b629210ea5f10" == approval_digest(a)
     assert not (B / (N + ".execution-progress.json")).exists()
 
     assert p["plan_id"] == PLAN_ID
@@ -132,6 +146,7 @@ def main() -> None:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            ".approval.json",
         )
     )
     assert INVALID_OLD_KEY_NAME not in rendered
@@ -149,8 +164,8 @@ def main() -> None:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v2: PASS "
-        "(READY_FOR_APPROVAL; pristine; Supabase-valid exact key label; "
-        "owner-confirmed corrective retirement bound; no approval/provider authority)"
+        "(APPROVED; pristine; Supabase-valid exact key label; "
+        "owner-confirmed corrective retirement bound; provider execution not yet started)"
     )
 
 

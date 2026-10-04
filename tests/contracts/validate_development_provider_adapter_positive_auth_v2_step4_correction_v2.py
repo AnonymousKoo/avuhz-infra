@@ -21,6 +21,9 @@ PLAN_DIGEST = 'sha256:d82b740665733e825d28c980c5753e6eb38970690167fc785298cc6d0e
 PROGRESS_ID = 'faf51c2d-4af0-54d2-8f43-e1d0d5f2936c'
 PROGRESS_DIGEST = 'sha256:2328b9f70e5525a120e82c25a0f1a8ddd35e1aa8c3f43456329c9c8da8189325'
 PREP_DIGEST = 'sha256:e81a6f58dfdbddd83ef73f51f62a7f27c798d96f237a71f6c093699f87d8dc93'
+APPROVAL_ID = '2253c1f9-5408-56be-86c7-53a6a1d07620'
+APPROVAL_DIGEST = 'sha256:6c19f7b444f1824ad6e53be2987f22efc3aabc3e44c272816ed49ade882f15ca'
+APPROVED_AT = '2026-10-04T12:27:56Z'
 WINDOW = dict(binding_state='BOUND', starts_at='2026-10-04T13:00:00Z', expires_at='2026-10-04T17:00:00Z')
 
 
@@ -59,10 +62,11 @@ def expected_replacement(old, prep, plan):
 def main():
     prior.main()  # Exact SQL/counts, all stop conditions, pristine v1 and pending original Step 4.
     old, old_approval = (prior.load(prior.N + suffix) for suffix in ('.plan.json', '.approval.json'))
-    plan, progress, prep = (prior.load(N + suffix) for suffix in
-                            ('.plan.json', '.progress.json', '-preparation.evidence.json'))
+    plan, progress, prep, approval = (prior.load(N + suffix) for suffix in
+                                      ('.plan.json', '.progress.json', '-preparation.evidence.json', '.approval.json'))
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
+    validate_approval(plan, approval, S, WINDOW['starts_at'])
     assert plan['plan_id'] == PLAN_ID and plan['plan_digest'] == PLAN_DIGEST == plan_digest(plan)
     assert progress == initial_progress(plan, S, PROGRESS_ID, plan['created_at'])
     assert progress['progress_digest'] == PROGRESS_DIGEST
@@ -106,22 +110,36 @@ def main():
     for name, path in paths.items():
         assert 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest() == prep['preserved_artifact_sha256'][name], name
     assert {p.name for p in B.glob(N + '*')} == {
-        N + '.plan.json', N + '.progress.json', N + '-preparation.evidence.json',
-    }  # No approval, execution, result or replacement resource artifact.
+        N + '.plan.json', N + '.progress.json', N + '-preparation.evidence.json', N + '.approval.json',
+    }  # Approval only; no execution, result or replacement resource artifact.
     denied(lambda: validate_approval(old, old_approval, S, prep['observed_at']), 'PLAN_AUTHORIZATION_EXPIRED')
+    assert approval == {
+        'approval_id': APPROVAL_ID,
+        'plan_id': PLAN_ID,
+        'plan_version': 2,
+        'plan_digest': PLAN_DIGEST,
+        'owner_identity': 'github:AnonymousKoo',
+        'decision': 'APPROVE',
+        'environment': 'DEVELOPMENT',
+        'effective_at': WINDOW['starts_at'],
+        'expires_at': WINDOW['expires_at'],
+        'approved_at': APPROVED_AT,
+        'status': 'ACTIVE',
+        'authority_scope': 'EXACT_PLAN_ONLY',
+        'approval_digest': APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW['starts_at']
+    assert not (B / (N + '.execution-progress.json')).exists()
+    assert not list(B.glob(N + '-step*-*.evidence.json'))
     denied(lambda: authorize_step(plan, {}, progress, {}, S, WINDOW['starts_at']), 'SCHEMA_INVALID')
     denied(lambda: authorize_step(plan, old_approval, progress, {}, S, WINDOW['starts_at']), 'APPROVAL_BINDING_MISMATCH')
-    # Synthetic approval exists only in memory to exercise the shared gate. No artifact is written.
-    synthetic = dict(old_approval, plan_id=PLAN_ID, plan_version=2, plan_digest=PLAN_DIGEST,
-                     approved_at=prep['observed_at'], effective_at=WINDOW['starts_at'], expires_at=WINDOW['expires_at'])
-    synthetic['approval_digest'] = approval_digest(synthetic)
-    validate_approval(plan, synthetic, S, WINDOW['starts_at'])
     for when in ('2026-10-04T12:59:59Z', WINDOW['expires_at'], '2026-10-04T17:00:01Z'):
-        denied(lambda: authorize_step(plan, synthetic, progress, {}, S, when), 'PLAN_AUTHORIZATION_EXPIRED')
-    synthetic['approved_at'] = '2026-10-04T13:00:01Z'
-    synthetic['approval_digest'] = approval_digest(synthetic)
-    denied(lambda: validate_approval(plan, synthetic, S, '2026-10-04T13:00:02Z'), 'PLAN_AUTHORIZATION_EXPIRED')
-    print('DEVELOPMENT positive-auth v2 Step 4 correction v2: PASS (timing-only; no authority; v1 expired/pristine; original v2 pending; exact resource reused; byte preservation and authorization denials pass)')
+        denied(lambda: authorize_step(plan, approval, progress, {}, S, when), 'PLAN_AUTHORIZATION_EXPIRED')
+    late = dict(approval, approved_at='2026-10-04T13:00:01Z')
+    late['approval_digest'] = approval_digest(late)
+    denied(lambda: validate_approval(plan, late, S, '2026-10-04T13:00:02Z'), 'PLAN_AUTHORIZATION_EXPIRED')
+    print('DEVELOPMENT positive-auth v2 Step 4 correction v2: PASS (APPROVED; pristine; timing-only replacement; v1 expired/pristine; original v2 pending; exact resource reused; provider read not yet executed)')
 
 
 if __name__ == '__main__':

@@ -51,6 +51,8 @@ from avuhz_service.development import (
     DEVELOPMENT_SERVICE_AUDIENCE,
 )
 from avuhz_service.development_supabase_identity import (
+    DEVELOPMENT_IDENTITY_ALLOWLIST,
+    DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_ENTRY,
     DEVELOPMENT_SYNTHETIC_READ_ONLY_ALLOWLIST,
     DevelopmentSupabaseIdentityVerifier,
 )
@@ -688,6 +690,68 @@ def validate_development_synthetic_access_jwt(
         if claims.get("iss") != DEVELOPMENT_AUTH_ISSUER:
             raise PermissionError
         if claims.get("aud") != DEVELOPMENT_SERVICE_AUDIENCE:
+            raise PermissionError
+        if claims.get("avuhz_tenant_id") != entry.tenant_id:
+            raise PermissionError
+        if claims.get("role") != "authenticated" or claims.get("aal") != "aal1":
+            raise PermissionError
+        if claims.get("is_anonymous") is not False:
+            raise PermissionError
+    except Exception:
+        _stop("ACCESS_JWT_VALIDATION_FAILED")
+
+    return JwtValidationResult(
+        algorithm="ES256",
+        issuer=DEVELOPMENT_AUTH_ISSUER,
+        audience=DEVELOPMENT_SERVICE_AUDIENCE,
+        subject_digest=entry.subject_digest,
+        tenant_id=entry.tenant_id,
+        role="authenticated",
+        aal="aal1",
+        is_anonymous=False,
+        caller_type=identity.caller_type,
+        capabilities=tuple(sorted(identity.capabilities)),
+        authority_roles=tuple(sorted(identity.authority_roles)),
+    )
+
+
+def validate_development_provider_adapter_access_jwt(
+    access_token: str,
+    *,
+    verifier: Any | None = None,
+) -> JwtValidationResult:
+    """Validate the exact DEVELOPMENT ImplementationHandoff provider-adapter JWT policy."""
+
+    try:
+        header = jwt.get_unverified_header(access_token)
+        if not isinstance(header, dict) or header.get("alg") != "ES256":
+            raise PermissionError
+        cryptographic_verifier = DevelopmentSupabaseEs256JwtVerifier() if verifier is None else verifier
+        claims = cryptographic_verifier.verify(access_token)
+        identity = DevelopmentSupabaseIdentityVerifier(
+            _VerifiedClaimsAdapter(claims),
+            allowlist=DEVELOPMENT_IDENTITY_ALLOWLIST,
+        ).verify(access_token)
+        provider_subject = claims.get("sub")
+        session_id = claims.get("session_id")
+        if not isinstance(provider_subject, str) or not _CANONICAL_UUID.fullmatch(provider_subject):
+            raise PermissionError
+        if not isinstance(session_id, str):
+            raise PermissionError
+        uuid.UUID(session_id)
+        entry = DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_ENTRY
+        digest = "sha256:" + hashlib.sha256(provider_subject.encode("utf-8")).hexdigest()
+        if not hmac.compare_digest(digest, entry.subject_digest):
+            raise PermissionError
+        if identity.subject != entry.principal_reference or identity.tenant_id != entry.tenant_id:
+            raise PermissionError
+        if identity.caller_type != "PROVIDER_ADAPTER":
+            raise PermissionError
+        if identity.capabilities != frozenset({"implementation_handoff:accept"}):
+            raise PermissionError
+        if identity.authority_roles != frozenset():
+            raise PermissionError
+        if claims.get("iss") != DEVELOPMENT_AUTH_ISSUER or claims.get("aud") != DEVELOPMENT_SERVICE_AUDIENCE:
             raise PermissionError
         if claims.get("avuhz_tenant_id") != entry.tenant_id:
             raise PermissionError

@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 import validate_development_provider_adapter_positive_auth_continuation_v1 as continuation
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B = ROOT / "contracts/plans/v1"
@@ -29,6 +29,9 @@ PROGRESS_DIGEST = "sha256:8dce889a527959d91cf03cc05e4e5cba7965670f2cc0513cfe7d3c
 CREATED_AT = "2026-10-04T16:18:30Z"
 WINDOW_START = "2026-10-04T17:00:00Z"
 WINDOW_END = "2026-10-04T21:00:00Z"
+APPROVAL_ID = "1e60f413-f385-53a0-a03f-ccbceb2fcb55"
+APPROVAL_DIGEST = "sha256:144d51d1786baf662e21b1bc6bde41abe7040e0b5070c984d3ed3ec5cd8c432c"
+APPROVED_AT = "2026-10-04T16:49:30Z"
 
 PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
@@ -66,9 +69,11 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     plan = load(N + ".plan.json")
     progress = load(N + ".progress.json")
+    approval = load(N + ".approval.json")
 
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
+    validate_approval(plan, approval, S, WINDOW_START)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
@@ -199,7 +204,23 @@ def main() -> int:
         == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
         for x in progress["step_states"]
     )
-    assert not (B / (N + ".approval.json")).exists()
+    assert approval == {
+        "approval_id": APPROVAL_ID,
+        "plan_id": PLAN_ID,
+        "plan_version": 1,
+        "plan_digest": PLAN_DIGEST,
+        "owner_identity": "github:AnonymousKoo",
+        "decision": "APPROVE",
+        "environment": "DEVELOPMENT",
+        "effective_at": WINDOW_START,
+        "expires_at": WINDOW_END,
+        "approved_at": APPROVED_AT,
+        "status": "ACTIVE",
+        "authority_scope": "EXACT_PLAN_ONLY",
+        "approval_digest": APPROVAL_DIGEST,
+    }
+    assert approval_digest(approval) == APPROVAL_DIGEST
+    assert APPROVED_AT < WINDOW_START
     assert not (B / (N + ".execution-progress.json")).exists()
     assert not list(B.glob(N + "-step*.evidence.json"))
 
@@ -220,7 +241,7 @@ def main() -> int:
     assert all(x["authorization_state"] == "BLOCKED" for x in stopped["step_states"][1:])
 
     rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
-        ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json"
+        ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json"
     ))
     for forbidden in ("sb_secret_", "Bearer eyJ", "service_role_key", '"access_token":', '"refresh_token":'):
         assert forbidden not in rendered
@@ -228,8 +249,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth corrective cleanup/retirement v1: PASS "
-        "(READY_FOR_APPROVAL; pristine five-step boundary; zero-state required before retirement; "
-        "failed live-auth retry prohibited; no provider authority)"
+        "(APPROVED; pristine five-step boundary; zero-state required before retirement; "
+        "failed live-auth retry prohibited; execution not started)"
     )
     return 0
 

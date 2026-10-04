@@ -1,0 +1,68 @@
+{
+  "progress_id": "6e5177b5-3c9e-445d-b4be-3b1e2793d4d9",
+  "plan_id": "7c5828c6-dd2e-4dd2-a163-9e8c99d35bcb",
+  "plan_version": 1,
+  "plan_digest": "sha256:c9b22999181030d87d2e1d3e58cbe8d75eef33d708b3eac9233fbeaebfbd3bac",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-tenant-binding-v1.step.01.bind-canonical-tenant",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-tenant-metadata.bound",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-tenant-binding-v1-step01-success.evidence.json",
+          "evidence_digest": "sha256:24caf151405d2e0f72dba940c856f9484275be5f5d1d6eade9a848bcb9073f3e",
+          "recorded_at": "2026-10-04T01:39:07Z"
+        }
+      ],
+      "observed_postcondition": "In DEVELOPMENT AUTH project pwlhruwutoitnieactol, execute exactly the bound owner-interactive SQL transaction. It must fail closed unless the existing two-user state, synthetic canonical tenant binding, exact one target provider-adapter identity, verified passwordless state, provider-only target app metadata, one target email identity, and zero sessions/refresh tokens all match. The only authorized mutation is adding app_metadata.avuhz_tenant_id=1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0 to exactly the target provider-adapter row. The transaction commits only after exact postconditions prove both identities are bound to the same canonical DEVELOPMENT tenant, the target remains passwordless, provider metadata remains exact, and sessions/refresh tokens remain zero. user_metadata is neither read nor changed, and the server allowlist remains untouched.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-tenant-binding-v1.dashboard-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "evidence_digest": "sha256:47f45e96988f00e2a2d31f70b30d24a817f6a1f086e147400400df805d337774",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:47f45e96988f00e2a2d31f70b30d24a817f6a1f086e147400400df805d337774",
+          "recorded_at": "2026-10-04T01:33:48Z"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-tenant-binding-v1.tenant-metadata",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-tenant-metadata.bound",
+          "evidence_digest": "sha256:24caf151405d2e0f72dba940c856f9484275be5f5d1d6eade9a848bcb9073f3e",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:8b5014499848a18c30b6c7a6e16733dd89a7f7895b7422b480aa8a84c3011ab0",
+          "recorded_at": "2026-10-04T01:39:07Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-tenant-binding-v1.step.02.verify-canonical-tenant",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-04T01:39:07Z",
+  "progress_digest": "sha256:aa1d85cb5ad51f7acfcc978bdcd1e69eb8c7fade1a943bece579e3d22d4eef1a"
+}

@@ -13,13 +13,16 @@ PROGRESS_ID='6e5177b5-3c9e-445d-b4be-3b1e2793d4d9'
 PROGRESS_DIGEST='sha256:e612b0d0cf69fdefcf32a3fe0d77afd5b54e63f56e3f3ee9ced1d163451b882d'
 RESOURCE_DIGEST='sha256:6918d0117202b883c22931c3747fd3f27f9bf7ce015af3fc5e13ed63ddfa7d7c'
 PREP_DIGEST='sha256:9c6ae4cc7e8fa0ba20ac021b94d14eb71cdaf738a2986c65d9757710fc98e01c'
+STEP1_EVIDENCE_DIGEST='sha256:24caf151405d2e0f72dba940c856f9484275be5f5d1d6eade9a848bcb9073f3e'
+STEP1_STATE_DIGEST='sha256:8b5014499848a18c30b6c7a6e16733dd89a7f7895b7422b480aa8a84c3011ab0'
+EXECUTION_PROGRESS_DIGEST='sha256:aa1d85cb5ad51f7acfcc978bdcd1e69eb8c7fade1a943bece579e3d22d4eef1a'
 TENANT='1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0'
 SUBJECT_DIGEST='sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a'
 PROJECT='pwlhruwutoitnieactol';TARGET='avuhz-implementation-handoff-provider-adapter-development@example.invalid'
 def load(n): return json.loads((B/n).read_text())
 def rawsha(p): return 'sha256:'+hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def main():
- r=load(N+'.resource.json');prep=load(N+'-preparation.evidence.json');p=load(N+'.plan.json');g=load(N+'.progress.json');a=load(N+'.approval.json')
+ r=load(N+'.resource.json');prep=load(N+'-preparation.evidence.json');p=load(N+'.plan.json');g=load(N+'.progress.json');a=load(N+'.approval.json');e=load(N+'-step01-success.evidence.json');x=load(N+'.execution-progress.json')
  validate_plan(p,S);validate_progress(p,g,S);validate_approval(p,a,S,'2026-10-04T01:15:00Z')
  assert p['plan_id']==PLAN_ID and p['plan_digest']==PLAN_DIGEST==plan_digest(p) and p['plan_version']==1
  assert p['definition_status']=='READY_FOR_APPROVAL' and p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
@@ -31,6 +34,16 @@ def main():
  assert a['approved_at']=='2026-10-04T01:02:16Z' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
  assert a['approval_digest']=='sha256:08e75ab1aa2e1d8987badb13c350c3a5cac9dac84449df5ff63da5fc552d6ea6'==approval_digest(a)
  assert g==initial_progress(p,S,PROGRESS_ID,p['created_at']) and g['progress_digest']==PROGRESS_DIGEST and g['overall_state']=='NOT_STARTED'
+ assert x['progress_id']==PROGRESS_ID and x['progress_digest']==EXECUTION_PROGRESS_DIGEST and x['overall_state']=='IN_PROGRESS' and x['record_version']==3
+ s1x,s2x=x['step_states']; assert s1x['authorization_state']=='CONSUMED' and s1x['execution_state']=='SUCCEEDED' and s1x['verification_state']=='PASS' and s1x['authorization_consumed'] is True and s1x['safe_error_code'] is None
+ assert s2x['authorization_state']=='PENDING' and s2x['execution_state']=='NOT_STARTED' and s2x['verification_state']=='NOT_STARTED' and s2x['authorization_consumed'] is False
+ assert e['evidence_digest']==STEP1_EVIDENCE_DIGEST==canonical_digest({k:v for k,v in e.items() if k!='evidence_digest'})
+ assert e['outcome']=='SUCCEEDED_VERIFIED' and e['classification']=='PROVIDER_ADAPTER_CANONICAL_TENANT_BOUND' and e['verified_effect']['tenant_metadata_state_digest']==STEP1_STATE_DIGEST
+ assert e['execution_observation']['approved_transaction_attempts']==1 and e['execution_observation']['provider_result']=='SUCCESS_NO_ROWS_RETURNED' and e['execution_observation']['transaction_commit_reached'] is True
+ assert e['execution_observation']['preflight_guard_passed'] is True and e['execution_observation']['rowcount_guard_passed'] is True and e['execution_observation']['postcondition_guard_passed'] is True
+ assert e['execution_observation']['additional_sql_executed'] is False and e['execution_observation']['retry_performed'] is False and e['screenshot_retained'] is False
+ assert e['verified_effect']['canonical_tenant_id']==TENANT and e['verified_effect']['separate_step2_verification_completed'] is False
+ assert all(v is False for v in e['security_state'].values())
  assert r['contract_digest']==RESOURCE_DIGEST==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
  assert r['project_reference']==PROJECT and r['target_email']==TARGET and r['provider_subject_digest']==SUBJECT_DIGEST and r['canonical_tenant_id']==TENANT
  assert r['authorized_table']=='auth.users' and r['authorized_column']=='raw_app_meta_data' and r['authorized_json_key']=='avuhz_tenant_id' and r['authorized_target_count']==1
@@ -58,7 +71,7 @@ def main():
  assert s1['resource']['exact_digest']==RESOURCE_DIGEST==s2['resource']['exact_digest']
  assert 'server-allowlist.bind' in p['prohibited_actions'] and 'token.issue' in p['prohibited_actions'] and 'session.issue' in p['prohibited_actions']
  assert 'provider.mutation' in s2['prohibited_actions'] and 'raw-row.read' in s2['prohibited_actions'] and 'tenant-metadata.bind' in s2['prohibited_actions']
- rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
+ rendered=''.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step01-success.evidence.json','.execution-progress.json'))
  for secret in ('postgresql://','postgres://','password=','sb_secret_','service_role'): assert secret not in rendered
- print('DEVELOPMENT provider-adapter tenant binding v1: PASS (APPROVED; pristine; exact one-key tenant mutation + separate read-only verification; allowlist remains inactive)')
+ print('DEVELOPMENT provider-adapter tenant binding v1: PASS (IN_PROGRESS; Step 1 consumed/succeeded/pass; Step 2 pending; allowlist remains inactive)')
 if __name__=='__main__': main()

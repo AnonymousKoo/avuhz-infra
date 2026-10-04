@@ -31,6 +31,9 @@ PROGRESS_DIGEST = "sha256:1f47aec9d95d7a996077cca6c3c73f5c12b2c344182e93cbe37633
 RESOURCE_DIGEST = "sha256:45c912a3364d8568b03b962eaae774a3de9183d9c80efb36f1004d978feb4556"
 PREP_DIGEST = "sha256:45b2d594ba236941ca068c0c5b511cb73b878deac126b76ae852a0efe4a22999"
 CORRECTIVE_RETIREMENT_DIGEST = "sha256:6013b08f1e11475d368a0a34c1d347d5d87d1a3baff04cbdf236c9dc88e917bc"
+STEP1_EVIDENCE_DIGEST = "sha256:1afa5a5b2129364ca63f458e63211b1aa2201f004c1acc131f90aa1cd15c4a42"
+STEP1_EXECUTION_PROGRESS_DIGEST = "sha256:078c4a661971ad36fba7039f59d63fc830c079a8c531da212b63192c3e4b4112"
+STEP1_RECORDED_AT = "2026-10-04T05:30:46Z"
 KEY_NAME = "impl_handoff_provider_adapter_positive_auth_v1_ephemeral"
 INVALID_OLD_KEY_NAME = "implementation-handoff-provider-adapter-positive-auth-v1-ephemeral"
 
@@ -50,10 +53,13 @@ def main() -> None:
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
     a = load(N + ".approval.json")
+    e1 = load(N + "-step01-success.evidence.json")
+    x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
     validate_approval(p, a, S, "2026-10-04T05:30:00Z")
+    validate_progress(p, x, S)
 
     assert a["approval_id"] == "af3e10e7-2319-5462-9b6c-a17063a29206"
     assert a["plan_id"] == PLAN_ID and a["plan_version"] == 2 and a["plan_digest"] == PLAN_DIGEST
@@ -61,7 +67,6 @@ def main() -> None:
     assert a["effective_at"] == "2026-10-04T05:30:00Z" and a["expires_at"] == "2026-10-04T08:30:00Z"
     assert a["approved_at"] == "2026-10-04T04:59:32Z" and a["status"] == "ACTIVE" and a["authority_scope"] == "EXACT_PLAN_ONLY"
     assert a["approval_digest"] == "sha256:faf96f4b6bac4e62fa96f7739c5e47959eed9f29a6ee0f5a5d4b629210ea5f10" == approval_digest(a)
-    assert not (B / (N + ".execution-progress.json")).exists()
 
     assert p["plan_id"] == PLAN_ID
     assert p["plan_version"] == 2
@@ -138,6 +143,41 @@ def main() -> None:
         for state in g["step_states"]
     )
 
+    assert e1["evidence_type"] == "auth.provider-adapter-positive-auth.admin-credential.created"
+    assert e1["project_reference"] == "pwlhruwutoitnieactol"
+    assert e1["owner_confirmed_created"] is True
+    assert e1["sanitized_result"]["logical_key_name"] == KEY_NAME
+    assert e1["credential_material_retained"] is False
+    assert e1["credential_material_digest_recorded"] is False
+    assert e1["security_state"]["credential_value_provided_to_agent"] is False
+    assert e1["security_state"]["credential_value_committed"] is False
+    assert raw(B / (N + "-step01-success.evidence.json")) == STEP1_EVIDENCE_DIGEST
+
+    assert x["record_version"] == 3
+    assert x["overall_state"] == "IN_PROGRESS"
+    assert x["updated_at"] == STEP1_RECORDED_AT
+    assert x["progress_digest"] == STEP1_EXECUTION_PROGRESS_DIGEST
+    step1 = x["step_states"][0]
+    assert (
+        step1["authorization_state"],
+        step1["execution_state"],
+        step1["verification_state"],
+        step1["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert step1["safe_error_code"] is None
+    assert len(step1["evidence"]) == 1
+    assert step1["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
+    assert len(step1["binding_assertions"]) == 1
+    assert step1["binding_assertions"][0]["value_digest"] == RESOURCE_DIGEST
+    assert all(
+        state["authorization_state"] == "PENDING"
+        and state["execution_state"] == "NOT_STARTED"
+        and state["verification_state"] == "NOT_STARTED"
+        and state["authorization_consumed"] is False
+        and not state["evidence"]
+        for state in x["step_states"][1:]
+    )
+
     rendered = "".join(
         (B / (N + suffix)).read_text()
         for suffix in (
@@ -147,6 +187,8 @@ def main() -> None:
             ".plan.json",
             ".progress.json",
             ".approval.json",
+            "-step01-success.evidence.json",
+            ".execution-progress.json",
         )
     )
     assert INVALID_OLD_KEY_NAME not in rendered
@@ -164,8 +206,8 @@ def main() -> None:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v2: PASS "
-        "(APPROVED; pristine; Supabase-valid exact key label; "
-        "owner-confirmed corrective retirement bound; provider execution not yet started)"
+        "(APPROVED; Step 1 CONSUMED/SUCCEEDED/PASS; exact key reference only; "
+        "credential material never retained; Step 2 pending)"
     )
 
 

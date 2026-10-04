@@ -53,14 +53,61 @@
     },
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step.02.verify-prewindow-auth-admin-key-absent",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1-step2-success.evidence.json",
+          "evidence_digest": "sha256:aca3e9d6fc8532cf1e0368bb2b9cfd8dc2bc42d99fc4b7836d90b6752957c495",
+          "recorded_at": "2026-10-04T21:25:51Z"
+        }
+      ],
+      "observed_postcondition": "A separate owner-interactive read-only Supabase Dashboard inspection independently proves the exact impl_handoff_provider_adapter_positive_auth_v3_ephemeral key reference is absent from DEVELOPMENT AUTH by name only. Do not reveal key material and make no provider mutation or identity change.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.key-retired",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step.01.retire-prewindow-auth-admin-key",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_digest": "sha256:23791e31d64420458293042c433cc4c52fe20040bddbc4de78e7f783ebd4f3a2",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:5a4c1d7c0d5d56f89f9f63560b6b328e36483b7a3e4ff5825caf22c3d30bfbcd",
+          "recorded_at": "2026-10-04T21:25:51Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step2-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854",
+          "recorded_at": "2026-10-04T21:25:51Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.key-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_digest": "sha256:aca3e9d6fc8532cf1e0368bb2b9cfd8dc2bc42d99fc4b7836d90b6752957c495",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:31e72736f5991a9f375ddbba2ab08460a2be112a60bee0369dea2c39f31323c6",
+          "recorded_at": "2026-10-04T21:25:51Z"
+        }
+      ]
     },
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step.03.verify-github-binding-absent",
@@ -74,6 +121,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-04T21:13:21Z",
-  "progress_digest": "sha256:01a186c84fa434f4570aa4b840d2436813f2f1fdaf97994cf752c1d217e67f0a"
+  "updated_at": "2026-10-04T21:25:51Z",
+  "progress_digest": "sha256:6eebedbf6a11077e20074455e75b305693bce5af59e9f651efbc8f43c59d86bd"
 }

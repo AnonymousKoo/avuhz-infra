@@ -47,7 +47,11 @@ STEP1_RECORDED_AT = "2026-10-04T21:13:21Z"
 STEP1_EVIDENCE_DIGEST = "sha256:23791e31d64420458293042c433cc4c52fe20040bddbc4de78e7f783ebd4f3a2"
 STEP1_AUTHORIZATION_DIGEST = "sha256:db8b09adc9d217efd22315d09fd151bf230f3ddc708f1a38601277989a04b37f"
 STEP1_RESULT_DIGEST = "sha256:5a4c1d7c0d5d56f89f9f63560b6b328e36483b7a3e4ff5825caf22c3d30bfbcd"
-EXECUTION_PROGRESS_DIGEST = "sha256:01a186c84fa434f4570aa4b840d2436813f2f1fdaf97994cf752c1d217e67f0a"
+EXECUTION_PROGRESS_DIGEST = "sha256:6eebedbf6a11077e20074455e75b305693bce5af59e9f651efbc8f43c59d86bd"
+STEP2_RECORDED_AT = "2026-10-04T21:25:51Z"
+STEP2_EVIDENCE_DIGEST = "sha256:aca3e9d6fc8532cf1e0368bb2b9cfd8dc2bc42d99fc4b7836d90b6752957c495"
+STEP2_AUTHORIZATION_DIGEST = "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854"
+STEP2_RESULT_DIGEST = "sha256:31e72736f5991a9f375ddbba2ab08460a2be112a60bee0369dea2c39f31323c6"
 
 
 def load(name: str) -> dict:
@@ -68,6 +72,7 @@ def main() -> int:
     progress = load(N + ".progress.json")
     approval = load(N + ".approval.json")
     step1_success = load(N + "-step1-success.evidence.json")
+    step2_success = load(N + "-step2-success.evidence.json")
     execution = load(N + ".execution-progress.json")
     v3_plan = load(V3 + ".plan.json")
     v3_approval = load(V3 + ".approval.json")
@@ -99,7 +104,7 @@ def main() -> int:
     assert raw(B / (N + "-step1-success.evidence.json")) == STEP1_EVIDENCE_DIGEST
     assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST == progress_digest(execution)
     assert execution["overall_state"] == "IN_PROGRESS"
-    assert execution["updated_at"] == STEP1_RECORDED_AT
+    assert execution["updated_at"] == STEP2_RECORDED_AT
 
     assert incident["evidence_digest"] == INCIDENT_DIGEST == canonical_digest({k:v for k,v in incident.items() if k != "evidence_digest"})
     assert incident["evidence_type"] == "auth.provider-adapter-positive-auth-v3.prewindow-key-creation.observed"
@@ -232,11 +237,52 @@ def main() -> int:
     assert e1["binding_assertions"][1]["binding_id"] == "binding.development.provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.key-retired"
     assert e1["binding_assertions"][1]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
     assert e1["binding_assertions"][1]["value_digest"] == STEP1_RESULT_DIGEST
-    assert all((x["authorization_state"],x["execution_state"],x["verification_state"],x["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False) for x in execution["step_states"][1:])
+    step2_path = B / (N + "-step2-success.evidence.json")
+    assert raw(step2_path) == STEP2_EVIDENCE_DIGEST
+    assert step2_success["evidence_type"] == "auth.provider-adapter-positive-auth.admin-credential.absence-verified"
+    assert step2_success["environment"] == "DEVELOPMENT" and step2_success["responsibility"] == "AUTH"
+    assert step2_success["provider_reference"] == "supabase" and step2_success["project_reference"] == PROJECT
+    assert step2_success["plan_id"] == PLAN_ID and step2_success["plan_digest"] == PLAN_DIGEST
+    assert step2_success["approval_id"] == APPROVAL_ID and step2_success["approval_digest"] == APPROVAL_DIGEST
+    assert step2_success["step_id"] == steps[1]["step_id"] and step2_success["attempt"] == 1
+    assert step2_success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step2_success["classification"] == "EXACT_PREWINDOW_V3_EPHEMERAL_AUTH_KEY_ABSENCE_INDEPENDENTLY_CONFIRMED"
+    assert step2_success["authorization_observation_digest"] == STEP2_AUTHORIZATION_DIGEST == canonical_digest(step2_success["authorization_observation"])
+    assert step2_success["sanitized_result"] == {
+        "key_name": KEY, "absent": True, "credential_material_observed": False,
+        "other_key_inspected": False, "provider_mutation_performed": False,
+    }
+    assert step2_success["result_digest"] == STEP2_RESULT_DIGEST == canonical_digest(step2_success["sanitized_result"])
+    assert step2_success["record_basis"] == "OWNER_CONFIRMED_SEPARATE_READ_ONLY_INSPECTION"
+    assert step2_success["recorded_at"] == STEP2_RECORDED_AT
+    assert all(value is False for value in step2_success["security_state"].values())
+
+    e2 = execution["step_states"][1]
+    assert (e2["authorization_state"], e2["execution_state"], e2["verification_state"], e2["authorization_consumed"]) == ("CONSUMED","SUCCEEDED","PASS",True)
+    assert e2["safe_error_code"] is None
+    assert e2["observed_postcondition"] == steps[1]["expected_postcondition"]
+    assert e2["evidence"] == [{
+        "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+        "evidence_reference": N + "-step2-success.evidence.json",
+        "evidence_digest": STEP2_EVIDENCE_DIGEST,
+        "recorded_at": STEP2_RECORDED_AT,
+    }]
+    assert len(e2["binding_assertions"]) == 3
+    assert e2["binding_assertions"][0]["binding_id"] == "binding.development.provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.key-retired"
+    assert e2["binding_assertions"][0]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
+    assert e2["binding_assertions"][0]["value_digest"] == STEP1_RESULT_DIGEST
+    assert e2["binding_assertions"][1]["binding_id"] == "binding.development.provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step2-owner-session"
+    assert e2["binding_assertions"][1]["evidence_digest"] == STEP2_AUTHORIZATION_DIGEST
+    assert e2["binding_assertions"][1]["value_digest"] == STEP2_AUTHORIZATION_DIGEST
+    assert e2["binding_assertions"][2]["binding_id"] == "binding.development.provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.key-absence"
+    assert e2["binding_assertions"][2]["evidence_digest"] == STEP2_EVIDENCE_DIGEST
+    assert e2["binding_assertions"][2]["value_digest"] == STEP2_RESULT_DIGEST
+    e3 = execution["step_states"][2]
+    assert (e3["authorization_state"],e3["execution_state"],e3["verification_state"],e3["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False)
 
     rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
         "-incident.evidence.json", ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json",
-        "-step1-success.evidence.json", ".execution-progress.json"
+        "-step1-success.evidence.json", "-step2-success.evidence.json", ".execution-progress.json"
     ))
     for forbidden in ("Bearer eyJ", '"access_token":', '"refresh_token":', "service_role_key"):
         assert forbidden not in rendered
@@ -245,8 +291,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v3 prewindow-key retirement v1: PASS "
-        "(IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS; Steps 2-3 PENDING; "
-        "exact prewindow v3 key retired; v3 execution remains blocked)"
+        "(IN_PROGRESS; Steps 1-2 CONSUMED/SUCCEEDED/PASS; Step 3 PENDING; "
+        "exact prewindow v3 key retired and independently verified absent; v3 execution remains blocked)"
     )
     return 0
 

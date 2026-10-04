@@ -1,0 +1,50 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v3.prewindow-key-creation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "8a31fb79-9e7e-53d8-b0b0-f14b611da37a",
+  "plan_digest": "sha256:9d6ce4ff12450657dcda89650fe7b3207db6f179794cfb48eff8ebb81ad143d9",
+  "approval_id": "f69cb520-1336-5281-ae51-13bdb242ee7d",
+  "approval_digest": "sha256:e79e433af146c5260368087833e56ce98f16babc018ccd477515f0fc09a8b672",
+  "target_key_name": "impl_handoff_provider_adapter_positive_auth_v3_ephemeral",
+  "owner_report": {
+    "created": true,
+    "report_text_class": "OWNER_CONFIRMED_CREATED_NO_SECRET_MATERIAL",
+    "exact_creation_timestamp_known": false,
+    "report_observed_at": "2026-10-04T20:29:41Z",
+    "v3_authorization_effective_at": "2026-10-04T20:30:00Z",
+    "report_observed_before_effective_at": true
+  },
+  "authorization_assessment": {
+    "v3_step1_recordable_as_authorized": false,
+    "v3_execution_progress_created": false,
+    "v3_execution_progress_may_be_retroactively_created": false,
+    "fresh_forward_only_retirement_required": true,
+    "v3_must_remain_blocked_until_retirement_complete": true
+  },
+  "github_binding_state": {
+    "creation_reported": false,
+    "mutation_authorized_by_this_evidence": false,
+    "absence_requires_independent_names_only_verification": true
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "secret_value_observed": false,
+    "pii_retained": false,
+    "provider_read_performed": false,
+    "provider_mutation_performed_by_agent": false,
+    "github_secret_mutation_performed_by_agent": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_CURRENT_CHAT_PLUS_AGENT_CLOCK_OBSERVATION",
+  "recorded_at": "2026-10-04T20:31:26Z",
+  "evidence_digest": "sha256:38bd6282b4da2453e100335b5666cb7edac65d8d91216b6e175315b7d99ac39a"
+}

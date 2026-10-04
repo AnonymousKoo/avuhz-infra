@@ -1,0 +1,45 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v3.prewindow-key-retirement.prepared",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "github_environment": "development",
+  "observation_only": true,
+  "incident_evidence_digest": "sha256:38bd6282b4da2453e100335b5666cb7edac65d8d91216b6e175315b7d99ac39a",
+  "resource_contract_digest": "sha256:145f0a22b3d231f434d40f9b45c53299c8a422b469e790580080ee3aaada0c86",
+  "v3_lineage": {
+    "plan_id": "8a31fb79-9e7e-53d8-b0b0-f14b611da37a",
+    "plan_digest": "sha256:9d6ce4ff12450657dcda89650fe7b3207db6f179794cfb48eff8ebb81ad143d9",
+    "approval_id": "f69cb520-1336-5281-ae51-13bdb242ee7d",
+    "approval_digest": "sha256:e79e433af146c5260368087833e56ce98f16babc018ccd477515f0fc09a8b672",
+    "canonical_approval_commit": "080e2649bbf4a8b9331c953fec6a797985cd3523",
+    "execution_progress_absent": true
+  },
+  "target_references": {
+    "supabase_key_name": "impl_handoff_provider_adapter_positive_auth_v3_ephemeral",
+    "github_secret_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V3_EPHEMERAL"
+  },
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED",
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "credential_material_digest_recorded": false,
+    "secret_value_read": false,
+    "pii_observed": false,
+    "github_secret_mutation_performed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false,
+    "approval_created": false,
+    "execution_progress_created": false,
+    "result_evidence_created": false
+  },
+  "recorded_at": "2026-10-04T20:31:26Z",
+  "evidence_digest": "sha256:7e3de3bac50715a112448f97c8b3f24ecadb5b01456f76aca8d670d7265b04ed"
+}

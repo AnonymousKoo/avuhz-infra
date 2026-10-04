@@ -51,6 +51,8 @@ PREWINDOW_RETIREMENT_N = "development-implementation-handoff-provider-adapter-po
 PREWINDOW_INCIDENT_DIGEST = "sha256:38bd6282b4da2453e100335b5666cb7edac65d8d91216b6e175315b7d99ac39a"
 PREWINDOW_RETIREMENT_PLAN_DIGEST = "sha256:4b70a82966dad56ca9ff4c9c680356dbfa6bba48a71acc3780655a84da15ff2b"
 PREWINDOW_RETIREMENT_PROGRESS_DIGEST = "sha256:54e65db1c2a3a84b3c19d233072df1488eba1ca320610f9f6054c9a2ab46a1ae"
+PREWINDOW_RETIREMENT_APPROVAL_DIGEST = "sha256:229c3617af12c6ffad91b261364beb8ed46a71ae7936ebf080186c8471783a18"
+PREWINDOW_RETIREMENT_APPROVAL_FILE_DIGEST = "sha256:dcaf061267208e9fec4f376b53b43cd0254613b217ba9b9285511fcfe019f392"
 
 
 def load(name: str) -> dict:
@@ -99,6 +101,7 @@ def main() -> int:
     prewindow_incident = load(PREWINDOW_RETIREMENT_N + "-incident.evidence.json")
     prewindow_plan = load(PREWINDOW_RETIREMENT_N + ".plan.json")
     prewindow_progress = load(PREWINDOW_RETIREMENT_N + ".progress.json")
+    prewindow_approval = load(PREWINDOW_RETIREMENT_N + ".approval.json")
     assert prewindow_incident["evidence_digest"] == PREWINDOW_INCIDENT_DIGEST
     assert prewindow_incident["authorization_assessment"]["v3_step1_recordable_as_authorized"] is False
     assert prewindow_incident["authorization_assessment"]["v3_must_remain_blocked_until_retirement_complete"] is True
@@ -107,7 +110,9 @@ def main() -> int:
     assert prewindow_plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
     assert prewindow_progress["progress_digest"] == PREWINDOW_RETIREMENT_PROGRESS_DIGEST
     assert prewindow_progress["overall_state"] == "NOT_STARTED"
-    assert not (B / (PREWINDOW_RETIREMENT_N + ".approval.json")).exists()
+    assert raw(B / (PREWINDOW_RETIREMENT_N + ".approval.json")) == PREWINDOW_RETIREMENT_APPROVAL_FILE_DIGEST
+    assert prewindow_approval["approval_digest"] == PREWINDOW_RETIREMENT_APPROVAL_DIGEST
+    assert prewindow_approval["status"] == "ACTIVE" and prewindow_approval["decision"] == "APPROVE"
     assert not (B / (PREWINDOW_RETIREMENT_N + ".execution-progress.json")).exists()
 
     assert r["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
@@ -260,7 +265,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v3: PASS "
-        "(APPROVED / BLOCKED_BY_PREWINDOW_KEY; pristine execution progress; exact Step-4 SQL bound; "
+        "(APPROVED / BLOCKED_BY_APPROVED_PREWINDOW_RETIREMENT; pristine execution progress; exact Step-4 SQL bound; "
         "premature key creation is not recordable as authorized Step 1; fresh retirement v1 is required before any continuation)"
     )
     return 0

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B = ROOT / "contracts/plans/v1"
@@ -39,6 +39,10 @@ V3_PLAN_ID = "8a31fb79-9e7e-53d8-b0b0-f14b611da37a"
 V3_PLAN_DIGEST = "sha256:9d6ce4ff12450657dcda89650fe7b3207db6f179794cfb48eff8ebb81ad143d9"
 V3_APPROVAL_ID = "f69cb520-1336-5281-ae51-13bdb242ee7d"
 V3_APPROVAL_DIGEST = "sha256:e79e433af146c5260368087833e56ce98f16babc018ccd477515f0fc09a8b672"
+APPROVAL_ID = "fd049de5-92fb-549c-b918-66cd1509d600"
+APPROVAL_DIGEST = "sha256:229c3617af12c6ffad91b261364beb8ed46a71ae7936ebf080186c8471783a18"
+APPROVAL_FILE_DIGEST = "sha256:dcaf061267208e9fec4f376b53b43cd0254613b217ba9b9285511fcfe019f392"
+APPROVED_AT = "2026-10-04T20:43:25Z"
 
 
 def load(name: str) -> dict:
@@ -57,11 +61,13 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     plan = load(N + ".plan.json")
     progress = load(N + ".progress.json")
+    approval = load(N + ".approval.json")
     v3_plan = load(V3 + ".plan.json")
     v3_approval = load(V3 + ".approval.json")
 
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
+    validate_approval(plan, approval, S, WINDOW_START)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
@@ -73,7 +79,15 @@ def main() -> int:
     assert plan["target"]["responsibility"] == "AUTH"
     assert plan["created_at"] == CREATED_AT
     assert plan["authorization_window"] == {"binding_state":"BOUND","starts_at":WINDOW_START,"expires_at":WINDOW_END}
-    assert not (B / (N + ".approval.json")).exists()
+    assert raw(B / (N + ".approval.json")) == APPROVAL_FILE_DIGEST
+    assert approval["approval_id"] == APPROVAL_ID
+    assert approval["plan_id"] == PLAN_ID and approval["plan_version"] == 1 and approval["plan_digest"] == PLAN_DIGEST
+    assert approval["owner_identity"] == "github:AnonymousKoo" and approval["decision"] == "APPROVE"
+    assert approval["environment"] == "DEVELOPMENT" and approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert approval["effective_at"] == WINDOW_START and approval["expires_at"] == WINDOW_END
+    assert approval["approved_at"] == APPROVED_AT and approval["status"] == "ACTIVE"
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
+    assert APPROVED_AT < WINDOW_START
     assert not (B / (N + ".execution-progress.json")).exists()
     assert not list(B.glob(N + "-step*-*.evidence.json"))
 
@@ -172,7 +186,7 @@ def main() -> int:
     assert all((s["authorization_state"],s["execution_state"],s["verification_state"],s["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False) for s in progress["step_states"])
 
     rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
-        "-incident.evidence.json", ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json"
+        "-incident.evidence.json", ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json"
     ))
     for forbidden in ("Bearer eyJ", '"access_token":', '"refresh_token":', "service_role_key"):
         assert forbidden not in rendered
@@ -181,7 +195,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v3 prewindow-key retirement v1: PASS "
-        "(READY_FOR_APPROVAL; pristine; one exact key retirement + independent key/GitHub absence reads; "
+        "(APPROVED; pristine; one exact key retirement + independent key/GitHub absence reads; "
         "v3 execution blocked; no provider execution under retirement preparation)"
     )
     return 0

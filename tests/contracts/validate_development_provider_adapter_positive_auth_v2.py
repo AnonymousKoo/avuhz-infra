@@ -37,6 +37,9 @@ STEP1_RECORDED_AT = "2026-10-04T05:30:46Z"
 STEP2_EVIDENCE_DIGEST = "sha256:9cf39e54d31c6c861607df0750df4f80ae920040ebc15ae664c94d67ebc7a7dd"
 STEP2_EXECUTION_PROGRESS_DIGEST = "sha256:60a393bb7d85cdbd05d36f8fbbae63590964f191e52987f7ab8f6db4d6840b11"
 STEP2_RECORDED_AT = "2026-10-04T05:44:45Z"
+STEP3_EVIDENCE_DIGEST = "sha256:1949474314c7486e178e465e0e1436b6127c2da20260997daaf70bfb42a1d3d5"
+STEP3_EXECUTION_PROGRESS_DIGEST = "sha256:656af77ba698ebaf159b0ce812f627e4a54e26472fd0ba69d0bdf97f52ed4060"
+STEP3_RECORDED_AT = "2026-10-04T05:52:39Z"
 KEY_NAME = "impl_handoff_provider_adapter_positive_auth_v1_ephemeral"
 INVALID_OLD_KEY_NAME = "implementation-handoff-provider-adapter-positive-auth-v1-ephemeral"
 
@@ -58,6 +61,7 @@ def main() -> None:
     a = load(N + ".approval.json")
     e1 = load(N + "-step01-success.evidence.json")
     e2 = load(N + "-step02-success.evidence.json")
+    e3 = load(N + "-step03-success.evidence.json")
     x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
@@ -167,10 +171,18 @@ def main() -> None:
     assert e2["security_state"]["credential_value_committed"] is False
     assert raw(B / (N + "-step02-success.evidence.json")) == STEP2_EVIDENCE_DIGEST
 
-    assert x["record_version"] == 5
+    assert e3["evidence_type"] == "auth.provider-adapter-positive-auth.github-binding.verified"
+    assert e3["sanitized_result"]["binding_present"] is True
+    assert e3["sanitized_result"]["secret_name"] == "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V1_EPHEMERAL"
+    assert e3["sanitized_result"]["value_read"] is False
+    assert e3["sanitized_result"]["value_returned"] is False
+    assert e3["provider_mutation_attempted"] is False
+    assert raw(B / (N + "-step03-success.evidence.json")) == STEP3_EVIDENCE_DIGEST
+
+    assert x["record_version"] == 7
     assert x["overall_state"] == "IN_PROGRESS"
-    assert x["updated_at"] == STEP2_RECORDED_AT
-    assert x["progress_digest"] == STEP2_EXECUTION_PROGRESS_DIGEST
+    assert x["updated_at"] == STEP3_RECORDED_AT
+    assert x["progress_digest"] == STEP3_EXECUTION_PROGRESS_DIGEST
     step1 = x["step_states"][0]
     assert (
         step1["authorization_state"],
@@ -196,13 +208,25 @@ def main() -> None:
     assert len(step2["binding_assertions"]) == 2
     assert {a["phase"] for a in step2["binding_assertions"]} == {"DERIVED_FROM_SOURCE_STEP", "PRODUCED_BY_CURRENT_STEP"}
     assert all(a["value_digest"] == RESOURCE_DIGEST for a in step2["binding_assertions"])
+    step3 = x["step_states"][2]
+    assert (
+        step3["authorization_state"],
+        step3["execution_state"],
+        step3["verification_state"],
+        step3["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert step3["safe_error_code"] is None
+    assert len(step3["evidence"]) == 1
+    assert step3["evidence"][0]["evidence_digest"] == STEP3_EVIDENCE_DIGEST
+    assert len(step3["binding_assertions"]) == 2
+    assert all(a["value_digest"] == RESOURCE_DIGEST for a in step3["binding_assertions"])
     assert all(
         state["authorization_state"] == "PENDING"
         and state["execution_state"] == "NOT_STARTED"
         and state["verification_state"] == "NOT_STARTED"
         and state["authorization_consumed"] is False
         and not state["evidence"]
-        for state in x["step_states"][2:]
+        for state in x["step_states"][3:]
     )
 
     rendered = "".join(
@@ -216,6 +240,7 @@ def main() -> None:
             ".approval.json",
             "-step01-success.evidence.json",
             "-step02-success.evidence.json",
+            "-step03-success.evidence.json",
             ".execution-progress.json",
         )
     )
@@ -234,8 +259,8 @@ def main() -> None:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v2: PASS "
-        "(APPROVED; Steps 1-2 CONSUMED/SUCCEEDED/PASS; exact GitHub development binding present by name; "
-        "credential material never retained; Step 3 pending)"
+        "(APPROVED; Steps 1-3 CONSUMED/SUCCEEDED/PASS; GitHub binding independently verified by name only; "
+        "credential material never retained; Step 4 pending)"
     )
 
 

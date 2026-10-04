@@ -1,0 +1,63 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "2f0af2ef-f17b-544e-9be0-22498b3c628a",
+  "plan_version": 1,
+  "plan_digest": "sha256:4b70a82966dad56ca9ff4c9c680356dbfa6bba48a71acc3780655a84da15ff2b",
+  "approval_id": "fd049de5-92fb-549c-b918-66cd1509d600",
+  "approval_digest": "sha256:229c3617af12c6ffad91b261364beb8ed46a71ae7936ebf080186c8471783a18",
+  "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v3-prewindow-key-retirement-v1.step.02.verify-prewindow-auth-admin-key-absent",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "EXACT_PREWINDOW_V3_EPHEMERAL_AUTH_KEY_ABSENCE_INDEPENDENTLY_CONFIRMED",
+  "authorization_observation": {
+    "interaction_surface": "supabase.dashboard.project-settings.api-keys.names-only",
+    "project_reference": "pwlhruwutoitnieactol",
+    "environment": "DEVELOPMENT",
+    "responsibility": "AUTH",
+    "approval_exact": true,
+    "authorization_window_execution_owner_confirmed": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "credential_material_observed": false,
+    "provider_mutation_attempted": false
+  },
+  "authorization_observation_digest": "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854",
+  "sanitized_result": {
+    "key_name": "impl_handoff_provider_adapter_positive_auth_v3_ephemeral",
+    "absent": true,
+    "credential_material_observed": false,
+    "other_key_inspected": false,
+    "provider_mutation_performed": false
+  },
+  "result_digest": "sha256:31e72736f5991a9f375ddbba2ab08460a2be112a60bee0369dea2c39f31323c6",
+  "execution_observation": {
+    "execution_class": "PROVIDER_READ",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_absence_read_attempts": 1,
+    "credential_value_read": false,
+    "other_key_inspected": false,
+    "provider_mutation_attempted": false,
+    "retry_occurred": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "other_provider_key_inspected": false,
+    "provider_key_changed": false,
+    "github_secret_changed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SEPARATE_READ_ONLY_INSPECTION",
+  "recorded_at": "2026-10-04T21:25:51Z"
+}

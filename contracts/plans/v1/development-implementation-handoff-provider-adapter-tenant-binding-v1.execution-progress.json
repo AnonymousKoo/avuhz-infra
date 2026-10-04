@@ -3,8 +3,8 @@
   "plan_id": "7c5828c6-dd2e-4dd2-a163-9e8c99d35bcb",
   "plan_version": 1,
   "plan_digest": "sha256:c9b22999181030d87d2e1d3e58cbe8d75eef33d708b3eac9233fbeaebfbd3bac",
-  "record_version": 3,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development.implementation-handoff.provider-adapter-tenant-binding-v1.step.01.bind-canonical-tenant",
@@ -53,16 +53,63 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-tenant-binding-v1.step.02.verify-canonical-tenant",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-tenant-metadata.verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-tenant-binding-v1-step02-success.evidence.json",
+          "evidence_digest": "sha256:42a33b97e8ab5c8fd9c7972d5d4a9cad57d06135ea9a05952ed6f669026c3936",
+          "recorded_at": "2026-10-04T01:50:04Z"
+        }
+      ],
+      "observed_postcondition": "In a separate owner-interactive DEVELOPMENT AUTH SQL Editor read, execute exactly the bound aggregate-only verification SELECT. Return only the twelve named count fields. Exact expected counts prove both Auth identities remain, both are bound to canonical tenant 1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0, the provider-adapter remains passwordless with exact target app metadata and one email identity, and global sessions/refresh tokens remain zero. No mutation, raw row, user_metadata read, or server allowlist change is authorized.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-tenant-binding-v1.tenant-metadata",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": "development.implementation-handoff.provider-adapter-tenant-binding-v1.step.01.bind-canonical-tenant",
+          "evidence_type": "auth.provider-adapter-tenant-metadata.bound",
+          "evidence_digest": "sha256:24caf151405d2e0f72dba940c856f9484275be5f5d1d6eade9a848bcb9073f3e",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:8b5014499848a18c30b6c7a6e16733dd89a7f7895b7422b480aa8a84c3011ab0",
+          "recorded_at": "2026-10-04T01:46:26Z"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-tenant-binding-v1.verification-dashboard-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-dashboard-session.observed",
+          "evidence_digest": "sha256:47f45e96988f00e2a2d31f70b30d24a817f6a1f086e147400400df805d337774",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:47f45e96988f00e2a2d31f70b30d24a817f6a1f086e147400400df805d337774",
+          "recorded_at": "2026-10-04T01:46:26Z"
+        },
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-tenant-binding-v1.tenant-metadata-verified",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-tenant-metadata.verified",
+          "evidence_digest": "sha256:42a33b97e8ab5c8fd9c7972d5d4a9cad57d06135ea9a05952ed6f669026c3936",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:ac7fec8d094e2518bc9bda4b4ff818cae29eb3bf76e3e608cbc3f65aaf2e5726",
+          "recorded_at": "2026-10-04T01:50:04Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-10-04T01:39:07Z",
-  "progress_digest": "sha256:aa1d85cb5ad51f7acfcc978bdcd1e69eb8c7fade1a943bece579e3d22d4eef1a"
+  "updated_at": "2026-10-04T01:50:04Z",
+  "progress_digest": "sha256:15d141c1f2571f0b95ab9ba6ba6c2589d8939f1202119a5a36b1a6fb7cda6ced"
 }

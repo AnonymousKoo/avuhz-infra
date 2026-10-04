@@ -1,0 +1,44 @@
+{
+  "progress_id": "9934545c-77ee-4218-aace-6a23bc3ce9c3",
+  "plan_id": "cce4289e-d441-40f3-8d46-196355d093bc",
+  "plan_version": 1,
+  "plan_digest": "sha256:7852e2c59abe083986d7e7add98e2f350460d76cf448aa9bb47b88603ad876fe",
+  "record_version": 3,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-allowlist-binding-v1.step.01.activate-exact-server-policy-entry",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "server.capability-policy.verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-allowlist-binding-v1-step01-success.evidence.json",
+          "evidence_digest": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325",
+          "recorded_at": "2026-10-04T02:20:21Z"
+        }
+      ],
+      "observed_postcondition": "Only src/avuhz_service/development_supabase_identity.py changes to the exact target digest. The existing HUMAN / engagement:read entry remains unchanged. Exactly one PROVIDER_ADAPTER entry is added for provider-adapter.implementation-handoff-development, tenant 1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0, with only implementation_handoff:accept and empty authority roles. Tests pass; no provider, credential, DATA, Render/deploy, n8n, staging, or production action occurs.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-allowlist-binding-v1.server-capability-policy",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "server.capability-policy.verified",
+          "evidence_digest": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:7ed1565c16e150b4495509de36f98150f4f70b3898323789e306f2d5c831ce36",
+          "recorded_at": "2026-10-04T02:20:21Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-04T02:20:21Z",
+  "progress_digest": "sha256:eef423d8cd118abf87da1d2d1f7b2a56c78570dab306cf8c94113ab923774a9c"
+}

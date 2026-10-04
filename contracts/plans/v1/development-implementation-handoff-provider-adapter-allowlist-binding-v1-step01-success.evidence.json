@@ -1,0 +1,88 @@
+{
+  "evidence_type": "server.capability-policy.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "cce4289e-d441-40f3-8d46-196355d093bc",
+  "plan_version": 1,
+  "plan_digest": "sha256:7852e2c59abe083986d7e7add98e2f350460d76cf448aa9bb47b88603ad876fe",
+  "approval_id": "980fad43-7fbc-4aca-9bb9-fed67c2b2f33",
+  "approval_digest": "sha256:95d81aebcf5fa0d3d16919debc0e537f6411b24b84d20134bdfe5ad15754f2bb",
+  "step_id": "development.implementation-handoff.provider-adapter-allowlist-binding-v1.step.01.activate-exact-server-policy-entry",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_VERIFIED",
+  "classification": "PROVIDER_ADAPTER_ALLOWLIST_ENTRY_ACTIVATED",
+  "execution_observation": {
+    "execution_class": "LOCAL_ONLY",
+    "credential_class": "NONE",
+    "policy_resource_reference": "policy.development.provider-adapter.implementation-handoff",
+    "policy_resource_version": "allowlist-binding.v1",
+    "source_path": "src/avuhz_service/development_supabase_identity.py",
+    "source_before_digest": "sha256:17894ed10e4faa26616b8843df96f10a3e65de77fc6c5d85007970ceabd4a367",
+    "source_after_digest": "sha256:bbdf9c44c683118adedd42645bfb6b3c40617bbe8e402ce4bb65b20a7b1f6189",
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "credential_used": false,
+    "resource_mutation_count": 1
+  },
+  "policy_observation": {
+    "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience": "audience.avuhz.command-service.development",
+    "entries": [
+      {
+        "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+        "audience": "audience.avuhz.command-service.development",
+        "subject_digest": "sha256:96ed2639ff64f1c0712d9548f8d524c4cd7f3025d30013c8857aace8661a84a5",
+        "principal_reference": "subject.development-synthetic-user",
+        "tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+        "caller_type": "HUMAN",
+        "capabilities": [
+          "engagement:read"
+        ],
+        "authority_roles": []
+      },
+      {
+        "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+        "audience": "audience.avuhz.command-service.development",
+        "subject_digest": "sha256:21ae3658908a20bb95e6440850180d699bba96da97ee1556e0574d1b12293e7a",
+        "principal_reference": "provider-adapter.implementation-handoff-development",
+        "tenant_id": "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0",
+        "caller_type": "PROVIDER_ADAPTER",
+        "capabilities": [
+          "implementation_handoff:accept"
+        ],
+        "authority_roles": []
+      }
+    ]
+  },
+  "verification_observation": {
+    "target_source_digest_verified": true,
+    "target_policy_digest_verified": true,
+    "allowlist_entry_count": 2,
+    "existing_human_policy_preserved": true,
+    "provider_adapter_entry_exact": true,
+    "authority_roles_empty": true,
+    "focused_identity_unit_tests_passed": true,
+    "focused_identity_unit_test_count": 6,
+    "repository_baseline_passed": true
+  },
+  "security_state": {
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "credential_material_observed": false,
+    "raw_provider_subject_observed": false,
+    "pii_retained": false,
+    "human_policy_modified": false,
+    "extra_capability_added": false,
+    "authority_role_added": false,
+    "token_or_session_mutated": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "recorded_at": "2026-10-04T02:20:21Z",
+  "evidence_digest": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325"
+}

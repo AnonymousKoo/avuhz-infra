@@ -85,14 +85,48 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.03.verify-github-binding-presence",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v4-step03-success.evidence.json",
+          "evidence_digest": "sha256:b32dba957f080e4f0df22d3dd572afd2e2172c0f63c157f1a8328ca11a9aea0d",
+          "recorded_at": "2026-10-04T23:31:35Z"
+        }
+      ],
+      "observed_postcondition": "A separate owner-interactive read-only GitHub environment inspection proves exactly the secret reference AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL exists in repository AnonymousKoo/avuhz-infra environment development by name only. No secret value is requested or returned and no mutation occurs.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v4.github-binding-created",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.02.bind-fresh-key-github-development",
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "evidence_digest": "sha256:947336db2db2cc49029949d363b9cc34904ce0753d424887cc22504a9f1a779e",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:443e1cd9ac9ce155e8f6914ac886d2444b2d05008411d859ccd8c8028feb3604",
+          "recorded_at": "2026-10-04T23:31:35Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v4.github-binding-verified",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "evidence_digest": "sha256:b32dba957f080e4f0df22d3dd572afd2e2172c0f63c157f1a8328ca11a9aea0d",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:0a1369cf1caa19e9fc5f52889ad643c7f65f97db9e378978d2ae45aeb662c1f3",
+          "recorded_at": "2026-10-04T23:31:35Z"
+        }
+      ]
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4.step.04.verify-fresh-auth-preflight",
@@ -172,6 +206,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-04T23:22:26Z",
-  "progress_digest": "sha256:27c0580968d547fe06667beae1ff89336fc43015948ffd136323c53ad1cdd470"
+  "updated_at": "2026-10-04T23:31:35Z",
+  "progress_digest": "sha256:16a6dff912571af47cff95c57218ed31b53014bb82c0c6d8bc999eb8ee35d554"
 }

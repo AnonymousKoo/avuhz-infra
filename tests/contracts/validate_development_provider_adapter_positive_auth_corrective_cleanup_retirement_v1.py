@@ -32,6 +32,11 @@ WINDOW_END = "2026-10-04T21:00:00Z"
 APPROVAL_ID = "1e60f413-f385-53a0-a03f-ccbceb2fcb55"
 APPROVAL_DIGEST = "sha256:144d51d1786baf662e21b1bc6bde41abe7040e0b5070c984d3ed3ec5cd8c432c"
 APPROVED_AT = "2026-10-04T16:49:30Z"
+STEP1_RECORDED_AT = "2026-10-04T17:31:31Z"
+STEP1_EVIDENCE_DIGEST = "sha256:5a4183d202fc94f948b25e9c60a59136e9b81687728bf02ecb116ceba25709d1"
+STEP1_AUTHORIZATION_DIGEST = "sha256:5978bd396f8855dce3b3ee2d79a076098498ca57ce039da16c88c9958f1d8102"
+STEP1_RESULT_DIGEST = "sha256:3e2e7abda1b4491314952227804dc17fc293978ecf7f0ab8a5be8158bb954473"
+EXECUTION_PROGRESS_DIGEST = "sha256:2446e6b8b2189f8c371cf46b382d3dd7e43964f8f150d7bcef28df0ac0c454b1"
 
 PROJECT = "pwlhruwutoitnieactol"
 DATA_PROJECT = "gnuqaefotwgkwurjpyik"
@@ -70,10 +75,13 @@ def main() -> int:
     plan = load(N + ".plan.json")
     progress = load(N + ".progress.json")
     approval = load(N + ".approval.json")
+    success = load(N + "-step1-success.evidence.json")
+    execution = load(N + ".execution-progress.json")
 
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
     validate_approval(plan, approval, S, WINDOW_START)
+    validate_progress(plan, execution, S)
 
     assert plan["plan_id"] == PLAN_ID
     assert plan["plan_version"] == 1
@@ -221,8 +229,75 @@ def main() -> int:
     }
     assert approval_digest(approval) == APPROVAL_DIGEST
     assert APPROVED_AT < WINDOW_START
-    assert not (B / (N + ".execution-progress.json")).exists()
-    assert not list(B.glob(N + "-step*.evidence.json"))
+
+    success_path = B / (N + "-step1-success.evidence.json")
+    assert raw(success_path) == STEP1_EVIDENCE_DIGEST
+    assert success["evidence_type"] == "auth.provider-adapter-positive-auth.cleanup.verified"
+    assert success["environment"] == "DEVELOPMENT"
+    assert success["responsibility"] == "AUTH"
+    assert success["provider_reference"] == "supabase"
+    assert success["project_reference"] == PROJECT
+    assert success["plan_id"] == PLAN_ID
+    assert success["plan_version"] == 1
+    assert success["plan_digest"] == PLAN_DIGEST
+    assert success["approval_id"] == APPROVAL_ID
+    assert success["approval_digest"] == APPROVAL_DIGEST
+    assert success["step_id"] == steps[0]["step_id"]
+    assert success["attempt"] == 1
+    assert success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert success["classification"] == "ZERO_SESSION_REFRESH_STATE_VERIFIED"
+    assert success["authorization_observation_digest"] == STEP1_AUTHORIZATION_DIGEST
+    assert success["sanitized_result"] == {"session_count": 0, "refresh_token_count": 0}
+    assert success["result_digest"] == STEP1_RESULT_DIGEST
+    assert success["record_basis"] == "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME"
+    assert success["recorded_at"] == STEP1_RECORDED_AT
+    assert success["execution_observation"] == {
+        "execution_class": "PROVIDER_READ",
+        "execution_timestamp_retained": False,
+        "recorded_at_is_execution_timestamp": False,
+        "approved_aggregate_select_attempts": 1,
+        "additional_sql_executed": False,
+        "provider_mutation_attempted": False,
+        "retry_occurred": False,
+    }
+    assert success["verification_observation"] == {
+        "one_row_only": True,
+        "exact_two_fields_only": True,
+        "all_counts_nonnegative_integers": True,
+        "all_expected_counts_matched": True,
+        "raw_rows_returned": False,
+        "sensitive_values_returned": False,
+    }
+    assert not any(success["security_state"].values())
+
+    assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST
+    assert execution["overall_state"] == "IN_PROGRESS"
+    assert execution["updated_at"] == STEP1_RECORDED_AT
+    step1_state = execution["step_states"][0]
+    assert (
+        step1_state["authorization_state"],
+        step1_state["execution_state"],
+        step1_state["verification_state"],
+        step1_state["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert step1_state["safe_error_code"] is None
+    assert step1_state["evidence"] == [{
+        "evidence_type": "auth.provider-adapter-positive-auth.cleanup.verified",
+        "evidence_reference": N + "-step1-success.evidence.json",
+        "evidence_digest": STEP1_EVIDENCE_DIGEST,
+        "recorded_at": STEP1_RECORDED_AT,
+    }]
+    assert len(step1_state["binding_assertions"]) == 2
+    assert step1_state["binding_assertions"][0]["evidence_digest"] == STEP1_AUTHORIZATION_DIGEST
+    assert step1_state["binding_assertions"][1]["evidence_digest"] == STEP1_EVIDENCE_DIGEST
+    assert step1_state["binding_assertions"][1]["value_digest"] == STEP1_RESULT_DIGEST
+    assert all(
+        (
+            x["authorization_state"], x["execution_state"],
+            x["verification_state"], x["authorization_consumed"]
+        ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
+        for x in execution["step_states"][1:]
+    )
 
     cont = "development-implementation-handoff-provider-adapter-positive-auth-continuation-v1"
     assert raw(B / (cont + ".plan.json")) == CONT_PLAN_RAW
@@ -241,7 +316,8 @@ def main() -> int:
     assert all(x["authorization_state"] == "BLOCKED" for x in stopped["step_states"][1:])
 
     rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (
-        ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json"
+        ".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json",
+        "-step1-success.evidence.json", ".execution-progress.json"
     ))
     for forbidden in ("sb_secret_", "Bearer eyJ", "service_role_key", '"access_token":', '"refresh_token":'):
         assert forbidden not in rendered
@@ -249,8 +325,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth corrective cleanup/retirement v1: PASS "
-        "(APPROVED; pristine five-step boundary; zero-state required before retirement; "
-        "failed live-auth retry prohibited; execution not started)"
+        "(IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS with zero session/refresh state; "
+        "Step 2 retirement dependency now satisfied; failed live-auth retry prohibited)"
     )
     return 0
 

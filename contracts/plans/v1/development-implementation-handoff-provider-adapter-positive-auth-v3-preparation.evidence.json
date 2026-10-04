@@ -1,0 +1,46 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v3.preparation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "observation_only": true,
+  "resource_contract_digest": "sha256:d89ae6b20765a47dbd76b19761fbee832947e18591333a0a1cc3aa25c45fa9c9",
+  "source_bindings": {
+    "executor": "sha256:a6cc58458dad0e7589217d4bcb217f30b5b533aba64338ad487af28ab61deb9f",
+    "workflow": "sha256:40509f84cbcb27a2b6721cbcbebc8e5c6668c45fe4bd5c77469a58d3a873d85a",
+    "token_lifecycle": "sha256:d8b68df0ed06fec06cbf538e9511b432678d3baa73ee656c3495eb724bde0797",
+    "identity_policy": "sha256:bbdf9c44c683118adedd42645bfb6b3c40617bbe8e402ce4bb65b20a7b1f6189",
+    "jwt_verifier": "sha256:52de43a29eddd4d17e428fa3989ac7bb20397b3c131b0eaa6eef5b37de37713c"
+  },
+  "prerequisites": {
+    "passwordless": "sha256:26a90c35357ac14b23d1b7f17e18762e958248462d53aed168985dba249cbb10",
+    "tenant_binding": "sha256:42a33b97e8ab5c8fd9c7972d5d4a9cad57d06135ea9a05952ed6f669026c3936",
+    "allowlist": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325",
+    "render_v11_runtime": "sha256:f49f6882f2e6ec0274935137a52c7b7c942bfbe0bc72baebca143a90aedc5345",
+    "render_v11_progress": "sha256:762fc38748aeb4483a5b26179a703e687bab13e7f5c73160b29a3a77d4480e5c",
+    "failed_continuation_evidence": "sha256:27c324aa9f0c155fb5c75125cdc4ce24bb160e1bf06af1fd2d08bd75039180c9",
+    "failed_continuation_progress": "sha256:730f4c0a7b6393223c85cd5746472e1227bb9c77d174e8644075c4dc1722bd6b",
+    "corrective_cleanup_zero_state": "sha256:5a4183d202fc94f948b25e9c60a59136e9b81687728bf02ecb116ceba25709d1",
+    "corrective_cleanup_key_absence": "sha256:338e9648389d857871c816d9e4ad5c814300c3a92de45671da77e2564274a60f",
+    "corrective_cleanup_github_absence": "sha256:318709e7c83d2e701552b4daaa9769120ccade381c3aeaf179132489f9ff3de4",
+    "corrective_cleanup_progress": "sha256:e48fe89e45b47e31b5439ccefe2240ab0edc3e9f2e377d10c2f799e617bc08a4"
+  },
+  "security_state": {
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "credential_created": false,
+    "credential_material_observed": false,
+    "github_secret_changed": false,
+    "session_issued": false,
+    "token_issued": false,
+    "runtime_request_performed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "recorded_at": "2026-10-04T19:53:50Z",
+  "evidence_digest": "sha256:c97bf6eeebed0df9259a07904d72d9e5101b72a3fa33d173bd7c084d9417bc16"
+}

@@ -49,6 +49,11 @@ APPROVAL_ID = '976971bf-f20c-5dc3-8895-d4e7cd2d1d16'
 APPROVAL_DIGEST = 'sha256:31ede5908db0a9b29a21f27602ca3dd7708bdbaafcb9bb5ae25c829999eb81d6'
 APPROVAL_FILE_DIGEST = 'sha256:321091ca7bfa7727eb35fd5df30bbb6845cbfab317e3ddd5c90cd42619f18141'
 APPROVED_AT = '2026-10-04T21:57:20Z'
+STEP1_RECORDED_AT = '2026-10-04T23:10:20Z'
+STEP1_EVIDENCE_DIGEST = 'sha256:69cfb113f70f7e87ac681c7c0123dc338808f129a9f2fe534661b98805796302'
+STEP1_AUTHORIZATION_DIGEST = 'sha256:08285ad0e00ea50fe36dec45db8eb61b9ca9792a976a1e9fe09246f78e8f08f1'
+STEP1_RESULT_DIGEST = 'sha256:9017a727b7bebe151e0c7a23492201a7f3127c74ede0c691022fbfb393098378'
+EXECUTION_PROGRESS_DIGEST = 'sha256:52e6d1cfbcef6201e87983c0d3cc5b05e4ef03cdb3dc4c84367ae9994b3e02b4'
 
 
 def load(name: str) -> dict:
@@ -67,10 +72,13 @@ def main() -> int:
     p = load(N + '.plan.json')
     g = load(N + '.progress.json')
     a = load(N + '.approval.json')
+    step1 = load(N + '-step01-success.evidence.json')
+    execution = load(N + '.execution-progress.json')
 
     validate_plan(p, S)
     validate_progress(p, g, S)
     validate_approval(p, a, S, WINDOW_START)
+    validate_progress(p, execution, S)
     assert p['plan_id'] == PLAN_ID and p['plan_version'] == 4
     assert p['plan_digest'] == PLAN_DIGEST == plan_digest(p)
     assert p['definition_status'] == 'READY_FOR_APPROVAL'
@@ -88,8 +96,10 @@ def main() -> int:
     assert a['approved_at'] == APPROVED_AT and a['status'] == 'ACTIVE'
     assert a['approval_digest'] == APPROVAL_DIGEST == approval_digest(a)
     assert APPROVED_AT < WINDOW_START
-    assert not (B / (N + '.execution-progress.json')).exists()
-    assert not list(B.glob(N + '-step*-*.evidence.json'))
+    assert raw(B / (N + '-step01-success.evidence.json')) == STEP1_EVIDENCE_DIGEST
+    assert execution['progress_digest'] == EXECUTION_PROGRESS_DIGEST == progress_digest(execution)
+    assert execution['overall_state'] == 'IN_PROGRESS'
+    assert execution['updated_at'] == STEP1_RECORDED_AT
 
     assert r['contract_digest'] == RESOURCE_DIGEST == canonical_digest({k:v for k,v in r.items() if k != 'contract_digest'})
     assert r['resource_version'] == 'provider-adapter-positive-auth.v4' and r['boundary'] == N
@@ -188,12 +198,47 @@ def main() -> int:
     assert g['overall_state'] == 'NOT_STARTED'
     assert all((s['authorization_state'],s['execution_state'],s['verification_state'],s['authorization_consumed']) == ('PENDING','NOT_STARTED','NOT_STARTED',False) and not s['evidence'] and not s['binding_assertions'] for s in g['step_states'])
 
-    rendered='\n'.join((B/(N+suffix)).read_text() for suffix in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
+    assert step1['evidence_type'] == 'auth.provider-adapter-positive-auth.admin-credential.created'
+    assert step1['environment'] == 'DEVELOPMENT' and step1['responsibility'] == 'AUTH'
+    assert step1['provider_reference'] == 'supabase' and step1['project_reference'] == PROJECT
+    assert step1['plan_id'] == PLAN_ID and step1['plan_version'] == 4 and step1['plan_digest'] == PLAN_DIGEST
+    assert step1['approval_id'] == APPROVAL_ID and step1['approval_digest'] == APPROVAL_DIGEST
+    assert step1['step_id'] == p['steps'][0]['step_id'] and step1['attempt'] == 1
+    assert step1['outcome'] == 'SUCCEEDED_VERIFIED'
+    assert step1['classification'] == 'DEDICATED_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_CREDENTIAL_CREATED'
+    assert step1['authorization_observation_digest'] == STEP1_AUTHORIZATION_DIGEST == canonical_digest(step1['authorization_observation'])
+    assert step1['authorization_observation']['credential_material_exposed_to_agent'] is False
+    assert step1['sanitized_result']['logical_key_name'] == KEY
+    assert step1['sanitized_result']['resource_reference'] == f'supabase:{PROJECT}:secret-key:{KEY}'
+    assert step1['sanitized_result']['dedicated_scope'] == 'development-provider-adapter-positive-auth-v4-only'
+    assert step1['result_digest'] == STEP1_RESULT_DIGEST == canonical_digest(step1['sanitized_result'])
+    assert step1['owner_confirmed_created'] is True
+    assert step1['credential_material_retained'] is False and step1['credential_material_digest_recorded'] is False
+    assert step1['recorded_at'] == STEP1_RECORDED_AT
+    assert all(value is False for value in step1['security_state'].values())
+
+    e1 = execution['step_states'][0]
+    assert (e1['authorization_state'],e1['execution_state'],e1['verification_state'],e1['authorization_consumed']) == ('CONSUMED','SUCCEEDED','PASS',True)
+    assert e1['safe_error_code'] is None
+    assert e1['observed_postcondition'] == p['steps'][0]['expected_postcondition']
+    assert e1['evidence'] == [{
+        'evidence_type':'auth.provider-adapter-positive-auth.admin-credential.created',
+        'evidence_reference':N + '-step01-success.evidence.json',
+        'evidence_digest':STEP1_EVIDENCE_DIGEST,
+        'recorded_at':STEP1_RECORDED_AT,
+    }]
+    assert len(e1['binding_assertions']) == 1
+    assert e1['binding_assertions'][0]['binding_id'] == 'binding.development.provider-adapter-positive-auth-v4.fresh-key-created'
+    assert e1['binding_assertions'][0]['evidence_digest'] == STEP1_EVIDENCE_DIGEST
+    assert e1['binding_assertions'][0]['value_digest'] == STEP1_RESULT_DIGEST
+    assert all((x['authorization_state'],x['execution_state'],x['verification_state'],x['authorization_consumed']) == ('PENDING','NOT_STARTED','NOT_STARTED',False) for x in execution['step_states'][1:])
+
+    rendered='\n'.join((B/(N+suffix)).read_text() for suffix in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step01-success.evidence.json','.execution-progress.json'))
     for forbidden in ('Bearer eyJ','"access_token":','"refresh_token":','service_role_key'): assert forbidden not in rendered
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert re.search(r'postgres(?:ql)?://[^\s/:]+:[^\s/@]+@',rendered,re.I) is None
 
-    print('DEVELOPMENT provider-adapter positive-auth v4: PASS (APPROVED; pristine; effective 7-11 PM ET; v3 retirement complete and bound; fresh v4 credential lifecycle; no provider execution)')
+    print('DEVELOPMENT provider-adapter positive-auth v4: PASS (IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS; Steps 2-10 PENDING; fresh v4 key created with no material retained)')
     return 0
 
 if __name__ == '__main__':

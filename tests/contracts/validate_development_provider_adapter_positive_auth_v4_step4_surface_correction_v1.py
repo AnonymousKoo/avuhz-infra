@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B = ROOT / "contracts/plans/v1"
@@ -41,6 +41,10 @@ V4_STOPPED_PROGRESS = "sha256:89597fb31105b2398295ba8c0be4534c7de80e7813b673e108
 V4_SCOPE_DRIFT_EVID = "sha256:15548bdd48fa9df3f78b2a8b84888c3b191fcd510c07c50db0ce64fded5ae6d3"
 V4_STEP3_EVID = "sha256:b32dba957f080e4f0df22d3dd572afd2e2172c0f63c157f1a8328ca11a9aea0d"
 V4_HIST_RESULT = "sha256:9cdd1a5df610cc4e193da53e03a74b108a0ebb0875cb16dc82bf6320516d846e"
+APPROVAL_ID = "eec15fdd-e84d-548f-9e5f-90b1f4f0836b"
+APPROVAL_DIGEST = "sha256:47f4547d628c82aa0fc2902de3f8b8dbf1ab7b3a0fd360f1bfb5930b22a700cb"
+APPROVAL_FILE_DIGEST = "sha256:a425a5b602083029dbfb2afaecc886a890a2beffab90367931da45fee0a01e2b"
+APPROVED_AT = "2026-10-05T00:28:48Z"
 
 
 def load(name: str) -> dict:
@@ -58,12 +62,14 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     plan = load(N + ".plan.json")
     progress = load(N + ".progress.json")
+    approval = load(N + ".approval.json")
     v4_stop = load(V4 + ".execution-progress.json")
     v4_drift = load(V4 + "-step04-scope-drift.evidence.json")
     v4_step3 = load(V4 + "-step03-success.evidence.json")
 
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
+    validate_approval(plan, approval, S, WINDOW_START)
 
     assert plan["plan_id"] == PLAN_ID and plan["plan_version"] == 1
     assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
@@ -78,7 +84,17 @@ def main() -> int:
         "starts_at": WINDOW_START,
         "expires_at": WINDOW_END,
     }
-    assert not (B / (N + ".approval.json")).exists()
+    assert raw(B / (N + ".approval.json")) == APPROVAL_FILE_DIGEST
+    assert approval["approval_id"] == APPROVAL_ID
+    assert approval["plan_id"] == PLAN_ID and approval["plan_version"] == 1
+    assert approval["plan_digest"] == PLAN_DIGEST
+    assert approval["owner_identity"] == "github:AnonymousKoo"
+    assert approval["decision"] == "APPROVE" and approval["environment"] == "DEVELOPMENT"
+    assert approval["effective_at"] == WINDOW_START and approval["expires_at"] == WINDOW_END
+    assert approval["approved_at"] == APPROVED_AT and approval["status"] == "ACTIVE"
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
+    assert APPROVED_AT < WINDOW_START
     assert not (B / (N + ".execution-progress.json")).exists()
     assert not list(B.glob(N + "-step*-*.evidence.json"))
 
@@ -227,6 +243,7 @@ def main() -> int:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            ".approval.json",
         )
     )
     for forbidden in ("Bearer eyJ", '"access_token":', '"refresh_token":', "service_role_key"):
@@ -236,8 +253,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v4 Step-4 surface correction v1: PASS "
-        "(READY_FOR_APPROVAL; pristine; exact one-query Supabase MCP read; v4 remains STOPPED; "
-        "no retry, mutation, credential access, or Step-5 authority)"
+        "(APPROVED; pristine; effective 9 PM-1 AM ET; exact one-query Supabase MCP read; "
+        "v4 remains STOPPED; no retry, mutation, credential access, or Step-5 authority)"
     )
     return 0
 

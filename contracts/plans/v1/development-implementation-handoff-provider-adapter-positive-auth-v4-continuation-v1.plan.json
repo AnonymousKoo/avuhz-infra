@@ -91,7 +91,7 @@
           "exact_digest": "sha256:b3b6f2f96a4d1a45ea90d685b13c375c4233b41999496b422c9a40e623eb41f5"
         }
       ],
-      "expected_postcondition": "Consume the completed correction-v2 aggregate evidence while original v2 Step 4 remains pending. Using only the existing dedicated Auth-admin binding in GitHub Actions memory, issue one temporary recovery session, validate the bound JWT and provider-adapter policy, require the live /v1/queries probe to return 400 invalid_query, then request global logout once. No handoff or retry. Any failure or unverified logout stops normal progression and requires fresh corrective cleanup/retirement authority.",
+      "expected_postcondition": "Consume the certified v4 Step-4 surface-correction aggregate evidence while the original v4 plan remains immutably STOPPED. Using only the existing dedicated v4 Auth-admin binding in GitHub Actions memory, issue one temporary recovery session, validate the bound JWT and provider-adapter policy, require the live /v1/queries probe to return 400 invalid_query, then request global logout once. Do not execute ImplementationHandoff, retire credentials, or retry. Any failure or unverified logout stops normal progression and requires fresh corrective cleanup/retirement authority.",
       "prohibited_actions": [
         "additional.session.issue",
         "allowlist.modify",
@@ -484,5 +484,5 @@
     "retirement.unverified"
   ],
   "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
-  "plan_digest": "sha256:6ba06bca76ed16fb9306ab1f279887dc92e7747a54767a9616c6d841d37c075e"
+  "plan_digest": "sha256:b3fe688ebb8e40da8f9c76db4f1054308e2a831ccd977b41852bb0322fb3ca32"
 }

@@ -19,11 +19,11 @@ START='2026-10-06T01:00:00Z'
 END='2026-10-06T05:00:00Z'
 V1_LATE='sha256:92b07fb7f7fec8c93603160f9404def011256eb0cbd243068c8e0090905074b4'
 V2_REJECT='sha256:40395a1c082cc8b196c63ee6e71e2274580d5dd25a2b1673f97bf09058444014'
-V3_REJECT='sha256:760a8000b6f2fcabd31ff1257b9a3a8310f77802250e053c53e59f907a862341'
-RESOURCE='sha256:4e7028736750bc11dcc88b90b3c3857a4bcf0526443f371769b7ba27d7ba7695'
-PREP='sha256:6418de1aaffd34fff2fdda3ca4e740fd7fdfa9746d2e434672366efb03c50413'
-PLAN='sha256:1fb61e3227e40c4613c423a6764ade13fdaf5b6d4cac9520aaab2c716e3c1ee4'
-PROGRESS='sha256:de198e400b48bd353db9e38ecd015c68bf21a211e523625c5b427d58b46f6ab0'
+V3_REJECT='sha256:0db6b200bec1d29f5f7e344c4de6cb5ac365fae04de841a8316c32e781f72fca'
+RESOURCE='sha256:13172fb5a72750c8a4aa8ca3bbef5611c5d54f2b25447224e5ffd2989e306791'
+PREP='sha256:39ca6455cdb6ec5692c197c0092aa93462bc77a2a1210aad7e514bdbb35ae1a6'
+PLAN='sha256:c86243c50bfbb681207c01705d1b75ee3e4024c7dcd9688ceb8b34e31027eeff'
+PROGRESS='sha256:60e057d4e3c260dbef3f9daf659e5a7cc3ec4e6f845379f4c0c518fef7f21a95'
 
 def load(name): return json.loads((B/name).read_text())
 
@@ -45,7 +45,7 @@ def main():
     assert reject3['evidence_digest']==V3_REJECT==canonical_digest({k:v for k,v in reject3.items() if k!='evidence_digest'})
     assert reject3['outcome']=='REJECTED_PREAPPROVAL_EFFECTIVE_TIME_PASSED'
     assert reject3['safe_error_code']=='PLAN_AUTHORIZATION_EXPIRED'
-    assert reject3['candidate_plan_canonicalized'] is False
+    assert reject3['candidate_plan_canonicalized_before_effective_time'] is False
     assert reject3['approval_instruction_received'] is False
     assert reject3['approval_artifact_created'] is False and reject3['approval_canonicalized'] is False
     assert reject3['candidate_plan_digest']=='sha256:ebfd8c2f6978f54e7503adba98cbcd8d6d0d816b015768fe6504594fa9178504'
@@ -69,7 +69,7 @@ def main():
     assert r['lineage']['v3_retirement_plan_digest']=='sha256:ebfd8c2f6978f54e7503adba98cbcd8d6d0d816b015768fe6504594fa9178504'
     assert r['lineage']['v3_preparation_evidence_digest']=='sha256:6c95b986b935593afa5f931fd89b3e7635a5913490074c98c2cc55f356001662'
     assert r['lineage']['v3_preapproval_effective_time_rejection_evidence_digest']==V3_REJECT
-    assert r['lineage']['v3_plan_canonicalized'] is False
+    assert r['lineage']['v3_plan_canonicalized_before_effective_time'] is False
     assert r['lineage']['v3_approval_canonicalized'] is False
     assert r['authorized_counts']=={
         'supabase_key_delete':1,'supabase_key_absence_read':1,'github_secret_absence_read':1,

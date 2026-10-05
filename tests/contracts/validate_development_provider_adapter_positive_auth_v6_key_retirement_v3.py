@@ -14,14 +14,14 @@ N='development-implementation-handoff-provider-adapter-positive-auth-v6-key-reti
 V1='development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v1'
 V2='development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v2'
 OBS='2026-10-05T19:48:49Z'
-START='2026-10-05T20:30:00Z'
-END='2026-10-05T23:30:00Z'
+START='2026-10-05T22:00:00Z'
+END='2026-10-06T02:00:00Z'
 V1_LATE='sha256:92b07fb7f7fec8c93603160f9404def011256eb0cbd243068c8e0090905074b4'
 V2_REJECT='sha256:40395a1c082cc8b196c63ee6e71e2274580d5dd25a2b1673f97bf09058444014'
 RESOURCE='sha256:8c15a7f9f7087f28dc02db9ddbb9fcc99b15fa34a337c6e6ec6fda4373fc8744'
 PREP='sha256:6c95b986b935593afa5f931fd89b3e7635a5913490074c98c2cc55f356001662'
-PLAN='sha256:52a7578480f27dfcec4d667a652f0f12434182e6992a076ce5b93846788417c7'
-PROGRESS='sha256:98c409fbe7beead87b2bbf2e5cc215c5f3aa7cb14ae8b2c7d5acf1e9f322b37e'
+PLAN='sha256:ebfd8c2f6978f54e7503adba98cbcd8d6d0d816b015768fe6504594fa9178504'
+PROGRESS='sha256:0c4dc0da685d489c8e1f5c2cf96d79f0f8ce66cf05eae3b8ba0e2abc05fa371a'
 
 def load(name): return json.loads((B/name).read_text())
 

@@ -9,7 +9,7 @@
   "observation_only": true,
   "v6_step1_key_creation_evidence_digest": "sha256:b0a29a99d233db3526179e77b841c27e0946760be3894f51050e147ba3b5a046",
   "v6_execution_progress_digest": "sha256:c5d7bf0545ca10f453f4ac9775edccb1a2eb5e63efa7966225b95f5e5659df6f",
-  "resource_contract_digest": "sha256:4e7028736750bc11dcc88b90b3c3857a4bcf0526443f371769b7ba27d7ba7695",
+  "resource_contract_digest": "sha256:13172fb5a72750c8a4aa8ca3bbef5611c5d54f2b25447224e5ffd2989e306791",
   "v6_lineage": {
     "plan_id": "e7b056e5-8a1b-5250-93fc-7c21feafe05e",
     "plan_digest": "sha256:f325962e66f5f5ab5deab748f2f63206f00f0bbcba6884e9e79991baf6570a93",
@@ -44,6 +44,6 @@
   "recorded_at": "2026-10-05T22:07:03Z",
   "late_approval_rejection_evidence_digest": "sha256:92b07fb7f7fec8c93603160f9404def011256eb0cbd243068c8e0090905074b4",
   "v2_binding_integrity_rejection_evidence_digest": "sha256:40395a1c082cc8b196c63ee6e71e2274580d5dd25a2b1673f97bf09058444014",
-  "v3_preapproval_effective_time_rejection_evidence_digest": "sha256:760a8000b6f2fcabd31ff1257b9a3a8310f77802250e053c53e59f907a862341",
-  "evidence_digest": "sha256:6418de1aaffd34fff2fdda3ca4e740fd7fdfa9746d2e434672366efb03c50413"
+  "v3_preapproval_effective_time_rejection_evidence_digest": "sha256:0db6b200bec1d29f5f7e344c4de6cb5ac365fae04de841a8316c32e781f72fca",
+  "evidence_digest": "sha256:39ca6455cdb6ec5692c197c0092aa93462bc77a2a1210aad7e514bdbb35ae1a6"
 }

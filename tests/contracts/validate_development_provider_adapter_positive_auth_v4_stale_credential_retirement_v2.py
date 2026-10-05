@@ -21,6 +21,9 @@ RESOURCE='sha256:f64da257fe32bb578bdb2936e6251675e4e61b429db87013b3c2ee53bb823f9
 PREP='sha256:6279108dd1dbf7dad319d977a82c954b7fcc768916af058fbfc2a14d59000bdd'
 PLAN='sha256:b012b3340f63afc8838d0516ca83c3a7b51d8c829528c40be0050a4cd48cef15'
 PROGRESS='sha256:2deb6de046900a2b061cd2201f401f07f5b96f7db71e0df8923bb60c08abd3b8'
+STEP1_EVIDENCE='sha256:be725bbc76a0a601dcf6fec23a34fa7e32a94a672074056f57c1d81764db0d40'
+EXECUTION_PROGRESS='sha256:5b58118b2f4b06a21f759f213fb1539ff51f7a6a8ce9a7517ee1dd8f8e77434b'
+STEP1_RECORDED_AT='2026-10-05T13:05:10Z'
 APPROVAL_ID='1106bbbb-87c1-5a96-8df7-a2a065e87286'
 APPROVAL='sha256:ec2550fa0937ef31b17ac1579713509bf0e14abfb75e7714a390c83a50080ca1'
 APPROVAL_FILE='sha256:a6401b89349955a1f0a048239de908925aac688f2c2803c4d616fa4e60a600b8'
@@ -61,7 +64,7 @@ def main() -> None:
     assert ('auth.provider-adapter-positive-auth.cleanup.verified',ZERO) in required
     assert ('authorization-plan.execution-progress',ZERO_PROGRESS) in required
     assert ('auth.provider-adapter-positive-auth.stale-credential-retirement.prepared',PREP) in required
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','.execution-progress.json'))
     for forbidden in ('service_role','sb_secret_','access-material','refresh-material','Bearer eyJ'):
         assert forbidden not in rendered
     assert a['approval_id']==APPROVAL_ID and a['plan_id']==p['plan_id'] and a['plan_version']==2 and a['plan_digest']==PLAN
@@ -69,9 +72,18 @@ def main() -> None:
     assert a['effective_at']==START and a['expires_at']==END and a['approved_at']==APPROVED_AT and APPROVED_AT < START
     assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY' and a['approval_digest']==APPROVAL==approval_digest(a)
     assert 'sha256:'+hashlib.sha256((B/(N+'.approval.json')).read_bytes()).hexdigest()==APPROVAL_FILE
-    assert not (B/(N+'.execution-progress.json')).exists()
-    assert not list(B.glob(N+'-step*-success.evidence.json'))
-    print('DEVELOPMENT provider-adapter positive-auth v4 stale credential retirement v2: PASS (APPROVED; canonical 0/0 reused; approval pre-start; Firefox owner key retirement/absence; gh CLI secret retirement/absence; no auth retry/session/handoff authority)')
+    s1=load('-step1-success.evidence.json'); x=load('.execution-progress.json')
+    assert canonical_digest(s1)==STEP1_EVIDENCE and s1['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.retired'
+    assert s1['record_basis']=='OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME' and s1['independent_absence_verification_required'] is True
+    assert s1['sanitized_result']=={'key_name':'impl_handoff_provider_adapter_positive_auth_v4_ephemeral','retirement_reported_by_owner':True,'credential_material_observed':False,'other_key_change_reported':False}
+    assert s1['authorization_observation']['interaction_surface']=='supabase.dashboard.settings.api-keys' and s1['authorization_observation']['execution_actor']=='OWNER_MANUAL_FIREFOX'
+    assert s1['recorded_at']==STEP1_RECORDED_AT and all(v is False for k,v in s1['security_state'].items() if k!='credential_material_observed') and s1['security_state']['credential_material_observed'] is False
+    assert x['progress_digest']==EXECUTION_PROGRESS==progress_digest(x) and x['overall_state']=='IN_PROGRESS' and x['record_version']==3
+    assert (x['step_states'][0]['authorization_state'],x['step_states'][0]['execution_state'],x['step_states'][0]['verification_state'],x['step_states'][0]['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
+    assert x['step_states'][0]['evidence']==[{'evidence_type':'auth.provider-adapter-positive-auth.admin-credential.retired','evidence_reference':N+'-step1-success.evidence.json','evidence_digest':STEP1_EVIDENCE,'recorded_at':STEP1_RECORDED_AT}]
+    assert all((z['authorization_state'],z['execution_state'],z['verification_state'],z['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False) for z in x['step_states'][1:])
+    assert not list(B.glob(N+'-step2-success.evidence.json')) and not list(B.glob(N+'-step3-success.evidence.json')) and not list(B.glob(N+'-step4-success.evidence.json'))
+    print('DEVELOPMENT provider-adapter positive-auth v4 stale credential retirement v2: PASS (IN_PROGRESS; Step 1 owner retirement recorded; Step 2 independent Firefox absence verification pending; GitHub binding untouched; no auth retry/session/handoff authority)')
 
 if __name__=='__main__':
     main()

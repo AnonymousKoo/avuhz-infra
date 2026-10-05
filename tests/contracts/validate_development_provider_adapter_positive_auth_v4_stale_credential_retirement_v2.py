@@ -25,6 +25,10 @@ APPROVAL_ID='1106bbbb-87c1-5a96-8df7-a2a065e87286'
 APPROVAL='sha256:ec2550fa0937ef31b17ac1579713509bf0e14abfb75e7714a390c83a50080ca1'
 APPROVAL_FILE='sha256:a6401b89349955a1f0a048239de908925aac688f2c2803c4d616fa4e60a600b8'
 APPROVED_AT='2026-10-05T12:07:29Z'
+STEP1='sha256:ff93f3cc1f50d33db56086cd8cfd659e4d76c8586b2ed89b0ba6bf8e027597df'
+STEP2='sha256:5adb1f54fd7f3f0ad680cb0cef6bff12bb0dd386811560edd51f03fe5ee0346e'
+EXECUTION='sha256:1dcfa982aee3b1923aba0e907ce8dfc72cf581b0dfb69e1929a0a528a7d884fd'
+RECORDED='2026-10-05T13:16:06Z'
 ZERO='sha256:15a15f8d6ad651d2140423e63fa5de42c42c9e6a6f18187e875b5386a6c9315d'
 ZERO_PROGRESS='sha256:4c99f4933785fe8cc77c6379c957bb2e76a0bd7ec94be7b20dc8a2c84bcf93c1'
 START='2026-10-05T13:00:00Z'
@@ -61,7 +65,7 @@ def main() -> None:
     assert ('auth.provider-adapter-positive-auth.cleanup.verified',ZERO) in required
     assert ('authorization-plan.execution-progress',ZERO_PROGRESS) in required
     assert ('auth.provider-adapter-positive-auth.stale-credential-retirement.prepared',PREP) in required
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','-step2-success.evidence.json','.execution-progress.json'))
     for forbidden in ('service_role','sb_secret_','access-material','refresh-material','Bearer eyJ'):
         assert forbidden not in rendered
     assert a['approval_id']==APPROVAL_ID and a['plan_id']==p['plan_id'] and a['plan_version']==2 and a['plan_digest']==PLAN
@@ -69,9 +73,19 @@ def main() -> None:
     assert a['effective_at']==START and a['expires_at']==END and a['approved_at']==APPROVED_AT and APPROVED_AT < START
     assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY' and a['approval_digest']==APPROVAL==approval_digest(a)
     assert 'sha256:'+hashlib.sha256((B/(N+'.approval.json')).read_bytes()).hexdigest()==APPROVAL_FILE
-    assert not (B/(N+'.execution-progress.json')).exists()
-    assert not list(B.glob(N+'-step*-success.evidence.json'))
-    print('DEVELOPMENT provider-adapter positive-auth v4 stale credential retirement v2: PASS (APPROVED; canonical 0/0 reused; approval pre-start; Firefox owner key retirement/absence; gh CLI secret retirement/absence; no auth retry/session/handoff authority)')
+    x=load('.execution-progress.json'); s1=load('-step1-success.evidence.json'); s2=load('-step2-success.evidence.json')
+    assert x['progress_digest']==EXECUTION==progress_digest(x) and x['overall_state']=='IN_PROGRESS' and x['updated_at']==RECORDED
+    validate_progress(p,x,S)
+    assert [(z['authorization_state'],z['execution_state'],z['verification_state'],z['authorization_consumed']) for z in x['step_states']]==[('CONSUMED','SUCCEEDED','PASS',True),('CONSUMED','SUCCEEDED','PASS',True),('PENDING','NOT_STARTED','NOT_STARTED',False),('PENDING','NOT_STARTED','NOT_STARTED',False)]
+    assert 'sha256:'+hashlib.sha256((B/(N+'-step1-success.evidence.json')).read_bytes()).hexdigest()==STEP1
+    assert 'sha256:'+hashlib.sha256((B/(N+'-step2-success.evidence.json')).read_bytes()).hexdigest()==STEP2
+    assert s1['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.retired' and s1['sanitized_result']['retired'] is True and s1['record_basis']=='OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME_IN_CHAT'
+    assert s2['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.absence-verified' and s2['sanitized_result']['absent'] is True and s2['record_basis']=='OWNER_CONFIRMED_SEPARATE_NAMES_ONLY_ABSENCE_INSPECTION_IN_CHAT'
+    assert s1['authorization_observation']['interaction_surface']==s2['authorization_observation']['interaction_surface']=='supabase.dashboard.settings.api-keys'
+    assert s1['authorization_observation']['execution_actor']==s2['authorization_observation']['execution_actor']=='OWNER_MANUAL_FIREFOX'
+    assert s1['execution_observation']['credential_value_read'] is False and s2['execution_observation']['credential_value_read'] is False
+    assert not list(B.glob(N+'-step3-success.evidence.json')) and not list(B.glob(N+'-step4-success.evidence.json'))
+    print('DEVELOPMENT provider-adapter positive-auth v4 stale credential retirement v2: PASS (IN_PROGRESS; Steps 1-2 CONSUMED/SUCCEEDED/PASS; exact v4 Supabase key retired and independently absent; Steps 3-4 pending; no auth retry/session/handoff authority)')
 
 if __name__=='__main__':
     main()

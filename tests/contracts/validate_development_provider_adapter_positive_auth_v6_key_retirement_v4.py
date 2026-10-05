@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT)); sys.path.insert(0,str(ROOT/'src'))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
@@ -24,6 +24,8 @@ RESOURCE='sha256:13172fb5a72750c8a4aa8ca3bbef5611c5d54f2b25447224e5ffd2989e30679
 PREP='sha256:39ca6455cdb6ec5692c197c0092aa93462bc77a2a1210aad7e514bdbb35ae1a6'
 PLAN='sha256:c86243c50bfbb681207c01705d1b75ee3e4024c7dcd9688ceb8b34e31027eeff'
 PROGRESS='sha256:60e057d4e3c260dbef3f9daf659e5a7cc3ec4e6f845379f4c0c518fef7f21a95'
+APPROVED='2026-10-05T22:27:46Z'
+APPROVAL='sha256:41bd085fab6bb06980fbfc0f5aacc772a92b505b762aa11c66b620b4c913d4b2'
 
 def load(name): return json.loads((B/name).read_text())
 
@@ -32,11 +34,12 @@ def main():
     prep=load(N+'-preparation.evidence.json')
     p=load(N+'.plan.json')
     g=load(N+'.progress.json')
+    a=load(N+'.approval.json')
     late=load(V1+'-late-window-rejection.evidence.json')
     reject2=load(V2+'-binding-integrity-rejection.evidence.json')
     reject3=load(V3+'-effective-time-rejection.evidence.json')
 
-    validate_plan(p,S); validate_progress(p,g,S)
+    validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,START)
 
     assert r['contract_digest']==RESOURCE==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
     assert prep['evidence_digest']==PREP==canonical_digest({k:v for k,v in prep.items() if k!='evidence_digest'})
@@ -100,13 +103,18 @@ def main():
     assert g['progress_digest']==PROGRESS==progress_digest(g)
     assert g['overall_state']=='NOT_STARTED' and g['record_version']==1
     assert g==initial_progress(p,S,g['progress_id'],OBS)
-    assert not (B/(N+'.approval.json')).exists()
+    assert a['approval_id']=='b775a844-8b87-508f-a84a-f9fe0a869cd1'
+    assert a['plan_id']==p['plan_id'] and a['plan_version']==4 and a['plan_digest']==p['plan_digest']
+    assert a['owner_identity']==p['owner_identity'] and a['environment']==p['environment']
+    assert a['decision']=='APPROVE' and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+    assert a['approved_at']==APPROVED and a['effective_at']==START and a['expires_at']==END
+    assert a['approval_digest']==APPROVAL==approval_digest(a)
     assert not (B/(N+'.execution-progress.json')).exists()
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v6 key retirement v4: PASS (PREPARED / UNAPPROVED / UNEXECUTED; v3 preapproval expiry preserved; one-key retirement scope only)')
+    print('DEVELOPMENT provider-adapter positive-auth v6 key retirement v4: PASS (APPROVED / UNEXECUTED; exact-plan-only authority begins at bound start; one-key retirement scope only)')
 
 if __name__=='__main__': main()

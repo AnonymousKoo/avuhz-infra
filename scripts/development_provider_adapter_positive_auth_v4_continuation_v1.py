@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""Fresh, one-shot DEVELOPMENT AUTH continuation; historical evidence is immutable.
+
+No network is used by authority preflight. Only main() after exact approval may
+resolve runner secrets and invoke the shared lifecycle. Any attempted lifecycle
+failure stops normal progress and requires separately authorized forward-only
+cleanup AND retirement; lack of a parsed session never proves no session exists.
+"""
+from __future__ import annotations
+
+import json
+import os
+import urllib.request
+from collections.abc import Mapping
+from functools import partial
+from pathlib import Path
+
+from scripts import development_provider_adapter_positive_auth_v4 as prior
+from avuhz_engineering.authorization_plan import (
+    AuthorizationPlanError, AuthorizationPlanStop, authorize_step,
+    validate_approval, validate_plan, validate_progress,
+)
+from avuhz_runtime.implementation_handoff import canonical_digest
+
+ROOT = prior.ROOT
+BASE = prior.BASE
+SCHEMA_ROOT = prior.SCHEMA_ROOT
+BOUNDARY = 'development-implementation-handoff-provider-adapter-positive-auth-v4-continuation-v1'
+PLAN_PATH = BASE / f'{BOUNDARY}.plan.json'
+APPROVAL_PATH = BASE / f'{BOUNDARY}.approval.json'
+PROGRESS_PATH = BASE / f'{BOUNDARY}.progress.json'
+RESOURCE_PATH = BASE / f'{BOUNDARY}.resource.json'
+WORKFLOW_PATH = ROOT / '.github/workflows/development-provider-adapter-positive-auth-v4-continuation-v1-step1.yml'
+STEP_ID = 'development.implementation-handoff.provider-adapter-positive-auth-v4-continuation-v1.step.01.authenticate-live-and-logout-global'
+CONFIRMATION = 'RUN_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_CONTINUATION_V1_STEP1'
+PROJECT = prior.PROJECT
+ADMIN_ENV = prior.ADMIN_ENV
+PUBLISHABLE_ENV = prior.PUBLISHABLE_ENV
+CORRECTION = 'development-implementation-handoff-provider-adapter-positive-auth-v4-step4-surface-correction-v1'
+CORRECTION_EVIDENCE = 'sha256:238b4af1586b4b57d919910acdd4042ea01abe95706a7133cadd9a8a6dc5887c'
+CORRECTION_PROGRESS = 'sha256:6b6eb329c6b945fde6f625be46794213b8f97a5126415a79389386547e123bdc'
+HISTORICAL_RESOURCE = 'sha256:f9212335059992f50b1d6c1f50c227495e97796962b8f67f843f81f6465a9d34'
+V4_STOPPED_PROGRESS = 'sha256:89597fb31105b2398295ba8c0be4534c7de80e7813b673e108db83a57a301c9c'
+V4_STEP1_EVIDENCE = 'sha256:69cfb113f70f7e87ac681c7c0123dc338808f129a9f2fe534661b98805796302'
+V4_STEP2_EVIDENCE = 'sha256:947336db2db2cc49029949d363b9cc34904ce0753d424887cc22504a9f1a779e'
+V4_STEP3_EVIDENCE = 'sha256:b32dba957f080e4f0df22d3dd572afd2e2172c0f63c157f1a8328ca11a9aea0d'
+SOURCE_PATHS = (
+    'scripts/development_provider_adapter_positive_auth_v4.py',
+    'src/avuhz_engineering/development_auth_token_lifecycle.py',
+    'src/avuhz_engineering/authorization_plan.py',
+    'src/avuhz_service/development_supabase_identity.py',
+    'src/avuhz_service/development_supabase_jwt.py',
+)
+
+
+def _deny() -> None:
+    raise AuthorizationPlanStop('AUTHORITY_INVALID')
+
+
+def _validate_invocation(env: Mapping[str, str]) -> None:
+    if any(env.get(key) != value for key, value in {
+        'GITHUB_REF': 'refs/heads/main', 'GITHUB_RUN_ATTEMPT': '1',
+        'GITHUB_RUN_NUMBER': '1', 'GITHUB_REPOSITORY': 'AnonymousKoo/avuhz-infra',
+        'GITHUB_EVENT_NAME': 'workflow_dispatch', 'AVUHZ_ENVIRONMENT': 'development',
+        'AVUHZ_CONFIRMATION': CONFIRMATION,
+    }.items()):
+        raise AuthorizationPlanStop('WORKFLOW_BINDING_MISMATCH')
+
+
+def _validate_boundary(plan: dict, resource: dict, progress: dict) -> None:
+    historical = prior._load(BASE / 'development-implementation-handoff-provider-adapter-positive-auth-v4.resource.json')
+    if (historical.get('contract_digest') != HISTORICAL_RESOURCE
+        or canonical_digest({k: v for k, v in historical.items() if k != 'contract_digest'}) != HISTORICAL_RESOURCE
+        or resource.get('contract_digest') != canonical_digest({k: v for k, v in resource.items() if k != 'contract_digest'})):
+        _deny()
+    if (resource.get('project_reference') != PROJECT
+        or resource.get('fresh_provider_key_reference') != 'impl_handoff_provider_adapter_positive_auth_v4_ephemeral'
+        or resource.get('github_secret_binding_name') != 'AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL'
+        or resource.get('fresh_auth_admin_key_create_count_authorized') != 0
+        or resource.get('github_secret_binding_create_count_authorized') != 0
+        or resource.get('fresh_auth_admin_key_delete_count_authorized') != 1
+        or resource.get('github_secret_binding_delete_count_authorized') != 1
+        or resource.get('temporary_session_issue_count_authorized') != 1
+        or resource.get('temporary_token_validation_count_authorized') != 1
+        or resource.get('live_runtime_identity_probe_count_authorized') != 1
+        or resource.get('global_logout_count_authorized') != 1
+        or resource.get('retry_authorized') is not False
+        or resource.get('implementation_handoff_execution_authorized') is not False):
+        _deny()
+    if (resource.get('step1_executor_digest') != prior._raw_digest(Path(__file__))
+        or resource.get('step1_workflow_digest') != prior._raw_digest(WORKFLOW_PATH)
+        or resource.get('original_positive_auth_v4_resource_digest') != HISTORICAL_RESOURCE
+        or resource.get('v4_stopped_progress_digest') != V4_STOPPED_PROGRESS
+        or resource.get('surface_correction_success_evidence_digest') != CORRECTION_EVIDENCE
+        or resource.get('surface_correction_execution_progress_digest') != CORRECTION_PROGRESS):
+        _deny()
+    sources = resource.get('source_artifact_sha256', {})
+    if any(sources.get(path) != prior._raw_digest(ROOT / path) for path in SOURCE_PATHS):
+        _deny()
+    window = plan.get('authorization_window', {})
+    rules = resource.get('execution_rules', {})
+    if (plan.get('environment') != 'DEVELOPMENT'
+        or plan.get('target', {}).get('project_reference') != PROJECT
+        or plan.get('target', {}).get('responsibility') != 'AUTH'
+        or plan.get('target', {}).get('provider_reference') != 'supabase'
+        or window.get('starts_at') != rules.get('owner_approval_deadline')
+        or window.get('expires_at') != rules.get('window_expiry')):
+        _deny()
+    old_plan = prior._load(BASE / 'development-implementation-handoff-provider-adapter-positive-auth-v4.plan.json')
+    steps = plan.get('steps', [])
+    if len(steps) != 6 or steps[0].get('step_id') != STEP_ID:
+        _deny()
+    for index, (step, old) in enumerate(zip(steps, old_plan['steps'][4:])):
+        if (step.get('operation') != old['operation']
+            or step.get('execution_class') != old['execution_class']
+            or not set(old['prohibited_actions']) <= set(step.get('prohibited_actions', []))
+            or step.get('resource', {}).get('exact_digest') != resource['contract_digest']):
+            _deny()
+        if index == 1:
+            if step.get('credential_policy') != {'permitted': False, 'allowed_classes': ['NONE'], 'values_stored': False}:
+                _deny()
+        elif step.get('credential_policy') != old['credential_policy']:
+            _deny()
+    required = {(item.get('evidence_type'), item.get('exact_digest')) for item in steps[0].get('required_evidence', [])}
+    for expected in (
+        ('auth.provider-adapter-positive-auth-v4.step4-surface-correction.counts-verified', CORRECTION_EVIDENCE),
+        ('authorization-plan.execution-progress', CORRECTION_PROGRESS),
+        ('authorization-plan.execution-progress', V4_STOPPED_PROGRESS),
+        ('auth.provider-adapter-positive-auth.admin-credential.created', V4_STEP1_EVIDENCE),
+        ('auth.provider-adapter-positive-auth.github-binding.created', V4_STEP2_EVIDENCE),
+        ('auth.provider-adapter-positive-auth.github-binding.verified', V4_STEP3_EVIDENCE),
+    ):
+        if expected not in required:
+            _deny()
+    evidence_path = BASE / f'{CORRECTION}-success.evidence.json'
+    evidence = prior._load(evidence_path)
+    correction_progress = prior._load(BASE / f'{CORRECTION}.execution-progress.json')
+    correction_plan = prior._load(BASE / f'{CORRECTION}.plan.json')
+    v4_stop = prior._load(BASE / 'development-implementation-handoff-provider-adapter-positive-auth-v4.execution-progress.json')
+    v4_plan = prior._load(BASE / 'development-implementation-handoff-provider-adapter-positive-auth-v4.plan.json')
+    validate_progress(correction_plan, correction_progress, SCHEMA_ROOT)
+    validate_progress(v4_plan, v4_stop, SCHEMA_ROOT)
+    if (prior._raw_digest(evidence_path) != CORRECTION_EVIDENCE
+        or correction_progress.get('progress_digest') != CORRECTION_PROGRESS
+        or correction_progress.get('overall_state') != 'COMPLETED'
+        or evidence.get('outcome') != 'SUCCEEDED_VERIFIED'
+        or v4_stop.get('progress_digest') != V4_STOPPED_PROGRESS
+        or v4_stop.get('overall_state') != 'STOPPED'):
+        _deny()
+    for name, digest in (
+        ('development-implementation-handoff-provider-adapter-positive-auth-v4-step01-success.evidence.json', V4_STEP1_EVIDENCE),
+        ('development-implementation-handoff-provider-adapter-positive-auth-v4-step02-success.evidence.json', V4_STEP2_EVIDENCE),
+        ('development-implementation-handoff-provider-adapter-positive-auth-v4-step03-success.evidence.json', V4_STEP3_EVIDENCE),
+    ):
+        if prior._raw_digest(BASE / name) != digest:
+            _deny()
+    states = progress.get('step_states', [])
+    if len(states) != 6 or progress.get('overall_state') != 'NOT_STARTED':
+        _deny()
+    for state in states:
+        if any(state.get(k) != v for k, v in {
+            'authorization_state': 'PENDING', 'execution_state': 'NOT_STARTED',
+            'verification_state': 'NOT_STARTED', 'authorization_consumed': False,
+            'evidence': [], 'binding_assertions': [], 'safe_error_code': None,
+            'observed_postcondition': None,
+        }.items()):
+            _deny()
+
+
+def _load_and_authorize(moment: str) -> tuple[dict, dict]:
+    plan, approval, progress, resource = (prior._load(path) for path in
+        (PLAN_PATH, APPROVAL_PATH, PROGRESS_PATH, RESOURCE_PATH))
+    validate_plan(plan, SCHEMA_ROOT)
+    validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, moment)
+    if approval.get('decision') != 'APPROVE' or approval.get('authority_scope') != 'EXACT_PLAN_ONLY':
+        _deny()
+    _validate_boundary(plan, resource, progress)
+    # The common request builder only depends on its module STEP_ID; avoid
+    # mutating historical module globals by constructing this request directly.
+    step = plan['steps'][0]
+    evidence = [{'evidence_type': item['evidence_type'], 'evidence_digest': item['exact_digest']} for item in step['required_evidence']]
+    request = {
+        **{k: plan[k] for k in ('plan_id', 'plan_version', 'plan_digest', 'environment')},
+        **{k: plan['target'][k] for k in ('provider_reference', 'project_reference', 'responsibility', 'issuer_reference', 'audience_reference')},
+        'step_id': STEP_ID, 'resource_reference': step['resource']['resource_reference'],
+        'resource_version': step['resource']['exact_version'], 'resource_digest': step['resource']['exact_digest'],
+        'operation': step['operation'], 'execution_class': step['execution_class'],
+        'credential_class': 'SUPABASE_AUTH_ADMIN_EPHEMERAL', 'required_evidence': evidence,
+        'prior_evidence_digests': [],
+        'unexpected_remote_state': False, 'extra_privileges': False,
+        'unauthorized_migration_surface': False, 'scope_expansion': False,
+    }
+    config = {'step_id': STEP_ID, 'resource_digest': resource['contract_digest'],
+              'executor_source_digest': resource['step1_executor_digest'],
+              'workflow_source_digest': resource['step1_workflow_digest'],
+              'admin_binding_name': ADMIN_ENV, 'publishable_binding_name': PUBLISHABLE_ENV}
+    assertion = {
+        'binding_id': 'binding.development.provider-adapter-positive-auth-v4-continuation-v1.admin-executor-capability',
+        'phase': 'RESOLVED_BY_STEP_PREFLIGHT', 'value_class': 'CONFIGURATION_REFERENCE',
+        'source_step_id': None, 'evidence_type': 'auth.admin-executor-capability.observed',
+        'evidence_digest': canonical_digest(config), 'digest_policy': 'REQUIRED',
+        'persistence_policy': 'DIGEST_ONLY', 'sanitized_value': None,
+        'value_digest': canonical_digest(config), 'recorded_at': moment,
+    }
+    authorized = authorize_step(plan, approval, progress, request, SCHEMA_ROOT, moment,
+                                trusted_preflight_assertions=[assertion])
+    if authorized['step_states'][0]['authorization_state'] != 'AUTHORIZED':
+        _deny()
+    return plan, authorized
+
+
+class _RejectRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def execute_positive_auth(**overrides) -> dict:
+    """Compose shared lifecycle without redirects or additional auth operations."""
+    opener = urllib.request.build_opener(_RejectRedirects()).open
+    defaults = {
+        'generate': partial(prior.request_generate_recovery_credential, urlopen=opener),
+        'verify': partial(prior.request_direct_recovery_verification, urlopen=opener),
+        'live_probe': partial(prior._live_identity_probe, urlopen=opener),
+        'logout_global': partial(prior.request_global_session_logout, urlopen=opener),
+    }
+    defaults.update(overrides)
+    result = prior.execute_positive_auth(**defaults)
+    result.pop('step6_readback_required')
+    result['step2_readback_required'] = True
+    result['retirement_required'] = True
+    return result
+
+
+def main(environment: Mapping[str, str] | None = None, *, preflight_only: bool = False) -> int:
+    env = os.environ if environment is None else environment
+    attempted = False
+    admin_secret = publishable_key = None
+    try:
+        _validate_invocation(env)
+        _load_and_authorize(prior._now())
+        if preflight_only:
+            print(json.dumps({'preflight': 'PASS', 'step_id': STEP_ID}, sort_keys=True))
+            return 0
+        admin_secret, publishable_key = env.get(ADMIN_ENV), env.get(PUBLISHABLE_ENV)
+        if (not isinstance(admin_secret, str) or not admin_secret.startswith('sb_secret_') or len(admin_secret) < 26
+            or not isinstance(publishable_key, str) or not publishable_key.startswith('sb_publishable_') or len(publishable_key) < 31):
+            raise AuthorizationPlanStop('CREDENTIAL_UNAVAILABLE')
+        attempted = True
+        result = execute_positive_auth(admin_secret=admin_secret, publishable_key=publishable_key)
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    except Exception:
+        # No exception text, provider payload, or credential-derived data escapes.
+        print(json.dumps({
+            'classification': 'STOP_REQUIRES_FORWARD_ONLY_CORRECTIVE_CLEANUP_AND_RETIREMENT' if attempted else 'AUTHORITY_OR_BINDING_REJECTED',
+            'provider_mutation_attempted': attempted, 'cleanup_verified': False,
+            'global_logout_accepted': False, 'global_logout_acceptance_proven': False,
+            'temporary_session_state': 'UNKNOWN' if attempted else 'NOT_OBSERVED',
+            'separately_authorized_corrective_cleanup_required': attempted,
+            'credential_retirement_obligation_remains': True,
+            'ordinary_later_steps_authorized': False, 'retry_authorized': False,
+            'credential_material_retained': False, 'token_material_retained': False,
+            'pii_retained': False,
+        }, sort_keys=True))
+        return 1
+    finally:
+        admin_secret = publishable_key = None
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--preflight-only', action='store_true')
+    raise SystemExit(main(preflight_only=parser.parse_args().preflight_only))

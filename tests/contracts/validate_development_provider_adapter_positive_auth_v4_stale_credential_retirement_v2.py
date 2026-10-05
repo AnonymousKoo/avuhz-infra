@@ -16,14 +16,14 @@ ROOT=Path(__file__).resolve().parents[2]
 B=ROOT/'contracts/plans/v1'
 S=ROOT/'contracts/schemas/v1'
 N='development-implementation-handoff-provider-adapter-positive-auth-v4-stale-credential-retirement-v2'
-RESOURCE='sha256:9963dc2e5ba58b6a42369d75008806d4c0002503726e45cc2fe9bf4660175916'
-PREP='sha256:c44214734e219a49929bcb901b8d8945a18828a3e927429f3e9e61276247959b'
-PLAN='sha256:898217fe8eb6ed179dbbfae38042cc7be5356bb3f4f84e976bcc0ee83a86068f'
-PROGRESS='sha256:59555f72f41a084c7c752d47ee69d5cca3611ba09b4d2077635605f3ad76c8cc'
+RESOURCE='sha256:f64da257fe32bb578bdb2936e6251675e4e61b429db87013b3c2ee53bb823f97'
+PREP='sha256:6279108dd1dbf7dad319d977a82c954b7fcc768916af058fbfc2a14d59000bdd'
+PLAN='sha256:b012b3340f63afc8838d0516ca83c3a7b51d8c829528c40be0050a4cd48cef15'
+PROGRESS='sha256:2deb6de046900a2b061cd2201f401f07f5b96f7db71e0df8923bb60c08abd3b8'
 ZERO='sha256:15a15f8d6ad651d2140423e63fa5de42c42c9e6a6f18187e875b5386a6c9315d'
 ZERO_PROGRESS='sha256:4c99f4933785fe8cc77c6379c957bb2e76a0bd7ec94be7b20dc8a2c84bcf93c1'
-START='2026-10-05T09:30:00Z'
-END='2026-10-05T13:30:00Z'
+START='2026-10-05T13:00:00Z'
+END='2026-10-05T17:00:00Z'
 
 def load(suffix: str) -> dict:
     return json.loads((B/(N+suffix)).read_text())

@@ -138,7 +138,7 @@
           "persistence_policy": "DIGEST_ONLY",
           "preapproval_value": {
             "value": "sha256:29fab2d780b57898d0e5e37b335871e9dcced4dc10d96343a5a6e093ea2fee71",
-            "exact_digest": "sha256:b70415a40ae648a3ed242add092ed1e53fe69c90e10bd43fd9d9304c3fcc8c66"
+            "exact_digest": "sha256:77008ab104c3612823d25852bc1e88c18bc332566d5bbd0a6834559c3d34fed2"
           }
         },
         {
@@ -169,7 +169,7 @@
           "persistence_policy": "DIGEST_ONLY",
           "preapproval_value": {
             "value": "sha256:77d92723177eae2dc690566496710c3a7520bf3d329926ddf1b5894929d7ed5a",
-            "exact_digest": "sha256:18e4a79bebc7c12c886b78a93a3a0e7843616e7c1fd51c872a7ec05973b9dc27"
+            "exact_digest": "sha256:1d95120eb2ce9630b1b45c922eaff25f68b8b3a89f6778df320e2409b97001e3"
           }
         },
         {
@@ -182,7 +182,7 @@
           "persistence_policy": "DIGEST_ONLY",
           "preapproval_value": {
             "value": "sha256:31ede5908db0a9b29a21f27602ca3dd7708bdbaafcb9bb5ae25c829999eb81d6",
-            "exact_digest": "sha256:056101354d2e0f01f7847ccbbac757a426cf568882c0898e1ef90a9613fe82de"
+            "exact_digest": "sha256:6d97be830a5af54aa869cd3fcdd671fce1d31fb81a1abd5e3a91d71aa2b313ad"
           }
         },
         {
@@ -195,7 +195,7 @@
           "persistence_policy": "DIGEST_ONLY",
           "preapproval_value": {
             "value": "sha256:89597fb31105b2398295ba8c0be4534c7de80e7813b673e108db83a57a301c9c",
-            "exact_digest": "sha256:dd4ad431d44306071f8e7e35a349dc66f43f73b7c7ca9424accbe8e26d47b155"
+            "exact_digest": "sha256:e5ec404de06de20c413486a1c452d3cff9f61d317ea769b4564acd7e05263384"
           }
         },
         {
@@ -208,7 +208,7 @@
           "persistence_policy": "DIGEST_ONLY",
           "preapproval_value": {
             "value": "sha256:b32dba957f080e4f0df22d3dd572afd2e2172c0f63c157f1a8328ca11a9aea0d",
-            "exact_digest": "sha256:65f124332397ad93e31d4c2886408020d2a31d7b6f1fc7001bfa9f947023a715"
+            "exact_digest": "sha256:ec85554d64fc07d9066ca665ba384b7a053ef5d5833dec492795f110089a28ce"
           }
         },
         {
@@ -221,7 +221,7 @@
           "persistence_policy": "DIGEST_ONLY",
           "preapproval_value": {
             "value": "sha256:15548bdd48fa9df3f78b2a8b84888c3b191fcd510c07c50db0ce64fded5ae6d3",
-            "exact_digest": "sha256:b4c42fbeb53b07497f5220233828575e872454224771545014de7e68a8a45ba3"
+            "exact_digest": "sha256:6e3fb561404b16e4a5e5bc98395a9621f673887471b64279b206e6fd311c3322"
           }
         }
       ],

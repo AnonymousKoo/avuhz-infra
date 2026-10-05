@@ -2,7 +2,7 @@
   "progress_id": "2df10de6-a149-5aa4-b5ce-4c23bd300074",
   "plan_id": "43baee79-d5ca-51de-b812-62761844aad0",
   "plan_version": 1,
-  "plan_digest": "sha256:ef029ff07d14620cc7e33c703d06dd40f4f3c044fb9af9843415e3072b55ee5b",
+  "plan_digest": "sha256:6ba06bca76ed16fb9306ab1f279887dc92e7747a54767a9616c6d841d37c075e",
   "record_version": 1,
   "overall_state": "NOT_STARTED",
   "step_states": [
@@ -27,52 +27,8 @@
       "observed_postcondition": null,
       "safe_error_code": null,
       "binding_assertions": []
-    },
-    {
-      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-continuation-v1.step.03.retire-fresh-auth-admin-key",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
-      "binding_assertions": []
-    },
-    {
-      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-continuation-v1.step.04.retire-github-secret-binding",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
-      "binding_assertions": []
-    },
-    {
-      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-continuation-v1.step.05.verify-fresh-auth-admin-key-absent",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
-      "binding_assertions": []
-    },
-    {
-      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-continuation-v1.step.06.verify-github-secret-binding-absent",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
-      "binding_assertions": []
     }
   ],
   "updated_at": "2026-10-05T01:20:43Z",
-  "progress_digest": "sha256:32e42f931902f537f22ca6cc968a8f111e50bd4ef4cdfaff8717686cc66c9ce9"
+  "progress_digest": "sha256:ca6fa8d408eafb3d63c409942d70d40e1979722649b0d5ceed5931c37ea6f40a"
 }

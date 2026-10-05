@@ -25,7 +25,7 @@ executor = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(executor)
 
 
-class PositiveAuthContinuationExecutorTests(unittest.TestCase):
+class PositiveAuthV4ContinuationExecutorTests(unittest.TestCase):
     def _credential(self) -> RecoveryVerificationCredential:
         return RecoveryVerificationCredential(
             "recovery-material",
@@ -98,7 +98,9 @@ class PositiveAuthContinuationExecutorTests(unittest.TestCase):
         self.assertEqual(result["live_runtime_probe_http"], 400)
         self.assertFalse(result["implementation_handoff_attempted"])
         self.assertTrue(result["step2_readback_required"])
-        self.assertTrue(result["retirement_required"])
+        self.assertFalse(result["retirement_required"])
+        self.assertTrue(result["retirement_deferred_until_after_implementation_handoff"])
+        self.assertTrue(result["temporary_binding_preserved_for_handoff"])
         self.assertNotIn("step6_readback_required", result)
         self.assertTrue(credential.is_cleared)
         self.assertTrue(session.is_cleared)

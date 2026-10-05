@@ -35,9 +35,9 @@
   "required_v11_runtime_evidence_digest": "sha256:f49f6882f2e6ec0274935137a52c7b7c942bfbe0bc72baebca143a90aedc5345",
   "required_v11_progress_digest": "sha256:762fc38748aeb4483a5b26179a703e687bab13e7f5c73160b29a3a77d4480e5c",
   "fresh_auth_admin_key_create_count_authorized": 0,
-  "fresh_auth_admin_key_delete_count_authorized": 1,
+  "fresh_auth_admin_key_delete_count_authorized": 0,
   "github_secret_binding_create_count_authorized": 0,
-  "github_secret_binding_delete_count_authorized": 1,
+  "github_secret_binding_delete_count_authorized": 0,
   "temporary_session_issue_count_authorized": 1,
   "temporary_token_validation_count_authorized": 1,
   "live_runtime_identity_probe_count_authorized": 1,
@@ -82,7 +82,7 @@
     "src/avuhz_service/development_supabase_jwt.py": "sha256:52de43a29eddd4d17e428fa3989ac7bb20397b3c131b0eaa6eef5b37de37713c",
     "src/avuhz_engineering/authorization_plan.py": "sha256:e46139fca8671d24aa02c9cd41cc1a65fb6364b2d942eb1227ea09198d1ba651"
   },
-  "step1_executor_digest": "sha256:66f2a8f728c2fbbbbd2fb9025a064082734358c4a86f101a0bedbaf7686deb2c",
+  "step1_executor_digest": "sha256:d0545c7a4a9088507f221fc57fc51f52781da159e4de9270c21acd5d07ecca79",
   "step1_workflow_digest": "sha256:1d22e62ec1ee0f3f82531994930335bfd50af32cdb76d78d8f1137b304d893a4",
   "session_verification": {
     "interaction_surface": "supabase.mcp.execute_sql",
@@ -106,42 +106,6 @@
     "additional_sql_authorized": false,
     "retry_authorized": false,
     "on_nonzero_malformed_or_unavailable": "STOP_REQUIRES_FORWARD_ONLY_CORRECTIVE_CLEANUP_AND_RETIREMENT"
-  },
-  "retirement_interactions": {
-    "step3": {
-      "interaction_surface": "supabase.dashboard.settings.api-keys",
-      "project_reference": "pwlhruwutoitnieactol",
-      "credential_class": "OWNER_INTERACTIVE_SESSION",
-      "operation": "delete-exact-key-by-name",
-      "exact_name": "impl_handoff_provider_adapter_positive_auth_v4_ephemeral",
-      "value_reads_authorized": false
-    },
-    "step4": {
-      "interaction_surface": "github.repository.settings.environments.development.secrets",
-      "repository": "AnonymousKoo/avuhz-infra",
-      "environment": "development",
-      "credential_class": "OWNER_INTERACTIVE_SESSION",
-      "operation": "delete-exact-environment-secret-by-name",
-      "exact_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
-      "value_reads_authorized": false
-    },
-    "step5": {
-      "interaction_surface": "supabase.dashboard.settings.api-keys",
-      "project_reference": "pwlhruwutoitnieactol",
-      "credential_class": "OWNER_INTERACTIVE_SESSION",
-      "operation": "independent-names-only-absence-read",
-      "exact_name": "impl_handoff_provider_adapter_positive_auth_v4_ephemeral",
-      "value_reads_authorized": false
-    },
-    "step6": {
-      "interaction_surface": "github.repository.settings.environments.development.secrets",
-      "repository": "AnonymousKoo/avuhz-infra",
-      "environment": "development",
-      "credential_class": "OWNER_INTERACTIVE_SESSION",
-      "operation": "independent-names-only-absence-read",
-      "exact_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
-      "value_reads_authorized": false
-    }
   },
   "failure_cleanup_obligation": {
     "failure_state": "STOP_REQUIRES_FORWARD_ONLY_CORRECTIVE_CLEANUP_AND_RETIREMENT",
@@ -176,9 +140,8 @@
     "window_expiry": "2026-10-05T06:00:00Z",
     "late_approval": "FORWARD_ONLY_WINDOW_REPLACEMENT_REQUIRED",
     "preflight": "Validate exact v4 continuation plan, approval, pristine progress, source digests, stopped-v4 lineage, completed Step-4 surface-correction evidence/progress, and environment references before resolving secrets.",
-    "history": "Stopped v4 remains immutable. This continuation consumes the separately certified Step-4 correction and starts only at the original authenticated lifecycle boundary; it cannot rewrite v4 history."
+    "history": "Stopped v4 remains immutable. This continuation consumes the separately certified Step-4 correction and starts only at the original authenticated lifecycle boundary. Successful completion proves trusted auth and zero session/refresh state, then preserves the existing v4 key and GitHub binding unchanged for a separately governed AcceptImplementationHandoff boundary before any retirement."
   },
-  "contract_digest": "sha256:10c9d7acc2344769edc76ee4ba2b5f3af68baf2a8a20fd6f2ec10ca97800a22a",
   "original_positive_auth_v4_resource_digest": "sha256:f9212335059992f50b1d6c1f50c227495e97796962b8f67f843f81f6465a9d34",
   "v4_plan_digest": "sha256:77d92723177eae2dc690566496710c3a7520bf3d329926ddf1b5894929d7ed5a",
   "v4_approval_digest": "sha256:31ede5908db0a9b29a21f27602ca3dd7708bdbaafcb9bb5ae25c829999eb81d6",
@@ -189,5 +152,10 @@
   "surface_correction_plan_digest": "sha256:561e72c641c1fb60fd8c4f4158841bfa7881889abc4ff1ae19cf49cbf3b5d53a",
   "surface_correction_approval_digest": "sha256:47f4547d628c82aa0fc2902de3f8b8dbf1ab7b3a0fd360f1bfb5930b22a700cb",
   "surface_correction_success_evidence_digest": "sha256:238b4af1586b4b57d919910acdd4042ea01abe95706a7133cadd9a8a6dc5887c",
-  "surface_correction_execution_progress_digest": "sha256:6b6eb329c6b945fde6f625be46794213b8f97a5126415a79389386547e123bdc"
+  "surface_correction_execution_progress_digest": "sha256:6b6eb329c6b945fde6f625be46794213b8f97a5126415a79389386547e123bdc",
+  "credential_retirement_authorized": false,
+  "credential_retirement_deferred_until_after_separately_governed_implementation_handoff": true,
+  "post_success_next_boundary": "SEPARATELY_GOVERNED_ACCEPT_IMPLEMENTATION_HANDOFF_USING_EXISTING_PROVEN_TEMPORARY_BINDING",
+  "post_success_credential_state": "PRESERVE_EXACT_V4_KEY_AND_GITHUB_BINDING_UNCHANGED",
+  "contract_digest": "sha256:23cd6de9908c86d90d6b8a9f98ae282b823d4afa3236382434f2f1d5f27cc790"
 }

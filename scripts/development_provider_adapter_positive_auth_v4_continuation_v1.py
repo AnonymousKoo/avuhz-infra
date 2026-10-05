@@ -4,7 +4,9 @@
 No network is used by authority preflight. Only main() after exact approval may
 resolve runner secrets and invoke the shared lifecycle. Any attempted lifecycle
 failure stops normal progress and requires separately authorized forward-only
-cleanup AND retirement; lack of a parsed session never proves no session exists.
+cleanup AND retirement; successful completion preserves the existing temporary key/binding
+for the separately governed ImplementationHandoff boundary. Lack of a parsed session never
+proves no session exists.
 """
 from __future__ import annotations
 
@@ -78,8 +80,8 @@ def _validate_boundary(plan: dict, resource: dict, progress: dict) -> None:
         or resource.get('github_secret_binding_name') != 'AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL'
         or resource.get('fresh_auth_admin_key_create_count_authorized') != 0
         or resource.get('github_secret_binding_create_count_authorized') != 0
-        or resource.get('fresh_auth_admin_key_delete_count_authorized') != 1
-        or resource.get('github_secret_binding_delete_count_authorized') != 1
+        or resource.get('fresh_auth_admin_key_delete_count_authorized') != 0
+        or resource.get('github_secret_binding_delete_count_authorized') != 0
         or resource.get('temporary_session_issue_count_authorized') != 1
         or resource.get('temporary_token_validation_count_authorized') != 1
         or resource.get('live_runtime_identity_probe_count_authorized') != 1
@@ -108,9 +110,9 @@ def _validate_boundary(plan: dict, resource: dict, progress: dict) -> None:
         _deny()
     old_plan = prior._load(BASE / 'development-implementation-handoff-provider-adapter-positive-auth-v4.plan.json')
     steps = plan.get('steps', [])
-    if len(steps) != 6 or steps[0].get('step_id') != STEP_ID:
+    if len(steps) != 2 or steps[0].get('step_id') != STEP_ID:
         _deny()
-    for index, (step, old) in enumerate(zip(steps, old_plan['steps'][4:])):
+    for index, (step, old) in enumerate(zip(steps, old_plan['steps'][4:6])):
         if (step.get('operation') != old['operation']
             or step.get('execution_class') != old['execution_class']
             or not set(old['prohibited_actions']) <= set(step.get('prohibited_actions', []))
@@ -155,7 +157,7 @@ def _validate_boundary(plan: dict, resource: dict, progress: dict) -> None:
         if prior._raw_digest(BASE / name) != digest:
             _deny()
     states = progress.get('step_states', [])
-    if len(states) != 6 or progress.get('overall_state') != 'NOT_STARTED':
+    if len(states) != 2 or progress.get('overall_state') != 'NOT_STARTED':
         _deny()
     for state in states:
         if any(state.get(k) != v for k, v in {
@@ -228,7 +230,9 @@ def execute_positive_auth(**overrides) -> dict:
     result = prior.execute_positive_auth(**defaults)
     result.pop('step6_readback_required')
     result['step2_readback_required'] = True
-    result['retirement_required'] = True
+    result['retirement_required'] = False
+    result['retirement_deferred_until_after_implementation_handoff'] = True
+    result['temporary_binding_preserved_for_handoff'] = True
     return result
 
 

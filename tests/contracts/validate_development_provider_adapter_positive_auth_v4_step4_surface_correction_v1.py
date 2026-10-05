@@ -7,12 +7,15 @@ import re
 import sys
 from pathlib import Path
 
+from jsonschema import Draft202012Validator, FormatChecker
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
+from avuhz_runtime.schema_registry import SchemaRegistry
 
 B = ROOT / "contracts/plans/v1"
 S = ROOT / "contracts/schemas/v1"
@@ -61,6 +64,16 @@ def main() -> int:
     v4_drift = load(V4 + "-step04-scope-drift.evidence.json")
     v4_step3 = load(V4 + "-step03-success.evidence.json")
 
+    registry = SchemaRegistry(S)
+    validator = Draft202012Validator(
+        registry.expanded("urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v2"),
+        format_checker=FormatChecker(),
+    )
+    schema_errors = sorted(validator.iter_errors(plan), key=lambda e: list(e.absolute_path))
+    if schema_errors:
+        for error in schema_errors:
+            print("CORRECTION_SCHEMA_ERROR", list(error.absolute_path), error.message)
+        raise AssertionError("correction plan schema invalid")
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
 

@@ -1,0 +1,47 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v6.key-retirement-v2.prepared",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "github_environment": "development",
+  "observation_only": true,
+  "v6_step1_key_creation_evidence_digest": "sha256:b0a29a99d233db3526179e77b841c27e0946760be3894f51050e147ba3b5a046",
+  "v6_execution_progress_digest": "sha256:c5d7bf0545ca10f453f4ac9775edccb1a2eb5e63efa7966225b95f5e5659df6f",
+  "resource_contract_digest": "sha256:4825c55f63a17d2c060bd6622c40c22b21d4017290eb054b5a24bd66157436ce",
+  "v6_lineage": {
+    "plan_id": "e7b056e5-8a1b-5250-93fc-7c21feafe05e",
+    "plan_digest": "sha256:f325962e66f5f5ab5deab748f2f63206f00f0bbcba6884e9e79991baf6570a93",
+    "approval_id": "a312eb3f-0ef7-5c78-8af4-dde6bb039b11",
+    "approval_digest": "sha256:9706922fa4beb9915767c655c8c678d2bd879ebfeaa9f7186effc6f4a587136b",
+    "stop_canonical_commit": "851228cba679def6dd4798aaa6e26630f2169021",
+    "overall_state": "STOPPED"
+  },
+  "target_references": {
+    "supabase_key_name": "impl_handoff_provider_adapter_positive_auth_v6_ephemeral",
+    "github_secret_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V6_EPHEMERAL"
+  },
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED",
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "credential_material_digest_recorded": false,
+    "secret_value_read": false,
+    "pii_observed": false,
+    "github_secret_mutation_performed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false,
+    "approval_created": false,
+    "execution_progress_created": false,
+    "result_evidence_created": false
+  },
+  "recorded_at": "2026-10-05T19:33:00Z",
+  "late_approval_rejection_evidence_digest": "sha256:92b07fb7f7fec8c93603160f9404def011256eb0cbd243068c8e0090905074b4",
+  "evidence_digest": "sha256:84ea701d6902d05e8f557361d8a005a7f31a30cceebff7210e51a8349a6dd487"
+}

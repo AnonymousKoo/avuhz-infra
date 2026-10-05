@@ -1,0 +1,89 @@
+name: DEVELOPMENT Provider Adapter Positive Auth v5 Step 5
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN_PROVIDER_ADAPTER_POSITIVE_AUTH_V5_STEP5 for exact Step 5 only
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-provider-adapter-positive-auth-v5-step5
+  cancel-in-progress: false
+
+jobs:
+  positive-auth:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+    env:
+      AVUHZ_CONFIRMATION: ${{ inputs.confirmation }}
+      AVUHZ_ENVIRONMENT: development
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify main-only first-run first-attempt dispatch
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          [[ "${GITHUB_REF}" == "refs/heads/main" ]]
+          [[ "$(git rev-parse HEAD)" == "${GITHUB_SHA}" ]]
+          [[ "${GITHUB_RUN_NUMBER}" == "1" ]]
+          [[ "${GITHUB_RUN_ATTEMPT}" == "1" ]]
+          [[ "${GITHUB_REPOSITORY}" == "AnonymousKoo/avuhz-infra" ]]
+          [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]
+          [[ "${AVUHZ_ENVIRONMENT}" == "development" ]]
+          [[ "${AVUHZ_CONFIRMATION}" == "RUN_PROVIDER_ADAPTER_POSITIVE_AUTH_V5_STEP5" ]]
+
+      - name: Validate exact Step 5 executor source binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          expected="$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v5.resource.json').read_text())
+          print(r['step5_executor_digest'].removeprefix('sha256:'))
+          PY
+          )"
+          actual="$(sha256sum scripts/development_provider_adapter_positive_auth_v5.py | awk '{print $1}')"
+          [[ "${actual}" == "${expected}" ]]
+
+      - name: Install pinned authorization and JWT dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 -m pip install --disable-pip-version-check --no-input             'jsonschema==4.10.3'             'PyJWT[crypto]==2.14.0'             'cryptography==50.0.1'
+
+      - name: Validate exact authority before secret resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_provider_adapter_positive_auth_v5.py --preflight-only
+
+      - name: Execute exact positive authentication lifecycle once
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V5_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V5_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          PYTHONPATH=src:. python3 scripts/development_provider_adapter_positive_auth_v5.py

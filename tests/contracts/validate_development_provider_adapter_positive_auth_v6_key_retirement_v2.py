@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT)); sys.path
 from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
-N='development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v2'; V1='development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v1'; START='2026-10-05T20:00:00Z'; END='2026-10-05T22:00:00Z'; OBS='2026-10-05T19:33:00Z'; LATE='sha256:92b07fb7f7fec8c93603160f9404def011256eb0cbd243068c8e0090905074b4'
+N='development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v2'; V1='development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v1'; START='2026-10-05T20:30:00Z'; END='2026-10-05T23:30:00Z'; OBS='2026-10-05T19:33:00Z'; LATE='sha256:92b07fb7f7fec8c93603160f9404def011256eb0cbd243068c8e0090905074b4'
 def load(n): return json.loads((B/n).read_text())
 def main():
  r=load(N+'.resource.json'); prep=load(N+'-preparation.evidence.json'); p=load(N+'.plan.json'); g=load(N+'.progress.json'); late=load(V1+'-late-window-rejection.evidence.json')

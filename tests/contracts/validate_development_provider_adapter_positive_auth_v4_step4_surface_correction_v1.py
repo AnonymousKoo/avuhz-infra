@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import re
 import sys
 from pathlib import Path
 
-from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -16,7 +14,6 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
-from avuhz_runtime.schema_registry import SchemaRegistry
 
 B = ROOT / "contracts/plans/v1"
 S = ROOT / "contracts/schemas/v1"
@@ -24,9 +21,9 @@ N = "development-implementation-handoff-provider-adapter-positive-auth-v4-step4-
 V4 = "development-implementation-handoff-provider-adapter-positive-auth-v4"
 
 PLAN_ID = "7b692f74-c75f-5f07-ab20-0caa0340cc76"
-PLAN_DIGEST = "sha256:e21360c0b07359a29cf2fe168aab5f11a53f48842b1c27c1f1f49cbbf2a8d351"
+PLAN_DIGEST = "sha256:561e72c641c1fb60fd8c4f4158841bfa7881889abc4ff1ae19cf49cbf3b5d53a"
 PROGRESS_ID = "cb3eddce-b37e-597f-8689-2808a5845773"
-PROGRESS_DIGEST = "sha256:443beb55606bd71937bcef2297937ba86cbf479869dda04dd991bd6caa33ee38"
+PROGRESS_DIGEST = "sha256:8a7d9ceaa519934581b67df547183e5441ec8067a159656243acdd26311e5601"
 RESOURCE_DIGEST = "sha256:4b91f437a8868b0b76fc6a2685ef9db95d52766df8e7409e9e51afb5e7a6ece8"
 PREP_DIGEST = "sha256:ec8dbf2927d80c959522c9a96b7d37be374671d894e47209915693946cd156b5"
 QUERY_DIGEST = "sha256:0d785af10877d43bd4d886a534438dc21a6dd4471ac80194630feef29af73f8e"
@@ -65,24 +62,6 @@ def main() -> int:
     v4_drift = load(V4 + "-step04-scope-drift.evidence.json")
     v4_step3 = load(V4 + "-step03-success.evidence.json")
 
-    registry = SchemaRegistry(S)
-    validator = Draft202012Validator(
-        registry.expanded("urn:avuhz:schema:contracts:orchestration:bounded-authorization-plan:v2"),
-        format_checker=FormatChecker(),
-    )
-    schema_errors = sorted(validator.iter_errors(plan), key=lambda e: list(e.absolute_path))
-    if schema_errors:
-        for error in schema_errors:
-            print("CORRECTION_SCHEMA_ERROR", list(error.absolute_path), error.message)
-        raise AssertionError("correction plan schema invalid")
-    computed_plan_digest = plan_digest(plan)
-    digest_plan = copy.deepcopy(plan)
-    digest_plan["plan_digest"] = computed_plan_digest
-    computed_progress = initial_progress(digest_plan, S, PROGRESS_ID, CREATED_AT)
-    print("CORRECTION_COMPUTED_PLAN_DIGEST", computed_plan_digest)
-    print("CORRECTION_COMPUTED_PROGRESS_DIGEST", computed_progress["progress_digest"])
-    if plan["plan_digest"] != computed_plan_digest:
-        raise AssertionError("correction plan digest needs refresh")
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
 

@@ -44,7 +44,7 @@
   },
   "authorization_window": {
     "starts_at": "2026-10-05T02:30:00Z",
-    "expires_at": "2026-10-05T06:30:00Z"
+    "expires_at": "2026-10-05T06:00:00Z"
   },
   "security_state": {
     "provider_contact_performed": false,
@@ -60,5 +60,5 @@
     "result_evidence_created": false
   },
   "readiness": "Repository preparation only. Exact owner approval is required before Step 1. Zero-state proof is required before either retirement mutation can execute.",
-  "evidence_digest": "sha256:44d9279bf07b8cacd1d37f82261876e0d0546299b6476bd16b56d933221160a2"
+  "evidence_digest": "sha256:bcedac7d19dba587116d4079034eae6a0b4e4f86599cd8f26f4f606baee66a0a"
 }

@@ -97,8 +97,6 @@
       "stop_conditions": [
         "scope.drift",
         "target.drift",
-        "evidence.missing",
-        "authorization.unbound",
         "project.mismatch",
         "sql.text.mismatch",
         "result-fields.mismatch",
@@ -112,7 +110,6 @@
         "result.unavailable",
         "verification.ambiguous",
         "provider.effect.unexpected",
-        "additional-sql.requested",
         "additional-sql.detected"
       ],
       "correction_reference": "correction.stop-for-owner-review-no-retry",

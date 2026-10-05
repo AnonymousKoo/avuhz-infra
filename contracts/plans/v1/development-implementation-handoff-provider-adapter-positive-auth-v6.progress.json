@@ -2,7 +2,7 @@
   "progress_id": "276d9843-751d-5724-8696-51acef7b493f",
   "plan_id": "e7b056e5-8a1b-5250-93fc-7c21feafe05e",
   "plan_version": 6,
-  "plan_digest": "sha256:a4944ec8f6cb32e37dc725c2e59513bb3585080b4be79ccd98a4281db0da32f5",
+  "plan_digest": "sha256:f325962e66f5f5ab5deab748f2f63206f00f0bbcba6884e9e79991baf6570a93",
   "record_version": 1,
   "overall_state": "NOT_STARTED",
   "step_states": [
@@ -118,5 +118,5 @@
     }
   ],
   "updated_at": "2026-10-05T14:20:52Z",
-  "progress_digest": "sha256:15c65ec74ca41c2dc69f930b57931522eed468f38c5d4f52b97de00f8f0b2033"
+  "progress_digest": "sha256:f7c18c9d8c97a224bee6309b6c216954ec8be33f250b976beff8d95ffa3f0236"
 }

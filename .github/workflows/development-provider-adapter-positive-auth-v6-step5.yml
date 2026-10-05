@@ -59,7 +59,7 @@ jobs:
           print(r['step5_executor_digest'].removeprefix('sha256:'))
           PY
           )"
-          actual="$(sha256sum scripts/development_provider_adapter_positive_auth_v5.py | awk '{print $1}')"
+          actual="$(sha256sum scripts/development_provider_adapter_positive_auth_v6.py | awk '{print $1}')"
           [[ "${actual}" == "${expected}" ]]
 
       - name: Install pinned authorization and JWT dependencies
@@ -75,7 +75,7 @@ jobs:
           set -euo pipefail
           set +x
           umask 077
-          PYTHONPATH=src:. python3 scripts/development_provider_adapter_positive_auth_v5.py --preflight-only
+          PYTHONPATH=src:. python3 scripts/development_provider_adapter_positive_auth_v6.py --preflight-only
 
       - name: Execute exact positive authentication lifecycle once
         shell: bash
@@ -86,4 +86,4 @@ jobs:
           set -euo pipefail
           set +x
           umask 077
-          PYTHONPATH=src:. python3 scripts/development_provider_adapter_positive_auth_v5.py
+          PYTHONPATH=src:. python3 scripts/development_provider_adapter_positive_auth_v6.py

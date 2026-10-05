@@ -313,7 +313,7 @@ class _RejectRedirects(urllib.request.HTTPRedirectHandler):
 
 
 def execute_positive_auth(**overrides) -> dict[str, Any]:
-    """Run the existing tested lifecycle with redirects rejected for v5."""
+    """Run the existing tested lifecycle with redirects rejected for v6."""
     opener = urllib.request.build_opener(_RejectRedirects()).open
     defaults = {
         "generate": partial(prior.request_generate_recovery_credential, urlopen=opener),

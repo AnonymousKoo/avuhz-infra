@@ -175,7 +175,7 @@ class PositiveAuthV6SecurityTests(unittest.TestCase):
             handler.redirect_request(None, None, 302, "redirect", {}, "https://example.invalid")
         )
 
-    def test_v5_uses_fresh_distinct_secret_namespace(self) -> None:
+    def test_v6_uses_fresh_distinct_secret_namespace(self) -> None:
         self.assertEqual(
             executor.ADMIN_ENV,
             "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V6_EPHEMERAL",

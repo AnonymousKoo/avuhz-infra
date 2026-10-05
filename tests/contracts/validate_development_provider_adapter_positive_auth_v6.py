@@ -24,6 +24,9 @@ def main():
  assert r['required_v5_rejection_evidence_digest']==REJECT
  assert r['step5_executor_digest']==raw(ROOT/'scripts/development_provider_adapter_positive_auth_v6.py')
  assert r['step5_workflow_digest']==raw(ROOT/'.github/workflows/development-provider-adapter-positive-auth-v6-step5.yml')
+ wf=(ROOT/'.github/workflows/development-provider-adapter-positive-auth-v6-step5.yml').read_text()
+ assert 'scripts/development_provider_adapter_positive_auth_v6.py' in wf
+ assert 'scripts/development_provider_adapter_positive_auth_v5.py' not in wf
  assert len(p['steps'])==10 and all('positive-auth-v6' in s['step_id'] for s in p['steps'])
  assert all(s['resource']['exact_version']=='provider-adapter-positive-auth.v6' and s['resource']['exact_digest']==r['contract_digest'] for s in p['steps'])
  for idx in (0,6,8):

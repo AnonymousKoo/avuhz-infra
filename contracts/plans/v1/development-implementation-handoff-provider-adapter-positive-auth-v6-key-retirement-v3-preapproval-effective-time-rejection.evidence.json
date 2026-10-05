@@ -7,7 +7,6 @@
   "candidate_plan_id": "d8e7c977-56f9-52c9-8313-476bfebb3421",
   "candidate_plan_version": 3,
   "candidate_plan_digest": "sha256:ebfd8c2f6978f54e7503adba98cbcd8d6d0d816b015768fe6504594fa9178504",
-  "candidate_plan_canonicalized": false,
   "approval_instruction_received": false,
   "approval_artifact_created": false,
   "approval_canonicalized": false,
@@ -35,5 +34,6 @@
     "production_touched": false
   },
   "continuation_rule": "CREATE_FRESH_FORWARD_ONLY_RETIREMENT_V4",
-  "evidence_digest": "sha256:760a8000b6f2fcabd31ff1257b9a3a8310f77802250e053c53e59f907a862341"
+  "candidate_plan_canonicalized_before_effective_time": false,
+  "evidence_digest": "sha256:0db6b200bec1d29f5f7e344c4de6cb5ac365fae04de841a8316c32e781f72fca"
 }

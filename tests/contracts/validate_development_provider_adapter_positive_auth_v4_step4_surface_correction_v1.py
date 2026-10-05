@@ -45,6 +45,11 @@ APPROVAL_ID = "eec15fdd-e84d-548f-9e5f-90b1f4f0836b"
 APPROVAL_DIGEST = "sha256:47f4547d628c82aa0fc2902de3f8b8dbf1ab7b3a0fd360f1bfb5930b22a700cb"
 APPROVAL_FILE_DIGEST = "sha256:a425a5b602083029dbfb2afaecc886a890a2beffab90367931da45fee0a01e2b"
 APPROVED_AT = "2026-10-05T00:28:48Z"
+SUCCESS_RECORDED_AT = "2026-10-05T01:05:01Z"
+SUCCESS_EVIDENCE_DIGEST = "sha256:238b4af1586b4b57d919910acdd4042ea01abe95706a7133cadd9a8a6dc5887c"
+SUCCESS_AUTHORIZATION_DIGEST = "sha256:e22748505b1d2614aaa864dbac230159022c1260376cc86c2c55e3bf6c29ef88"
+SUCCESS_RESULT_DIGEST = "sha256:7ab8f21ff7442882eca413794bfc85c1145bc9d1856648fd3482d9b554f8edbb"
+EXECUTION_PROGRESS_DIGEST = "sha256:6b6eb329c6b945fde6f625be46794213b8f97a5126415a79389386547e123bdc"
 
 
 def load(name: str) -> dict:
@@ -63,6 +68,8 @@ def main() -> int:
     plan = load(N + ".plan.json")
     progress = load(N + ".progress.json")
     approval = load(N + ".approval.json")
+    success = load(N + "-success.evidence.json")
+    execution = load(N + ".execution-progress.json")
     v4_stop = load(V4 + ".execution-progress.json")
     v4_drift = load(V4 + "-step04-scope-drift.evidence.json")
     v4_step3 = load(V4 + "-step03-success.evidence.json")
@@ -70,6 +77,7 @@ def main() -> int:
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
     validate_approval(plan, approval, S, WINDOW_START)
+    validate_progress(plan, execution, S)
 
     assert plan["plan_id"] == PLAN_ID and plan["plan_version"] == 1
     assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
@@ -95,8 +103,10 @@ def main() -> int:
     assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
     assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
     assert APPROVED_AT < WINDOW_START
-    assert not (B / (N + ".execution-progress.json")).exists()
-    assert not list(B.glob(N + "-step*-*.evidence.json"))
+    assert raw(B / (N + "-success.evidence.json")) == SUCCESS_EVIDENCE_DIGEST
+    assert execution["progress_digest"] == EXECUTION_PROGRESS_DIGEST == progress_digest(execution)
+    assert execution["overall_state"] == "COMPLETED"
+    assert execution["updated_at"] == SUCCESS_RECORDED_AT
 
     assert resource["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
         {k: v for k, v in resource.items() if k != "contract_digest"}
@@ -236,6 +246,59 @@ def main() -> int:
     assert progress["progress_digest"] == PROGRESS_DIGEST == progress_digest(progress)
     assert progress["overall_state"] == "NOT_STARTED"
 
+    assert success["evidence_type"] == "auth.provider-adapter-positive-auth-v4.step4-surface-correction.counts-verified"
+    assert success["environment"] == "DEVELOPMENT" and success["responsibility"] == "AUTH"
+    assert success["provider_reference"] == "supabase" and success["project_reference"] == PROJECT
+    assert success["plan_id"] == PLAN_ID and success["plan_version"] == 1 and success["plan_digest"] == PLAN_DIGEST
+    assert success["approval_id"] == APPROVAL_ID and success["approval_digest"] == APPROVAL_DIGEST
+    assert success["step_id"] == step["step_id"] and success["attempt"] == 1
+    assert success["outcome"] == "SUCCEEDED_VERIFIED"
+    assert success["classification"] == "EXPECTED_PRECHECK_COUNTS_MATCHED"
+    assert success["authorization_observation_digest"] == SUCCESS_AUTHORIZATION_DIGEST == canonical_digest(success["authorization_observation"])
+    assert success["authorization_observation"] == {
+        "interaction_surface": "supabase.mcp.execute_sql",
+        "project_reference": PROJECT,
+        "responsibility": "AUTH",
+        "approval_exact": True,
+        "authorization_window_active": True,
+        "credential_class": "NONE",
+        "credential_material_observed": False,
+    }
+    assert success["sanitized_result"] == resource["expected_result"] | {"classification": "EXPECTED_PRECHECK_COUNTS_MATCHED"}
+    assert success["result_digest"] == SUCCESS_RESULT_DIGEST == canonical_digest(success["sanitized_result"])
+    assert success["execution_observation"]["approved_aggregate_select_attempts"] == 1
+    assert success["execution_observation"]["additional_sql_executed"] is False
+    assert success["execution_observation"]["retry_occurred"] is False
+    assert success["execution_observation"]["provider_mutation_attempted"] is False
+    assert success["execution_observation"]["positive_auth_v4_progress_advanced"] is False
+    assert success["execution_observation"]["step5_or_later_attempted"] is False
+    assert success["verification_observation"] == {
+        "one_row_only": True,
+        "exact_six_fields_only": True,
+        "all_counts_nonnegative_integers": True,
+        "all_expected_counts_matched": True,
+        "raw_rows_returned": False,
+        "sensitive_values_returned": False,
+    }
+    assert all(value is False for value in success["security_state"].values())
+    assert success["record_basis"] == "SUPABASE_MCP_AGGREGATE_ONLY_SANITIZED_RESULT"
+    assert success["recorded_at"] == SUCCESS_RECORDED_AT
+
+    e = execution["step_states"][0]
+    assert (e["authorization_state"],e["execution_state"],e["verification_state"],e["authorization_consumed"]) == ("CONSUMED","SUCCEEDED","PASS",True)
+    assert e["safe_error_code"] is None
+    assert e["observed_postcondition"] == step["expected_postcondition"]
+    assert e["evidence"] == [{
+        "evidence_type": success["evidence_type"],
+        "evidence_reference": N + "-success.evidence.json",
+        "evidence_digest": SUCCESS_EVIDENCE_DIGEST,
+        "recorded_at": SUCCESS_RECORDED_AT,
+    }]
+    assert len(e["binding_assertions"]) == 1
+    assert e["binding_assertions"][0]["binding_id"] == "binding.development.implementation-handoff.provider-adapter-positive-auth-v4-step4-surface-correction-v1.result"
+    assert e["binding_assertions"][0]["evidence_digest"] == SUCCESS_EVIDENCE_DIGEST
+    assert e["binding_assertions"][0]["value_digest"] == SUCCESS_RESULT_DIGEST
+
     rendered = "\n".join(
         (B / (N + suffix)).read_text()
         for suffix in (
@@ -244,6 +307,8 @@ def main() -> int:
             ".plan.json",
             ".progress.json",
             ".approval.json",
+            "-success.evidence.json",
+            ".execution-progress.json",
         )
     )
     for forbidden in ("Bearer eyJ", '"access_token":', '"refresh_token":', "service_role_key"):
@@ -253,8 +318,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v4 Step-4 surface correction v1: PASS "
-        "(APPROVED; pristine; effective 9 PM-1 AM ET; exact one-query Supabase MCP read; "
-        "v4 remains STOPPED; no retry, mutation, credential access, or Step-5 authority)"
+        "(COMPLETED; CONSUMED/SUCCEEDED/PASS; exact one-query Supabase MCP read matched; "
+        "stopped v4 unchanged; no retry, mutation, credential access, or Step-5 execution)"
     )
     return 0
 

@@ -1,0 +1,44 @@
+{
+  "progress_id": "cb3eddce-b37e-597f-8689-2808a5845773",
+  "plan_id": "7b692f74-c75f-5f07-ab20-0caa0340cc76",
+  "plan_version": 1,
+  "plan_digest": "sha256:561e72c641c1fb60fd8c4f4158841bfa7881889abc4ff1ae19cf49cbf3b5d53a",
+  "record_version": 2,
+  "overall_state": "COMPLETED",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-step4-surface-correction-v1.step.01.inspect-preflight-counts-via-supabase-mcp-read-only",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth-v4.step4-surface-correction.counts-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v4-step4-surface-correction-v1-success.evidence.json",
+          "evidence_digest": "sha256:238b4af1586b4b57d919910acdd4042ea01abe95706a7133cadd9a8a6dc5887c",
+          "recorded_at": "2026-10-05T01:05:01Z"
+        }
+      ],
+      "observed_postcondition": "After separate exact owner approval, use only supabase.mcp.execute_sql against DEVELOPMENT AUTH project pwlhruwutoitnieactol to execute exactly the resource-bound aggregate SELECT once and return exactly auth_user_count=2, target_identity_count=1, target_password_null_count=1, target_tenant_exact_count=1, session_count=0, refresh_token_count=0. Stop on any deviation. No additional SQL, retry, mutation, raw Auth row, PII, credential material, GitHub secret access, session/token issuance, or positive-auth Step 5 execution is authorized. This correction creates fresh evidence only and never changes stopped v4 progress.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.implementation-handoff.provider-adapter-positive-auth-v4-step4-surface-correction-v1.result",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth-v4.step4-surface-correction.counts-verified",
+          "evidence_digest": "sha256:238b4af1586b4b57d919910acdd4042ea01abe95706a7133cadd9a8a6dc5887c",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:7ab8f21ff7442882eca413794bfc85c1145bc9d1856648fd3482d9b554f8edbb",
+          "recorded_at": "2026-10-05T01:05:01Z"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-10-05T01:05:01Z",
+  "progress_digest": "sha256:6b6eb329c6b945fde6f625be46794213b8f97a5126415a79389386547e123bdc"
+}

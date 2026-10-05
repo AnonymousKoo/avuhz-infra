@@ -19,6 +19,9 @@ APPROVAL_ID='e4eb4401-8f6a-444e-924b-a53120b1cb48'
 APPROVAL_DIGEST='sha256:585c72affeb88f78b778eac03ba8e15e6d83ced33e7ef36156df1a4042ddb8b4'
 APPROVAL_FILE_DIGEST='sha256:1302fd5ee0c6db11d0ac8cedee0a957520cf2a8065dcb2e5adad1018ff8c1365'
 APPROVED_AT='2026-10-05T02:37:29Z'
+STEP1_EVIDENCE_DIGEST='sha256:15a15f8d6ad651d2140423e63fa5de42c42c9e6a6f18187e875b5386a6c9315d'
+STEP1_PROGRESS_DIGEST='sha256:4c99f4933785fe8cc77c6379c957bb2e76a0bd7ec94be7b20dc8a2c84bcf93c1'
+STEP1_RECORDED_AT='2026-10-05T03:29:23Z'
 CREATED_AT='2026-10-05T02:14:33Z'; WINDOW_START='2026-10-05T03:00:00Z'; WINDOW_END='2026-10-05T06:00:00Z'
 PROJECT='pwlhruwutoitnieactol'
 KEY='impl_handoff_provider_adapter_positive_auth_v4_ephemeral'
@@ -90,14 +93,26 @@ def main():
     assert a['effective_at']==WINDOW_START and a['expires_at']==WINDOW_END
     assert a['approved_at']==APPROVED_AT and a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
     assert a['approval_digest']==APPROVAL_DIGEST==approval_digest(a) and APPROVED_AT < WINDOW_START
-    assert not (B/(N+'.execution-progress.json')).exists() and not list(B.glob(N+'-step*.evidence.json'))
+    s1=load(N+'-step1-success.evidence.json'); x=load(N+'.execution-progress.json')
+    assert canonical_digest(s1)==STEP1_EVIDENCE_DIGEST
+    assert s1['evidence_type']=='auth.provider-adapter-positive-auth.cleanup.verified' and s1['classification']=='ZERO_SESSION_REFRESH_STATE_VERIFIED'
+    assert s1['sanitized_result']=={'session_count':0,'refresh_token_count':0}
+    assert s1['authorization_observation']['interaction_surface']=='supabase.mcp.execute_sql' and s1['authorization_observation']['credential_class']=='NONE'
+    assert s1['recorded_at']==STEP1_RECORDED_AT and s1['execution_observation']['approved_aggregate_select_attempts']==1
+    assert s1['execution_observation']['additional_sql_executed'] is False and s1['execution_observation']['provider_mutation_attempted'] is False and s1['execution_observation']['retry_occurred'] is False
+    assert all(v is False for v in s1['security_state'].values())
+    assert x['progress_digest']==STEP1_PROGRESS_DIGEST==progress_digest(x) and x['overall_state']=='IN_PROGRESS' and x['record_version']==3
+    assert (x['step_states'][0]['authorization_state'],x['step_states'][0]['execution_state'],x['step_states'][0]['verification_state'],x['step_states'][0]['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
+    assert x['step_states'][0]['evidence']==[{'evidence_type':'auth.provider-adapter-positive-auth.cleanup.verified','evidence_reference':N+'-step1-success.evidence.json','evidence_digest':STEP1_EVIDENCE_DIGEST,'recorded_at':STEP1_RECORDED_AT}]
+    assert all((z['authorization_state'],z['execution_state'],z['verification_state'],z['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False) for z in x['step_states'][1:])
+    assert not list(B.glob(N+'-step2*.evidence.json')) and not list(B.glob(N+'-step3*.evidence.json')) and not list(B.glob(N+'-step4*.evidence.json')) and not list(B.glob(N+'-step5*.evidence.json'))
     f=load(CONT+'-step1-failure.evidence.json'); e=load(CONT+'.execution-progress.json')
     assert canonical_digest(f)==FAILURE and e['progress_digest']==STOPPED==progress_digest(e) and e['overall_state']=='STOPPED'
     assert e['step_states'][0]['authorization_state']=='CONSUMED' and e['step_states'][0]['execution_state']=='FAILED' and e['step_states'][0]['verification_state']=='FAIL'
     assert e['step_states'][1]['authorization_state']=='BLOCKED' and e['step_states'][1]['execution_state']=='NOT_STARTED'
-    rendered='\n'.join((B/(N+x)).read_text() for x in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
+    rendered='\n'.join((B/(N+x)).read_text() for x in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','.execution-progress.json'))
     for bad in ('Bearer eyJ','"access_token":','"refresh_token":','service_role_key','sb_secret_'): assert bad not in rendered
     assert re.search(r'postgres(?:ql)?://[^\s/:]+:[^\s/@]+@',rendered,re.I) is None
-    print('DEVELOPMENT provider-adapter positive-auth v4 corrective cleanup/retirement v1: PASS (APPROVED; pristine 5-step boundary; effective 11 PM-2 AM ET; Supabase MCP zero-state read first; retirement only after 0/0; no retry/handoff/provider authority)')
+    print('DEVELOPMENT provider-adapter positive-auth v4 corrective cleanup/retirement v1: PASS (IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS with exact 0/0 via Supabase MCP; Steps 2-5 pending; no retry/handoff authority)')
     return 0
 if __name__=='__main__': raise SystemExit(main())

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import re
@@ -74,6 +75,14 @@ def main() -> int:
         for error in schema_errors:
             print("CORRECTION_SCHEMA_ERROR", list(error.absolute_path), error.message)
         raise AssertionError("correction plan schema invalid")
+    computed_plan_digest = plan_digest(plan)
+    digest_plan = copy.deepcopy(plan)
+    digest_plan["plan_digest"] = computed_plan_digest
+    computed_progress = initial_progress(digest_plan, S, PROGRESS_ID, CREATED_AT)
+    print("CORRECTION_COMPUTED_PLAN_DIGEST", computed_plan_digest)
+    print("CORRECTION_COMPUTED_PROGRESS_DIGEST", computed_progress["progress_digest"])
+    if plan["plan_digest"] != computed_plan_digest:
+        raise AssertionError("correction plan digest needs refresh")
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
 

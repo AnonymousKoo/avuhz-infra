@@ -1,0 +1,134 @@
+{
+  "contract_version": "v1",
+  "environment": "DEVELOPMENT",
+  "provider": "supabase",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "project_name": "DEVELOPMENT AUTH",
+  "issuer": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+  "service_audience": "audience.avuhz.command-service.development",
+  "resource_id": "324774e6-5be4-59d8-9b68-fa14e34eddcb",
+  "resource_version": "provider-adapter-positive-auth-v4-corrective-cleanup-retirement.v2",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v4-corrective-cleanup-retirement-v2",
+  "lineage": {
+    "stopped_continuation_plan_id": "43baee79-d5ca-51de-b812-62761844aad0",
+    "stopped_continuation_plan_digest": "sha256:b3fe688ebb8e40da8f9c76db4f1054308e2a831ccd977b41852bb0322fb3ca32",
+    "stopped_continuation_approval_digest": "sha256:6c7dcfb95cf50ac79b9184839a36dd83957190aba454636dae37cbca4f53b94d",
+    "stopped_continuation_execution_progress_digest": "sha256:42ad20cde3ab60c8b040139ff34a6078d7097050d43e9a74cdc352dada0bd2db",
+    "stopped_continuation_step1_failure_evidence_digest": "sha256:d0adabce4a18b043eba5204b9896e8a454a4061d90a690a8a86df20b7852441d",
+    "failed_workflow_run_id": 37253641818,
+    "failed_workflow_run_attempt": 1,
+    "failed_execution_sha": "54b159fd1ba6e6eb0ee1cfa0dca4482ae316b034"
+  },
+  "fresh_provider_key_reference": "impl_handoff_provider_adapter_positive_auth_v4_ephemeral",
+  "github_repository": "AnonymousKoo/avuhz-infra",
+  "github_environment": "development",
+  "github_secret_binding_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+  "session_state_verification": {
+    "interaction_surface": "supabase.mcp.execute_sql",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "execution_class": "PROVIDER_READ",
+    "credential_class": "NONE",
+    "query": "select\n  (select count(*) from auth.sessions) as session_count,\n  (select count(*) from auth.refresh_tokens) as refresh_token_count;",
+    "query_sha256": "sha256:da814cfcb440fc635827734ca3388cb1bbe3c77a302e371d8f283681edeb12d1",
+    "query_count": 1,
+    "result_fields": [
+      "session_count",
+      "refresh_token_count"
+    ],
+    "expected_result": {
+      "session_count": 0,
+      "refresh_token_count": 0
+    },
+    "aggregate_only": true,
+    "raw_rows_authorized": false,
+    "additional_sql_authorized": false,
+    "retry_authorized": false,
+    "on_zero": "ALLOW_ORDERED_RETIREMENT_STEPS",
+    "on_nonzero_malformed_or_unavailable": "STOP_REQUIRES_FRESH_FORWARD_ONLY_SESSION_CLEANUP_BOUNDARY"
+  },
+  "retirement_interactions": {
+    "step2": {
+      "interaction_surface": "supabase.dashboard.settings.api-keys",
+      "project_reference": "pwlhruwutoitnieactol",
+      "credential_class": "OWNER_INTERACTIVE_SESSION",
+      "operation": "delete-exact-key-by-name",
+      "exact_name": "impl_handoff_provider_adapter_positive_auth_v4_ephemeral",
+      "value_reads_authorized": false
+    },
+    "step3": {
+      "interaction_surface": "github.repository.settings.environments.development.secrets",
+      "repository": "AnonymousKoo/avuhz-infra",
+      "environment": "development",
+      "credential_class": "OWNER_INTERACTIVE_SESSION",
+      "operation": "delete-exact-environment-secret-by-name",
+      "exact_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+      "value_reads_authorized": false
+    },
+    "step4": {
+      "interaction_surface": "supabase.dashboard.settings.api-keys",
+      "project_reference": "pwlhruwutoitnieactol",
+      "credential_class": "OWNER_INTERACTIVE_SESSION",
+      "operation": "independent-names-only-absence-read",
+      "exact_name": "impl_handoff_provider_adapter_positive_auth_v4_ephemeral",
+      "value_reads_authorized": false
+    },
+    "step5": {
+      "interaction_surface": "github.repository.settings.environments.development.secrets",
+      "repository": "AnonymousKoo/avuhz-infra",
+      "environment": "development",
+      "credential_class": "OWNER_INTERACTIVE_SESSION",
+      "operation": "independent-names-only-absence-read",
+      "exact_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+      "value_reads_authorized": false
+    }
+  },
+  "authorized_counts": {
+    "session_state_aggregate_read": 1,
+    "supabase_key_delete": 1,
+    "github_environment_secret_delete": 1,
+    "supabase_key_absence_read": 1,
+    "github_secret_absence_read": 1,
+    "session_cleanup_mutation": 0,
+    "positive_auth_retry": 0,
+    "new_authentication": 0,
+    "session_issue": 0,
+    "token_issue": 0,
+    "implementation_handoff_execute": 0
+  },
+  "security_rules": {
+    "credential_material_agent_visible": false,
+    "credential_material_persistence_authorized": false,
+    "secret_value_read_authorized": false,
+    "raw_provider_rows_authorized": false,
+    "pii_persistence_authorized": false,
+    "data_project_authorized": false,
+    "render_mutation_authorized": false,
+    "n8n_operation_authorized": false,
+    "staging_authorized": false,
+    "production_authorized": false
+  },
+  "failure_handling": {
+    "unknown_session_state_at_entry": true,
+    "cleanup_verified_at_entry": false,
+    "retirement_obligation_remains": true,
+    "zero_state_required_before_retirement": true,
+    "nonzero_or_ambiguous_state_action": "STOP_AND_PREPARE_FRESH_FORWARD_ONLY_SESSION_CLEANUP_BOUNDARY",
+    "retirement_after_nonzero_or_ambiguous_state_authorized": false,
+    "retry_failed_positive_auth_authorized": false,
+    "history_rewrite_authorized": false
+  },
+  "contract_digest": "sha256:96fae38d19b924600766e512ff93bd39d62f63e4f95112dbc7efc411f800af5e",
+  "supersedes_v1": {
+    "plan_id": "c4d14e3c-72fe-57f7-ae9a-3b9ea97fa74a",
+    "plan_digest": "sha256:819b9ef12bd7a4b25924e0ea1487f9da72b94f5215a571712557d773c82d2d2e",
+    "resource_digest": "sha256:12216b64d900e458f3d3207a378a6b3ab43fa51f00c3f7a3f433d0b93296b4d8",
+    "preparation_evidence_digest": "sha256:bcedac7d19dba587116d4079034eae6a0b4e4f86599cd8f26f4f606baee66a0a",
+    "progress_digest": "sha256:60f2271ba9b9ccfab1950729abf629a0a4817c5e3a580456b59e29cadbe57f9c",
+    "progress_state": "NOT_STARTED",
+    "approval_present": false,
+    "execution_progress_present": false,
+    "reason": "v1 authorization window began before owner approval was canonical; v1 remains pristine and unexecuted; v2 shifts timing only"
+  }
+}

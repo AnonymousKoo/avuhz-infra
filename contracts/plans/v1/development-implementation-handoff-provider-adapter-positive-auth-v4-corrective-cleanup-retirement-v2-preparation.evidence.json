@@ -1,0 +1,75 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.corrective-cleanup-retirement.prepared",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v4-corrective-cleanup-retirement-v2",
+  "observed_at": "2026-10-05T02:31:27Z",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "canonical_main_at_start": "e5a01228e82ef13ad55b7c0039a878b19a72a118",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "action_class": "REPOSITORY_LOCAL",
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED",
+  "resource_contract_digest": "sha256:96fae38d19b924600766e512ff93bd39d62f63e4f95112dbc7efc411f800af5e",
+  "lineage": {
+    "stopped_continuation_plan_id": "43baee79-d5ca-51de-b812-62761844aad0",
+    "stopped_continuation_plan_digest": "sha256:b3fe688ebb8e40da8f9c76db4f1054308e2a831ccd977b41852bb0322fb3ca32",
+    "stopped_continuation_approval_digest": "sha256:6c7dcfb95cf50ac79b9184839a36dd83957190aba454636dae37cbca4f53b94d",
+    "stopped_continuation_execution_progress_digest": "sha256:42ad20cde3ab60c8b040139ff34a6078d7097050d43e9a74cdc352dada0bd2db",
+    "stopped_continuation_step1_failure_evidence_digest": "sha256:d0adabce4a18b043eba5204b9896e8a454a4061d90a690a8a86df20b7852441d",
+    "failed_workflow_run_id": 37253641818,
+    "failed_workflow_run_attempt": 1,
+    "failed_execution_sha": "54b159fd1ba6e6eb0ee1cfa0dca4482ae316b034"
+  },
+  "entry_state": {
+    "provider_mutation_attempted": true,
+    "temporary_session_state": "UNKNOWN",
+    "global_logout_acceptance_proven": false,
+    "cleanup_verified": false,
+    "retry_authorized": false,
+    "credential_retirement_obligation_remains": true,
+    "continuation_later_steps_blocked": true
+  },
+  "design": {
+    "first_action": "ONE_AGGREGATE_ONLY_SESSION_REFRESH_COUNT_READ",
+    "retirement_requires_zero_counts": true,
+    "nonzero_or_ambiguous_counts": "STOP_BEFORE_RETIREMENT_AND_REQUIRE_SEPARATE_SESSION_CLEANUP",
+    "ordered_resources": [
+      "supabase:pwlhruwutoitnieactol:session-refresh-zero-verification",
+      "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v4_ephemeral",
+      "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+      "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v4_ephemeral",
+      "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL"
+    ]
+  },
+  "authorization_window": {
+    "starts_at": "2026-10-05T03:15:00Z",
+    "expires_at": "2026-10-05T06:00:00Z"
+  },
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "credential_material_digest_recorded": false,
+    "secret_value_read": false,
+    "raw_rows_observed": false,
+    "pii_observed": false,
+    "history_rewritten": false,
+    "approval_created": false,
+    "execution_progress_created": false,
+    "result_evidence_created": false
+  },
+  "readiness": "Repository preparation only. Exact owner approval is required before Step 1. Zero-state proof is required before either retirement mutation can execute.",
+  "evidence_digest": "sha256:720f6932acd5dc57a76e7e7821926c325bf3c93c700ebe474280f29204710d83",
+  "supersedes_v1": {
+    "plan_id": "c4d14e3c-72fe-57f7-ae9a-3b9ea97fa74a",
+    "plan_digest": "sha256:819b9ef12bd7a4b25924e0ea1487f9da72b94f5215a571712557d773c82d2d2e",
+    "resource_digest": "sha256:12216b64d900e458f3d3207a378a6b3ab43fa51f00c3f7a3f433d0b93296b4d8",
+    "preparation_evidence_digest": "sha256:bcedac7d19dba587116d4079034eae6a0b4e4f86599cd8f26f4f606baee66a0a",
+    "progress_digest": "sha256:60f2271ba9b9ccfab1950729abf629a0a4817c5e3a580456b59e29cadbe57f9c",
+    "progress_state": "NOT_STARTED",
+    "approval_present": false,
+    "execution_progress_present": false,
+    "reason": "v1 authorization window began before owner approval was canonical; v1 remains pristine and unexecuted; v2 shifts timing only"
+  }
+}

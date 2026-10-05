@@ -1,0 +1,67 @@
+{
+  "progress_id": "3cd10755-39f9-545c-9f66-5b06eed5db76",
+  "plan_id": "f0f9e805-8429-5e0f-b604-471f36e4528f",
+  "plan_version": 2,
+  "plan_digest": "sha256:311b9fb613104fc41f4e0393984e3c5c05652baa15200dabb1ad65f2355a80c0",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-corrective-cleanup-retirement-v2.step.01.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-corrective-cleanup-retirement-v2.step.02.retire-fresh-auth-admin-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-corrective-cleanup-retirement-v2.step.03.retire-github-secret-binding",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-corrective-cleanup-retirement-v2.step.04.verify-fresh-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v4-corrective-cleanup-retirement-v2.step.05.verify-github-secret-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-05T02:31:27Z",
+  "progress_digest": "sha256:58c18f703e35c2eeedb06e493b28ba83712510f0a52e574121d0874bbc4a5a1c"
+}

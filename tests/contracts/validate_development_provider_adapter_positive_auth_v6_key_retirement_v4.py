@@ -34,7 +34,7 @@ def main():
     g=load(N+'.progress.json')
     late=load(V1+'-late-window-rejection.evidence.json')
     reject2=load(V2+'-binding-integrity-rejection.evidence.json')
-    reject3=load(V3+'-preapproval-effective-time-rejection.evidence.json')
+    reject3=load(V3+'-effective-time-rejection.evidence.json')
 
     validate_plan(p,S); validate_progress(p,g,S)
 

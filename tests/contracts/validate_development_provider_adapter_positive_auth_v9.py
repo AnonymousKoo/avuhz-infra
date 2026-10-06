@@ -12,9 +12,11 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
+    approval_digest,
     initial_progress,
     plan_digest,
     progress_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -32,6 +34,8 @@ GH = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V9_EPHEMERA
 CREATED = "2026-10-06T15:37:03Z"
 START = "2026-10-06T17:00:00Z"
 END = "2026-10-06T23:00:00Z"
+APPROVED = "2026-10-06T15:55:00Z"
+APPROVAL = "sha256:ee9fa899d8b842b73677609955061618ec873a2a2c926a88207dab34dec234c5"
 
 RESOURCE = "sha256:798fa6cdd64f3c5cee74380eb255661cc9fe5de53dfbb96916309b3dfe78c3b3"
 PREP = "sha256:1198068f3a86bc49b77823856eece87e9b50803d227a9fa02051d3f0900c2a68"
@@ -59,6 +63,7 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
     v8_x = load(V8 + ".execution-progress.json")
     v8_retire_x = load(V8_RETIRE + ".execution-progress.json")
     v8_key_absence = load(V8_RETIRE + "-step1-success.evidence.json")
@@ -66,6 +71,7 @@ def main() -> int:
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, START)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest(
         {k: v for k, v in r.items() if k != "contract_digest"}
@@ -89,6 +95,15 @@ def main() -> int:
         "expires_at": END,
     }
     assert p["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+
+    assert a["approval_id"] == "7c4a6f21-8c9e-46b1-9b4a-3f7d2e6c5a10"
+    assert a["plan_id"] == p["plan_id"] and a["plan_version"] == 9
+    assert a["plan_digest"] == PLAN and a["owner_identity"] == p["owner_identity"]
+    assert a["decision"] == "APPROVE" and a["environment"] == "DEVELOPMENT"
+    assert a["effective_at"] == START and a["expires_at"] == END
+    assert a["approved_at"] == APPROVED and APPROVED < START
+    assert a["status"] == "ACTIVE" and a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["approval_digest"] == APPROVAL == approval_digest(a)
 
     assert r["project_reference"] == PROJECT and r["responsibility"] == "AUTH"
     assert r["fresh_provider_key_reference"] == KEY
@@ -211,7 +226,6 @@ def main() -> int:
         == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
         for s in g["step_states"]
     )
-    assert not (B / (N + ".approval.json")).exists()
     assert not (B / (N + ".execution-progress.json")).exists()
 
     rendered = "\n".join(
@@ -221,6 +235,7 @@ def main() -> int:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            ".approval.json",
         )
     )
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
@@ -230,7 +245,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v9: PASS "
-        "(PREPARED / UNAPPROVED / UNEXECUTED; v8 cleanup bound; "
+        "(APPROVED / UNEXECUTED; v8 cleanup bound; "
         "whole-plan stale active-version scan PASS)"
     )
     return 0

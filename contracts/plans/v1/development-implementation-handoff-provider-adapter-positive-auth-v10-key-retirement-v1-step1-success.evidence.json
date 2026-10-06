@@ -1,0 +1,61 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "8d3a6f21-5c74-4b9e-a102-7f6d3c5e8b41",
+  "plan_version": 1,
+  "plan_digest": "sha256:007735081fd7c4bc3d122a3475ff97d3a7a8983b60016c1347a45e0ad89dd5cb",
+  "approval_id": "7e4b2c91-6d35-4f8a-b120-9c5e3d7a6f41",
+  "approval_digest": "sha256:23ca76ffd209a9c2e76d38416b952b1e7319b6d30789fbd1fde4a83ffb9474cb",
+  "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v1.step.01.retire-stopped-auth-admin-key",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_RECORDED",
+  "classification": "EXACT_V10_EPHEMERAL_AUTH_KEY_RETIREMENT_REPORTED_BY_OWNER",
+  "authorization_observation": {
+    "interaction_surface": "supabase.dashboard.settings.api-keys",
+    "execution_actor": "OWNER_MANUAL_UI",
+    "project_reference": "pwlhruwutoitnieactol",
+    "environment": "DEVELOPMENT",
+    "responsibility": "AUTH",
+    "approval_exact": true,
+    "authorization_window_active": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "credential_material_observed": false,
+    "other_key_mutation_reported": false
+  },
+  "authorization_observation_digest": "sha256:c7cbbef454e47047c104b52d3748d0d31acc8b2e33bdfbfae4af52c5e2c55ca4",
+  "sanitized_result": {
+    "key_name": "impl_handoff_provider_adapter_positive_auth_v10_ephemeral",
+    "retirement_reported_by_owner": true,
+    "credential_material_observed": false,
+    "other_key_change_reported": false
+  },
+  "result_digest": "sha256:f684595a482fdde67ac7ff52a9ad59b854192cae648d64e429dbd07059614eb0",
+  "execution_observation": {
+    "execution_class": "PROVIDER_MUTATION",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_delete_attempts": 1,
+    "credential_value_read": false,
+    "other_key_mutation_reported": false,
+    "retry_occurred": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "github_binding_changed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "independent_absence_verification_required": true,
+  "recorded_at": "2026-10-06T22:35:02Z"
+}

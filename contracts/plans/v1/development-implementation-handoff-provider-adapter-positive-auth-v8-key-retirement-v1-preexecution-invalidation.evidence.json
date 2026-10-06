@@ -1,0 +1,43 @@
+{
+  "evidence_type": "authorization-plan.preexecution-invalidated",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "71372198-c690-4886-bfb4-ebe201d4c83a",
+  "plan_version": 1,
+  "plan_digest": "sha256:0675583489849cb3f93063e13aa3a1691e864bef4f9410375ab967dc9e1207a2",
+  "approval_id": "b1fd38d3-fdb6-4a66-9507-25e6b401e271",
+  "approval_digest": "sha256:943468fef4816fd40d38ffa3f75c105e23ced952a329e72a44fce5773c9d5645",
+  "classification": "UPSTREAM_V8_RECORDING_BINDING_CORRECTION_INVALIDATED_APPROVED_RETIREMENT_V1",
+  "safe_error_code": "PLAN_STATE_INVALID",
+  "approval_state": "APPROVED_BUT_NONEXECUTABLE",
+  "invalidated_prerequisites": {
+    "v8_stopped_progress": "sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a",
+    "v8_step1_key_creation": "sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da",
+    "v8_step2_plan_integrity_failure": "sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1"
+  },
+  "corrected_prerequisites": {
+    "v8_stopped_progress": "sha256:45c6d902458eee68f2f2782aaac82598d8cef7a2c022124691d3db4f08222b8d",
+    "v8_step1_key_creation": "sha256:e2f4cc24eb5bbe974ee51d2086262af68314a29a136c5f630f949bbf6699c420",
+    "v8_step2_plan_integrity_failure": "sha256:eb2138a99751165302f01b9e063fdd883919c69c1df3f67db040c001879d9ae5",
+    "v8_recording_correction": "sha256:8ec18cfe0586881e072aa6157012c15fcc9be3cd80d359731e12f3f99e7d75a0"
+  },
+  "provider_effects": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "github_secret_mutation_performed": false,
+    "session_issued": false,
+    "token_issued": false,
+    "implementation_handoff_attempted": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "continuation_rule": "PREPARE_FRESH_FORWARD_ONLY_V8_KEY_RETIREMENT_V2",
+  "recorded_at": "2026-10-06T12:52:15Z",
+  "evidence_digest": "sha256:6664a48710ed032272b0236e81c901ccdde1548fd185c26e2f0248f8a39b4b47"
+}

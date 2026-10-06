@@ -54,6 +54,10 @@ V6_GH_ABSENCE = "sha256:a92e3926482aaed1ac19c241aef6d23b0079f47e1087c77bc65797dd
 V4_RECON_PROGRESS = "sha256:57365c1791a9548568bb19515f70270e80b4ff1e4f3fa26f4560ebb6a3a572e9"
 V4_RECON_EVIDENCE = "sha256:1c0b6abf5a3e49ffd9dec1b2573918f4e7046ae7dd0144e6d31645d09bcf2773"
 V7_LATE = "sha256:5ea9bd9fade9a6b5674f190bc133a7aa70233e06c50193e7125f26303d8eca5b"
+RECORDED = "2026-10-06T12:15:58Z"
+STEP1 = "sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da"
+STEP2_FAILURE = "sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1"
+STOPPED = "sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a"
 
 
 def load(name: str) -> dict:
@@ -78,10 +82,14 @@ def main() -> int:
     recon_x = load(V4_RECON + ".execution-progress.json")
     recon_evidence = load(V4_RECON + "-step1-success.evidence.json")
     v7_late = load(V7 + "-late-window-rejection.evidence.json")
+    e1 = load(N + "-step01-success.evidence.json")
+    e2 = load(N + "-step02-plan-integrity-failure.evidence.json")
+    x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
     validate_approval(p, a, S, START)
+    validate_progress(p, x, S)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest({k: v for k, v in r.items() if k != "contract_digest"})
     assert prep["evidence_digest"] == PREP == canonical_digest({k: v for k, v in prep.items() if k != "evidence_digest"})
@@ -159,24 +167,44 @@ def main() -> int:
     for idx in (0, 6, 8):
         assert KEY in p["steps"][idx]["resource"]["resource_reference"]
         assert KEY in p["steps"][idx]["expected_postcondition"]
-    assert "bound in the v8 resource" in p["steps"][3]["expected_postcondition"]
-    assert "fresh v8 GitHub environment credential" in p["steps"][4]["expected_postcondition"]
+    assert "bound in the v7 resource" in p["steps"][3]["expected_postcondition"]
+    assert "fresh v7 GitHub environment credential" in p["steps"][4]["expected_postcondition"]
     for idx in (0, 3):
         assert any(e["evidence_type"] == "auth.provider-adapter-positive-auth-v7.late-approval-rejected" and e["exact_digest"] == V7_LATE for e in p["steps"][idx]["required_evidence"])
 
     assert g["overall_state"] == "NOT_STARTED" and g["record_version"] == 1
     assert all((s["authorization_state"], s["execution_state"], s["verification_state"], s["authorization_consumed"]) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False) for s in g["step_states"])
-    assert not (B / (N + ".execution-progress.json")).exists()
 
-    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json"))
+    assert canonical_digest(e1) == STEP1
+    assert e1["outcome"] == "SUCCEEDED_VERIFIED"
+    assert e1["classification"] == "DEDICATED_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_CREDENTIAL_CREATED"
+    assert e1["owner_confirmed_created"] is True
+    assert e1["credential_material_retained"] is False
+    assert canonical_digest(e2) == STEP2_FAILURE
+    assert e2["outcome"] == "FAILED_PREEXECUTION_PLAN_INTEGRITY"
+    assert e2["safe_error_code"] == "PLAN_STATE_INVALID"
+    assert e2["sanitized_result"]["binding_created"] is False
+    assert e2["sanitized_result"]["provider_mutation_performed"] is False
+    assert e2["sanitized_result"]["stale_execution_references"] == [
+        "step04.expected_postcondition.references-v7-resource",
+        "step05.expected_postcondition.references-fresh-v7-github-credential",
+    ]
+
+    assert x["progress_digest"] == STOPPED == progress_digest(x)
+    assert x["overall_state"] == "STOPPED" and x["record_version"] == 5
+    assert x["updated_at"] == RECORDED
+    assert (x["step_states"][0]["authorization_state"], x["step_states"][0]["execution_state"], x["step_states"][0]["verification_state"], x["step_states"][0]["authorization_consumed"]) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert (x["step_states"][1]["authorization_state"], x["step_states"][1]["execution_state"], x["step_states"][1]["verification_state"], x["step_states"][1]["authorization_consumed"]) == ("CONSUMED", "FAILED", "FAIL", True)
+    assert x["step_states"][1]["safe_error_code"] == "PLAN_STATE_INVALID"
+    assert all((s["authorization_state"], s["execution_state"], s["verification_state"], s["authorization_consumed"]) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False) for s in x["step_states"][2:])
+
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json", "-step01-success.evidence.json", "-step02-plan-integrity-failure.evidence.json", ".execution-progress.json"))
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
     assert "gnuqaefotwgkwurjpyik" not in rendered
-    assert "fresh v7 GitHub environment credential" not in rendered
-    assert "bound in the v7 resource" not in rendered
     for forbidden in ("service_role", "Bearer eyJ"):
         assert forbidden not in rendered
 
-    print("DEVELOPMENT provider-adapter positive-auth v8: PASS (APPROVED / UNEXECUTED; 8:00 AM ET start)")
+    print("DEVELOPMENT provider-adapter positive-auth v8: PASS (STOPPED; Step 1 credential created; Step 2 failed closed before GitHub binding on stale v7 execution wording; Steps 3-10 blocked; retirement required)")
     return 0
 
 

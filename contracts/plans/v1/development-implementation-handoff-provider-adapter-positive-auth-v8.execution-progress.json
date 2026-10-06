@@ -1,0 +1,164 @@
+{
+  "progress_id": "0e8c57a2-7d41-4d77-b03f-3d7c94fbb246",
+  "plan_id": "4a7d18c6-2f71-4f7a-8c43-9e5d2b6f1a80",
+  "plan_version": 8,
+  "plan_digest": "sha256:9ec8b204229a31c526870aa6b96776ede5ec474c592c72f814ce9ad5ed6eaba8",
+  "record_version": 5,
+  "overall_state": "STOPPED",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.01.create-fresh-auth-admin-key",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v8-step01-success.evidence.json",
+          "evidence_digest": "sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da",
+          "recorded_at": "2026-10-06T12:15:58Z"
+        }
+      ],
+      "observed_postcondition": "In DEVELOPMENT AUTH, create exactly one fresh dedicated secret key named impl_handoff_provider_adapter_positive_auth_v8_ephemeral. Only the owner may transfer its value directly to the separately authorized GitHub binding step. No value, digest, copy, log, prompt, repository file, identity, session, DATA, Render, n8n, staging, or production change is permitted.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8.fresh-key-created",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "evidence_digest": "sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:3c0028e9969c00768747ade720ca64ef13d3f772b68b4e850353e71749749e62",
+          "recorded_at": "2026-10-06T12:15:58Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.02.bind-fresh-key-github-development",
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v8-step02-plan-integrity-failure.evidence.json",
+          "evidence_digest": "sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1",
+          "recorded_at": "2026-10-06T12:15:58Z"
+        }
+      ],
+      "observed_postcondition": "Step 2 was not executed. Pre-execution whole-plan integrity review found stale v7 execution instructions in v8 Step 4 and Step 5, so the GitHub environment secret binding was not created and the v8 plan stopped fail-closed.",
+      "safe_error_code": "PLAN_STATE_INVALID",
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8.fresh-key-created",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.01.create-fresh-auth-admin-key",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "evidence_digest": "sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:3c0028e9969c00768747ade720ca64ef13d3f772b68b4e850353e71749749e62",
+          "recorded_at": "2026-10-06T12:15:58Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.03.verify-github-binding-presence",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.04.verify-fresh-auth-preflight",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.05.authenticate-live-and-logout-global",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.06.verify-zero-session-refresh-state",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.07.retire-fresh-auth-admin-key",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.08.retire-github-secret-binding",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.09.verify-fresh-auth-admin-key-absent",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.10.verify-github-secret-binding-absent",
+      "authorization_state": "BLOCKED",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T12:15:58Z",
+  "progress_digest": "sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a"
+}

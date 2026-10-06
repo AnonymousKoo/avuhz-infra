@@ -1,0 +1,61 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "github",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "environment_reference": "development",
+  "plan_id": "2e8f6c19-4d73-4b5a-a9c1-7f2e6d8b3c40",
+  "plan_version": 1,
+  "plan_digest": "sha256:9c200ac9b4ab7d81556b00dd6caa81e7f22c5a97969ac7c00c0446ee6df135d3",
+  "approval_id": "6c9a2e41-7d53-4f8b-a261-9e3c5d7b1f40",
+  "approval_digest": "sha256:43672c0a6a2ea21837716413d961c18d6535e303ad7125611c7216a9c3a7b996",
+  "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1.step.03.retire-github-secret-binding",
+  "attempt": 1,
+  "outcome": "SUCCEEDED_RECORDED",
+  "classification": "EXACT_V9_GITHUB_ENVIRONMENT_SECRET_RETIREMENT_REPORTED_BY_OWNER",
+  "authorization_observation": {
+    "interaction_surface": "github.repository.settings.environments.development.secrets",
+    "execution_actor": "OWNER_MANUAL_UI",
+    "repository": "AnonymousKoo/avuhz-infra",
+    "environment": "development",
+    "approval_exact": true,
+    "authorization_window_active": true,
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "secret_value_observed": false,
+    "other_secret_mutation_reported": false
+  },
+  "sanitized_result": {
+    "secret_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V9_EPHEMERAL",
+    "retirement_reported_by_owner": true,
+    "secret_value_observed": false,
+    "other_secret_change_reported": false
+  },
+  "execution_observation": {
+    "execution_class": "PROVIDER_MUTATION",
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "approved_delete_attempts": 1,
+    "secret_value_read": false,
+    "other_secret_mutation_reported": false,
+    "retry_occurred": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "supabase_key_changed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "independent_absence_verification_required": true,
+  "recorded_at": "2026-10-06T19:24:54Z",
+  "authorization_observation_digest": "sha256:286c38eb4b0e892447a84c5c3c8b3b165a8c5c2711e4eaa0885e630b2992576c",
+  "result_digest": "sha256:dbad7de60270d59645a50b515234b112a14af7ec5141322f34a8454714fdc83e"
+}

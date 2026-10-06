@@ -1,0 +1,56 @@
+{
+  "progress_id": "6b4e2d93-1a75-4f8c-9d20-5e7a3c6b1f84",
+  "plan_id": "8d3a6f21-5c74-4b9e-a102-7f6d3c5e8b41",
+  "plan_version": 1,
+  "plan_digest": "sha256:007735081fd7c4bc3d122a3475ff97d3a7a8983b60016c1347a45e0ad89dd5cb",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v1.step.01.retire-stopped-auth-admin-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v1.step.02.verify-stopped-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v1.step.03.retire-github-secret-binding",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v1.step.04.verify-github-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T21:50:00Z",
+  "progress_digest": "sha256:a598ce72e22cb9082915b251860b3966d753b589dea6095e24f75920d0a254ea"
+}

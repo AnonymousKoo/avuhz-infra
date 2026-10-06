@@ -101,6 +101,8 @@ def main() -> int:
     assert "required_v9_key_absence_evidence_digest" in source
     assert "required_v9_github_absence_evidence_digest" in source
     assert "from avuhz_engineering.evidence_digest import evidence_digest" in source
+    assert "evidence_digest_source_digest" in source
+    assert 'ROOT / "src/avuhz_engineering/evidence_digest.py"' in source
     assert "evidence_digest(v7_late_rejection)" in source
     assert "canonical_digest(v7_late_rejection)" not in source
 

@@ -93,20 +93,6 @@ def progress_digest(progress: dict) -> str:
     return canonical_digest({key: copy.deepcopy(value) for key, value in progress.items() if key != "progress_digest"})
 
 
-def evidence_digest(evidence: dict) -> str:
-    """Return the canonical evidence-body digest and validate any embedded digest."""
-    body = {
-        key: copy.deepcopy(value)
-        for key, value in evidence.items()
-        if key != "evidence_digest"
-    }
-    computed = canonical_digest(body)
-    embedded = evidence.get("evidence_digest")
-    if embedded is not None and embedded != computed:
-        raise AuthorizationPlanError("EVIDENCE_DIGEST_INVALID")
-    return computed
-
-
 def _schema_validate(value: dict, schema_id: str, schema_root: Path) -> None:
     registry = SchemaRegistry(schema_root)
     validator = Draft202012Validator(registry.expanded(schema_id), format_checker=FormatChecker())

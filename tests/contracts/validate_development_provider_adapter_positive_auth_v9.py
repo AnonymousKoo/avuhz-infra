@@ -41,6 +41,8 @@ RESOURCE = "sha256:798fa6cdd64f3c5cee74380eb255661cc9fe5de53dfbb96916309b3dfe78c
 PREP = "sha256:1198068f3a86bc49b77823856eece87e9b50803d227a9fa02051d3f0900c2a68"
 PLAN = "sha256:9ffc1f6d4c91614b79b281c9f21e3c87d7586517b5b20898d847e54038a026c4"
 PROGRESS = "sha256:fde7b914b74d1b6cdeda3b162f19438da786f818e43a41b6b3e1ebb8641c602a"
+STEP1_EVIDENCE = "sha256:e794f45457172d917f6dded302231edeb7369253d54d1a51aa7f503eb7c84f10"
+EXECUTION_PROGRESS = "sha256:e8416f5863578f7249817570325a9e68bb4f087a97f179916faf2cd783ee600e"
 EXECUTOR = "sha256:c92562443d2e9af274a150174b76bfdb7cae7989896590f2298addfafa9190d3"
 WORKFLOW = "sha256:c657fcd7b82352bf62e1a646f5e890225f22370ad48992fd81c2838f34a7abe2"
 
@@ -64,6 +66,8 @@ def main() -> int:
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
     a = load(N + ".approval.json")
+    step1_evidence = load(N + "-step01-success.evidence.json")
+    x = load(N + ".execution-progress.json")
     v8_x = load(V8 + ".execution-progress.json")
     v8_retire_x = load(V8_RETIRE + ".execution-progress.json")
     v8_key_absence = load(V8_RETIRE + "-step1-success.evidence.json")
@@ -71,6 +75,7 @@ def main() -> int:
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_progress(p, x, S)
     validate_approval(p, a, S, START)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest(
@@ -226,7 +231,32 @@ def main() -> int:
         == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
         for s in g["step_states"]
     )
-    assert not (B / (N + ".execution-progress.json")).exists()
+    assert canonical_digest(step1_evidence) == STEP1_EVIDENCE
+    assert step1_evidence["plan_id"] == p["plan_id"]
+    assert step1_evidence["approval_id"] == a["approval_id"]
+    assert step1_evidence["project_reference"] == PROJECT
+    assert step1_evidence["credential_material_retained"] is False
+    assert step1_evidence["credential_material_digest_recorded"] is False
+    assert x["progress_digest"] == EXECUTION_PROGRESS == progress_digest(x)
+    assert x["record_version"] == 2 and x["overall_state"] == "IN_PROGRESS"
+    first = x["step_states"][0]
+    assert (
+        first["authorization_state"],
+        first["execution_state"],
+        first["verification_state"],
+        first["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert first["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
+    assert all(
+        (
+            s["authorization_state"],
+            s["execution_state"],
+            s["verification_state"],
+            s["authorization_consumed"],
+        )
+        == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
+        for s in x["step_states"][1:]
+    )
 
     rendered = "\n".join(
         (B / (N + suffix)).read_text()
@@ -236,6 +266,8 @@ def main() -> int:
             ".plan.json",
             ".progress.json",
             ".approval.json",
+            "-step01-success.evidence.json",
+            ".execution-progress.json",
         )
     )
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
@@ -245,8 +277,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v9: PASS "
-        "(APPROVED / UNEXECUTED; v8 cleanup bound; "
-        "whole-plan stale active-version scan PASS)"
+        "(IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS; "
+        "Step 2 pending; v8 cleanup bound; whole-plan stale active-version scan PASS)"
     )
     return 0
 

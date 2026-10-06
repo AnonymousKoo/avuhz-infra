@@ -27,6 +27,8 @@ RESOURCE = "sha256:cf26ec78208c27b9f878a7446c50214d16e1a30568bf3385fb650a58e4902
 PREP = "sha256:6564ac9afc3e24a4dd9d84883f8eaf64d9f3960933bfb2121a946e7f50d32931"
 PLAN = "sha256:909276b7d894f68d01c0fadd1b4f8e1f354c2914d6f2cd658926aa099e977414"
 PROGRESS = "sha256:4a5813efcacb2298e8b6aa35b0f9bd139f286df898fe4b6bbeff5582f7e553f4"
+STEP1_EVIDENCE = "sha256:c90ee6dae85bc880703dd00dcd0a5813f92e86fa015b4c26392764601983eac4"
+EXECUTION_PROGRESS = "sha256:9e0b88a42df4eca4682d7ad8bee8aff685475034aae51f5b97eb8752a2a8782f"
 EXECUTOR = "sha256:38aa2b6b57fddb3e6b9627c2686b4f7ab944ebbd2c5d3bc225434a78ecd21dba"
 WORKFLOW = "sha256:66a1439bba1f9a372d70566a8d6b2bec47f15b046f4d0739dd5b70b3200c1d4b"
 EVIDENCE_HELPER = "sha256:ceed8cb7681f0fc195c7bfff9cd4dd06dbaee728efbf29f52e61b982acd53d34"
@@ -57,9 +59,12 @@ def main() -> int:
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
     a = load(N + ".approval.json")
+    step1_evidence = load(N + "-step01-success.evidence.json")
+    x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_progress(p, x, S)
     validate_approval(p, a, S, START)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest(
@@ -194,7 +199,41 @@ def main() -> int:
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
         for state in g["step_states"]
     )
-    assert not (B / (N + ".execution-progress.json")).exists()
+
+    assert evidence_digest(step1_evidence) == STEP1_EVIDENCE
+    assert step1_evidence["plan_id"] == p["plan_id"]
+    assert step1_evidence["approval_id"] == a["approval_id"]
+    assert step1_evidence["project_reference"] == "pwlhruwutoitnieactol"
+    assert step1_evidence["owner_confirmed_created"] is True
+    assert step1_evidence["credential_material_retained"] is False
+    assert step1_evidence["sanitized_result"] == {
+        "classification": "DEDICATED_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_CREDENTIAL_CREATED",
+        "resource_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v10_ephemeral",
+        "provider_key_kind": "secret",
+        "logical_key_name": "impl_handoff_provider_adapter_positive_auth_v10_ephemeral",
+        "dedicated_scope": "development-provider-adapter-positive-auth-v10-only",
+    }
+
+    assert x["progress_digest"] == EXECUTION_PROGRESS == progress_digest(x)
+    assert x["record_version"] == 2
+    assert x["overall_state"] == "IN_PROGRESS"
+    first = x["step_states"][0]
+    assert (
+        first["authorization_state"],
+        first["execution_state"],
+        first["verification_state"],
+        first["authorization_consumed"],
+    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    assert first["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
+    assert all(
+        (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
+        for state in x["step_states"][1:]
+    )
 
     rendered = "\n".join(
         (B / (N + suffix)).read_text()
@@ -204,6 +243,8 @@ def main() -> int:
             ".plan.json",
             ".progress.json",
             ".approval.json",
+            "-step01-success.evidence.json",
+            ".execution-progress.json",
         )
     )
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
@@ -214,8 +255,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v10: PASS "
-        "(APPROVED / UNEXECUTED; v9 STOPPED + retirement COMPLETED bound; "
-        "sealed evidence helper bound; execution window not yet active)"
+        "(IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS; Step 2 pending; "
+        "credential material never retained)"
     )
     return 0
 

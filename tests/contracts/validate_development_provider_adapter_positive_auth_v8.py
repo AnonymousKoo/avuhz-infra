@@ -12,9 +12,11 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_engineering.authorization_plan import (
+    approval_digest,
     initial_progress,
     plan_digest,
     progress_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -34,6 +36,8 @@ GH = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_EPHEMERA
 CREATED = "2026-10-06T08:02:47Z"
 START = "2026-10-06T12:00:00Z"
 END = "2026-10-06T18:00:00Z"
+APPROVED = "2026-10-06T08:26:51Z"
+APPROVAL = "sha256:cbafe4d53befe00909c4cb0c086ce45b55f20dd7f299975e11a9a11ec2dbd770"
 
 RESOURCE = "sha256:bbd92e25a085a41c3484730a1346970179f68f064245de0ee55ba8b8ab2c3a9b"
 PREP = "sha256:d1c6cb704c67feb64875f5721e153a69f9d888424b5fe23a413d17af6fdcf1c9"
@@ -65,6 +69,7 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
     v6_x = load(V6 + ".execution-progress.json")
     v6_failure = load(V6 + "-step02-plan-integrity-failure.evidence.json")
     retire_x = load(V6_RETIRE + ".execution-progress.json")
@@ -76,6 +81,7 @@ def main() -> int:
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, START)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest({k: v for k, v in r.items() if k != "contract_digest"})
     assert prep["evidence_digest"] == PREP == canonical_digest({k: v for k, v in prep.items() if k != "evidence_digest"})
@@ -89,6 +95,15 @@ def main() -> int:
     assert p["environment"] == "DEVELOPMENT"
     assert p["authorization_window"] == {"binding_state": "BOUND", "starts_at": START, "expires_at": END}
     assert p["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+
+    assert a["approval_id"] == "5bc4e639-f6d3-4fc4-8c74-1f10247111db"
+    assert a["plan_id"] == p["plan_id"] and a["plan_version"] == 8
+    assert a["plan_digest"] == PLAN and a["owner_identity"] == p["owner_identity"]
+    assert a["decision"] == "APPROVE" and a["environment"] == "DEVELOPMENT"
+    assert a["effective_at"] == START and a["expires_at"] == END
+    assert a["approved_at"] == APPROVED and APPROVED < START
+    assert a["status"] == "ACTIVE" and a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["approval_digest"] == APPROVAL == approval_digest(a)
 
     assert r["project_reference"] == PROJECT and r["responsibility"] == "AUTH"
     assert r["fresh_provider_key_reference"] == KEY
@@ -151,10 +166,9 @@ def main() -> int:
 
     assert g["overall_state"] == "NOT_STARTED" and g["record_version"] == 1
     assert all((s["authorization_state"], s["execution_state"], s["verification_state"], s["authorization_consumed"]) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False) for s in g["step_states"])
-    assert not (B / (N + ".approval.json")).exists()
     assert not (B / (N + ".execution-progress.json")).exists()
 
-    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json"))
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json"))
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
     assert "gnuqaefotwgkwurjpyik" not in rendered
     assert "fresh v7 GitHub environment credential" not in rendered
@@ -162,7 +176,7 @@ def main() -> int:
     for forbidden in ("service_role", "Bearer eyJ"):
         assert forbidden not in rendered
 
-    print("DEVELOPMENT provider-adapter positive-auth v8: PASS (PREPARED / UNAPPROVED / UNEXECUTED; 8:00 AM ET start)")
+    print("DEVELOPMENT provider-adapter positive-auth v8: PASS (APPROVED / UNEXECUTED; 8:00 AM ET start)")
     return 0
 
 

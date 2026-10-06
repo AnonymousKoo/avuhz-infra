@@ -3,8 +3,8 @@
   "plan_id": "04b2fa4b-ed7b-488e-a230-9aba210ed68e",
   "plan_version": 2,
   "plan_digest": "sha256:87d7c13f5fd8ac19642375eb7d876ae690832633ae5a55eacb051cdf336fa10a",
-  "record_version": 3,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "COMPLETED",
   "step_states": [
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v2.step.01.verify-stopped-auth-admin-key-absent",
@@ -53,16 +53,63 @@
     },
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v2.step.02.verify-github-binding-absent",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.absence-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v2-step2-success.evidence.json",
+          "evidence_digest": "sha256:4d4e4f695b60e90c5c6e230a10004bade558e22c69aa4c9fe3d477518d50015a",
+          "recorded_at": "2026-10-06T14:36:00Z"
+        }
+      ],
+      "observed_postcondition": "A separate owner-interactive read-only GitHub environment inspection proves exactly the secret reference AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_EPHEMERAL is absent from repository AnonymousKoo/avuhz-infra environment development by name only. No secret value is requested or returned and no mutation occurs. This prospective v2 reconciliation does not retroactively make retirement v1 conforming.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8-key-retirement-v2.key-absence",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v2.step.01.verify-stopped-auth-admin-key-absent",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_digest": "sha256:4568bc1310f24c0e2db15dc9922b751bfff0565fd2c811e8477ca433aaa9046f",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:27d92e5c806c4cc58aee384a4f3451baf73e83162e5a08ccc440e623a6168aad",
+          "recorded_at": "2026-10-06T14:36:00Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8-key-retirement-v2.step2-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:262e8dcc5d1bc70fab1a1b81edd078aaedd4c0c997f67c785e398d36466ee62b",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:262e8dcc5d1bc70fab1a1b81edd078aaedd4c0c997f67c785e398d36466ee62b",
+          "recorded_at": "2026-10-06T14:36:00Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8-key-retirement-v2.github-binding-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.absence-verified",
+          "evidence_digest": "sha256:4d4e4f695b60e90c5c6e230a10004bade558e22c69aa4c9fe3d477518d50015a",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:08b04d8663eeb1e174a90c8c9b3c69ca28e138a75b7ce4b3ddf3ec8a80ec0a14",
+          "recorded_at": "2026-10-06T14:36:00Z"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-10-06T14:01:49Z",
-  "progress_digest": "sha256:ab8177660380aad1538a9aee377b03d07c6fa2a6de3d24caa33dc9352e6122ec"
+  "updated_at": "2026-10-06T14:36:00Z",
+  "progress_digest": "sha256:dda26efb46d17998b71072edfec3ce3490478b595e92e31ce58ee645b211bade"
 }

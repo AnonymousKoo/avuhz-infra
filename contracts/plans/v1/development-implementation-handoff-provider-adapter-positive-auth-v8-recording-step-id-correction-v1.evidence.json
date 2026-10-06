@@ -1,0 +1,39 @@
+{
+  "evidence_type": "authorization-plan.repository-recording-correction",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "plan_id": "4a7d18c6-2f71-4f7a-8c43-9e5d2b6f1a80",
+  "plan_version": 8,
+  "plan_digest": "sha256:9ec8b204229a31c526870aa6b96776ede5ec474c592c72f814ce9ad5ed6eaba8",
+  "correction_reference": "development-implementation-handoff-provider-adapter-positive-auth-v8-recording-step-id-correction-v1",
+  "classification": "REPOSITORY_STEP_ID_BINDING_CORRECTION_NO_PROVIDER_EFFECT",
+  "original_record": {
+    "step1_evidence_digest": "sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da",
+    "step2_evidence_digest": "sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1",
+    "execution_progress_digest": "sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a",
+    "defect": "STEP_ID_BINDING_MISMATCH"
+  },
+  "corrected_record": {
+    "step1_evidence_digest": "sha256:e2f4cc24eb5bbe974ee51d2086262af68314a29a136c5f630f949bbf6699c420",
+    "step2_evidence_digest": "sha256:eb2138a99751165302f01b9e063fdd883919c69c1df3f67db040c001879d9ae5",
+    "execution_progress_digest": "sha256:45c6d902458eee68f2f2782aaac82598d8cef7a2c022124691d3db4f08222b8d",
+    "step1_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v8.step.01.create-fresh-auth-admin-key",
+    "step2_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v8.step.02.bind-fresh-key-github-development"
+  },
+  "correction_scope": {
+    "repository_only": true,
+    "execution_outcomes_changed": false,
+    "execution_timestamp_changed": false,
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "github_secret_mutation_performed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "recorded_at": "2026-10-06T12:30:48Z",
+  "evidence_digest": "sha256:8ec18cfe0586881e072aa6157012c15fcc9be3cd80d359731e12f3f99e7d75a0"
+}

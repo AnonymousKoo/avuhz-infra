@@ -1,0 +1,65 @@
+{
+  "contract_version": "v1",
+  "environment": "DEVELOPMENT",
+  "provider": "github",
+  "responsibility": "AUTH",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "github_environment": "development",
+  "source_auth_project_reference": "pwlhruwutoitnieactol",
+  "resource_id": "ff3f4efd-b567-46b8-9467-f968b36e46b9",
+  "resource_version": "provider-adapter-positive-auth-v4-github-binding-absence-reconciliation.v1",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1",
+  "lineage": {
+    "canonical_main_at_preparation": "104f06d847507940fb8775da4970b5640235dbae",
+    "stopped_retirement_plan_id": "5d4f3b8a-1c69-4c18-b0f1-0c70b511f54e",
+    "stopped_retirement_plan_digest": "sha256:f1ba176e1b42cb6563c42ddc57db98cf5c5ccefd0deb6d436fe3bec24d72b590",
+    "stopped_retirement_step1_evidence_digest": "sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4",
+    "stopped_retirement_step2_failure_evidence_digest": "sha256:5b46a52a3881eb6afdb094825a012ccd2cc54d045ca80c29c1eb68ec9a1b77d2",
+    "stopped_retirement_execution_progress_digest": "sha256:fc38e77792c472d6e135a3e9310c4f78af988acba36748df45946b6f00c4d48b"
+  },
+  "target_secret_binding_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+  "reconciliation_interaction": {
+    "interaction_surface": "github.web.settings.environments.development.secrets",
+    "execution_actor": "OWNER_MANUAL_FIREFOX",
+    "repository": "AnonymousKoo/avuhz-infra",
+    "environment": "development",
+    "credential_class": "OWNER_INTERACTIVE_SESSION",
+    "operation": "independent-names-only-absence-read",
+    "exact_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+    "value_reads_authorized": false
+  },
+  "authorized_counts": {
+    "github_secret_absence_read": 1,
+    "github_environment_secret_delete": 0,
+    "github_environment_secret_create": 0,
+    "supabase_key_read": 0,
+    "supabase_key_delete": 0,
+    "credential_create": 0,
+    "session_issue": 0,
+    "token_issue": 0,
+    "implementation_handoff_execute": 0
+  },
+  "security_rules": {
+    "secret_value_agent_visible": false,
+    "credential_material_persistence_authorized": false,
+    "secret_value_read_authorized": false,
+    "pii_persistence_authorized": false,
+    "supabase_operation_authorized": false,
+    "data_project_authorized": false,
+    "render_mutation_authorized": false,
+    "n8n_operation_authorized": false,
+    "staging_authorized": false,
+    "production_authorized": false,
+    "github_secret_mutation_authorized": false
+  },
+  "execution_rules": {
+    "approval_must_precede_window_start": true,
+    "window_starts_at": "2026-10-06T04:15:00Z",
+    "window_expires_at": "2026-10-06T06:00:00Z",
+    "late_approval": "FORWARD_ONLY_WINDOW_REPLACEMENT_REQUIRED",
+    "read_only_names_only": true,
+    "provider_mutation_authorized": false,
+    "implementation_handoff_authorized": false
+  },
+  "contract_digest": "sha256:afc2833fb1cc19192cefb6f217cf1263e6ac08416c9fcc9e6d7b758166dad3aa"
+}

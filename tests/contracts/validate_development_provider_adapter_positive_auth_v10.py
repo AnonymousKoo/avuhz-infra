@@ -21,15 +21,15 @@ B = ROOT / "contracts/plans/v1"
 S = ROOT / "contracts/schemas/v1"
 N = "development-implementation-handoff-provider-adapter-positive-auth-v10"
 
-RESOURCE = "sha256:839467744764ea923de14c42c6565360cd45cc7aea3a27e4f15e8ce3ce8883d9"
-PREP = "sha256:cb8c72adb9ea56264f3ef327fcbb0da33595d73e3843750b5927d778952f7042"
-PLAN = "sha256:d4de0d34f516f39cb3154b677a4cb929113d4c5aab840c687a312759b8d55187"
-PROGRESS = "sha256:367b4969ffb4192d4d3fa562a20fc47f1201fe6bdd613c8f18c7c0ed1b53c85c"
+RESOURCE = "sha256:cf26ec78208c27b9f878a7446c50214d16e1a30568bf3385fb650a58e49022a8"
+PREP = "sha256:6564ac9afc3e24a4dd9d84883f8eaf64d9f3960933bfb2121a946e7f50d32931"
+PLAN = "sha256:909276b7d894f68d01c0fadd1b4f8e1f354c2914d6f2cd658926aa099e977414"
+PROGRESS = "sha256:4a5813efcacb2298e8b6aa35b0f9bd139f286df898fe4b6bbeff5582f7e553f4"
 EXECUTOR = "sha256:38aa2b6b57fddb3e6b9627c2686b4f7ab944ebbd2c5d3bc225434a78ecd21dba"
 WORKFLOW = "sha256:66a1439bba1f9a372d70566a8d6b2bec47f15b046f4d0739dd5b70b3200c1d4b"
 EVIDENCE_HELPER = "sha256:ceed8cb7681f0fc195c7bfff9cd4dd06dbaee728efbf29f52e61b982acd53d34"
 CREATED = "2026-10-06T20:10:00Z"
-START = "2026-10-06T20:20:00Z"
+START = "2026-10-06T20:45:00Z"
 END = "2026-10-06T23:00:00Z"
 
 V9_STOP = "sha256:3f14c612807b8b956e30bf972c46090356a697d916036ade41d2096716e17417"
@@ -138,7 +138,7 @@ def main() -> int:
     )
     assert v9_stop["overall_state"] == "STOPPED"
     assert v9_stop["progress_digest"] == V9_STOP == r["required_v9_stopped_progress_digest"]
-    assert evidence_digest(v9_failure) == V9_FAILURE
+    assert evidence_digest(v9_failure) == V9_FAILURE == r["required_v9_step5_authority_failure_evidence_digest"]
     assert v9_failure["safe_error_code"] == "AUTHORITY_INVALID"
     assert v9_failure["sanitized_result"]["provider_mutation_attempted"] is False
     assert v9_retirement["overall_state"] == "COMPLETED"
@@ -157,6 +157,7 @@ def main() -> int:
         required = {(e["evidence_type"], e["exact_digest"]) for e in p["steps"][idx]["required_evidence"]}
         assert ("auth.provider-adapter-positive-auth-v10.preparation.observed", PREP) in required
         assert ("authorization-plan.execution-progress", V9_STOP) in required
+        assert ("auth.provider-adapter-positive-auth.live-verified-logout-accepted", V9_FAILURE) in required
         assert ("authorization-plan.execution-progress", V9_RETIREMENT) in required
         assert ("auth.provider-adapter-positive-auth.admin-credential.absence-verified", V9_KEY_ABSENCE) in required
         assert ("auth.provider-adapter-positive-auth.github-binding.absence-verified", V9_GITHUB_ABSENCE) in required

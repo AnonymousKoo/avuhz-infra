@@ -28,7 +28,8 @@ PREP = "sha256:6564ac9afc3e24a4dd9d84883f8eaf64d9f3960933bfb2121a946e7f50d32931"
 PLAN = "sha256:909276b7d894f68d01c0fadd1b4f8e1f354c2914d6f2cd658926aa099e977414"
 PROGRESS = "sha256:4a5813efcacb2298e8b6aa35b0f9bd139f286df898fe4b6bbeff5582f7e553f4"
 STEP1_EVIDENCE = "sha256:c90ee6dae85bc880703dd00dcd0a5813f92e86fa015b4c26392764601983eac4"
-EXECUTION_PROGRESS = "sha256:9e0b88a42df4eca4682d7ad8bee8aff685475034aae51f5b97eb8752a2a8782f"
+STEP2_EVIDENCE = "sha256:deac6b75bcad238ff7c47a91b6207ce3d0dee636243f429c9a9f85bd07d965df"
+EXECUTION_PROGRESS = "sha256:dd1e950ba964a97609272d15a7faad64bcc9e98f8c474c0fe8ebb85d18f4111f"
 EXECUTOR = "sha256:38aa2b6b57fddb3e6b9627c2686b4f7ab944ebbd2c5d3bc225434a78ecd21dba"
 WORKFLOW = "sha256:66a1439bba1f9a372d70566a8d6b2bec47f15b046f4d0739dd5b70b3200c1d4b"
 EVIDENCE_HELPER = "sha256:ceed8cb7681f0fc195c7bfff9cd4dd06dbaee728efbf29f52e61b982acd53d34"
@@ -60,6 +61,7 @@ def main() -> int:
     g = load(N + ".progress.json")
     a = load(N + ".approval.json")
     step1_evidence = load(N + "-step01-success.evidence.json")
+    step2_evidence = load(N + "-step02-success.evidence.json")
     x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
@@ -214,17 +216,35 @@ def main() -> int:
         "dedicated_scope": "development-provider-adapter-positive-auth-v10-only",
     }
 
+    assert evidence_digest(step2_evidence) == STEP2_EVIDENCE
+    assert step2_evidence["plan_id"] == p["plan_id"]
+    assert step2_evidence["approval_id"] == a["approval_id"]
+    assert step2_evidence["repository"] == "AnonymousKoo/avuhz-infra"
+    assert step2_evidence["environment_reference"] == "development"
+    assert step2_evidence["credential_material_retained"] is False
+    assert step2_evidence["sanitized_result"] == {
+        "classification": "PROVIDER_ADAPTER_POSITIVE_AUTH_V10_GITHUB_BINDING_CREATED",
+        "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL",
+        "repository": "AnonymousKoo/avuhz-infra",
+        "environment": "development",
+        "secret_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL",
+        "binding_created": True,
+        "source_credential_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v10_ephemeral",
+    }
+
     assert x["progress_digest"] == EXECUTION_PROGRESS == progress_digest(x)
-    assert x["record_version"] == 2
+    assert x["record_version"] == 3
     assert x["overall_state"] == "IN_PROGRESS"
-    first = x["step_states"][0]
-    assert (
-        first["authorization_state"],
-        first["execution_state"],
-        first["verification_state"],
-        first["authorization_consumed"],
-    ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    first, second = x["step_states"][:2]
+    for state in (first, second):
+        assert (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
     assert first["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
+    assert second["evidence"][0]["evidence_digest"] == STEP2_EVIDENCE
     assert all(
         (
             state["authorization_state"],
@@ -232,7 +252,7 @@ def main() -> int:
             state["verification_state"],
             state["authorization_consumed"],
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
-        for state in x["step_states"][1:]
+        for state in x["step_states"][2:]
     )
 
     rendered = "\n".join(
@@ -244,6 +264,7 @@ def main() -> int:
             ".progress.json",
             ".approval.json",
             "-step01-success.evidence.json",
+            "-step02-success.evidence.json",
             ".execution-progress.json",
         )
     )
@@ -255,7 +276,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v10: PASS "
-        "(IN_PROGRESS; Step 1 CONSUMED/SUCCEEDED/PASS; Step 2 pending; "
+        "(IN_PROGRESS; Steps 1-2 CONSUMED/SUCCEEDED/PASS; Step 3 pending; "
         "credential material never retained)"
     )
     return 0

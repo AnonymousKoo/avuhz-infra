@@ -3,7 +3,7 @@
   "plan_id": "c6a4f231-8d5e-4b79-a210-7e3c9d6f5a42",
   "plan_version": 10,
   "plan_digest": "sha256:909276b7d894f68d01c0fadd1b4f8e1f354c2914d6f2cd658926aa099e977414",
-  "record_version": 2,
+  "record_version": 3,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -40,14 +40,48 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.02.bind-fresh-key-github-development",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v10-step02-success.evidence.json",
+          "evidence_digest": "sha256:deac6b75bcad238ff7c47a91b6207ce3d0dee636243f429c9a9f85bd07d965df",
+          "recorded_at": "2026-10-06T21:08:18Z"
+        }
+      ],
+      "observed_postcondition": "Using only an owner-interactive GitHub operation, bind the fresh key from Step 1 to environment development as AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL. The value must transfer directly from owner to GitHub and never enter agent context, logs, evidence, digests, prompts, or files. No other secret or provider resource changes.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v10.fresh-key-created",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.01.create-fresh-auth-admin-key",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "evidence_digest": "sha256:c90ee6dae85bc880703dd00dcd0a5813f92e86fa015b4c26392764601983eac4",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:7e83c8995371536fb93978504dfa6a3b7ac1c83d13fce6170a1a2003d0cf937c",
+          "recorded_at": "2026-10-06T20:54:35Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v10.github-binding-created",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "evidence_digest": "sha256:deac6b75bcad238ff7c47a91b6207ce3d0dee636243f429c9a9f85bd07d965df",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:ecd6ece2a69816adeed38d2ccda61f5652f9f1e60f96525d956901981e6e5667",
+          "recorded_at": "2026-10-06T21:08:18Z"
+        }
+      ]
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.03.verify-github-binding-presence",
@@ -138,6 +172,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-06T20:54:35Z",
-  "progress_digest": "sha256:9e0b88a42df4eca4682d7ad8bee8aff685475034aae51f5b97eb8752a2a8782f"
+  "updated_at": "2026-10-06T21:08:18Z",
+  "progress_digest": "sha256:dd1e950ba964a97609272d15a7faad64bcc9e98f8c474c0fe8ebb85d18f4111f"
 }

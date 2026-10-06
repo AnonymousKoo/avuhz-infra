@@ -171,6 +171,8 @@ def _validate_boundary(plan: dict[str, Any], resource: dict[str, Any], progress:
         or resource.get("github_secret_binding_name") != ADMIN_ENV
         or resource.get("step5_executor_digest") != prior._raw_digest(Path(__file__))
         or resource.get("step5_workflow_digest") != prior._raw_digest(WORKFLOW_PATH)
+        or resource.get("evidence_digest_source_digest")
+        != prior._raw_digest(ROOT / "src/avuhz_engineering/evidence_digest.py")
         or resource.get("failure_diagnostics_source_digest")
         != prior._raw_digest(ROOT / "src/avuhz_engineering/safe_auth_failure_diagnostics.py")
         or resource.get("retry_authorized") is not False
@@ -335,6 +337,9 @@ def _capability_assertion(moment: str, resource: dict[str, Any]) -> dict[str, An
         "publishable_binding_name": PUBLISHABLE_ENV,
         "executor_source_digest": prior._raw_digest(Path(__file__)),
         "workflow_source_digest": prior._raw_digest(WORKFLOW_PATH),
+        "evidence_digest_source_digest": prior._raw_digest(
+            ROOT / "src/avuhz_engineering/evidence_digest.py"
+        ),
         "failure_diagnostics_source_digest": prior._raw_digest(
             ROOT / "src/avuhz_engineering/safe_auth_failure_diagnostics.py"
         ),

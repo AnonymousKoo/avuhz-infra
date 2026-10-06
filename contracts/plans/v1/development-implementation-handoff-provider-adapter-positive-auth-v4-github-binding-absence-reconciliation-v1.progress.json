@@ -1,0 +1,23 @@
+{
+  "progress_id": "ffde8dcb-4369-4d1d-9323-a88a03016ae6",
+  "plan_id": "aa947bad-a7be-4460-bbb5-dbfa4f8a7250",
+  "plan_version": 1,
+  "plan_digest": "sha256:3623489701b2af869a2c82e20eb9e1a2dd90814df7a5b714ca8e287b26ee68df",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.step.01.verify-github-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T03:45:28Z",
+  "progress_digest": "sha256:6c826ae60f80a84b4095136ca10d5dd62ca95210fa3993fc96e4ceb7e55130bc"
+}

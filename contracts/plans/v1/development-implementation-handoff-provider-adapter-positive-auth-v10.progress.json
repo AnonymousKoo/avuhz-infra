@@ -1,0 +1,122 @@
+{
+  "progress_id": "4d7b1e26-9c35-4f8a-b160-2e5d7c9a3f41",
+  "plan_id": "c6a4f231-8d5e-4b79-a210-7e3c9d6f5a42",
+  "plan_version": 10,
+  "plan_digest": "sha256:4a712c31441c791208fb536e130af4e3367159d4ad5e3cdc003d6ce1204642b2",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.01.create-fresh-auth-admin-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.02.bind-fresh-key-github-development",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.03.verify-github-binding-presence",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.04.verify-fresh-auth-preflight",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.05.authenticate-live-and-logout-global",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.06.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.07.retire-fresh-auth-admin-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.08.retire-github-secret-binding",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.09.verify-fresh-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.10.verify-github-secret-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T20:10:00Z",
+  "progress_digest": "sha256:abb893418d62a95d4b224c8741419cdacd1d7bd941594fb0c4014a673cc552d7"
+}

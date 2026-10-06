@@ -175,6 +175,24 @@ def main() -> int:
         "values_stored": False,
     }
 
+    assert late["evidence_digest"] == LATE_REJECTION == canonical_digest(
+        {k: v for k, v in late.items() if k != "evidence_digest"}
+    )
+    assert late["candidate_plan_id"] == p["plan_id"]
+    assert late["candidate_plan_version"] == 7
+    assert late["candidate_plan_digest"] == PLAN
+    assert late["approval_instruction_received"] is True
+    assert late["approval_artifact_created"] is False
+    assert late["approval_canonicalized"] is False
+    assert late["candidate_effective_at"] == START
+    assert late["candidate_expires_at"] == END
+    assert late["approval_observed_at"] == LATE_OBSERVED
+    assert LATE_OBSERVED > START
+    assert late["outcome"] == "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE"
+    assert late["safe_error_code"] == "PLAN_AUTHORIZATION_EXPIRED"
+    assert all(v is False for v in late["provider_effects"].values())
+    assert late["continuation_rule"] == "CREATE_FRESH_FORWARD_ONLY_POSITIVE_AUTH_V8"
+
     assert g["overall_state"] == "NOT_STARTED"
     assert g["record_version"] == 1
     assert all(

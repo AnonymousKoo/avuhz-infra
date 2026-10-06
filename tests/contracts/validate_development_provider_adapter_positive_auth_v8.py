@@ -55,9 +55,10 @@ V4_RECON_PROGRESS = "sha256:57365c1791a9548568bb19515f70270e80b4ff1e4f3fa26f4560
 V4_RECON_EVIDENCE = "sha256:1c0b6abf5a3e49ffd9dec1b2573918f4e7046ae7dd0144e6d31645d09bcf2773"
 V7_LATE = "sha256:5ea9bd9fade9a6b5674f190bc133a7aa70233e06c50193e7125f26303d8eca5b"
 RECORDED = "2026-10-06T12:15:58Z"
-STEP1 = "sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da"
-STEP2_FAILURE = "sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1"
-STOPPED = "sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a"
+STEP1 = "sha256:e2f4cc24eb5bbe974ee51d2086262af68314a29a136c5f630f949bbf6699c420"
+STEP2_FAILURE = "sha256:eb2138a99751165302f01b9e063fdd883919c69c1df3f67db040c001879d9ae5"
+STOPPED = "sha256:45c6d902458eee68f2f2782aaac82598d8cef7a2c022124691d3db4f08222b8d"
+CORRECTION = "sha256:8ec18cfe0586881e072aa6157012c15fcc9be3cd80d359731e12f3f99e7d75a0"
 
 
 def load(name: str) -> dict:
@@ -85,6 +86,7 @@ def main() -> int:
     e1 = load(N + "-step01-success.evidence.json")
     e2 = load(N + "-step02-plan-integrity-failure.evidence.json")
     x = load(N + ".execution-progress.json")
+    correction = load(N + "-recording-step-id-correction-v1.evidence.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
@@ -175,12 +177,25 @@ def main() -> int:
     assert g["overall_state"] == "NOT_STARTED" and g["record_version"] == 1
     assert all((s["authorization_state"], s["execution_state"], s["verification_state"], s["authorization_consumed"]) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False) for s in g["step_states"])
 
+    assert correction["evidence_digest"] == CORRECTION == canonical_digest(
+        {k: v for k, v in correction.items() if k != "evidence_digest"}
+    )
+    assert correction["classification"] == "REPOSITORY_STEP_ID_BINDING_CORRECTION_NO_PROVIDER_EFFECT"
+    assert correction["original_record"]["defect"] == "STEP_ID_BINDING_MISMATCH"
+    assert correction["corrected_record"]["step1_evidence_digest"] == STEP1
+    assert correction["corrected_record"]["step2_evidence_digest"] == STEP2_FAILURE
+    assert correction["corrected_record"]["execution_progress_digest"] == STOPPED
+    assert all(v is False for k, v in correction["correction_scope"].items() if k != "repository_only")
+    assert correction["correction_scope"]["repository_only"] is True
+
     assert canonical_digest(e1) == STEP1
+    assert e1["step_id"] == p["ordered_step_ids"][0]
     assert e1["outcome"] == "SUCCEEDED_VERIFIED"
     assert e1["classification"] == "DEDICATED_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_CREDENTIAL_CREATED"
     assert e1["owner_confirmed_created"] is True
     assert e1["credential_material_retained"] is False
     assert canonical_digest(e2) == STEP2_FAILURE
+    assert e2["step_id"] == p["ordered_step_ids"][1]
     assert e2["outcome"] == "FAILED_PREEXECUTION_PLAN_INTEGRITY"
     assert e2["safe_error_code"] == "PLAN_STATE_INVALID"
     assert e2["sanitized_result"]["binding_created"] is False
@@ -191,6 +206,7 @@ def main() -> int:
     ]
 
     assert x["progress_digest"] == STOPPED == progress_digest(x)
+    assert [s["step_id"] for s in x["step_states"]] == p["ordered_step_ids"]
     assert x["overall_state"] == "STOPPED" and x["record_version"] == 5
     assert x["updated_at"] == RECORDED
     assert (x["step_states"][0]["authorization_state"], x["step_states"][0]["execution_state"], x["step_states"][0]["verification_state"], x["step_states"][0]["authorization_consumed"]) == ("CONSUMED", "SUCCEEDED", "PASS", True)
@@ -198,7 +214,7 @@ def main() -> int:
     assert x["step_states"][1]["safe_error_code"] == "PLAN_STATE_INVALID"
     assert all((s["authorization_state"], s["execution_state"], s["verification_state"], s["authorization_consumed"]) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False) for s in x["step_states"][2:])
 
-    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json", "-step01-success.evidence.json", "-step02-plan-integrity-failure.evidence.json", ".execution-progress.json"))
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json", "-preparation.evidence.json", ".plan.json", ".progress.json", ".approval.json", "-step01-success.evidence.json", "-step02-plan-integrity-failure.evidence.json", ".execution-progress.json", "-recording-step-id-correction-v1.evidence.json"))
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
     assert "gnuqaefotwgkwurjpyik" not in rendered
     for forbidden in ("service_role", "Bearer eyJ"):

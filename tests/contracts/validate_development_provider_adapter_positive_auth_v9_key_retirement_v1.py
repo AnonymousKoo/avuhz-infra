@@ -6,9 +6,11 @@ import re
 from pathlib import Path
 
 from avuhz_engineering.authorization_plan import (
+    approval_digest,
     initial_progress,
     plan_digest,
     progress_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -26,6 +28,8 @@ PROGRESS = "sha256:54ab97062d88405a34ed1b17482a6ac511113a1886a2d50767655a373fc23
 CREATED = "2026-10-06T18:02:00Z"
 START = "2026-10-06T18:15:00Z"
 END = "2026-10-06T23:00:00Z"
+APPROVED = "2026-10-06T18:07:15Z"
+APPROVAL = "sha256:43672c0a6a2ea21837716413d961c18d6535e303ad7125611c7216a9c3a7b996"
 V9_STOP = "sha256:3f14c612807b8b956e30bf972c46090356a697d916036ade41d2096716e17417"
 V9_STEP1 = "sha256:e794f45457172d917f6dded302231edeb7369253d54d1a51aa7f503eb7c84f10"
 V9_STEP2 = "sha256:9576eddf1b2a55598cdfd4052126d592b21be652ceba4b2488641d046f600e7a"
@@ -45,9 +49,11 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, START)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest(
         {k: v for k, v in r.items() if k != "contract_digest"}
@@ -68,6 +74,21 @@ def main() -> int:
     }
     assert p["target"]["project_reference"] == "pwlhruwutoitnieactol"
     assert p["target"]["responsibility"] == "AUTH"
+
+    assert a["approval_id"] == "6c9a2e41-7d53-4f8b-a261-9e3c5d7b1f40"
+    assert a["plan_id"] == p["plan_id"]
+    assert a["plan_version"] == 1
+    assert a["plan_digest"] == p["plan_digest"]
+    assert a["owner_identity"] == p["owner_identity"]
+    assert a["decision"] == "APPROVE"
+    assert a["environment"] == "DEVELOPMENT"
+    assert a["approved_at"] == APPROVED
+    assert APPROVED < START
+    assert a["effective_at"] == START
+    assert a["expires_at"] == END
+    assert a["status"] == "ACTIVE"
+    assert a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["approval_digest"] == APPROVAL == approval_digest(a)
 
     assert prep["canonical_main_at_preparation"] == "ad2732012ec4e23ffc918eeeece69cdd0db01a84"
     assert prep["resource_contract_digest"] == RESOURCE
@@ -140,7 +161,6 @@ def main() -> int:
 
     assert g["overall_state"] == "NOT_STARTED"
     assert g["record_version"] == 1
-    assert not (B / (N + ".approval.json")).exists()
     assert not (B / (N + ".execution-progress.json")).exists()
 
     rendered = "\n".join(
@@ -150,6 +170,7 @@ def main() -> int:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            ".approval.json",
         )
     )
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
@@ -159,7 +180,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v9 key retirement v1: PASS "
-        "(READY_FOR_APPROVAL / UNEXECUTED; four-step exact cleanup; no auth retry)"
+        "(APPROVED / UNEXECUTED; four-step exact cleanup; no auth retry)"
     )
     return 0
 

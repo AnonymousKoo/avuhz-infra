@@ -10,7 +10,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/'src'))
 
-from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, authorize_step, initial_progress, plan_digest, progress_digest, record_step_outcome, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B=ROOT/'contracts/plans/v1'
@@ -29,6 +29,11 @@ START='2026-10-06T04:15:00Z'
 END='2026-10-06T06:00:00Z'
 APPROVED='2026-10-06T03:53:35Z'
 APPROVAL='sha256:d9a2f072a0513e62bc5bc45cecb387effaa0d64c125ea05d0a3d092177d6b823'
+RECORDED='2026-10-06T04:22:51Z'
+AUTH_OBS='sha256:44db0a2e89b335c72fdb4b383c423e189a588b142d303afb21a2e97e317e4376'
+RESULT='sha256:027fdc476ca7df7e60727a07da5b9cc3395c9c1ca7bdd58a31928b2048f303ff'
+SUCCESS='sha256:1c0b6abf5a3e49ffd9dec1b2573918f4e7046ae7dd0144e6d31645d09bcf2773'
+COMPLETED='sha256:57365c1791a9548568bb19515f70270e80b4ff1e4f3fa26f4560ebb6a3a572e9'
 
 def load(name):
     return json.loads((B/name).read_text())
@@ -42,10 +47,14 @@ def main():
     p=load(N+'.plan.json')
     g=load(N+'.progress.json')
     a=load(N+'.approval.json')
+    success=load(N+'-step1-success.evidence.json')
+    x=load(N+'.execution-progress.json')
 
     validate_plan(p,S)
     validate_progress(p,g,S)
     validate_approval(p,a,S,START)
+    validate_approval(p,a,S,RECORDED)
+    validate_progress(p,x,S)
 
     assert canonical_digest(e1)==PREDECESSOR_STEP1
     assert e1['sanitized_result']['absence_reported_by_owner'] is True
@@ -123,15 +132,138 @@ def main():
     assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
     assert a['approval_digest']==APPROVAL==approval_digest(a)
     assert APPROVED < START
-    assert not (B/(N+'.execution-progress.json')).exists()
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
+    auth_obs={
+        'interaction_surface':'github.web.settings.environments.development.secrets',
+        'execution_actor':'OWNER_MANUAL_FIREFOX',
+        'repository':'AnonymousKoo/avuhz-infra',
+        'environment':'development',
+        'responsibility':'AUTH',
+        'approval_exact':True,
+        'authorization_window_active':True,
+        'credential_class':'OWNER_INTERACTIVE_SESSION',
+        'secret_value_requested':False,
+        'secret_value_observed':False,
+        'provider_mutation_attempted':False,
+    }
+    result={
+        'repository':'AnonymousKoo/avuhz-infra',
+        'environment':'development',
+        'secret_name':'AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL',
+        'exact_secret_reference_count':0,
+        'absent':True,
+        'secret_value_requested':False,
+        'secret_value_observed':False,
+        'provider_mutation_performed':False,
+    }
+    assert canonical_digest(auth_obs)==AUTH_OBS
+    assert canonical_digest(result)==RESULT
+    assert canonical_digest(success)==SUCCESS
+    assert success['outcome']=='SUCCEEDED_VERIFIED'
+    assert success['classification']=='EXACT_V4_GITHUB_BINDING_ABSENCE_OWNER_VERIFIED'
+    assert success['authorization_observation']==auth_obs
+    assert success['authorization_observation_digest']==AUTH_OBS
+    assert success['sanitized_result']==result
+    assert success['result_digest']==RESULT
+    assert success['execution_observation']=={
+        'execution_class':'PROVIDER_READ',
+        'execution_timestamp_retained':False,
+        'recorded_at_is_execution_timestamp':False,
+        'approved_absence_read_attempts':1,
+        'secret_value_requested':False,
+        'secret_value_read':False,
+        'provider_mutation_attempted':False,
+        'retry_occurred':False,
+    }
+    assert success['verification_observation']=={
+        'exact_reference_absent':True,
+        'name_only':True,
+        'postcondition_verified':True,
+    }
+    assert all(v is False for v in success['security_state'].values())
+    assert success['record_basis']=='OWNER_CONFIRMED_NAMES_ONLY_ABSENCE_INSPECTION'
+    assert success['recorded_at']==RECORDED
+
+    preflight={
+        'binding_id':N+'.github-read-session',
+        'phase':'RESOLVED_BY_STEP_PREFLIGHT',
+        'value_class':'CONFIGURATION_REFERENCE',
+        'source_step_id':None,
+        'evidence_type':'provider.owner-interactive-session.observed',
+        'evidence_digest':AUTH_OBS,
+        'digest_policy':'REQUIRED',
+        'persistence_policy':'DIGEST_ONLY',
+        'sanitized_value':None,
+        'value_digest':AUTH_OBS,
+        'recorded_at':RECORDED,
+    }
+    request={
+        'plan_id':p['plan_id'],
+        'plan_version':p['plan_version'],
+        'plan_digest':p['plan_digest'],
+        'environment':p['environment'],
+        'provider_reference':p['target']['provider_reference'],
+        'project_reference':p['target']['project_reference'],
+        'responsibility':p['target']['responsibility'],
+        'issuer_reference':p['target']['issuer_reference'],
+        'audience_reference':p['target']['audience_reference'],
+        'step_id':step['step_id'],
+        'resource_reference':step['resource']['resource_reference'],
+        'resource_version':step['resource']['exact_version'],
+        'resource_digest':step['resource']['exact_digest'],
+        'operation':step['operation'],
+        'execution_class':step['execution_class'],
+        'credential_class':'OWNER_INTERACTIVE_SESSION',
+        'required_evidence':[
+            {'evidence_type':e['evidence_type'],'evidence_digest':e['exact_digest']}
+            for e in step['required_evidence']
+        ],
+        'prior_evidence_digests':[],
+        'unexpected_remote_state':False,
+        'extra_privileges':False,
+        'unauthorized_migration_surface':False,
+        'scope_expansion':False,
+    }
+    authorized=authorize_step(p,a,g,request,S,RECORDED,trusted_preflight_assertions=[preflight])
+    outcome_evidence=[{
+        'evidence_type':'auth.provider-adapter-positive-auth.github-binding.absence-verified',
+        'evidence_reference':N+'-step1-success.evidence.json',
+        'evidence_digest':SUCCESS,
+        'recorded_at':RECORDED,
+    }]
+    produced={
+        'binding_id':N+'.github-binding-absence',
+        'phase':'PRODUCED_BY_CURRENT_STEP',
+        'value_class':'CONTENT_DIGEST',
+        'source_step_id':None,
+        'evidence_type':'auth.provider-adapter-positive-auth.github-binding.absence-verified',
+        'evidence_digest':SUCCESS,
+        'digest_policy':'REQUIRED',
+        'persistence_policy':'DIGEST_ONLY',
+        'sanitized_value':None,
+        'value_digest':RESULT,
+        'recorded_at':RECORDED,
+    }
+    expected=record_step_outcome(
+        p,a,authorized,step['step_id'],'SUCCEEDED','PASS',outcome_evidence,
+        step['expected_postcondition'],None,S,RECORDED,binding_assertions=[produced],
+    )
+    assert x==expected
+    assert x['progress_digest']==COMPLETED==progress_digest(x)
+    assert x['overall_state']=='COMPLETED' and x['record_version']==3
+    state=x['step_states'][0]
+    assert (state['authorization_state'],state['execution_state'],state['verification_state'],state['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
+    assert state['safe_error_code'] is None
+    assert state['evidence']==outcome_evidence
+    assert state['binding_assertions']==[preflight,produced]
+
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','.execution-progress.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
     for forbidden in ('service_role','Bearer eyJ'):
         assert forbidden not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding absence reconciliation v1: PASS (APPROVED / UNEXECUTED; read-only names-only GitHub absence verification only)')
+    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding absence reconciliation v1: PASS (COMPLETED; exact GitHub development secret reference absent by name only)')
 
 if __name__=='__main__':
     main()

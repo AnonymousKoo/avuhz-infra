@@ -35,6 +35,10 @@ APPROVAL='sha256:fcdd5aec1c03ed18b98bf6c9b5dc7cd58c21968d8cdde5d35a243281a50c8d9
 STEP1='sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4'
 EXECUTION_STEP1='sha256:353cba4358b464a418ca642e76f3c40781ab461b1b18e47998a69593f92f58ae'
 STEP1_RECORDED='2026-10-06T03:30:27Z'
+STEP2_FAILURE='sha256:5b46a52a3881eb6afdb094825a012ccd2cc54d045ca80c29c1eb68ec9a1b77d2'
+EXECUTION_STEP2_STOP='sha256:fc38e77792c472d6e135a3e9310c4f78af988acba36748df45946b6f00c4d48b'
+STEP2_RECORDED='2026-10-06T03:37:56Z'
+STEP2_STOP='STOP_REQUIRES_FORWARD_ONLY_GITHUB_BINDING_ABSENCE_RECONCILIATION'
 
 def load(name):
     return json.loads((B/name).read_text())
@@ -47,6 +51,7 @@ def main():
     g=load(N+'.progress.json')
     a=load(N+'.approval.json')
     e1=load(N+'-step1-success.evidence.json')
+    e2=load(N+'-step2-failure.evidence.json')
     x=load(N+'.execution-progress.json')
     old_key=load('development-implementation-handoff-provider-adapter-positive-auth-v4-stale-credential-retirement-v2-step2-success.evidence.json')
     old_gh=load('development-implementation-handoff-provider-adapter-positive-auth-v4-stale-credential-retirement-v2-step4-success.evidence.json')
@@ -175,12 +180,41 @@ def main():
     assert e1['record_basis']=='OWNER_CONFIRMED_SEPARATE_NAMES_ONLY_ABSENCE_INSPECTION'
     assert e1['recorded_at']==STEP1_RECORDED
 
+    assert canonical_digest(e2)==STEP2_FAILURE
+    assert e2['evidence_type']=='auth.provider-adapter-positive-auth.github-binding.retired'
+    assert e2['plan_id']==p['plan_id'] and e2['plan_version']==1 and e2['plan_digest']==p['plan_digest']
+    assert e2['approval_id']==a['approval_id'] and e2['approval_digest']==a['approval_digest']
+    assert e2['step_id']==p['ordered_step_ids'][1] and e2['attempt']==1
+    assert e2['outcome']=='FAILED_NONCONFORMING_RETRY'
+    assert e2['safe_error_code']==STEP2_STOP and e2['classification']==STEP2_STOP
+    assert e2['authorization_observation']['approval_exact'] is True
+    assert e2['authorization_observation']['authorization_window_active'] is True
+    assert e2['authorization_observation']['secret_value_requested'] is False
+    assert e2['authorization_observation']['secret_value_observed'] is False
+    assert e2['authorization_observation']['initial_delete_attempt_failed'] is True
+    assert e2['authorization_observation']['retry_occurred'] is True
+    assert e2['sanitized_runtime_outcome']['initial_delete_result']=='FAILED_UI_REPORTED'
+    assert e2['sanitized_runtime_outcome']['retry_occurred'] is True
+    assert e2['sanitized_runtime_outcome']['later_absence_reported_by_owner'] is True
+    assert e2['sanitized_runtime_outcome']['fresh_reconciliation_required'] is True
+    assert e2['authority_state']['authorization_consumed'] is True
+    assert e2['authority_state']['retry_authorized'] is False
+    assert e2['authority_state']['step3_authorized'] is False
+    assert e2['execution_observation']['authorized_initial_delete_attempts']==1
+    assert e2['execution_observation']['observed_ui_delete_submission_count']==2
+    assert e2['execution_observation']['retry_occurred'] is True
+    assert all(v is False for v in e2['security_state'].values())
+    assert e2['record_basis']=='OWNER_REPORTED_UI_DELETE_FAILURE_AND_LATER_NAMES_ONLY_ABSENCE'
+    assert e2['recorded_at']==STEP2_RECORDED
+
     assert x['progress_id']==g['progress_id']
     assert x['plan_id']==p['plan_id'] and x['plan_version']==1 and x['plan_digest']==p['plan_digest']
-    assert x['record_version']==3 and x['overall_state']=='IN_PROGRESS'
-    assert x['updated_at']==STEP1_RECORDED
-    assert x['progress_digest']==EXECUTION_STEP1==progress_digest(x)
+    assert x['record_version']==5 and x['overall_state']=='STOPPED'
+    assert x['updated_at']==STEP2_RECORDED
+    assert x['progress_digest']==EXECUTION_STEP2_STOP==progress_digest(x)
     s1=x['step_states'][0]
+    s2=x['step_states'][1]
+    s3=x['step_states'][2]
     assert (s1['authorization_state'],s1['execution_state'],s1['verification_state'],s1['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
     assert s1['observed_postcondition']==p['steps'][0]['expected_postcondition'] and s1['safe_error_code'] is None
     assert s1['evidence']==[{
@@ -190,19 +224,30 @@ def main():
         'recorded_at':STEP1_RECORDED,
     }]
     assert len(s1['binding_assertions'])==2
-    assert all((s['authorization_state'],s['execution_state'],s['verification_state'],s['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False) for s in x['step_states'][1:])
-    assert all(s['evidence']==[] and s['binding_assertions']==[] and s['observed_postcondition'] is None and s['safe_error_code'] is None for s in x['step_states'][1:])
+    assert (s2['authorization_state'],s2['execution_state'],s2['verification_state'],s2['authorization_consumed'])==('CONSUMED','FAILED','FAIL',True)
+    assert s2['safe_error_code']==STEP2_STOP
+    assert s2['evidence']==[{
+        'evidence_type':'auth.provider-adapter-positive-auth.github-binding.retired',
+        'evidence_reference':N+'-step2-failure.evidence.json',
+        'evidence_digest':STEP2_FAILURE,
+        'recorded_at':STEP2_RECORDED,
+    }]
+    assert len(s2['binding_assertions'])==2
+    derived=[b for b in s2['binding_assertions'] if b['phase']=='DERIVED_FROM_SOURCE_STEP']
+    assert len(derived)==1 and derived[0]['source_step_id']==p['ordered_step_ids'][0] and derived[0]['evidence_digest']==STEP1
+    assert (s3['authorization_state'],s3['execution_state'],s3['verification_state'],s3['authorization_consumed'])==('BLOCKED','NOT_STARTED','NOT_STARTED',False)
+    assert s3['evidence']==[] and s3['binding_assertions']==[] and s3['observed_postcondition'] is None and s3['safe_error_code'] is None
     assert not (B/(N+'-step2-success.evidence.json')).exists()
     assert not (B/(N+'-step3-success.evidence.json')).exists()
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','.execution-progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','-step2-failure.evidence.json','.execution-progress.json'))
     rendered+='\n'+(B/'development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-observation.evidence.json').read_text()
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
     for forbidden in ('service_role','Bearer eyJ'):
         assert forbidden not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding drift retirement v1: PASS (Step 1 CONSUMED / SUCCEEDED / PASS; Steps 2-3 pending repository recording)')
+    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding drift retirement v1: PASS (STOPPED; Step 1 PASS; Step 2 consumed/failed after nonconforming retry; Step 3 blocked; fresh read-only reconciliation required)')
 
 if __name__=='__main__':
     main()

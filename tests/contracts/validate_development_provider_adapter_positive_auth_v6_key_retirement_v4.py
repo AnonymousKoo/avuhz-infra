@@ -29,6 +29,9 @@ APPROVAL='sha256:41bd085fab6bb06980fbfc0f5aacc772a92b505b762aa11c66b620b4c913d4b
 STEP1='sha256:9c59ea56aa247f9d576280a4cc050e4d9db972bffae247c7b3d6e243527b57a2'
 EXECUTION='sha256:cd7b82bb271e8e93bd9b434704a45caac9f700a8ee450c757dfdcc629a3a58b0'
 STEP1_RECORDED='2026-10-06T01:09:42Z'
+STEP2='sha256:96e9371c01dcf15e061823c35df159d4627f79b06884af3c4edf6c48d08e2770'
+EXECUTION_STEP2='sha256:e4dbe07a5a38957e5125a8257a9a1bd73bad646eb7d6e7d0e34bd02fb9dbd0cc'
+STEP2_RECORDED='2026-10-06T01:19:46Z'
 
 def load(name): return json.loads((B/name).read_text())
 
@@ -39,6 +42,7 @@ def main():
     g=load(N+'.progress.json')
     a=load(N+'.approval.json')
     e1=load(N+'-step1-success.evidence.json')
+    e2=load(N+'-step2-success.evidence.json')
     x=load(N+'.execution-progress.json')
     late=load(V1+'-late-window-rejection.evidence.json')
     reject2=load(V2+'-binding-integrity-rejection.evidence.json')
@@ -140,12 +144,41 @@ def main():
     assert e1['independent_absence_verification_required'] is True
     assert e1['recorded_at']==STEP1_RECORDED
 
+    assert canonical_digest(e2)==STEP2
+    assert e2['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.absence-verified'
+    assert e2['plan_id']==p['plan_id'] and e2['plan_version']==4 and e2['plan_digest']==p['plan_digest']
+    assert e2['approval_id']==a['approval_id'] and e2['approval_digest']==a['approval_digest']
+    assert e2['step_id']==p['ordered_step_ids'][1] and e2['attempt']==1
+    assert e2['outcome']=='SUCCEEDED_VERIFIED'
+    assert e2['classification']=='EXACT_V6_EPHEMERAL_AUTH_KEY_ABSENCE_REPORTED_BY_OWNER'
+    assert e2['authorization_observation']['project_reference']=='pwlhruwutoitnieactol'
+    assert e2['authorization_observation']['approval_exact'] is True
+    assert e2['authorization_observation']['authorization_window_active'] is True
+    assert e2['authorization_observation']['credential_material_observed'] is False
+    assert e2['authorization_observation']['provider_mutation_attempted'] is False
+    assert e2['sanitized_result']=={
+        'key_name':'impl_handoff_provider_adapter_positive_auth_v6_ephemeral',
+        'absence_reported_by_owner':True,
+        'credential_material_observed':False,
+        'other_key_inspected':False,
+        'provider_mutation_performed':False,
+    }
+    assert e2['execution_observation']['credential_value_read'] is False
+    assert e2['execution_observation']['other_key_inspected'] is False
+    assert e2['execution_observation']['provider_mutation_attempted'] is False
+    assert e2['execution_observation']['retry_occurred'] is False
+    assert all(v is False for v in e2['security_state'].values())
+    assert e2['record_basis']=='OWNER_CONFIRMED_SEPARATE_NAMES_ONLY_ABSENCE_INSPECTION'
+    assert e2['recorded_at']==STEP2_RECORDED
+
     assert x['progress_id']==g['progress_id']
     assert x['plan_id']==p['plan_id'] and x['plan_version']==4 and x['plan_digest']==p['plan_digest']
-    assert x['record_version']==3 and x['overall_state']=='IN_PROGRESS'
-    assert x['updated_at']==STEP1_RECORDED
-    assert x['progress_digest']==EXECUTION==progress_digest(x)
+    assert x['record_version']==5 and x['overall_state']=='IN_PROGRESS'
+    assert x['updated_at']==STEP2_RECORDED
+    assert x['progress_digest']==EXECUTION_STEP2==progress_digest(x)
     s1=x['step_states'][0]
+    s2=x['step_states'][1]
+    s3=x['step_states'][2]
     assert (s1['authorization_state'],s1['execution_state'],s1['verification_state'],s1['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
     assert s1['observed_postcondition']==p['steps'][0]['expected_postcondition'] and s1['safe_error_code'] is None
     assert s1['evidence']==[{
@@ -155,15 +188,25 @@ def main():
         'recorded_at':STEP1_RECORDED,
     }]
     assert len(s1['binding_assertions'])==2
-    assert all((s['authorization_state'],s['execution_state'],s['verification_state'],s['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False) for s in x['step_states'][1:])
-    assert all(s['evidence']==[] and s['binding_assertions']==[] and s['observed_postcondition'] is None and s['safe_error_code'] is None for s in x['step_states'][1:])
-    assert not (B/(N+'-step2-success.evidence.json')).exists()
+    assert (s2['authorization_state'],s2['execution_state'],s2['verification_state'],s2['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
+    assert s2['observed_postcondition']==p['steps'][1]['expected_postcondition'] and s2['safe_error_code'] is None
+    assert s2['evidence']==[{
+        'evidence_type':'auth.provider-adapter-positive-auth.admin-credential.absence-verified',
+        'evidence_reference':N+'-step2-success.evidence.json',
+        'evidence_digest':STEP2,
+        'recorded_at':STEP2_RECORDED,
+    }]
+    assert len(s2['binding_assertions'])==3
+    derived=[b for b in s2['binding_assertions'] if b['phase']=='DERIVED_FROM_SOURCE_STEP']
+    assert len(derived)==1 and derived[0]['source_step_id']==p['ordered_step_ids'][0] and derived[0]['evidence_digest']==STEP1
+    assert (s3['authorization_state'],s3['execution_state'],s3['verification_state'],s3['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False)
+    assert s3['evidence']==[] and s3['binding_assertions']==[] and s3['observed_postcondition'] is None and s3['safe_error_code'] is None
     assert not (B/(N+'-step3-success.evidence.json')).exists()
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','.execution-progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','-step2-success.evidence.json','.execution-progress.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v6 key retirement v4: PASS (Step 1 CONSUMED / SUCCEEDED / PASS; Steps 2-3 PENDING / NOT_STARTED; independent absence verification required)')
+    print('DEVELOPMENT provider-adapter positive-auth v6 key retirement v4: PASS (Steps 1-2 CONSUMED / SUCCEEDED / PASS; Step 3 PENDING / NOT_STARTED; GitHub names-only absence verification required)')
 
 if __name__=='__main__': main()

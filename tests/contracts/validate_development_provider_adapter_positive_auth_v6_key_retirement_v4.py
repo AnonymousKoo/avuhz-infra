@@ -32,6 +32,9 @@ STEP1_RECORDED='2026-10-06T01:09:42Z'
 STEP2='sha256:96e9371c01dcf15e061823c35df159d4627f79b06884af3c4edf6c48d08e2770'
 EXECUTION_STEP2='sha256:e4dbe07a5a38957e5125a8257a9a1bd73bad646eb7d6e7d0e34bd02fb9dbd0cc'
 STEP2_RECORDED='2026-10-06T01:19:46Z'
+STEP3='sha256:a92e3926482aaed1ac19c241aef6d23b0079f47e1087c77bc65797dd11f99d76'
+EXECUTION_STEP3='sha256:b988dd98a2623e5831f007d65238940095725050a9cb8fc32e0dcba0cdb7ef0a'
+STEP3_RECORDED='2026-10-06T01:38:34Z'
 
 def load(name): return json.loads((B/name).read_text())
 
@@ -43,6 +46,7 @@ def main():
     a=load(N+'.approval.json')
     e1=load(N+'-step1-success.evidence.json')
     e2=load(N+'-step2-success.evidence.json')
+    e3=load(N+'-step3-success.evidence.json')
     x=load(N+'.execution-progress.json')
     late=load(V1+'-late-window-rejection.evidence.json')
     reject2=load(V2+'-binding-integrity-rejection.evidence.json')
@@ -171,42 +175,79 @@ def main():
     assert e2['record_basis']=='OWNER_CONFIRMED_SEPARATE_NAMES_ONLY_ABSENCE_INSPECTION'
     assert e2['recorded_at']==STEP2_RECORDED
 
+    assert canonical_digest(e3)==STEP3
+    assert e3['evidence_type']=='auth.provider-adapter-positive-auth.github-binding.absence-verified'
+    assert e3['plan_id']==p['plan_id'] and e3['plan_version']==4 and e3['plan_digest']==p['plan_digest']
+    assert e3['approval_id']==a['approval_id'] and e3['approval_digest']==a['approval_digest']
+    assert e3['step_id']==p['ordered_step_ids'][2] and e3['attempt']==1
+    assert e3['outcome']=='SUCCEEDED_VERIFIED'
+    assert e3['classification']=='EXACT_V6_GITHUB_BINDING_ABSENCE_OWNER_VERIFIED'
+    assert e3['repository']=='AnonymousKoo/avuhz-infra' and e3['github_environment']=='development'
+    assert e3['authorization_observation']['approval_exact'] is True
+    assert e3['authorization_observation']['authorization_window_active'] is True
+    assert e3['authorization_observation']['secret_value_requested'] is False
+    assert e3['authorization_observation']['secret_value_observed'] is False
+    assert e3['authorization_observation']['provider_mutation_attempted'] is False
+    assert e3['sanitized_result']=={
+        'repository':'AnonymousKoo/avuhz-infra',
+        'environment':'development',
+        'secret_name':'AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V6_EPHEMERAL',
+        'exact_secret_reference_count':0,
+        'absent':True,
+        'secret_value_requested':False,
+        'secret_value_observed':False,
+        'provider_mutation_performed':False,
+    }
+    assert e3['execution_observation']['secret_value_requested'] is False
+    assert e3['execution_observation']['secret_value_read'] is False
+    assert e3['execution_observation']['provider_mutation_attempted'] is False
+    assert e3['execution_observation']['retry_occurred'] is False
+    assert all(v is False for v in e3['security_state'].values())
+    assert e3['record_basis']=='OWNER_CONFIRMED_SCREENSHOT_NAMES_ONLY_ABSENCE_INSPECTION'
+    assert e3['recorded_at']==STEP3_RECORDED
+
     assert x['progress_id']==g['progress_id']
     assert x['plan_id']==p['plan_id'] and x['plan_version']==4 and x['plan_digest']==p['plan_digest']
-    assert x['record_version']==5 and x['overall_state']=='IN_PROGRESS'
-    assert x['updated_at']==STEP2_RECORDED
-    assert x['progress_digest']==EXECUTION_STEP2==progress_digest(x)
+    assert x['record_version']==7 and x['overall_state']=='COMPLETED'
+    assert x['updated_at']==STEP3_RECORDED
+    assert x['progress_digest']==EXECUTION_STEP3==progress_digest(x)
     s1=x['step_states'][0]
     s2=x['step_states'][1]
     s3=x['step_states'][2]
-    assert (s1['authorization_state'],s1['execution_state'],s1['verification_state'],s1['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
-    assert s1['observed_postcondition']==p['steps'][0]['expected_postcondition'] and s1['safe_error_code'] is None
+    for s in (s1,s2,s3):
+        assert (s['authorization_state'],s['execution_state'],s['verification_state'],s['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
+        assert s['safe_error_code'] is None
+    assert s1['observed_postcondition']==p['steps'][0]['expected_postcondition']
+    assert s2['observed_postcondition']==p['steps'][1]['expected_postcondition']
+    assert s3['observed_postcondition']==p['steps'][2]['expected_postcondition']
     assert s1['evidence']==[{
         'evidence_type':'auth.provider-adapter-positive-auth.admin-credential.retired',
         'evidence_reference':N+'-step1-success.evidence.json',
         'evidence_digest':STEP1,
         'recorded_at':STEP1_RECORDED,
     }]
-    assert len(s1['binding_assertions'])==2
-    assert (s2['authorization_state'],s2['execution_state'],s2['verification_state'],s2['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
-    assert s2['observed_postcondition']==p['steps'][1]['expected_postcondition'] and s2['safe_error_code'] is None
     assert s2['evidence']==[{
         'evidence_type':'auth.provider-adapter-positive-auth.admin-credential.absence-verified',
         'evidence_reference':N+'-step2-success.evidence.json',
         'evidence_digest':STEP2,
         'recorded_at':STEP2_RECORDED,
     }]
-    assert len(s2['binding_assertions'])==3
-    derived=[b for b in s2['binding_assertions'] if b['phase']=='DERIVED_FROM_SOURCE_STEP']
-    assert len(derived)==1 and derived[0]['source_step_id']==p['ordered_step_ids'][0] and derived[0]['evidence_digest']==STEP1
-    assert (s3['authorization_state'],s3['execution_state'],s3['verification_state'],s3['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False)
-    assert s3['evidence']==[] and s3['binding_assertions']==[] and s3['observed_postcondition'] is None and s3['safe_error_code'] is None
-    assert not (B/(N+'-step3-success.evidence.json')).exists()
+    assert s3['evidence']==[{
+        'evidence_type':'auth.provider-adapter-positive-auth.github-binding.absence-verified',
+        'evidence_reference':N+'-step3-success.evidence.json',
+        'evidence_digest':STEP3,
+        'recorded_at':STEP3_RECORDED,
+    }]
+    assert len(s1['binding_assertions'])==2 and len(s2['binding_assertions'])==3 and len(s3['binding_assertions'])==3
+    derived2=[b for b in s2['binding_assertions'] if b['phase']=='DERIVED_FROM_SOURCE_STEP']
+    derived3=[b for b in s3['binding_assertions'] if b['phase']=='DERIVED_FROM_SOURCE_STEP']
+    assert len(derived2)==1 and derived2[0]['source_step_id']==p['ordered_step_ids'][0] and derived2[0]['evidence_digest']==STEP1
+    assert len(derived3)==1 and derived3[0]['source_step_id']==p['ordered_step_ids'][1] and derived3[0]['evidence_digest']==STEP2
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','-step2-success.evidence.json','.execution-progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','-step2-success.evidence.json','-step3-success.evidence.json','.execution-progress.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v6 key retirement v4: PASS (Steps 1-2 CONSUMED / SUCCEEDED / PASS; Step 3 PENDING / NOT_STARTED; GitHub names-only absence verification required)')
+    print('DEVELOPMENT provider-adapter positive-auth v6 key retirement v4: PASS (COMPLETED; Steps 1-3 CONSUMED / SUCCEEDED / PASS; no secret value or out-of-scope mutation recorded)')
 
 if __name__=='__main__': main()

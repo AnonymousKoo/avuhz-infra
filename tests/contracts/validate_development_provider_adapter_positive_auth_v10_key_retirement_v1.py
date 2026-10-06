@@ -33,6 +33,7 @@ APPROVAL = "sha256:23ca76ffd209a9c2e76d38416b952b1e7319b6d30789fbd1fde4a83ffb947
 STEP1_EVIDENCE = "sha256:35044d1166daa983e06781334c05d0002f877992cc9d9ca2ebe6a8bff597815e"
 STEP2_EVIDENCE = "sha256:cfaeca271afa9a51db7ff0390f45548a6e7b9e1864436c51e7d3acd1a89ae0e7"
 EXECUTION_PROGRESS = "sha256:980bd163d03623f901d1f80e0fd25fbb70a8e06f1e3de1620af29cfb56c6e5a2"
+POST_WINDOW_INCIDENT = "sha256:45c5a8f402d6d675ef25e1b4d77c1ad4c6a9f2a5090d1d11e36ed00bea873355"
 V10_STOP = "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0"
 V10_STEP1 = "sha256:c90ee6dae85bc880703dd00dcd0a5813f92e86fa015b4c26392764601983eac4"
 V10_STEP2 = "sha256:deac6b75bcad238ff7c47a91b6207ce3d0dee636243f429c9a9f85bd07d965df"
@@ -55,6 +56,7 @@ def main() -> int:
     a = load(N + ".approval.json")
     step1_evidence = load(N + "-step1-success.evidence.json")
     step2_evidence = load(N + "-step2-success.evidence.json")
+    incident = load(N + "-post-window-github-outcome.evidence.json")
     x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
@@ -203,6 +205,27 @@ def main() -> int:
         ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
     assert first["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
     assert second["evidence"][0]["evidence_digest"] == STEP2_EVIDENCE
+    assert incident["evidence_digest"] == POST_WINDOW_INCIDENT == canonical_digest(
+        {k: v for k, v in incident.items() if k != "evidence_digest"}
+    )
+    assert incident["owner_report"]["secret_name"] == "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL"
+    assert incident["owner_report"]["deletion_reported"] is True
+    assert incident["owner_report"]["absence_reported"] is True
+    assert incident["owner_report"]["exact_deletion_timestamp_known"] is False
+    assert incident["owner_report"]["exact_absence_verification_timestamp_known"] is False
+    assert incident["owner_report"]["report_observed_after_expiry"] is True
+    assert incident["owner_report"]["report_observed_at"] > incident["authorization_window"]["expires_at"]
+    assert incident["authorization_assessment"] == {
+        "step3_recordable_as_authorized": False,
+        "step4_recordable_as_authorized": False,
+        "retirement_v1_execution_progress_may_be_retroactively_advanced": False,
+        "retirement_v1_steps1_2_remain_conforming": True,
+        "fresh_forward_only_v2_absence_reconciliation_required": True,
+    }
+    assert incident["reported_effects"]["github_binding_delete_reported"] is True
+    assert incident["reported_effects"]["github_binding_absence_reported"] is True
+    assert incident["reported_effects"]["secret_value_observed"] is False
+    assert incident["continuation_rule"] == "PREPARE_FRESH_FORWARD_ONLY_V10_KEY_RETIREMENT_V2_GITHUB_ABSENCE_RECONCILIATION"
     assert all(
         (
             state["authorization_state"],
@@ -223,6 +246,7 @@ def main() -> int:
             ".approval.json",
             "-step1-success.evidence.json",
             "-step2-success.evidence.json",
+            "-post-window-github-outcome.evidence.json",
             ".execution-progress.json",
         )
     )

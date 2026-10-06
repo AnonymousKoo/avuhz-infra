@@ -3,8 +3,8 @@
   "plan_id": "c6a4f231-8d5e-4b79-a210-7e3c9d6f5a42",
   "plan_version": 10,
   "plan_digest": "sha256:909276b7d894f68d01c0fadd1b4f8e1f354c2914d6f2cd658926aa099e977414",
-  "record_version": 5,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 6,
+  "overall_state": "STOPPED",
   "step_states": [
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.01.create-fresh-auth-admin-key",
@@ -175,18 +175,25 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.05.authenticate-live-and-logout-global",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.live-verified-logout-accepted",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v10-step05-plan-integrity-failure.evidence.json",
+          "evidence_digest": "sha256:d55ff4f7bcca05b03c5fc878f5fa2a09d95cd3b36b1716e181e4cd8bf3df2228",
+          "recorded_at": "2026-10-06T21:37:38Z"
+        }
+      ],
+      "observed_postcondition": "Step 5 was not executed. Pre-execution whole-plan integrity review found stale v9 execution instructions in the approved v10 plan: Step 4 says the exact query is bound in the v9 resource and Step 5 says to use the fresh v9 GitHub environment credential. The live authentication workflow was not dispatched, no secret was resolved, and no provider mutation occurred.",
+      "safe_error_code": "PLAN_STATE_INVALID",
       "binding_assertions": []
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.06.verify-zero-session-refresh-state",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -197,7 +204,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.07.retire-fresh-auth-admin-key",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -208,7 +215,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.08.retire-github-secret-binding",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -219,7 +226,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.09.verify-fresh-auth-admin-key-absent",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -230,7 +237,7 @@
     },
     {
       "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v10.step.10.verify-github-secret-binding-absent",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -240,6 +247,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-06T21:23:36Z",
-  "progress_digest": "sha256:38ae6d41e7d5dd448b302a4b60c3059b5d005eb5ca0fd8cb59570ba90d86d1d9"
+  "updated_at": "2026-10-06T21:37:38Z",
+  "progress_digest": "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0"
 }

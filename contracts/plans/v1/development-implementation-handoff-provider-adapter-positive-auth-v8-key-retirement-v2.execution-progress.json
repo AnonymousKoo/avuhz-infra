@@ -1,0 +1,68 @@
+{
+  "progress_id": "f533b49a-3b24-41fb-b33c-2c5de1c4659e",
+  "plan_id": "04b2fa4b-ed7b-488e-a230-9aba210ed68e",
+  "plan_version": 2,
+  "plan_digest": "sha256:87d7c13f5fd8ac19642375eb7d876ae690832633ae5a55eacb051cdf336fa10a",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v2.step.01.verify-stopped-auth-admin-key-absent",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v2-step1-success.evidence.json",
+          "evidence_digest": "sha256:4568bc1310f24c0e2db15dc9922b751bfff0565fd2c811e8477ca433aaa9046f",
+          "recorded_at": "2026-10-06T14:01:49Z"
+        }
+      ],
+      "observed_postcondition": "A separate owner-interactive read-only Supabase Dashboard inspection independently proves the exact impl_handoff_provider_adapter_positive_auth_v8_ephemeral key reference is absent from DEVELOPMENT AUTH by name only. Do not reveal key material and make no provider mutation or identity change. This prospective v2 reconciliation does not retroactively make retirement v1 conforming.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8-key-retirement-v2.step1-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:b6ba35bc0c04b4ced20fcc5af975955f96df700f7f7d3b26ee75a2cffdec72ce",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b6ba35bc0c04b4ced20fcc5af975955f96df700f7f7d3b26ee75a2cffdec72ce",
+          "recorded_at": "2026-10-06T14:01:49Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8-key-retirement-v2.key-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_digest": "sha256:4568bc1310f24c0e2db15dc9922b751bfff0565fd2c811e8477ca433aaa9046f",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:27d92e5c806c4cc58aee384a4f3451baf73e83162e5a08ccc440e623a6168aad",
+          "recorded_at": "2026-10-06T14:01:49Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v2.step.02.verify-github-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T14:01:49Z",
+  "progress_digest": "sha256:ab8177660380aad1538a9aee377b03d07c6fa2a6de3d24caa33dc9352e6122ec"
+}

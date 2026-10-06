@@ -169,7 +169,7 @@
     "first_workflow_run_only": true,
     "first_run_attempt_only": true,
     "redirects_authorized": false,
-    "owner_approval_deadline": "2026-10-06T20:20:00Z",
+    "owner_approval_deadline": "2026-10-06T20:45:00Z",
     "window_expiry": "2026-10-06T23:00:00Z",
     "late_approval": "FORWARD_ONLY_WINDOW_REPLACEMENT_REQUIRED",
     "preflight": "Validate exact v10 plan, approval, Steps 1-4 execution progress, canonical v10 executor/workflow/helper digests, historical clean-state bindings, canonical v7 body-digest evidence, stopped v9 state, and completed v9 key-retirement v1 absence reconciliation before secret resolution.",
@@ -225,5 +225,6 @@
   "required_v9_retirement_progress_digest": "sha256:f63c3c1ce9d3cd450dc74d77f5b42324f257b485305eaddac815458a54ae349e",
   "required_v9_key_absence_evidence_digest": "sha256:02186a947b099da0f9854a3b6c056cf7342b54d631edeb77b20803f31d6bda0e",
   "required_v9_github_absence_evidence_digest": "sha256:38d525130844b42194dd222c85ceae61788aac42b96ca8331148f3d9316f92e0",
-  "contract_digest": "sha256:839467744764ea923de14c42c6565360cd45cc7aea3a27e4f15e8ce3ce8883d9"
+  "required_v9_step5_authority_failure_evidence_digest": "sha256:d931a7de4f6a41bcfd7f072b30f86ecafa4cccc2a0cca5f4e6387fa942cf687a",
+  "contract_digest": "sha256:cf26ec78208c27b9f878a7446c50214d16e1a30568bf3385fb650a58e49022a8"
 }

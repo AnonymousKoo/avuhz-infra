@@ -1,0 +1,79 @@
+{
+  "progress_id": "05a084cc-6862-42d3-872a-01d51b59efdc",
+  "plan_id": "71372198-c690-4886-bfb4-ebe201d4c83a",
+  "plan_version": 1,
+  "plan_digest": "sha256:0675583489849cb3f93063e13aa3a1691e864bef4f9410375ab967dc9e1207a2",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v1.step.01.retire-stopped-auth-admin-key",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v1-step1-success.evidence.json",
+          "evidence_digest": "sha256:ee55defe3d06d4561ae21aa6edae5bcfe4b6388ec2e375fcf79697a38e1ef5a2",
+          "recorded_at": "2026-10-06T13:03:20Z"
+        }
+      ],
+      "observed_postcondition": "Using only an owner-interactive Supabase Dashboard session in DEVELOPMENT AUTH, retire exactly the stopped-v8 secret key named impl_handoff_provider_adapter_positive_auth_v8_ephemeral. Do not reveal, copy, export, log, hash, rotate, recreate, or return secret material. Delete no other key. If the exact key is already absent, perform no mutation and record only the sanitized name-only postcondition for independent verification.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8-key-retirement-v1.step1-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:57d792e9ecafa957f4de238f2e788f5f9ecf36afa1009543279d3553169490ef",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:57d792e9ecafa957f4de238f2e788f5f9ecf36afa1009543279d3553169490ef",
+          "recorded_at": "2026-10-06T13:03:20Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v8-key-retirement-v1.key-retired",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_digest": "sha256:ee55defe3d06d4561ae21aa6edae5bcfe4b6388ec2e375fcf79697a38e1ef5a2",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:00e38f51090be4d62546cece77a96012cb0eee703d5a4f4eb040b00d9dd97d27",
+          "recorded_at": "2026-10-06T13:03:20Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v1.step.02.verify-stopped-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v1.step.03.verify-github-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T13:03:20Z",
+  "progress_digest": "sha256:01a92438dbc856648a241c2d71f7d19063eadcbd94ea954c821617e0ceb001ad"
+}

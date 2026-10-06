@@ -7,9 +7,11 @@ import re
 from pathlib import Path
 
 from avuhz_engineering.authorization_plan import (
+    approval_digest,
     initial_progress,
     plan_digest,
     progress_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -31,6 +33,8 @@ EVIDENCE_HELPER = "sha256:ceed8cb7681f0fc195c7bfff9cd4dd06dbaee728efbf29f52e61b9
 CREATED = "2026-10-06T20:10:00Z"
 START = "2026-10-06T20:45:00Z"
 END = "2026-10-06T23:00:00Z"
+APPROVED = "2026-10-06T20:25:29Z"
+APPROVAL = "sha256:740a797f1523092658ca40ee422d0bba97171b980e1f28c735d66fa36b2beaa0"
 
 V9_STOP = "sha256:3f14c612807b8b956e30bf972c46090356a697d916036ade41d2096716e17417"
 V9_FAILURE = "sha256:d931a7de4f6a41bcfd7f072b30f86ecafa4cccc2a0cca5f4e6387fa942cf687a"
@@ -52,9 +56,11 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, START)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest(
         {k: v for k, v in r.items() if k != "contract_digest"}
@@ -75,6 +81,21 @@ def main() -> int:
     }
     assert p["target"]["project_reference"] == "pwlhruwutoitnieactol"
     assert p["target"]["responsibility"] == "AUTH"
+
+    assert a["approval_id"] == "a4e7c2d9-51b8-4f63-9c20-7d1e5a8b3f46"
+    assert a["plan_id"] == p["plan_id"]
+    assert a["plan_version"] == 10
+    assert a["plan_digest"] == p["plan_digest"]
+    assert a["owner_identity"] == p["owner_identity"]
+    assert a["decision"] == "APPROVE"
+    assert a["environment"] == "DEVELOPMENT"
+    assert a["approved_at"] == APPROVED
+    assert APPROVED < START
+    assert a["effective_at"] == START
+    assert a["expires_at"] == END
+    assert a["status"] == "ACTIVE"
+    assert a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["approval_digest"] == APPROVAL == approval_digest(a)
 
     assert r["resource_version"] == "provider-adapter-positive-auth.v10"
     assert r["boundary"] == N
@@ -173,7 +194,6 @@ def main() -> int:
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
         for state in g["step_states"]
     )
-    assert not (B / (N + ".approval.json")).exists()
     assert not (B / (N + ".execution-progress.json")).exists()
 
     rendered = "\n".join(
@@ -183,6 +203,7 @@ def main() -> int:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            ".approval.json",
         )
     )
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
@@ -193,8 +214,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v10: PASS "
-        "(READY_FOR_APPROVAL / UNEXECUTED; v9 STOPPED + retirement COMPLETED bound; "
-        "sealed evidence helper bound; no provider authority)"
+        "(APPROVED / UNEXECUTED; v9 STOPPED + retirement COMPLETED bound; "
+        "sealed evidence helper bound; execution window not yet active)"
     )
     return 0
 

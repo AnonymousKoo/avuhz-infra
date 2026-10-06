@@ -1,0 +1,45 @@
+{
+  "progress_id": "f4f31fd2-7fd8-4b59-9f3b-8b3e6e592cb3",
+  "plan_id": "5d4f3b8a-1c69-4c18-b0f1-0c70b511f54e",
+  "plan_version": 1,
+  "plan_digest": "sha256:f1ba176e1b42cb6563c42ddc57db98cf5c5ccefd0deb6d436fe3bec24d72b590",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.01.verify-retired-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.02.retire-reappeared-github-secret-binding",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.03.verify-reappeared-github-secret-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T01:47:32Z",
+  "progress_digest": "sha256:2bd2a2e1b15c70439f616480aa8afb09dc6295cf40d8a98492fadaf0085ed80e"
+}

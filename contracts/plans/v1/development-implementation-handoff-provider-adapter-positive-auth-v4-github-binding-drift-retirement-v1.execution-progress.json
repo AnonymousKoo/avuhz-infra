@@ -3,8 +3,8 @@
   "plan_id": "5d4f3b8a-1c69-4c18-b0f1-0c70b511f54e",
   "plan_version": 1,
   "plan_digest": "sha256:f1ba176e1b42cb6563c42ddc57db98cf5c5ccefd0deb6d436fe3bec24d72b590",
-  "record_version": 3,
-  "overall_state": "IN_PROGRESS",
+  "record_version": 5,
+  "overall_state": "STOPPED",
   "step_states": [
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.01.verify-retired-auth-admin-key-absent",
@@ -53,18 +53,52 @@
     },
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.02.retire-reappeared-github-secret-binding",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
-      "safe_error_code": null,
-      "binding_assertions": []
+      "authorization_state": "CONSUMED",
+      "execution_state": "FAILED",
+      "verification_state": "FAIL",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1-step2-failure.evidence.json",
+          "evidence_digest": "sha256:5b46a52a3881eb6afdb094825a012ccd2cc54d045ca80c29c1eb68ec9a1b77d2",
+          "recorded_at": "2026-10-06T03:37:56Z"
+        }
+      ],
+      "observed_postcondition": "The first owner-manual GitHub environment-secret delete submission returned an explicit UI failure. The plan's correction boundary was stop-for-owner-review-no-retry, but a later retry occurred and the target was subsequently reported absent by name. The original Step 2 therefore cannot be certified as a conforming success; its authorization is consumed, Step 3 is blocked, and a fresh forward-only read-only GitHub absence reconciliation is required. No secret value was requested or observed and no other secret change was reported.",
+      "safe_error_code": "STOP_REQUIRES_FORWARD_ONLY_GITHUB_BINDING_ABSENCE_RECONCILIATION",
+      "binding_assertions": [
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.key-absence",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.01.verify-retired-auth-admin-key-absent",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_digest": "sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b71669239c3bab5efcc96ee9d0bece4e6b56869d4b80ec2eefa3add039134c90",
+          "recorded_at": "2026-10-06T03:37:56Z"
+        },
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step2-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:0be2a6b1791dec6554105f89f3f43ee1df39a1bda3c18eeea46d175b51bc5008",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:0be2a6b1791dec6554105f89f3f43ee1df39a1bda3c18eeea46d175b51bc5008",
+          "recorded_at": "2026-10-06T03:37:56Z"
+        }
+      ]
     },
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.03.verify-reappeared-github-secret-binding-absent",
-      "authorization_state": "PENDING",
+      "authorization_state": "BLOCKED",
       "execution_state": "NOT_STARTED",
       "verification_state": "NOT_STARTED",
       "authorization_consumed": false,
@@ -74,6 +108,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-06T03:30:27Z",
-  "progress_digest": "sha256:353cba4358b464a418ca642e76f3c40781ab461b1b18e47998a69593f92f58ae"
+  "updated_at": "2026-10-06T03:37:56Z",
+  "progress_digest": "sha256:fc38e77792c472d6e135a3e9310c4f78af988acba36748df45946b6f00c4d48b"
 }

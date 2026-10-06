@@ -1,0 +1,54 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v8.preparation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "observation_only": true,
+  "canonical_main_at_preparation": "017bdb76273b7d1978a0960e835e0e7fc13b15e4",
+  "resource_contract_digest": "sha256:bbd92e25a085a41c3484730a1346970179f68f064245de0ee55ba8b8ab2c3a9b",
+  "source_bindings": {
+    "executor": "sha256:b94bafd10f7d77f79f618299d45ab8b4bfdec56c3238e2596635c86d5612e2a3",
+    "workflow": "sha256:52e462c6414b5e4814037760dad27cea436a0229420a4b640f9cf1eec2df95f9",
+    "failure_diagnostics": "sha256:ab59ad4f1eaa1a0ce8fec04a09ee53a52def68b3bd57a24902d14daba6860920",
+    "token_lifecycle": "sha256:d8b68df0ed06fec06cbf538e9511b432678d3baa73ee656c3495eb724bde0797",
+    "identity_policy": "sha256:bbdf9c44c683118adedd42645bfb6b3c40617bbe8e402ce4bb65b20a7b1f6189",
+    "jwt_verifier": "sha256:52de43a29eddd4d17e428fa3989ac7bb20397b3c131b0eaa6eef5b37de37713c"
+  },
+  "prerequisites": {
+    "passwordless": "sha256:26a90c35357ac14b23d1b7f17e18762e958248462d53aed168985dba249cbb10",
+    "tenant_binding": "sha256:42a33b97e8ab5c8fd9c7972d5d4a9cad57d06135ea9a05952ed6f669026c3936",
+    "allowlist": "sha256:07b1103c5a90a04849e4cc6c4d9c303adcf09b7a639086ae88a90979ad301325",
+    "render_v11_runtime": "sha256:f49f6882f2e6ec0274935137a52c7b7c942bfbe0bc72baebca143a90aedc5345",
+    "render_v11_progress": "sha256:762fc38748aeb4483a5b26179a703e687bab13e7f5c73160b29a3a77d4480e5c",
+    "v6_stopped_progress": "sha256:c5d7bf0545ca10f453f4ac9775edccb1a2eb5e63efa7966225b95f5e5659df6f",
+    "v6_plan_integrity_failure": "sha256:fdd233c078ee3e60bae0dd95128535526dc073759c54ee5cd21c8070cac15937",
+    "v6_retirement_progress": "sha256:b988dd98a2623e5831f007d65238940095725050a9cb8fc32e0dcba0cdb7ef0a",
+    "v6_key_absence": "sha256:96e9371c01dcf15e061823c35df159d4627f79b06884af3c4edf6c48d08e2770",
+    "v6_github_absence": "sha256:a92e3926482aaed1ac19c241aef6d23b0079f47e1087c77bc65797dd11f99d76",
+    "v4_binding_reconciliation_progress": "sha256:57365c1791a9548568bb19515f70270e80b4ff1e4f3fa26f4560ebb6a3a572e9",
+    "v4_binding_reconciliation_evidence": "sha256:1c0b6abf5a3e49ffd9dec1b2573918f4e7046ae7dd0144e6d31645d09bcf2773",
+    "v7_late_rejection": "sha256:5ea9bd9fade9a6b5674f190bc133a7aa70233e06c50193e7125f26303d8eca5b"
+  },
+  "security_state": {
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "credential_created": false,
+    "credential_material_observed": false,
+    "github_secret_changed": false,
+    "session_issued": false,
+    "token_issued": false,
+    "runtime_request_performed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "authorization_window": {
+    "starts_at": "2026-10-06T12:00:00Z",
+    "expires_at": "2026-10-06T18:00:00Z"
+  },
+  "recorded_at": "2026-10-06T08:02:47Z",
+  "evidence_digest": "sha256:d1c6cb704c67feb64875f5721e153a69f9d888424b5fe23a413d17af6fdcf1c9"
+}

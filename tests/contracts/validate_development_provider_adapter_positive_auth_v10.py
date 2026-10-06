@@ -30,7 +30,8 @@ PROGRESS = "sha256:4a5813efcacb2298e8b6aa35b0f9bd139f286df898fe4b6bbeff5582f7e55
 STEP1_EVIDENCE = "sha256:c90ee6dae85bc880703dd00dcd0a5813f92e86fa015b4c26392764601983eac4"
 STEP2_EVIDENCE = "sha256:deac6b75bcad238ff7c47a91b6207ce3d0dee636243f429c9a9f85bd07d965df"
 STEP3_EVIDENCE = "sha256:a7ae5d2495f727dfe94c2be7ae9c7f6c3169251c8db6e4c364d06ef9b35acf58"
-EXECUTION_PROGRESS = "sha256:cefbc4cdcf6aec0c4e92c871bbf97e5cd8fb232ddc1e53b2abeac93c947f03ba"
+STEP4_EVIDENCE = "sha256:4843d2a014d2aa415b7d8528893aa4aeabed608f765687ddaca732993e6183ab"
+EXECUTION_PROGRESS = "sha256:38ae6d41e7d5dd448b302a4b60c3059b5d005eb5ca0fd8cb59570ba90d86d1d9"
 EXECUTOR = "sha256:38aa2b6b57fddb3e6b9627c2686b4f7ab944ebbd2c5d3bc225434a78ecd21dba"
 WORKFLOW = "sha256:66a1439bba1f9a372d70566a8d6b2bec47f15b046f4d0739dd5b70b3200c1d4b"
 EVIDENCE_HELPER = "sha256:ceed8cb7681f0fc195c7bfff9cd4dd06dbaee728efbf29f52e61b982acd53d34"
@@ -64,6 +65,7 @@ def main() -> int:
     step1_evidence = load(N + "-step01-success.evidence.json")
     step2_evidence = load(N + "-step02-success.evidence.json")
     step3_evidence = load(N + "-step03-success.evidence.json")
+    step4_evidence = load(N + "-step04-success.evidence.json")
     x = load(N + ".execution-progress.json")
 
     validate_plan(p, S)
@@ -252,11 +254,29 @@ def main() -> int:
         "value_hashed": False,
     }
 
+    assert evidence_digest(step4_evidence) == STEP4_EVIDENCE
+    assert step4_evidence["plan_id"] == p["plan_id"]
+    assert step4_evidence["approval_id"] == a["approval_id"]
+    assert step4_evidence["project_reference"] == "pwlhruwutoitnieactol"
+    assert step4_evidence["sanitized_result"] == {
+        "classification": "EXPECTED_PRECHECK_COUNTS_MATCHED",
+        "auth_user_count": 2,
+        "target_identity_count": 1,
+        "target_password_null_count": 1,
+        "target_tenant_exact_count": 1,
+        "session_count": 0,
+        "refresh_token_count": 0,
+    }
+    assert step4_evidence["execution_observation"]["approved_aggregate_select_attempts"] == 1
+    assert step4_evidence["execution_observation"]["additional_sql_executed"] is False
+    assert step4_evidence["execution_observation"]["retry_occurred"] is False
+    assert step4_evidence["execution_observation"]["step5_attempted"] is False
+
     assert x["progress_digest"] == EXECUTION_PROGRESS == progress_digest(x)
-    assert x["record_version"] == 4
+    assert x["record_version"] == 5
     assert x["overall_state"] == "IN_PROGRESS"
-    first, second, third = x["step_states"][:3]
-    for state in (first, second, third):
+    first, second, third, fourth = x["step_states"][:4]
+    for state in (first, second, third, fourth):
         assert (
             state["authorization_state"],
             state["execution_state"],
@@ -266,6 +286,7 @@ def main() -> int:
     assert first["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
     assert second["evidence"][0]["evidence_digest"] == STEP2_EVIDENCE
     assert third["evidence"][0]["evidence_digest"] == STEP3_EVIDENCE
+    assert fourth["evidence"][0]["evidence_digest"] == STEP4_EVIDENCE
     assert all(
         (
             state["authorization_state"],
@@ -273,7 +294,7 @@ def main() -> int:
             state["verification_state"],
             state["authorization_consumed"],
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
-        for state in x["step_states"][3:]
+        for state in x["step_states"][4:]
     )
 
     rendered = "\n".join(
@@ -287,6 +308,7 @@ def main() -> int:
             "-step01-success.evidence.json",
             "-step02-success.evidence.json",
             "-step03-success.evidence.json",
+            "-step04-success.evidence.json",
             ".execution-progress.json",
         )
     )
@@ -298,7 +320,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v10: PASS "
-        "(IN_PROGRESS; Steps 1-3 CONSUMED/SUCCEEDED/PASS; Step 4 pending; "
+        "(IN_PROGRESS; Steps 1-4 CONSUMED/SUCCEEDED/PASS; Step 5 pending; "
         "credential material never retained)"
     )
     return 0

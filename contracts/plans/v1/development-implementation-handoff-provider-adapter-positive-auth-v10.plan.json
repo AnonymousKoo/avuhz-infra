@@ -48,7 +48,7 @@
           "evidence_type": "auth.provider-adapter-positive-auth-v10.preparation.observed",
           "source_step_id": null,
           "binding_state": "BOUND",
-          "exact_digest": "sha256:1198068f3a86bc49b77823856eece87e9b50803d227a9fa02051d3f0900c2a68"
+          "exact_digest": "sha256:cb8c72adb9ea56264f3ef327fcbb0da33595d73e3843750b5927d778952f7042"
         },
         {
           "evidence_type": "auth.provider-adapter-passwordless-state.verified",
@@ -475,7 +475,7 @@
           "evidence_type": "auth.provider-adapter-positive-auth-v10.preparation.observed",
           "source_step_id": null,
           "binding_state": "BOUND",
-          "exact_digest": "sha256:1198068f3a86bc49b77823856eece87e9b50803d227a9fa02051d3f0900c2a68"
+          "exact_digest": "sha256:cb8c72adb9ea56264f3ef327fcbb0da33595d73e3843750b5927d778952f7042"
         },
         {
           "evidence_type": "auth.provider-adapter-passwordless-state.verified",
@@ -1374,5 +1374,5 @@
     "unexpected.provider-effect"
   ],
   "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
-  "plan_digest": "sha256:4a712c31441c791208fb536e130af4e3367159d4ad5e3cdc003d6ce1204642b2"
+  "plan_digest": "sha256:d4de0d34f516f39cb3154b677a4cb929113d4c5aab840c687a312759b8d55187"
 }

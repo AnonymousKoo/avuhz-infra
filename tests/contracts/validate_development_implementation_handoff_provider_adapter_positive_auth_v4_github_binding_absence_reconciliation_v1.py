@@ -10,7 +10,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/'src'))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 B=ROOT/'contracts/plans/v1'
@@ -27,6 +27,8 @@ PREDECESSOR_STOPPED='sha256:fc38e77792c472d6e135a3e9310c4f78af988acba36748df4594
 CREATED='2026-10-06T03:45:28Z'
 START='2026-10-06T04:15:00Z'
 END='2026-10-06T06:00:00Z'
+APPROVED='2026-10-06T03:53:35Z'
+APPROVAL='sha256:d9a2f072a0513e62bc5bc45cecb387effaa0d64c125ea05d0a3d092177d6b823'
 
 def load(name):
     return json.loads((B/name).read_text())
@@ -39,9 +41,11 @@ def main():
     prep=load(N+'-preparation.evidence.json')
     p=load(N+'.plan.json')
     g=load(N+'.progress.json')
+    a=load(N+'.approval.json')
 
     validate_plan(p,S)
     validate_progress(p,g,S)
+    validate_approval(p,a,S,START)
 
     assert canonical_digest(e1)==PREDECESSOR_STEP1
     assert e1['sanitized_result']['absence_reported_by_owner'] is True
@@ -112,16 +116,22 @@ def main():
     assert g==initial_progress(p,S,g['progress_id'],CREATED)
     assert g['overall_state']=='NOT_STARTED' and g['record_version']==1
     assert all((s['authorization_state'],s['execution_state'],s['verification_state'],s['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False) for s in g['step_states'])
-    assert not (B/(N+'.approval.json')).exists()
+    assert a['approval_id']=='348b2bd4-2c3c-4288-b886-4f3b0e926452'
+    assert a['plan_id']==p['plan_id'] and a['plan_version']==1 and a['plan_digest']==p['plan_digest']
+    assert a['owner_identity']==p['owner_identity'] and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+    assert a['approved_at']==APPROVED and a['effective_at']==START and a['expires_at']==END
+    assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+    assert a['approval_digest']==APPROVAL==approval_digest(a)
+    assert APPROVED < START
     assert not (B/(N+'.execution-progress.json')).exists()
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
     for forbidden in ('service_role','Bearer eyJ'):
         assert forbidden not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding absence reconciliation v1: PASS (PREPARED / UNAPPROVED / UNEXECUTED; read-only names-only GitHub absence verification only)')
+    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding absence reconciliation v1: PASS (APPROVED / UNEXECUTED; read-only names-only GitHub absence verification only)')
 
 if __name__=='__main__':
     main()

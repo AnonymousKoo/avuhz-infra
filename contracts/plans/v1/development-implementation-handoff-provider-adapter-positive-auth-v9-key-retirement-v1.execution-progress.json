@@ -3,7 +3,7 @@
   "plan_id": "2e8f6c19-4d73-4b5a-a9c1-7f2e6d8b3c40",
   "plan_version": 1,
   "plan_digest": "sha256:9c200ac9b4ab7d81556b00dd6caa81e7f22c5a97969ac7c00c0446ee6df135d3",
-  "record_version": 2,
+  "record_version": 3,
   "overall_state": "IN_PROGRESS",
   "step_states": [
     {
@@ -53,14 +53,61 @@
     },
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1.step.02.verify-stopped-auth-admin-key-absent",
-      "authorization_state": "PENDING",
-      "execution_state": "NOT_STARTED",
-      "verification_state": "NOT_STARTED",
-      "authorization_consumed": false,
-      "evidence": [],
-      "observed_postcondition": null,
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1-step2-success.evidence.json",
+          "evidence_digest": "sha256:02186a947b099da0f9854a3b6c056cf7342b54d631edeb77b20803f31d6bda0e",
+          "recorded_at": "2026-10-06T19:06:24Z"
+        }
+      ],
+      "observed_postcondition": "A separate owner-interactive read-only Supabase Dashboard inspection independently proves the exact impl_handoff_provider_adapter_positive_auth_v9_ephemeral key reference is absent from DEVELOPMENT AUTH by name only. Do not reveal key material and make no provider mutation or identity change.",
       "safe_error_code": null,
-      "binding_assertions": []
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1.key-retired",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1.step.01.retire-stopped-auth-admin-key",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_digest": "sha256:053069275137f842faae2c807b479561165180df28d0cc18c92770f1be5847e5",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:d84c6072a4f315a6529fc367d127dd48c003549aac984184797d880c40974b50",
+          "recorded_at": "2026-10-06T19:06:24Z"
+        },
+        {
+          "binding_id": "binding.development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1.step2-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:c6832efddf87080a4132c3af1696c77e4dffbd4573ddb032d62763f52c636539",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:c6832efddf87080a4132c3af1696c77e4dffbd4573ddb032d62763f52c636539",
+          "recorded_at": "2026-10-06T19:06:24Z"
+        },
+        {
+          "binding_id": "binding.development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1.key-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_digest": "sha256:02186a947b099da0f9854a3b6c056cf7342b54d631edeb77b20803f31d6bda0e",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:99268d994b879a54aa9062d03b5eac1907de5d2cd7c45a8ef5df7ce70cc0f688",
+          "recorded_at": "2026-10-06T19:06:24Z"
+        }
+      ]
     },
     {
       "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v9-key-retirement-v1.step.03.retire-github-secret-binding",
@@ -85,6 +132,6 @@
       "binding_assertions": []
     }
   ],
-  "updated_at": "2026-10-06T18:57:08Z",
-  "progress_digest": "sha256:b6d26b98a111106011a2c7d8cc86e2e729b0d0ed2213be93484b210ff1de90a6"
+  "updated_at": "2026-10-06T19:06:24Z",
+  "progress_digest": "sha256:3a002bde95afba8bfbc2024209a762922e6a14da0ed40bfe6fa73739af2cc44e"
 }

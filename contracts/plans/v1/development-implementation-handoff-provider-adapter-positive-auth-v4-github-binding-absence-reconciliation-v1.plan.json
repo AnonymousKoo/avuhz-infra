@@ -1,0 +1,229 @@
+{
+  "plan_id": "aa947bad-a7be-4460-bbb5-dbfa4f8a7250",
+  "plan_version": 1,
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-06T03:45:28Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-06T04:15:00Z",
+    "expires_at": "2026-10-06T06:00:00Z"
+  },
+  "ordered_step_ids": [
+    "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.step.01.verify-github-binding-absent"
+  ],
+  "steps": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.step.01.verify-github-binding-absent",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "github.environment-secret-binding-reference",
+        "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-v4-github-binding-absence-reconciliation.v1",
+        "exact_digest": "sha256:afc2833fb1cc19192cefb6f217cf1263e6ac08416c9fcc9e6d7b758166dad3aa"
+      },
+      "operation": "provider.auth-secret-binding.verify-github-environment-reference-absent",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4"
+        },
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:5b46a52a3881eb6afdb094825a012ccd2cc54d045ca80c29c1eb68ec9a1b77d2"
+        },
+        {
+          "evidence_type": "authorization-plan.execution-progress",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:fc38e77792c472d6e135a3e9310c4f78af988acba36748df45946b6f00c4d48b"
+        }
+      ],
+      "expected_postcondition": "Using only a fresh owner-interactive read-only GitHub environment settings inspection against repository AnonymousKoo/avuhz-infra environment development, independently prove AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL is absent by name only. No secret value is requested or returned and no mutation occurs. This prospective reconciliation certifies only the current absence state; it does not retroactively convert the stopped predecessor Step 2 into a conforming success.",
+      "prohibited_actions": [
+        "credential.copy",
+        "credential.create",
+        "credential.digest",
+        "credential.export",
+        "credential.expose",
+        "credential.log",
+        "credential.persist",
+        "credential.return",
+        "credential.rotate",
+        "data.operation",
+        "github-secret.create",
+        "github-secret.delete",
+        "github-secret.mutate",
+        "hook.modify",
+        "identity.create",
+        "identity.delete",
+        "identity.modify",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "password.modify",
+        "positive-auth.retry",
+        "production.target",
+        "provider-key.mutate",
+        "provider.mutation",
+        "raw-provider-payload.persist",
+        "raw-provider-subject.persist",
+        "render.mutation",
+        "secret-value.output",
+        "secret-value.read",
+        "session.issue",
+        "staging.target",
+        "supabase.operation",
+        "tenant-metadata.modify",
+        "token.issue",
+        "token.refresh"
+      ],
+      "stop_conditions": [
+        "authorization.window-inactive",
+        "environment.mismatch",
+        "repository.mismatch",
+        "scope.drift",
+        "secret-reference.present",
+        "secret-value.observed",
+        "secret-value.requested",
+        "verification.ambiguous"
+      ],
+      "correction_reference": "correction.stop-for-owner-review-no-retry",
+      "execution_class": "PROVIDER_READ",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": [],
+      "binding_declarations": [
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.predecessor-key-absence",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4",
+            "exact_digest": "sha256:fc5a89c74f5f0880b277aceadb4af770822a46aa8e5d2c97a2a81eee0e4a9efe"
+          }
+        },
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.predecessor-step2-failure",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.retired",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:5b46a52a3881eb6afdb094825a012ccd2cc54d045ca80c29c1eb68ec9a1b77d2",
+            "exact_digest": "sha256:2b363aa43e782a1046cc16d66c73a5acc6e0e30f073f67e2790639dc744b90a2"
+          }
+        },
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.predecessor-stopped-progress",
+          "phase": "PREAPPROVAL_BOUND",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "authorization-plan.execution-progress",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "preapproval_value": {
+            "value": "sha256:fc38e77792c472d6e135a3e9310c4f78af988acba36748df45946b6f00c4d48b",
+            "exact_digest": "sha256:f12d061d455b51284f52987fb3f62336cc4d93bcadc9997f5e2757bd2e7a18dd"
+          }
+        },
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.github-read-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        },
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.github-binding-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.absence-verified",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY"
+        }
+      ],
+      "produced_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.absence-verified",
+          "established_binding_ids": [
+            "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-absence-reconciliation-v1.github-binding-absence"
+          ],
+          "digest_policy": "REQUIRED"
+        }
+      ]
+    }
+  ],
+  "prohibited_actions": [
+    "billing.operation",
+    "credential.copy",
+    "credential.create",
+    "credential.digest",
+    "credential.export",
+    "credential.expose",
+    "credential.log",
+    "credential.persist",
+    "credential.return",
+    "credential.rotate",
+    "data.operation",
+    "github-secret.create",
+    "github-secret.delete",
+    "github-secret.mutate",
+    "identity.create",
+    "identity.delete",
+    "implementation-handoff.execute",
+    "n8n.operation",
+    "positive-auth.retry",
+    "production.target",
+    "provider-key.mutate",
+    "provider.mutation",
+    "raw-provider-subject.persist",
+    "render.mutation",
+    "secret-value.read",
+    "session.issue",
+    "staging.target",
+    "supabase.operation",
+    "token.issue",
+    "token.refresh"
+  ],
+  "stop_conditions": [
+    "authorization.unbound",
+    "evidence.missing",
+    "outcome.ambiguous",
+    "scope.drift",
+    "security.validation.failed",
+    "target.drift",
+    "unexpected.provider-effect",
+    "workflow.interrupted"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "plan_digest": "sha256:3623489701b2af869a2c82e20eb9e1a2dd90814df7a5b714ca8e287b26ee68df"
+}

@@ -1,0 +1,79 @@
+{
+  "progress_id": "f4f31fd2-7fd8-4b59-9f3b-8b3e6e592cb3",
+  "plan_id": "5d4f3b8a-1c69-4c18-b0f1-0c70b511f54e",
+  "plan_version": 1,
+  "plan_digest": "sha256:f1ba176e1b42cb6563c42ddc57db98cf5c5ccefd0deb6d436fe3bec24d72b590",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.01.verify-retired-auth-admin-key-absent",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1-step1-success.evidence.json",
+          "evidence_digest": "sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4",
+          "recorded_at": "2026-10-06T03:30:27Z"
+        }
+      ],
+      "observed_postcondition": "Using only a separate owner-interactive read-only Supabase Dashboard names-only inspection in DEVELOPMENT AUTH, independently prove impl_handoff_provider_adapter_positive_auth_v4_ephemeral remains absent. Do not reveal key material and make no provider mutation. If the exact key reference is present, stop before any GitHub deletion and require a fresh forward-only provider-key cleanup boundary.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step1-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:b6ba35bc0c04b4ced20fcc5af975955f96df700f7f7d3b26ee75a2cffdec72ce",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b6ba35bc0c04b4ced20fcc5af975955f96df700f7f7d3b26ee75a2cffdec72ce",
+          "recorded_at": "2026-10-06T03:30:27Z"
+        },
+        {
+          "binding_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.key-absence",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.absence-verified",
+          "evidence_digest": "sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:b71669239c3bab5efcc96ee9d0bece4e6b56869d4b80ec2eefa3add039134c90",
+          "recorded_at": "2026-10-06T03:30:27Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.02.retire-reappeared-github-secret-binding",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1.step.03.verify-reappeared-github-secret-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T03:30:27Z",
+  "progress_digest": "sha256:353cba4358b464a418ca642e76f3c40781ab461b1b18e47998a69593f92f58ae"
+}

@@ -1,0 +1,46 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v4.github-binding-drift-retirement-v1.prepared",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-retirement-v1",
+  "observed_at": "2026-10-06T01:47:32Z",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "canonical_main_at_start": "cb08ffcbac6e3b7eb5c4da3e2ded070b348311c0",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "action_class": "REPOSITORY_LOCAL",
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED",
+  "resource_contract_digest": "sha256:07c9dd7dafcb46608aeab41825b5512835ea7cb1575aafac4412bb3d1727e3d4",
+  "drift_observation_evidence_digest": "sha256:d3f503921d8b27d698e95dcb05651a8c42b20403267673720643e25e28b5944c",
+  "prior_v4_key_absence_evidence_digest": "sha256:89596d6e8895213059840d3af8b84202bee52b4069365afa5df8e75ec11d9a7e",
+  "prior_v4_github_absence_evidence_digest": "sha256:c9da22e43c568c9f276eb86c78ce730b394740bb02161afc9adbd4cd6c66b98f",
+  "design": {
+    "provider_key_mutation_authorized": false,
+    "provider_key_absence_recheck_required": true,
+    "github_binding_delete_authorized_only_after_key_absence_reverified": true,
+    "ordered_resources": [
+      "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v4_ephemeral:absence",
+      "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+      "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL:absence"
+    ],
+    "execution_actor": "OWNER_MANUAL_FIREFOX"
+  },
+  "authorization_window": {
+    "starts_at": "2026-10-06T02:45:00Z",
+    "expires_at": "2026-10-06T06:00:00Z"
+  },
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "credential_material_digest_recorded": false,
+    "secret_value_read": false,
+    "pii_observed": false,
+    "history_rewritten": false,
+    "approval_created": false,
+    "execution_progress_created": false,
+    "result_evidence_created": false
+  },
+  "readiness": "Repository preparation only. Exact owner approval is required before Step 1. Step 1 is read-only and must prove the retired v4 Supabase key remains absent before the exact GitHub binding deletion is authorized.",
+  "evidence_digest": "sha256:fa66101a194f32f8387b0b589832cd2938e8d6e4520761dca7324a0480dd7277"
+}

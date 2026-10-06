@@ -9,7 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import AuthorizationPlanError, evidence_digest
+from avuhz_engineering.authorization_plan import AuthorizationPlanError
+from avuhz_engineering.evidence_digest import evidence_digest
 from avuhz_runtime.implementation_handoff import canonical_digest
 
 

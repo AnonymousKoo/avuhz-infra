@@ -31,6 +31,11 @@ V1_POST_DELETE='sha256:6f9fe1bd43637cf64002c7758846f56fdb6959aa254fc5228468b3686
 STEP1_RECORDED='2026-10-06T14:01:49Z'
 STEP1='sha256:4568bc1310f24c0e2db15dc9922b751bfff0565fd2c811e8477ca433aaa9046f'
 EXECUTION_STEP1='sha256:ab8177660380aad1538a9aee377b03d07c6fa2a6de3d24caa33dc9352e6122ec'
+STEP2_RECORDED='2026-10-06T14:36:00Z'
+STEP2='sha256:4d4e4f695b60e90c5c6e230a10004bade558e22c69aa4c9fe3d477518d50015a'
+STEP2_OBS='sha256:262e8dcc5d1bc70fab1a1b81edd078aaedd4c0c997f67c785e398d36466ee62b'
+STEP2_RESULT='sha256:08b04d8663eeb1e174a90c8c9b3c69ca28e138a75b7ce4b3ddf3ec8a80ec0a14'
+TERMINAL='sha256:dda26efb46d17998b71072edfec3ce3490478b595e92e31ce58ee645b211bade'
 
 def load(name): return json.loads((B/name).read_text())
 
@@ -47,6 +52,7 @@ def main():
     invalidation=load(V1+'-preexecution-invalidation.evidence.json')
     post_delete=load(V1+'-post-invalidation-delete.evidence.json')
     e1=load(N+'-step1-success.evidence.json')
+    e2=load(N+'-step2-success.evidence.json')
     x=load(N+'.execution-progress.json')
 
     validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,START); validate_progress(p,x,S)
@@ -177,11 +183,42 @@ def main():
     assert e1['record_basis']=='OWNER_CONFIRMED_SEPARATE_NAMES_ONLY_ABSENCE_INSPECTION'
     assert e1['recorded_at']==STEP1_RECORDED
 
+    assert canonical_digest(e2)==STEP2
+    assert e2['evidence_type']=='auth.provider-adapter-positive-auth.github-binding.absence-verified'
+    assert e2['plan_id']==p['plan_id'] and e2['plan_version']==2 and e2['plan_digest']==p['plan_digest']
+    assert e2['approval_id']==a['approval_id'] and e2['approval_digest']==a['approval_digest']
+    assert e2['step_id']==p['ordered_step_ids'][1] and e2['attempt']==1
+    assert e2['outcome']=='SUCCEEDED_VERIFIED'
+    assert e2['classification']=='EXACT_V8_GITHUB_BINDING_ABSENCE_REPORTED_BY_OWNER'
+    assert e2['authorization_observation']['repository']=='AnonymousKoo/avuhz-infra'
+    assert e2['authorization_observation']['environment']=='development'
+    assert e2['authorization_observation']['approval_exact'] is True
+    assert e2['authorization_observation']['authorization_window_active'] is True
+    assert e2['authorization_observation']['secret_value_requested'] is False
+    assert e2['authorization_observation']['secret_value_observed'] is False
+    assert e2['authorization_observation']['provider_mutation_attempted'] is False
+    assert e2['authorization_observation_digest']==STEP2_OBS
+    assert e2['sanitized_result']=={
+        'secret_name':'AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_EPHEMERAL',
+        'absence_reported_by_owner':True,
+        'secret_value_observed':False,
+        'provider_mutation_performed':False,
+    }
+    assert e2['result_digest']==STEP2_RESULT
+    assert e2['execution_observation']['execution_class']=='PROVIDER_READ'
+    assert e2['execution_observation']['secret_value_requested'] is False
+    assert e2['execution_observation']['secret_value_observed'] is False
+    assert e2['execution_observation']['provider_mutation_attempted'] is False
+    assert e2['execution_observation']['retry_occurred'] is False
+    assert all(v is False for v in e2['security_state'].values())
+    assert e2['record_basis']=='OWNER_CONFIRMED_SEPARATE_NAMES_ONLY_GITHUB_ABSENCE_INSPECTION'
+    assert e2['recorded_at']==STEP2_RECORDED
+
     assert x['progress_id']==g['progress_id']
     assert x['plan_id']==p['plan_id'] and x['plan_version']==2 and x['plan_digest']==p['plan_digest']
-    assert x['record_version']==3 and x['overall_state']=='IN_PROGRESS'
-    assert x['updated_at']==STEP1_RECORDED
-    assert x['progress_digest']==EXECUTION_STEP1==progress_digest(x)
+    assert x['record_version']==5 and x['overall_state']=='COMPLETED'
+    assert x['updated_at']==STEP2_RECORDED
+    assert x['progress_digest']==TERMINAL==progress_digest(x)
     sx1,sx2=x['step_states']
     assert (sx1['authorization_state'],sx1['execution_state'],sx1['verification_state'],sx1['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
     assert sx1['safe_error_code'] is None
@@ -193,14 +230,22 @@ def main():
         'recorded_at':STEP1_RECORDED,
     }]
     assert len(sx1['binding_assertions'])==2
-    assert (sx2['authorization_state'],sx2['execution_state'],sx2['verification_state'],sx2['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False)
-    assert sx2['evidence']==[] and sx2['binding_assertions']==[]
+    assert (sx2['authorization_state'],sx2['execution_state'],sx2['verification_state'],sx2['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
+    assert sx2['safe_error_code'] is None
+    assert sx2['observed_postcondition']==p['steps'][1]['expected_postcondition']
+    assert sx2['evidence']==[{
+        'evidence_type':'auth.provider-adapter-positive-auth.github-binding.absence-verified',
+        'evidence_reference':N+'-step2-success.evidence.json',
+        'evidence_digest':STEP2,
+        'recorded_at':STEP2_RECORDED,
+    }]
+    assert len(sx2['binding_assertions'])==3
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','.execution-progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','-step2-success.evidence.json','.execution-progress.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
     assert 'service_role' not in rendered and 'Bearer eyJ' not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v8 key retirement v2: PASS (Step 1 CONSUMED / SUCCEEDED / PASS; Step 2 pending; read-only absence reconciliation only)')
+    print('DEVELOPMENT provider-adapter positive-auth v8 key retirement v2: PASS (COMPLETED; both absence checks SUCCEEDED / PASS; read-only reconciliation complete)')
 
 if __name__=='__main__': main()

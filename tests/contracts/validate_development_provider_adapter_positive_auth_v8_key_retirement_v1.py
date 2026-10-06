@@ -29,6 +29,8 @@ V8_STEP1='sha256:e2f4cc24eb5bbe974ee51d2086262af68314a29a136c5f630f949bbf6699c42
 V8_STEP2_FAIL='sha256:eb2138a99751165302f01b9e063fdd883919c69c1df3f67db040c001879d9ae5'
 V8_CORRECTION='sha256:8ec18cfe0586881e072aa6157012c15fcc9be3cd80d359731e12f3f99e7d75a0'
 INVALIDATION='sha256:6664a48710ed032272b0236e81c901ccdde1548fd185c26e2f0248f8a39b4b47'
+POST_DELETE='sha256:6f9fe1bd43637cf64002c7758846f56fdb6959aa254fc5228468b368656ce3b4'
+POST_DELETE_RECORDED='2026-10-06T13:03:20Z'
 
 def load(name): return json.loads((B/name).read_text())
 
@@ -43,6 +45,7 @@ def main():
     v8e2=load(V8+'-step02-plan-integrity-failure.evidence.json')
     correction=load(V8+'-recording-step-id-correction-v1.evidence.json')
     invalidation=load(N+'-preexecution-invalidation.evidence.json')
+    post_delete=load(N+'-post-invalidation-delete.evidence.json')
 
     validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,START)
 
@@ -123,6 +126,34 @@ def main():
     assert all(v is False for v in invalidation['provider_effects'].values())
     assert invalidation['continuation_rule']=='PREPARE_FRESH_FORWARD_ONLY_V8_KEY_RETIREMENT_V2'
 
+    assert post_delete['evidence_digest']==POST_DELETE==canonical_digest({k:v for k,v in post_delete.items() if k!='evidence_digest'})
+    assert post_delete['plan_id']==p['plan_id'] and post_delete['plan_digest']==p['plan_digest']
+    assert post_delete['approval_id']==a['approval_id'] and post_delete['approval_digest']==a['approval_digest']
+    assert post_delete['preexecution_invalidation_evidence_digest']==INVALIDATION
+    assert post_delete['authority_state']=='APPROVED_BUT_NONEXECUTABLE'
+    assert post_delete['outcome']=='NONCONFORMING_PROVIDER_MUTATION_AFTER_PREEXECUTION_INVALIDATION'
+    assert post_delete['safe_error_code']=='PLAN_STATE_INVALID'
+    assert post_delete['sanitized_result']=={
+        'key_name':'impl_handoff_provider_adapter_positive_auth_v8_ephemeral',
+        'deletion_reported_by_owner':True,
+        'credential_material_observed':False,
+        'other_key_change_reported':False,
+        'github_binding_change_reported':False,
+    }
+    assert post_delete['execution_observation']=={
+        'execution_timestamp_retained':False,
+        'recorded_at_is_execution_timestamp':False,
+        'provider_key_delete_attempts_reported':1,
+        'credential_value_read':False,
+        'retry_occurred':False,
+    }
+    assert post_delete['provider_effects']['provider_key_delete_reported'] is True
+    assert all(v is False for k,v in post_delete['provider_effects'].items() if k!='provider_key_delete_reported')
+    assert all(v is False for v in post_delete['security_state'].values())
+    assert post_delete['record_basis']=='OWNER_CONFIRMED_SANITIZED_POST_INVALIDATION_DELETION_OUTCOME'
+    assert post_delete['continuation_rule']=='PREPARE_FRESH_FORWARD_ONLY_V8_KEY_RETIREMENT_V2_ABSENCE_RECONCILIATION'
+    assert post_delete['recorded_at']==POST_DELETE_RECORDED
+
     assert prep['canonical_main_at_preparation']=='cc8c41d6e0b068daf30cfc5091cf2be5d883a852'
     assert prep['resource_contract_digest']==RESOURCE
     assert prep['authorization_window']=={'starts_at':START,'expires_at':END}
@@ -153,11 +184,11 @@ def main():
     assert g==initial_progress(p,S,g['progress_id'],OBS)
     assert not (B/(N+'.execution-progress.json')).exists()
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-preexecution-invalidation.evidence.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-preexecution-invalidation.evidence.json','-post-invalidation-delete.evidence.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
     assert 'service_role' not in rendered and 'Bearer eyJ' not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v8 key retirement v1: PASS (APPROVED BUT PREEXECUTION-INVALIDATED / UNEXECUTED; forward-only v2 required)')
+    print('DEVELOPMENT provider-adapter positive-auth v8 key retirement v1: PASS (PREEXECUTION-INVALIDATED; post-invalidation delete recorded as nonconforming; forward-only v2 absence reconciliation required)')
 
 if __name__=='__main__': main()

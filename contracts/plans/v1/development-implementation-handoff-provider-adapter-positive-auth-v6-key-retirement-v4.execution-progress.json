@@ -1,0 +1,79 @@
+{
+  "progress_id": "a1b735e5-5a59-4a1d-afb5-40a4bb38e00b",
+  "plan_id": "a72084f5-f9a9-4ffc-89a5-4fbb0634414c",
+  "plan_version": 4,
+  "plan_digest": "sha256:c86243c50bfbb681207c01705d1b75ee3e4024c7dcd9688ceb8b34e31027eeff",
+  "record_version": 3,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v4.step.01.retire-prewindow-auth-admin-key",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v4-step1-success.evidence.json",
+          "evidence_digest": "sha256:9c59ea56aa247f9d576280a4cc050e4d9db972bffae247c7b3d6e243527b57a2",
+          "recorded_at": "2026-10-06T01:09:42Z"
+        }
+      ],
+      "observed_postcondition": "Using only an owner-interactive Supabase Dashboard session in DEVELOPMENT AUTH, retire exactly the stopped-v6 secret key named impl_handoff_provider_adapter_positive_auth_v6_ephemeral. Do not reveal, copy, export, log, hash, rotate, recreate, or return secret material. Delete no other key. If the exact key is already absent, perform no mutation and record only the sanitized name-only postcondition for independent verification.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v6-prewindow-key-retirement-v4.step1-owner-session",
+          "phase": "RESOLVED_BY_STEP_PREFLIGHT",
+          "value_class": "CONFIGURATION_REFERENCE",
+          "source_step_id": null,
+          "evidence_type": "provider.owner-interactive-session.observed",
+          "evidence_digest": "sha256:57d792e9ecafa957f4de238f2e788f5f9ecf36afa1009543279d3553169490ef",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:57d792e9ecafa957f4de238f2e788f5f9ecf36afa1009543279d3553169490ef",
+          "recorded_at": "2026-10-06T01:09:42Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v6-prewindow-key-retirement-v4.key-retired",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.retired",
+          "evidence_digest": "sha256:9c59ea56aa247f9d576280a4cc050e4d9db972bffae247c7b3d6e243527b57a2",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:cd1dee0ceb84b9946d1a88fae4b37452a2ec22f6478c71a7a0bae2e070f9b6bf",
+          "recorded_at": "2026-10-06T01:09:42Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v4.step.02.verify-prewindow-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v6-key-retirement-v4.step.03.verify-github-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-06T01:09:42Z",
+  "progress_digest": "sha256:cd7b82bb271e8e93bd9b434704a45caac9f700a8ee450c757dfdcc629a3a58b0"
+}

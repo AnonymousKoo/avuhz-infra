@@ -9,7 +9,7 @@
   "plan_digest": "sha256:9ec8b204229a31c526870aa6b96776ede5ec474c592c72f814ce9ad5ed6eaba8",
   "approval_id": "5bc4e639-f6d3-4fc4-8c74-1f10247111db",
   "approval_digest": "sha256:cbafe4d53befe00909c4cb0c086ce45b55f20dd7f299975e11a9a11ec2dbd770",
-  "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v8.step.01.create-fresh-auth-admin-key",
+  "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v8.step.01.create-fresh-auth-admin-key",
   "attempt": 1,
   "outcome": "SUCCEEDED_VERIFIED",
   "classification": "DEDICATED_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_CREDENTIAL_CREATED",

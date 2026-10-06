@@ -48,6 +48,8 @@ V6_KEY_ABSENCE = "sha256:96e9371c01dcf15e061823c35df159d4627f79b06884af3c4edf6c4
 V6_GH_ABSENCE = "sha256:a92e3926482aaed1ac19c241aef6d23b0079f47e1087c77bc65797dd11f99d76"
 V4_RECON_PROGRESS = "sha256:57365c1791a9548568bb19515f70270e80b4ff1e4f3fa26f4560ebb6a3a572e9"
 V4_RECON_EVIDENCE = "sha256:1c0b6abf5a3e49ffd9dec1b2573918f4e7046ae7dd0144e6d31645d09bcf2773"
+LATE_REJECTION = "sha256:5ea9bd9fade9a6b5674f190bc133a7aa70233e06c50193e7125f26303d8eca5b"
+LATE_OBSERVED = "2026-10-06T07:39:38Z"
 
 
 def load(name: str) -> dict:
@@ -71,6 +73,7 @@ def main() -> int:
     gh_absence = load(V6_RETIRE + "-step3-success.evidence.json")
     recon_x = load(V4_RECON + ".execution-progress.json")
     recon_evidence = load(V4_RECON + "-step1-success.evidence.json")
+    late = load(N + "-late-window-rejection.evidence.json")
 
     validate_plan(p, S)
     validate_progress(p, g, S)
@@ -175,6 +178,24 @@ def main() -> int:
         "values_stored": False,
     }
 
+    assert late["evidence_digest"] == LATE_REJECTION == canonical_digest(
+        {k: v for k, v in late.items() if k != "evidence_digest"}
+    )
+    assert late["candidate_plan_id"] == p["plan_id"]
+    assert late["candidate_plan_version"] == 7
+    assert late["candidate_plan_digest"] == PLAN
+    assert late["approval_instruction_received"] is True
+    assert late["approval_artifact_created"] is False
+    assert late["approval_canonicalized"] is False
+    assert late["candidate_effective_at"] == START
+    assert late["candidate_expires_at"] == END
+    assert late["approval_observed_at"] == LATE_OBSERVED
+    assert LATE_OBSERVED > START
+    assert late["outcome"] == "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE"
+    assert late["safe_error_code"] == "PLAN_AUTHORIZATION_EXPIRED"
+    assert all(v is False for v in late["provider_effects"].values())
+    assert late["continuation_rule"] == "CREATE_FRESH_FORWARD_ONLY_POSITIVE_AUTH_V8"
+
     assert g["overall_state"] == "NOT_STARTED"
     assert g["record_version"] == 1
     assert all(
@@ -197,6 +218,7 @@ def main() -> int:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            "-late-window-rejection.evidence.json",
         )
     )
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
@@ -208,7 +230,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v7: PASS "
-        "(PREPARED / UNAPPROVED / UNEXECUTED; fresh v7 source and predecessor cleanup bound)"
+        "(LATE APPROVAL REJECTED / UNAPPROVED / UNEXECUTED; forward-only v8 required)"
     )
     return 0
 

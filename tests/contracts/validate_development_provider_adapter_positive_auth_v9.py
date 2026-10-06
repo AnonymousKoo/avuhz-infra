@@ -45,7 +45,8 @@ STEP1_EVIDENCE = "sha256:e794f45457172d917f6dded302231edeb7369253d54d1a51aa7f503
 STEP2_EVIDENCE = "sha256:9576eddf1b2a55598cdfd4052126d592b21be652ceba4b2488641d046f600e7a"
 STEP3_EVIDENCE = "sha256:e6d2befae47955bbb66e042996eda5f2460a32515223e8d79b6438cbd608ae51"
 STEP4_EVIDENCE = "sha256:7165b6992e53df1e422b626594ecbf76ac09fdf2c029791307ce408d3f6ecb45"
-EXECUTION_PROGRESS = "sha256:4c1d3c795f85e8615d807ecdbbe1e15bbcf9043903f5d8fc87df9ed5ac359ee1"
+STEP5_FAILURE_EVIDENCE = "sha256:d931a7de4f6a41bcfd7f072b30f86ecafa4cccc2a0cca5f4e6387fa942cf687a"
+EXECUTION_PROGRESS = "sha256:3f14c612807b8b956e30bf972c46090356a697d916036ade41d2096716e17417"
 EXECUTOR = "sha256:c92562443d2e9af274a150174b76bfdb7cae7989896590f2298addfafa9190d3"
 WORKFLOW = "sha256:c657fcd7b82352bf62e1a646f5e890225f22370ad48992fd81c2838f34a7abe2"
 
@@ -73,6 +74,7 @@ def main() -> int:
     step2_evidence = load(N + "-step02-success.evidence.json")
     step3_evidence = load(N + "-step03-success.evidence.json")
     step4_evidence = load(N + "-step04-success.evidence.json")
+    step5_failure = load(N + "-step05-authority-preflight-failure.evidence.json")
     x = load(N + ".execution-progress.json")
     v8_x = load(V8 + ".execution-progress.json")
     v8_retire_x = load(V8_RETIRE + ".execution-progress.json")
@@ -276,8 +278,22 @@ def main() -> int:
     assert step4_evidence["authorization_observation"]["query_sha256"] == (
         "sha256:0d785af10877d43bd4d886a534438dc21a6dd4471ac80194630feef29af73f8e"
     )
+    assert canonical_digest(step5_failure) == STEP5_FAILURE_EVIDENCE
+    assert step5_failure["plan_id"] == p["plan_id"]
+    assert step5_failure["approval_id"] == a["approval_id"]
+    assert step5_failure["project_reference"] == PROJECT
+    assert step5_failure["safe_error_code"] == "AUTHORITY_INVALID"
+    assert step5_failure["sanitized_result"]["provider_mutation_attempted"] is False
+    assert step5_failure["sanitized_result"]["session_state_readback_required"] is False
+    assert step5_failure["sanitized_result"]["retry_authorized"] is False
+    assert step5_failure["sanitized_result"]["root_cause"] == {
+        "class": "V7_EVIDENCE_DIGEST_SEMANTICS_MISMATCH",
+        "resource_expected_digest": "sha256:5ea9bd9fade9a6b5674f190bc133a7aa70233e06c50193e7125f26303d8eca5b",
+        "executor_full_object_digest": "sha256:8020874ff6b114c1d31bba3966605f38d0767932f227e74069464df31fd04898",
+        "canonical_v7_embedded_evidence_digest": "sha256:5ea9bd9fade9a6b5674f190bc133a7aa70233e06c50193e7125f26303d8eca5b",
+    }
     assert x["progress_digest"] == EXECUTION_PROGRESS == progress_digest(x)
-    assert x["record_version"] == 5 and x["overall_state"] == "IN_PROGRESS"
+    assert x["record_version"] == 6 and x["overall_state"] == "STOPPED"
     first, second, third, fourth = x["step_states"][:4]
     for state in (first, second, third, fourth):
         assert (
@@ -286,6 +302,15 @@ def main() -> int:
             state["verification_state"],
             state["authorization_consumed"],
         ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+    fifth = x["step_states"][4]
+    assert (
+        fifth["authorization_state"],
+        fifth["execution_state"],
+        fifth["verification_state"],
+        fifth["authorization_consumed"],
+        fifth["safe_error_code"],
+    ) == ("CONSUMED", "FAILED", "FAIL", True, "AUTHORITY_INVALID")
+    assert fifth["evidence"][0]["evidence_digest"] == STEP5_FAILURE_EVIDENCE
     assert first["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
     assert second["evidence"][0]["evidence_digest"] == STEP2_EVIDENCE
     assert third["evidence"][0]["evidence_digest"] == STEP3_EVIDENCE
@@ -297,8 +322,8 @@ def main() -> int:
             s["verification_state"],
             s["authorization_consumed"],
         )
-        == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
-        for s in x["step_states"][4:]
+        == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False)
+        for s in x["step_states"][5:]
     )
 
     rendered = "\n".join(
@@ -313,6 +338,7 @@ def main() -> int:
             "-step02-success.evidence.json",
             "-step03-success.evidence.json",
             "-step04-success.evidence.json",
+            "-step05-authority-preflight-failure.evidence.json",
             ".execution-progress.json",
         )
     )
@@ -323,8 +349,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v9: PASS "
-        "(IN_PROGRESS; Steps 1-4 CONSUMED/SUCCEEDED/PASS; "
-        "Step 5 pending; v8 cleanup bound; whole-plan stale active-version scan PASS)"
+        "(STOPPED; Steps 1-4 CONSUMED/SUCCEEDED/PASS; "
+        "Step 5 CONSUMED/FAILED/FAIL before secret resolution; retry prohibited)"
     )
     return 0
 

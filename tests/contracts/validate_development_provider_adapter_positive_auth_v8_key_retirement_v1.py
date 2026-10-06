@@ -19,9 +19,14 @@ RESOURCE='sha256:cbd92eb0848549c21be7ae0d7a68ad12e1c61e332511c7e0c39d6c24ae63ea5
 PREP='sha256:7a127efc5018002f2c1a258cca5ac9d1b14b7212e595d42adead2de27822a548'
 PLAN='sha256:0675583489849cb3f93063e13aa3a1691e864bef4f9410375ab967dc9e1207a2'
 PROGRESS='sha256:3c01c7db130cd08e5e1a0810bd4d3986d39d8055be754299e0d9a5caf9aa8f7c'
-V8_STOP='sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a'
-V8_STEP1='sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da'
-V8_STEP2_FAIL='sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1'
+V8_STOP_OLD='sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a'
+V8_STEP1_OLD='sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da'
+V8_STEP2_FAIL_OLD='sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1'
+V8_STOP='sha256:45c6d902458eee68f2f2782aaac82598d8cef7a2c022124691d3db4f08222b8d'
+V8_STEP1='sha256:e2f4cc24eb5bbe974ee51d2086262af68314a29a136c5f630f949bbf6699c420'
+V8_STEP2_FAIL='sha256:eb2138a99751165302f01b9e063fdd883919c69c1df3f67db040c001879d9ae5'
+V8_CORRECTION='sha256:8ec18cfe0586881e072aa6157012c15fcc9be3cd80d359731e12f3f99e7d75a0'
+SUPERSEDED='sha256:d9e04b6eecc76743ebab8fb8070c65e5a43d444785be7530dc51f5f15f348e38'
 
 def load(name): return json.loads((B/name).read_text())
 
@@ -33,6 +38,8 @@ def main():
     v8x=load(V8+'.execution-progress.json')
     v8e1=load(V8+'-step01-success.evidence.json')
     v8e2=load(V8+'-step02-plan-integrity-failure.evidence.json')
+    correction=load(V8+'-recording-step-id-correction-v1.evidence.json')
+    superseded=load(N+'-superseded.evidence.json')
 
     validate_plan(p,S); validate_progress(p,g,S)
 
@@ -52,9 +59,9 @@ def main():
     assert r['boundary']==N
     assert r['target_key_reference']=='impl_handoff_provider_adapter_positive_auth_v8_ephemeral'
     assert r['github_secret_binding_name']=='AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_EPHEMERAL'
-    assert r['lineage']['v8_execution_progress_digest']==V8_STOP
-    assert r['lineage']['v8_step1_key_creation_evidence_digest']==V8_STEP1
-    assert r['lineage']['v8_step2_plan_integrity_failure_evidence_digest']==V8_STEP2_FAIL
+    assert r['lineage']['v8_execution_progress_digest']==V8_STOP_OLD
+    assert r['lineage']['v8_step1_key_creation_evidence_digest']==V8_STEP1_OLD
+    assert r['lineage']['v8_step2_plan_integrity_failure_evidence_digest']==V8_STEP2_FAIL_OLD
     assert r['lineage']['v8_overall_state']=='STOPPED'
     assert r['lineage']['v8_github_binding_created'] is False
     assert r['authorized_counts']=={
@@ -74,6 +81,34 @@ def main():
     assert v8e1['owner_confirmed_created'] is True and v8e1['credential_material_retained'] is False
     assert v8e2['outcome']=='FAILED_PREEXECUTION_PLAN_INTEGRITY'
     assert v8e2['sanitized_result']['binding_created'] is False
+    assert correction['evidence_digest']==V8_CORRECTION==canonical_digest({k:v for k,v in correction.items() if k!='evidence_digest'})
+    assert correction['original_record']=={
+        'step1_evidence_digest':V8_STEP1_OLD,
+        'step2_evidence_digest':V8_STEP2_FAIL_OLD,
+        'execution_progress_digest':V8_STOP_OLD,
+        'defect':'STEP_ID_BINDING_MISMATCH',
+    }
+    assert correction['corrected_record']['step1_evidence_digest']==V8_STEP1
+    assert correction['corrected_record']['step2_evidence_digest']==V8_STEP2_FAIL
+    assert correction['corrected_record']['execution_progress_digest']==V8_STOP
+
+    assert superseded['evidence_digest']==SUPERSEDED==canonical_digest({k:v for k,v in superseded.items() if k!='evidence_digest'})
+    assert superseded['classification']=='UPSTREAM_V8_RECORDING_BINDING_CORRECTION_INVALIDATED_RETIREMENT_V1_PREREQUISITES'
+    assert superseded['original_prerequisites']=={
+        'v8_stopped_progress':V8_STOP_OLD,
+        'v8_step1_key_creation':V8_STEP1_OLD,
+        'v8_step2_plan_integrity_failure':V8_STEP2_FAIL_OLD,
+    }
+    assert superseded['corrected_prerequisites']=={
+        'v8_stopped_progress':V8_STOP_OLD,
+        'v8_step1_key_creation':V8_STEP1_OLD,
+        'v8_step2_plan_integrity_failure':V8_STEP2_FAIL_OLD,
+        'v8_recording_correction':V8_CORRECTION,
+    }
+    assert superseded['approval_artifact_present'] is False
+    assert superseded['execution_progress_present'] is False
+    assert all(v is False for v in superseded['provider_effects'].values())
+    assert superseded['continuation_rule']=='PREPARE_FRESH_FORWARD_ONLY_V8_KEY_RETIREMENT_V2'
 
     assert prep['canonical_main_at_preparation']=='cc8c41d6e0b068daf30cfc5091cf2be5d883a852'
     assert prep['resource_contract_digest']==RESOURCE
@@ -94,9 +129,9 @@ def main():
     ]
     assert all(s['resource']['exact_version']=='provider-adapter-positive-auth-v8-key-retirement.v1' and s['resource']['exact_digest']==RESOURCE for s in p['steps'])
     step1=p['steps'][0]
-    assert any(e['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.created' and e['exact_digest']==V8_STEP1 for e in step1['required_evidence'])
-    assert any(e['evidence_type']=='authorization-plan.execution-progress' and e['exact_digest']==V8_STOP for e in step1['required_evidence'])
-    assert any(e['evidence_type']=='auth.provider-adapter-positive-auth.github-binding.created' and e['exact_digest']==V8_STEP2_FAIL for e in step1['required_evidence'])
+    assert any(e['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.created' and e['exact_digest']==V8_STEP1_OLD for e in step1['required_evidence'])
+    assert any(e['evidence_type']=='authorization-plan.execution-progress' and e['exact_digest']==V8_STOP_OLD for e in step1['required_evidence'])
+    assert any(e['evidence_type']=='auth.provider-adapter-positive-auth.github-binding.created' and e['exact_digest']==V8_STEP2_FAIL_OLD for e in step1['required_evidence'])
     assert any(e['evidence_type']=='auth.provider-adapter-positive-auth-v8.key-retirement-v1.prepared' and e['exact_digest']==PREP for e in step1['required_evidence'])
 
     assert g['progress_id']=='05a084cc-6862-42d3-872a-01d51b59efdc'
@@ -106,11 +141,11 @@ def main():
     assert not (B/(N+'.approval.json')).exists()
     assert not (B/(N+'.execution-progress.json')).exists()
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json'))
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','-superseded.evidence.json'))
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
     assert 'service_role' not in rendered and 'Bearer eyJ' not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v8 key retirement v1: PASS (PREPARED / UNAPPROVED / UNEXECUTED; exact v8 key retirement only)')
+    print('DEVELOPMENT provider-adapter positive-auth v8 key retirement v1: PASS (SUPERSEDED / UNAPPROVED / UNEXECUTED; forward-only v2 required)')
 
 if __name__=='__main__': main()

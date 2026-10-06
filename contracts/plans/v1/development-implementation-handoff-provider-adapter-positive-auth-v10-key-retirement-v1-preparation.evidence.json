@@ -1,0 +1,39 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v10.key-retirement-v1.prepared",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "canonical_main_at_preparation": "a0d8974bac32a51198df320025a6bf1261383fb6",
+  "resource_contract_digest": "sha256:3083d8e1b34fc5b806ab248deb4cda5aa4d43a0bfe757ba01abc70e7d50b2260",
+  "authorization_window": {
+    "starts_at": "2026-10-06T22:15:00Z",
+    "expires_at": "2026-10-06T23:00:00Z"
+  },
+  "prerequisites": {
+    "v10_stopped_progress": "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0",
+    "v10_step1_key_creation": "sha256:c90ee6dae85bc880703dd00dcd0a5813f92e86fa015b4c26392764601983eac4",
+    "v10_step2_github_binding_creation": "sha256:deac6b75bcad238ff7c47a91b6207ce3d0dee636243f429c9a9f85bd07d965df",
+    "v10_step5_authority_failure": "sha256:d55ff4f7bcca05b03c5fc878f5fa2a09d95cd3b36b1716e181e4cd8bf3df2228",
+    "v10_overall_state": "STOPPED",
+    "v10_github_binding_created": true,
+    "v10_step5_provider_mutation_attempted": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "github_secret_changed": false,
+    "provider_key_changed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "CANONICAL_V10_STOP_AND_RETIREMENT_OBLIGATION",
+  "recorded_at": "2026-10-06T21:50:00Z",
+  "evidence_digest": "sha256:506e6ddf8c2b47397bac023cd128e757c51698f7e5ad36296ccffbf9c8396f28"
+}

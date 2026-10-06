@@ -197,6 +197,8 @@ class PositiveAuthV10SecurityTests(unittest.TestCase):
             source,
         )
         self.assertIn("evidence_digest(v7_late_rejection)", source)
+        self.assertIn("evidence_digest_source_digest", source)
+        self.assertIn('ROOT / "src/avuhz_engineering/evidence_digest.py"', source)
         self.assertNotIn("canonical_digest(v7_late_rejection)", source)
 
     def test_v10_uses_fresh_distinct_secret_namespace(self) -> None:

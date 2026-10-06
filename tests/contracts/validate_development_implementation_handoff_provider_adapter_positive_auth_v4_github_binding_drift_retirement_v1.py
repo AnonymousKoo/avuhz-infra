@@ -32,6 +32,9 @@ START='2026-10-06T02:45:00Z'
 END='2026-10-06T06:00:00Z'
 APPROVED='2026-10-06T02:00:48Z'
 APPROVAL='sha256:fcdd5aec1c03ed18b98bf6c9b5dc7cd58c21968d8cdde5d35a243281a50c8d9e'
+STEP1='sha256:7e30a4d2e973a4e5cab4e2a97e76e11b3deda2b49ee682721d7c6f8aebc83bd4'
+EXECUTION_STEP1='sha256:353cba4358b464a418ca642e76f3c40781ab461b1b18e47998a69593f92f58ae'
+STEP1_RECORDED='2026-10-06T03:30:27Z'
 
 def load(name):
     return json.loads((B/name).read_text())
@@ -43,6 +46,8 @@ def main():
     p=load(N+'.plan.json')
     g=load(N+'.progress.json')
     a=load(N+'.approval.json')
+    e1=load(N+'-step1-success.evidence.json')
+    x=load(N+'.execution-progress.json')
     old_key=load('development-implementation-handoff-provider-adapter-positive-auth-v4-stale-credential-retirement-v2-step2-success.evidence.json')
     old_gh=load('development-implementation-handoff-provider-adapter-positive-auth-v4-stale-credential-retirement-v2-step4-success.evidence.json')
     old_x=load('development-implementation-handoff-provider-adapter-positive-auth-v4-stale-credential-retirement-v2.execution-progress.json')
@@ -53,6 +58,7 @@ def main():
     validate_plan(p,S)
     validate_progress(p,g,S)
     validate_approval(p,a,S,START)
+    validate_progress(p,x,S)
 
     assert drift['evidence_digest']==DRIFT==canonical_digest({k:v for k,v in drift.items() if k!='evidence_digest'})
     assert r['contract_digest']==RESOURCE==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
@@ -143,16 +149,60 @@ def main():
     assert a['approved_at']==APPROVED and a['effective_at']==START and a['expires_at']==END
     assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
     assert a['approval_digest']==APPROVAL==approval_digest(a)
-    assert not (B/(N+'.execution-progress.json')).exists()
+    assert canonical_digest(e1)==STEP1
+    assert e1['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.absence-verified'
+    assert e1['plan_id']==p['plan_id'] and e1['plan_version']==1 and e1['plan_digest']==p['plan_digest']
+    assert e1['approval_id']==a['approval_id'] and e1['approval_digest']==a['approval_digest']
+    assert e1['step_id']==p['ordered_step_ids'][0] and e1['attempt']==1
+    assert e1['outcome']=='SUCCEEDED_VERIFIED'
+    assert e1['classification']=='EXACT_V4_EPHEMERAL_AUTH_KEY_ABSENCE_REPORTED_BY_OWNER'
+    assert e1['authorization_observation']['project_reference']=='pwlhruwutoitnieactol'
+    assert e1['authorization_observation']['approval_exact'] is True
+    assert e1['authorization_observation']['authorization_window_active'] is True
+    assert e1['authorization_observation']['credential_material_observed'] is False
+    assert e1['authorization_observation']['provider_mutation_attempted'] is False
+    assert e1['sanitized_result']=={
+        'key_name':'impl_handoff_provider_adapter_positive_auth_v4_ephemeral',
+        'absence_reported_by_owner':True,
+        'credential_material_observed':False,
+        'other_key_inspected':False,
+        'provider_mutation_performed':False,
+    }
+    assert e1['execution_observation']['credential_value_read'] is False
+    assert e1['execution_observation']['provider_mutation_attempted'] is False
+    assert e1['execution_observation']['retry_occurred'] is False
+    assert all(v is False for v in e1['security_state'].values())
+    assert e1['record_basis']=='OWNER_CONFIRMED_SEPARATE_NAMES_ONLY_ABSENCE_INSPECTION'
+    assert e1['recorded_at']==STEP1_RECORDED
 
-    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json'))
+    assert x['progress_id']==g['progress_id']
+    assert x['plan_id']==p['plan_id'] and x['plan_version']==1 and x['plan_digest']==p['plan_digest']
+    assert x['record_version']==3 and x['overall_state']=='IN_PROGRESS'
+    assert x['updated_at']==STEP1_RECORDED
+    assert x['progress_digest']==EXECUTION_STEP1==progress_digest(x)
+    s1=x['step_states'][0]
+    assert (s1['authorization_state'],s1['execution_state'],s1['verification_state'],s1['authorization_consumed'])==('CONSUMED','SUCCEEDED','PASS',True)
+    assert s1['observed_postcondition']==p['steps'][0]['expected_postcondition'] and s1['safe_error_code'] is None
+    assert s1['evidence']==[{
+        'evidence_type':'auth.provider-adapter-positive-auth.admin-credential.absence-verified',
+        'evidence_reference':N+'-step1-success.evidence.json',
+        'evidence_digest':STEP1,
+        'recorded_at':STEP1_RECORDED,
+    }]
+    assert len(s1['binding_assertions'])==2
+    assert all((s['authorization_state'],s['execution_state'],s['verification_state'],s['authorization_consumed'])==('PENDING','NOT_STARTED','NOT_STARTED',False) for s in x['step_states'][1:])
+    assert all(s['evidence']==[] and s['binding_assertions']==[] and s['observed_postcondition'] is None and s['safe_error_code'] is None for s in x['step_states'][1:])
+    assert not (B/(N+'-step2-success.evidence.json')).exists()
+    assert not (B/(N+'-step3-success.evidence.json')).exists()
+
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-step1-success.evidence.json','.execution-progress.json'))
     rendered+='\n'+(B/'development-implementation-handoff-provider-adapter-positive-auth-v4-github-binding-drift-observation.evidence.json').read_text()
     assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
     assert 'gnuqaefotwgkwurjpyik' not in rendered
     for forbidden in ('service_role','Bearer eyJ'):
         assert forbidden not in rendered
 
-    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding drift retirement v1: PASS (APPROVED / UNEXECUTED; provider key recheck required before exact GitHub binding retirement)')
+    print('DEVELOPMENT provider-adapter positive-auth v4 GitHub binding drift retirement v1: PASS (Step 1 CONSUMED / SUCCEEDED / PASS; Steps 2-3 pending repository recording)')
 
 if __name__=='__main__':
     main()

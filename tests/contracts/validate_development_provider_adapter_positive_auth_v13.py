@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from avuhz_engineering.authorization_plan import initial_progress, plan_digest, progress_digest, validate_plan, validate_progress
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
 from avuhz_engineering.evidence_digest import evidence_digest
 from avuhz_runtime.implementation_handoff import canonical_digest
 
@@ -25,8 +25,10 @@ PROGRESS = "sha256:b0227e09710a65df4bc317a718b37183fd10d7de075db7b39c28aeb8537cc
 EXECUTOR = "sha256:3c2e2eb34caf44ae82c7e772c0fa80f75b6cba0632bd4b3be3f1340b2c5c547a"
 WORKFLOW = "sha256:e0693b76413813052c1251222a09441ad6c2e3f0c81880d0c55c654930cdfb2a"
 CREATED = "2026-10-07T02:10:38Z"
-START = "2026-10-07T05:30:00Z"
+START = "2026-10-07T03:30:00Z"
 END = "2026-10-07T05:30:00Z"
+APPROVED = "2026-10-07T02:24:05Z"
+APPROVAL = "sha256:8b8d6d842dcce50bfb013c2dde1c1a7296917f4f4e8dc43f2c3c07c8a74414ae"
 V10_STOP = "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0"
 V10_FAILURE = "sha256:d55ff4f7bcca05b03c5fc878f5fa2a09d95cd3b36b1716e181e4cd8bf3df2228"
 V10_RET1_PROGRESS = "sha256:980bd163d03623f901d1f80e0fd25fbb70a8e06f1e3de1620af29cfb56c6e5a2"
@@ -49,8 +51,10 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    a = load(N + ".approval.json")
     validate_plan(p, S)
     validate_progress(p, g, S)
+    validate_approval(p, a, S, START)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest({k:v for k,v in r.items() if k != "contract_digest"})
     assert prep["evidence_digest"] == PREP == evidence_digest(prep)
@@ -59,7 +63,7 @@ def main() -> int:
     assert g == initial_progress(p, S, g["progress_id"], CREATED)
 
     assert p["plan_id"] == "5d9f7b32-4e86-4ca1-b230-7f3d6e8a9b52"
-    assert p["plan_version"] == 12
+    assert p["plan_version"] == 13
     assert p["definition_status"] == "READY_FOR_APPROVAL"
     assert p["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
     assert p["authorization_window"] == {"binding_state":"BOUND","starts_at":START,"expires_at":END}
@@ -174,17 +178,30 @@ def main() -> int:
 
     assert g["overall_state"] == "NOT_STARTED" and g["record_version"] == 1
     assert all((s["authorization_state"],s["execution_state"],s["verification_state"],s["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False) for s in g["step_states"])
-    assert not (B / (N + ".approval.json")).exists()
+    assert a["approval_id"] == "7b4e2c91-6d35-4f8a-b120-9c5e3d7a6f42"
+    assert a["plan_id"] == p["plan_id"]
+    assert a["plan_version"] == 13
+    assert a["plan_digest"] == p["plan_digest"]
+    assert a["owner_identity"] == p["owner_identity"]
+    assert a["decision"] == "APPROVE"
+    assert a["environment"] == "DEVELOPMENT"
+    assert a["approved_at"] == APPROVED
+    assert APPROVED < START
+    assert a["effective_at"] == START
+    assert a["expires_at"] == END
+    assert a["status"] == "ACTIVE"
+    assert a["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert a["approval_digest"] == APPROVAL == approval_digest(a)
     assert not (B / (N + ".execution-progress.json")).exists()
 
-    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json"))
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json"))
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
     assert "gnuqaefotwgkwurjpyik" not in rendered
     assert "Bearer eyJ" not in rendered
     assert "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL" not in p.__str__()
     assert "impl_handoff_provider_adapter_positive_auth_v10_ephemeral" not in p.__str__()
 
-    print("DEVELOPMENT provider-adapter positive-auth v13: PASS (READY_FOR_APPROVAL / UNEXECUTED; v10 cleanup + v11/v12 late rejections bound; corrected v13 Step 4/5 wording; no provider authority)")
+    print("DEVELOPMENT provider-adapter positive-auth v13: PASS (APPROVED / UNEXECUTED; pre-window exact-plan approval canonical candidate; no provider action)")
     return 0
 
 if __name__ == "__main__":

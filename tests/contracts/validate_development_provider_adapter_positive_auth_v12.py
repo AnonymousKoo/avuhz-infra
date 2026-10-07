@@ -18,10 +18,10 @@ from avuhz_runtime.implementation_handoff import canonical_digest
 B = ROOT / "contracts/plans/v1"
 S = ROOT / "contracts/schemas/v1"
 N = "development-implementation-handoff-provider-adapter-positive-auth-v12"
-RESOURCE = "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
-PREP = "sha256:8b3bb7eb0716e8c29f593a7d856b5cbd40efd0a5fe239330924ec50d3f917726"
-PLAN = "sha256:f636af393ea4f3f817568a37772cc9ff8677d2fe1012693b47c00ea9f59a4db5"
-PROGRESS = "sha256:ed0f2dcc115bc745721a4ec4d587872b12ef40d022fb9770e64d04d3e4f19b3c"
+RESOURCE = "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
+PREP = "sha256:ae3cc1c1c3163afdc6140b622c0feb4594a2127328e49d65a11e78c0dab3bd3c"
+PLAN = "sha256:b6fcb1f503f73023fb71a54a8452e4d5d2eafecafae8a02a58ff481e413ec11c"
+PROGRESS = "sha256:140d16e84cb6a2e24241ba2faa8323f115a602779904d3b5a301383905aca771"
 EXECUTOR = "sha256:0e637e89ea20db20d869849680bf21fcc3122bdebd9c302da7062ecfa26e4949"
 WORKFLOW = "sha256:5c87dc19f85e7850a8a91b932a6ffb69cbac7cde76c9f45c136c264c77e3f42c"
 CREATED = "2026-10-07T01:16:01Z"
@@ -82,6 +82,7 @@ def main() -> int:
     assert r["production_authorized"] is False
 
     assert prep["canonical_source_main"] == "0130d38094e12c09c0428a23c132feb5535ed586"
+    assert r["lineage"]["canonical_source_main"] == "0130d38094e12c09c0428a23c132feb5535ed586"
     assert prep["resource_contract_digest"] == RESOURCE
     assert prep["authorization_window"] == {"starts_at":START,"expires_at":END}
     assert prep["predecessor_state"]["v10_overall_state"] == "STOPPED"

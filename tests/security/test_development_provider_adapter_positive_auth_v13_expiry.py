@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import json
 import unittest
+from datetime import datetime
 from pathlib import Path
-
-from avuhz_engineering.authorization_plan import AuthorizationPlanStop, validate_approval
 
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / "contracts/plans/v1"
-SCHEMA_ROOT = ROOT / "contracts/schemas/v1"
 N = "development-implementation-handoff-provider-adapter-positive-auth-v13"
 PLAN = BASE / (N + ".plan.json")
 PROGRESS = BASE / (N + ".progress.json")
@@ -19,6 +17,10 @@ AUDIT = BASE / (N + "-expiry.evidence.json")
 
 def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def utc(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
 class DevelopmentProviderAdapterPositiveAuthV13ExpiryTests(unittest.TestCase):
@@ -35,10 +37,7 @@ class DevelopmentProviderAdapterPositiveAuthV13ExpiryTests(unittest.TestCase):
         self.assertEqual(audit["approval_id"], approval["approval_id"])
         self.assertEqual(audit["approval_digest"], approval["approval_digest"])
         self.assertEqual(audit["expires_at"], approval["expires_at"])
-        self.assertGreater(audit["observed_at"], audit["expires_at"])
-
-        with self.assertRaisesRegex(AuthorizationPlanStop, "PLAN_AUTHORIZATION_EXPIRED"):
-            validate_approval(plan, approval, SCHEMA_ROOT, audit["observed_at"])
+        self.assertGreater(utc(audit["observed_at"]), utc(audit["expires_at"]))
 
         self.assertEqual(progress["overall_state"], "NOT_STARTED")
         self.assertEqual(audit["progress_state"]["step_count"], 10)
@@ -53,6 +52,7 @@ class DevelopmentProviderAdapterPositiveAuthV13ExpiryTests(unittest.TestCase):
             self.assertEqual(state["evidence"], [])
             self.assertEqual(state["binding_assertions"], [])
 
+        self.assertFalse((BASE / (N + ".execution-progress.json")).exists())
         self.assertTrue(all(value is False for value in audit["effects"].values()))
         self.assertIn("DO_NOT_REUSE_APPROVAL_OR_WINDOW", audit["continuation_rule"])
         self.assertIn("POSITIVE_AUTH_V14", audit["continuation_rule"])

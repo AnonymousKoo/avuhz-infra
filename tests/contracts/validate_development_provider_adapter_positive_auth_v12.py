@@ -34,7 +34,8 @@ V10_KEY_RETIRE = "sha256:35044d1166daa983e06781334c05d0002f877992cc9d9ca2ebe6a8b
 V10_KEY_ABSENCE = "sha256:cfaeca271afa9a51db7ff0390f45548a6e7b9e1864436c51e7d3acd1a89ae0e7"
 V10_INCIDENT = "sha256:45c5a8f402d6d675ef25e1b4d77c1ad4c6a9f2a5090d1d11e36ed00bea873355"
 V10_RET2_PROGRESS = "sha256:edc6600fb780bdff9b9b699d884d2fe739abcf1876f9af2cee27b246b1b5fd4a"
-V10_GITHUB_ABSENCE = "sha256:1bef85f2ce88601d1a895ea9cb0ce5c9d2bb35a61ffcb05dbf15ecb9d15eacea"\nV11_LATE = "sha256:81d4aa6893f1d378863ad15d33b88543de4ed1e8f5f99a252deb4ad0408e5380"
+V10_GITHUB_ABSENCE = "sha256:1bef85f2ce88601d1a895ea9cb0ce5c9d2bb35a61ffcb05dbf15ecb9d15eacea"
+V11_LATE = "sha256:81d4aa6893f1d378863ad15d33b88543de4ed1e8f5f99a252deb4ad0408e5380"
 
 def load(name: str) -> dict:
     return json.loads((B / name).read_text())
@@ -88,8 +89,15 @@ def main() -> int:
     assert prep["predecessor_state"]["v10_plan_integrity_failure_evidence_digest"] == V10_FAILURE
     assert prep["predecessor_state"]["v10_retirement_v1_steps1_2_progress_digest"] == V10_RET1_PROGRESS
     assert prep["predecessor_state"]["v10_retirement_v2_overall_state"] == "COMPLETED"
-    assert prep["predecessor_state"]["v10_retirement_v2_progress_digest"] == V10_RET2_PROGRESS\n    assert prep["predecessor_state"]["v11_plan_id"] == "1f7c3e92-5a64-4b8d-a210-6e9c2d5f7b41"\n    assert prep["predecessor_state"]["v11_plan_digest"] == "sha256:3fd1c42b6a5eb10958c13b9c99e64be806f7278e16415d6b931c2410de09f7fa"\n    assert prep["predecessor_state"]["v11_late_rejection_evidence_digest"] == V11_LATE\n    assert prep["predecessor_state"]["v11_approval_outcome"] == "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE"\n    assert prep["predecessor_state"]["v11_provider_authority_activated"] is False\n    assert prep["whole_boundary_integrity"]["active_version"] == "v12"
-    assert prep["whole_boundary_integrity"]["stale_active_v10_namespace_allowed"] is False\n    assert prep["whole_boundary_integrity"]["stale_active_v11_namespace_allowed"] is False
+    assert prep["predecessor_state"]["v10_retirement_v2_progress_digest"] == V10_RET2_PROGRESS
+    assert prep["predecessor_state"]["v11_plan_id"] == "1f7c3e92-5a64-4b8d-a210-6e9c2d5f7b41"
+    assert prep["predecessor_state"]["v11_plan_digest"] == "sha256:3fd1c42b6a5eb10958c13b9c99e64be806f7278e16415d6b931c2410de09f7fa"
+    assert prep["predecessor_state"]["v11_late_rejection_evidence_digest"] == V11_LATE
+    assert prep["predecessor_state"]["v11_approval_outcome"] == "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE"
+    assert prep["predecessor_state"]["v11_provider_authority_activated"] is False
+    assert prep["whole_boundary_integrity"]["active_version"] == "v12"
+    assert prep["whole_boundary_integrity"]["stale_active_v10_namespace_allowed"] is False
+    assert prep["whole_boundary_integrity"]["stale_active_v11_namespace_allowed"] is False
     assert prep["whole_boundary_integrity"]["step4_resource_wording"] == "v12"
     assert prep["whole_boundary_integrity"]["step5_credential_wording"] == "v12"
     assert all(v is False for v in prep["security_state"].values())
@@ -101,7 +109,9 @@ def main() -> int:
     v10_key_absence = load("development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v1-step2-success.evidence.json")
     v10_incident = load("development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v1-post-window-github-outcome.evidence.json")
     v10_ret2 = load("development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v2.execution-progress.json")
-    v10_github = load("development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v2-step1-success.evidence.json")\n    v11_late = load("development-implementation-handoff-provider-adapter-positive-auth-v11-late-window-rejection.evidence.json")\n
+    v10_github = load("development-implementation-handoff-provider-adapter-positive-auth-v10-key-retirement-v2-step1-success.evidence.json")
+    v11_late = load("development-implementation-handoff-provider-adapter-positive-auth-v11-late-window-rejection.evidence.json")
+
     assert v10_stop["overall_state"] == "STOPPED"
     assert v10_stop["progress_digest"] == V10_STOP == r["required_v10_stopped_progress_digest"]
     assert evidence_digest(v10_failure) == V10_FAILURE == r["required_v10_plan_integrity_failure_evidence_digest"]
@@ -118,7 +128,12 @@ def main() -> int:
     assert v10_incident["authorization_assessment"]["fresh_forward_only_v2_absence_reconciliation_required"] is True
     assert v10_ret2["overall_state"] == "COMPLETED"
     assert v10_ret2["progress_digest"] == V10_RET2_PROGRESS == r["required_v10_retirement_v2_progress_digest"]
-    assert evidence_digest(v10_github) == V10_GITHUB_ABSENCE == r["required_v10_github_absence_evidence_digest"]\n    assert evidence_digest(v11_late) == V11_LATE == r["required_v11_late_rejection_evidence_digest"]\n    assert v11_late["outcome"] == "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE"\n    assert v11_late["approval_artifact_created"] is False\n    assert v11_late["approval_canonicalized"] is False\n
+    assert evidence_digest(v10_github) == V10_GITHUB_ABSENCE == r["required_v10_github_absence_evidence_digest"]
+    assert evidence_digest(v11_late) == V11_LATE == r["required_v11_late_rejection_evidence_digest"]
+    assert v11_late["outcome"] == "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE"
+    assert v11_late["approval_artifact_created"] is False
+    assert v11_late["approval_canonicalized"] is False
+
     assert len(p["steps"]) == 10
     assert [s["ordinal"] for s in p["steps"]] == list(range(1,11))
     assert all(s["resource"]["exact_version"] == "provider-adapter-positive-auth.v12" for s in p["steps"])
@@ -140,7 +155,9 @@ def main() -> int:
         assert ("auth.provider-adapter-positive-auth.admin-credential.absence-verified", V10_KEY_ABSENCE) in required
         assert ("auth.provider-adapter-positive-auth-v10.key-retirement-v1.post-window-github-outcome-observed", V10_INCIDENT) in required
         assert ("authorization-plan.execution-progress", V10_RET2_PROGRESS) in required
-        assert ("auth.provider-adapter-positive-auth.github-binding.absence-verified", V10_GITHUB_ABSENCE) in required\n        assert ("auth.provider-adapter-positive-auth-v11.late-approval-rejected", V11_LATE) in required\n
+        assert ("auth.provider-adapter-positive-auth.github-binding.absence-verified", V10_GITHUB_ABSENCE) in required
+        assert ("auth.provider-adapter-positive-auth-v11.late-approval-rejected", V11_LATE) in required
+
     assert g["overall_state"] == "NOT_STARTED" and g["record_version"] == 1
     assert all((s["authorization_state"],s["execution_state"],s["verification_state"],s["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False) for s in g["step_states"])
     assert not (B / (N + ".approval.json")).exists()

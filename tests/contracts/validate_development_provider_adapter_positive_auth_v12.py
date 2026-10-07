@@ -27,6 +27,8 @@ WORKFLOW = "sha256:5c87dc19f85e7850a8a91b932a6ffb69cbac7cde76c9f45c136c264c77e3f
 CREATED = "2026-10-07T01:16:01Z"
 START = "2026-10-07T01:45:00Z"
 END = "2026-10-07T03:30:00Z"
+LATE_REJECTION = "sha256:efd327d5f86b5c4db51601bf479620d2d5d733bcb9c921f2a3b33f0374b02b31"
+LATE_OBSERVED = "2026-10-07T01:55:13Z"
 V10_STOP = "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0"
 V10_FAILURE = "sha256:d55ff4f7bcca05b03c5fc878f5fa2a09d95cd3b36b1716e181e4cd8bf3df2228"
 V10_RET1_PROGRESS = "sha256:980bd163d03623f901d1f80e0fd25fbb70a8e06f1e3de1620af29cfb56c6e5a2"
@@ -48,6 +50,7 @@ def main() -> int:
     prep = load(N + "-preparation.evidence.json")
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
+    late = load(N + "-late-window-rejection.evidence.json")
     validate_plan(p, S)
     validate_progress(p, g, S)
 
@@ -159,19 +162,37 @@ def main() -> int:
         assert ("auth.provider-adapter-positive-auth.github-binding.absence-verified", V10_GITHUB_ABSENCE) in required
         assert ("auth.provider-adapter-positive-auth-v11.late-approval-rejected", V11_LATE) in required
 
+    assert late["evidence_digest"] == LATE_REJECTION == canonical_digest(
+        {k: v for k, v in late.items() if k != "evidence_digest"}
+    )
+    assert late["candidate_plan_id"] == p["plan_id"]
+    assert late["candidate_plan_version"] == 12
+    assert late["candidate_plan_digest"] == PLAN
+    assert late["approval_instruction_received"] is True
+    assert late["approval_artifact_created"] is False
+    assert late["approval_canonicalized"] is False
+    assert late["candidate_effective_at"] == START
+    assert late["candidate_expires_at"] == END
+    assert late["approval_observed_at"] == LATE_OBSERVED
+    assert LATE_OBSERVED > START
+    assert late["outcome"] == "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE"
+    assert late["safe_error_code"] == "PLAN_AUTHORIZATION_EXPIRED"
+    assert all(v is False for v in late["provider_effects"].values())
+    assert late["continuation_rule"] == "CREATE_FRESH_FORWARD_ONLY_POSITIVE_AUTH_V13"
+
     assert g["overall_state"] == "NOT_STARTED" and g["record_version"] == 1
     assert all((s["authorization_state"],s["execution_state"],s["verification_state"],s["authorization_consumed"]) == ("PENDING","NOT_STARTED","NOT_STARTED",False) for s in g["step_states"])
     assert not (B / (N + ".approval.json")).exists()
     assert not (B / (N + ".execution-progress.json")).exists()
 
-    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json"))
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json","-late-window-rejection.evidence.json"))
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
     assert "gnuqaefotwgkwurjpyik" not in rendered
     assert "Bearer eyJ" not in rendered
     assert "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL" not in p.__str__()
     assert "impl_handoff_provider_adapter_positive_auth_v10_ephemeral" not in p.__str__()
 
-    print("DEVELOPMENT provider-adapter positive-auth v12: PASS (READY_FOR_APPROVAL / UNEXECUTED; v10 cleanup + v11 late rejection bound; corrected v12 Step 4/5 wording; no provider authority)")
+    print("DEVELOPMENT provider-adapter positive-auth v12: PASS (LATE APPROVAL REJECTED / UNAPPROVED / UNEXECUTED; forward-only v13 required; no provider authority)")
     return 0
 
 if __name__ == "__main__":

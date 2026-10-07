@@ -39,7 +39,7 @@
         "resource_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v12_ephemeral",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-admin-credential.create-dedicated-secret-key",
       "dependency_step_ids": [],
@@ -48,7 +48,7 @@
           "evidence_type": "auth.provider-adapter-positive-auth-v12.preparation.observed",
           "source_step_id": null,
           "binding_state": "BOUND",
-          "exact_digest": "sha256:8b3bb7eb0716e8c29f593a7d856b5cbd40efd0a5fe239330924ec50d3f917726"
+          "exact_digest": "sha256:ae3cc1c1c3163afdc6140b622c0feb4594a2127328e49d65a11e78c0dab3bd3c"
         },
         {
           "evidence_type": "auth.provider-adapter-passwordless-state.verified",
@@ -316,7 +316,7 @@
         "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V12_EPHEMERAL",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-secret-binding.create-github-environment-reference",
       "dependency_step_ids": [
@@ -417,7 +417,7 @@
         "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V12_EPHEMERAL",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-secret-binding.verify-github-environment-reference",
       "dependency_step_ids": [
@@ -518,7 +518,7 @@
         "resource_reference": "supabase:pwlhruwutoitnieactol:provider-adapter-positive-auth-v12-preflight",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-state.inspect-aggregate-only-via-supabase-mcp",
       "dependency_step_ids": [
@@ -535,7 +535,7 @@
           "evidence_type": "auth.provider-adapter-positive-auth-v12.preparation.observed",
           "source_step_id": null,
           "binding_state": "BOUND",
-          "exact_digest": "sha256:8b3bb7eb0716e8c29f593a7d856b5cbd40efd0a5fe239330924ec50d3f917726"
+          "exact_digest": "sha256:ae3cc1c1c3163afdc6140b622c0feb4594a2127328e49d65a11e78c0dab3bd3c"
         },
         {
           "evidence_type": "auth.provider-adapter-passwordless-state.verified",
@@ -815,7 +815,7 @@
         "resource_reference": "supabase:pwlhruwutoitnieactol:provider-adapter-positive-auth-v12-live-lifecycle",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-session.provider-adapter-recover-validate-live-probe-and-logout-global",
       "dependency_step_ids": [
@@ -954,7 +954,7 @@
         "resource_reference": "supabase:pwlhruwutoitnieactol:provider-adapter-positive-auth-v12-session-readback",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-session-state.inspect-read-only-via-supabase-mcp",
       "dependency_step_ids": [
@@ -1058,7 +1058,7 @@
         "resource_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v12_ephemeral",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-admin-credential.delete-dedicated-secret-key",
       "dependency_step_ids": [
@@ -1160,7 +1160,7 @@
         "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V12_EPHEMERAL",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-secret-binding.delete-github-environment-reference",
       "dependency_step_ids": [
@@ -1261,7 +1261,7 @@
         "resource_reference": "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v12_ephemeral",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-admin-credential.verify-dedicated-secret-key-absent",
       "dependency_step_ids": [
@@ -1366,7 +1366,7 @@
         "resource_reference": "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V12_EPHEMERAL",
         "binding_state": "BOUND",
         "exact_version": "provider-adapter-positive-auth.v12",
-        "exact_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+        "exact_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
       },
       "operation": "provider.auth-secret-binding.verify-github-environment-reference-absent",
       "dependency_step_ids": [
@@ -1494,5 +1494,5 @@
     "unexpected.provider-effect"
   ],
   "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
-  "plan_digest": "sha256:f636af393ea4f3f817568a37772cc9ff8677d2fe1012693b47c00ea9f59a4db5"
+  "plan_digest": "sha256:b6fcb1f503f73023fb71a54a8452e4d5d2eafecafae8a02a58ff481e413ec11c"
 }

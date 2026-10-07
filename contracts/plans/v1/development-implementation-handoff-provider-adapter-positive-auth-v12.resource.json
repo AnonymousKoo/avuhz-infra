@@ -186,7 +186,7 @@
     "v6_github_absence_evidence_digest": "sha256:a92e3926482aaed1ac19c241aef6d23b0079f47e1087c77bc65797dd11f99d76",
     "v4_binding_reconciliation_completed_progress_digest": "sha256:57365c1791a9548568bb19515f70270e80b4ff1e4f3fa26f4560ebb6a3a572e9",
     "v4_binding_reconciliation_evidence_digest": "sha256:1c0b6abf5a3e49ffd9dec1b2573918f4e7046ae7dd0144e6d31645d09bcf2773",
-    "canonical_source_main": "6c7af0eef8bffdaa881dffe864ed961255435d62",
+    "canonical_source_main": "0130d38094e12c09c0428a23c132feb5535ed586",
     "v7_plan_id": "f3c4d8b1-9e8a-4f2d-9b07-5a7c8d2e1f66",
     "v7_plan_digest": "sha256:4a067f4884186a7bb447d1ae3eb3248daeb2e024c586a97b3d564cc366f0011c",
     "v7_late_rejection_evidence_digest": "sha256:5ea9bd9fade9a6b5674f190bc133a7aa70233e06c50193e7125f26303d8eca5b",
@@ -252,5 +252,5 @@
   "required_v10_retirement_v2_progress_digest": "sha256:edc6600fb780bdff9b9b699d884d2fe739abcf1876f9af2cee27b246b1b5fd4a",
   "required_v10_github_absence_evidence_digest": "sha256:1bef85f2ce88601d1a895ea9cb0ce5c9d2bb35a61ffcb05dbf15ecb9d15eacea",
   "required_v11_late_rejection_evidence_digest": "sha256:81d4aa6893f1d378863ad15d33b88543de4ed1e8f5f99a252deb4ad0408e5380",
-  "contract_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b"
+  "contract_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5"
 }

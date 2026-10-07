@@ -5,7 +5,7 @@
   "provider_reference": "supabase",
   "project_reference": "pwlhruwutoitnieactol",
   "canonical_source_main": "0130d38094e12c09c0428a23c132feb5535ed586",
-  "resource_contract_digest": "sha256:ee6aac7530858cd69c03aed0d34049b223f02f6881b3c1cd686268133577861b",
+  "resource_contract_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5",
   "authorization_window": {
     "starts_at": "2026-10-07T01:45:00Z",
     "expires_at": "2026-10-07T03:30:00Z"
@@ -56,5 +56,5 @@
   "record_basis": "CANONICAL_V10_STOP_PLUS_V10_RETIREMENT_V1_PARTIAL_HISTORY_AND_COMPLETED_V10_RETIREMENT_V2_AND_SEALED_V12_SOURCE",
   "recorded_at": "2026-10-07T00:28:21Z",
   "prepared_at": "2026-10-07T01:16:01Z",
-  "evidence_digest": "sha256:8b3bb7eb0716e8c29f593a7d856b5cbd40efd0a5fe239330924ec50d3f917726"
+  "evidence_digest": "sha256:ae3cc1c1c3163afdc6140b622c0feb4594a2127328e49d65a11e78c0dab3bd3c"
 }

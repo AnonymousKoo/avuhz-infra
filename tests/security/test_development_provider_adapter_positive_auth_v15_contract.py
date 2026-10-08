@@ -12,6 +12,7 @@ from pathlib import Path
 
 from avuhz_engineering.authorization_plan import (
     AuthorizationPlanStop,
+    approval_digest,
     plan_digest,
     progress_digest,
     validate_approval,
@@ -95,8 +96,26 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
         self.assertFalse(resource["data_operation_authorized"])
         self.assertFalse(resource["production_authorized"])
         self.assertFalse(resource["render_mutation_authorized"])
-        with self.assertRaises(AuthorizationPlanStop):
-            validate_approval(plan, {}, ROOT / "contracts/schemas/v1", "2026-10-09T13:00:00Z")
+        # A shape-valid, in-memory fixture cannot grant authority to DRAFT_BLOCKED.
+        # Never create an approval artifact or authorize a provider operation.
+        fake_approval = {
+            "approval_id": "32b0e879-3bf8-47cb-a98a-f995d37711e0",
+            "plan_id": plan["plan_id"],
+            "plan_version": plan["plan_version"],
+            "plan_digest": plan["plan_digest"],
+            "owner_identity": plan["owner_identity"],
+            "decision": "APPROVE",
+            "environment": "DEVELOPMENT",
+            "effective_at": "2026-10-09T13:00:00Z",
+            "expires_at": "2026-10-11T13:00:00Z",
+            "approved_at": "2026-10-08T15:00:00Z",
+            "status": "ACTIVE",
+            "authority_scope": "EXACT_PLAN_ONLY",
+        }
+        fake_approval["approval_digest"] = approval_digest(fake_approval)
+        with self.assertRaises(AuthorizationPlanStop) as stopped:
+            validate_approval(plan, fake_approval, ROOT / "contracts/schemas/v1", "2026-10-09T13:00:00Z")
+        self.assertEqual(str(stopped.exception), "PLAN_UNRESOLVED")
 
     def test_one_lifecycle_and_no_separate_automation_or_data_path(self):
         plan, resource = load("plan"), load("resource")

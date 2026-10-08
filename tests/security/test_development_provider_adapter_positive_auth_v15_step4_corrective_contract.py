@@ -68,8 +68,29 @@ class CorrectiveV15DispatchContractTests(unittest.TestCase):
         self.assertEqual(cleanup["status"], "ACTIVE")
         self.assertEqual(cleanup["expires_at"], "2026-10-10T16:30:00Z")
 
-    def test_no_corrective_owner_approval_or_runtime_execution_before_owner_review(self):
-        self.assertFalse((DIR / (BOUNDARY + ".approval.json")).exists())
+    def test_exact_corrective_approval_is_time_gated(self):
+        from avuhz_engineering.authorization_plan import approval_digest, validate_approval
+        plan = load(BOUNDARY + ".plan.json")
+        approval = load(BOUNDARY + ".approval.json")
+        progress = load(BOUNDARY + ".progress.json")
+        self.assertEqual(approval["plan_id"], "4fcaf2f0-53d9-40bb-ac8a-a8cde8869f7c")
+        self.assertEqual(approval["plan_digest"], plan["plan_digest"])
+        self.assertEqual(approval["owner_identity"], "github:AnonymousKoo")
+        self.assertEqual(approval["decision"], "APPROVE")
+        self.assertEqual(approval["status"], "ACTIVE")
+        self.assertEqual(approval["authority_scope"], "EXACT_PLAN_ONLY")
+        self.assertEqual(approval["environment"], "DEVELOPMENT")
+        self.assertEqual(approval["effective_at"], "2026-10-08T18:00:00Z")
+        self.assertEqual(approval["expires_at"], "2026-10-10T16:30:00Z")
+        self.assertEqual(approval["approved_at"], "2026-10-08T17:34:08Z")
+        self.assertEqual(approval["approval_digest"], approval_digest(approval))
+        self.assertEqual(progress["overall_state"], "NOT_STARTED")
+        self.assertEqual(progress["step_states"][0]["execution_state"], "NOT_STARTED")
+        validate_approval(plan, approval, SCHEMAS, "2026-10-08T18:00:00Z")
+        for outside in ("2026-10-08T17:59:59Z", "2026-10-10T16:30:00Z"):
+            with self.subTest(outside=outside), self.assertRaises(AuthorizationPlanStop) as stopped:
+                validate_approval(plan, approval, SCHEMAS, outside)
+            self.assertEqual(str(stopped.exception), "PLAN_AUTHORIZATION_EXPIRED")
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("github.run_number == 1", workflow)
         self.assertIn("github.run_attempt == 1", workflow)

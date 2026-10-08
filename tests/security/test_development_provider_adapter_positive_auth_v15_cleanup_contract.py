@@ -72,12 +72,30 @@ class PositiveAuthV15CleanupFallbackContractTests(unittest.TestCase):
             "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_EPHEMERAL",
         )
 
-    def test_no_approval_artifact_and_no_environment_secret(self) -> None:
-        self.assertFalse((BASE / f"{NAME}.approval.json").exists())
-        for kind in ("plan", "progress", "resource"):
+    def test_exact_owner_approval_is_time_gated_and_no_secret_is_committed(self) -> None:
+        plan, progress, approval = load("plan"), load("progress"), load("approval")
+        self.assertEqual(approval["plan_id"], plan["plan_id"])
+        self.assertEqual(approval["plan_digest"], plan["plan_digest"])
+        self.assertEqual(approval["owner_identity"], "github:AnonymousKoo")
+        self.assertEqual(approval["environment"], "DEVELOPMENT")
+        self.assertEqual(approval["authority_scope"], "EXACT_PLAN_ONLY")
+        self.assertEqual(approval["effective_at"], "2026-10-08T16:30:00Z")
+        self.assertEqual(approval["expires_at"], "2026-10-10T16:30:00Z")
+        self.assertEqual(progress["overall_state"], "NOT_STARTED")
+
+        # Approval must be valid *inside* the exact window, never before or after.
+        validate_approval(plan, approval, ROOT / "contracts/schemas/v1", "2026-10-08T16:30:00Z")
+        for outside in ("2026-10-08T16:29:59Z", "2026-10-10T16:30:00Z"):
+            with self.subTest(outside=outside), self.assertRaises(AuthorizationPlanStop) as stopped:
+                validate_approval(plan, approval, ROOT / "contracts/schemas/v1", outside)
+            self.assertEqual(str(stopped.exception), "PLAN_AUTHORIZATION_EXPIRED")
+
+        for kind in ("plan", "progress", "resource", "approval"):
             text = (BASE / f"{NAME}.{kind}.json").read_text()
             self.assertNotIn("sb_secret_", text)
             self.assertNotIn("Bearer eyJ", text)
+            self.assertNotIn('"access_token":', text)
+            self.assertNotIn('"refresh_token":', text)
 
     def test_derived_steps_depending_on_zero_proof(self) -> None:
         plan = load("plan")

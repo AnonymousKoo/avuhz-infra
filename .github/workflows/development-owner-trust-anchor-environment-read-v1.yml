@@ -1,0 +1,138 @@
+name: DEVELOPMENT Owner Trust Anchor Environment Read v1 (READ ONLY)
+
+# Separate read-only check: NEVER dispatch the existing one-shot handoff workflow.
+# No secrets context, credential resolution, token minting, Supabase or command call.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-owner-trust-anchor-environment-read-v1
+  cancel-in-progress: false
+
+jobs:
+  inspect-owner-public-variables:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'AnonymousKoo' &&
+      github.actor_id == 168945054 &&
+      github.triggering_actor == 'AnonymousKoo' &&
+      github.repository == 'AnonymousKoo/avuhz-infra' &&
+      github.run_attempt == 1
+    runs-on: ubuntu-latest
+    environment: development
+    timeout-minutes: 4
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: 'src:.'
+      AVUHZ_BOUND_ENVIRONMENT: development
+      # Values come only from GitHub Actions Environment VARIABLES, never secrets.
+      AVUHZ_OBSERVED_OWNER_PUBLIC_KEY: ${{ vars.AVUHZ_HANDOFF_OWNER_ED25519_PUBLIC_KEY_BASE64 }}
+      AVUHZ_OBSERVED_OWNER_FINGERPRINT: ${{ vars.AVUHZ_HANDOFF_OWNER_ED25519_FINGERPRINT }}
+
+    steps:
+      - name: Checkout exact protected-main dispatch SHA, no persisted token
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Check actual DEVELOPMENT environment public values, no activation
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 - <<'PY'
+          import os
+          import subprocess
+          from avuhz_engineering.development_handoff_owner_trust_anchor import (
+              DevelopmentTrustAnchorStop,
+              ENV_FINGERPRINT,
+              ENV_PUBLIC_KEY,
+              prepare_development_owner_trust_anchor_candidate,
+          )
+          from avuhz_service.development import (
+              DEVELOPMENT_AUTH_PROJECT_REF, DEVELOPMENT_DATA_PROJECT_REF,
+          )
+
+          def git_value(*args):
+              return subprocess.check_output(
+                  ["git", *args], text=True, timeout=20,
+                  stderr=subprocess.DEVNULL
+              ).strip()
+
+          try:
+              # GitHub-supplied context only; the workflow source binds the
+              # job to the development environment and variables namespace.
+              g = os.environ
+              if not (
+                  g["GITHUB_ACTIONS"] == "true"
+                  and g["GITHUB_EVENT_NAME"] == "workflow_dispatch"
+                  and g["GITHUB_REPOSITORY"] == "AnonymousKoo/avuhz-infra"
+                  and g["GITHUB_REPOSITORY_ID"] == "1231399336"
+                  and g["GITHUB_ACTOR"] == "AnonymousKoo"
+                  and g["GITHUB_ACTOR_ID"] == "168945054"
+                  and g["GITHUB_TRIGGERING_ACTOR"] == "AnonymousKoo"
+                  and g["GITHUB_REF"] == "refs/heads/main"
+                  and g["GITHUB_RUN_ATTEMPT"] == "1"
+                  and g["GITHUB_WORKFLOW_REF"] ==
+                  "AnonymousKoo/avuhz-infra/.github/workflows/"
+                  "development-owner-trust-anchor-environment-read-v1.yml"
+                  "@refs/heads/main"
+                  and g["GITHUB_WORKFLOW_SHA"] == g["GITHUB_SHA"]
+                  and g["AVUHZ_BOUND_ENVIRONMENT"] == "development"
+              ):
+                  raise ValueError("untrusted GitHub invocation")
+              sha = g["GITHUB_SHA"]
+              if len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
+                  raise ValueError("invalid source sha")
+              remote = git_value("ls-remote", "--exit-code", "origin", "refs/heads/main")
+              observed = remote.split()
+              if not (
+                  len(observed) == 2 and observed[1] == "refs/heads/main"
+                  and observed[0] == sha
+                  and git_value("rev-parse", "HEAD") == sha
+                  and git_value("remote", "get-url", "origin") in (
+                      "https://github.com/AnonymousKoo/avuhz-infra",
+                      "https://github.com/AnonymousKoo/avuhz-infra.git",
+                  )
+              ):
+                  raise ValueError("source drift")
+
+              candidate = prepare_development_owner_trust_anchor_candidate(
+                  environment_values={
+                      ENV_PUBLIC_KEY: g.get("AVUHZ_OBSERVED_OWNER_PUBLIC_KEY", ""),
+                      ENV_FINGERPRINT: g.get("AVUHZ_OBSERVED_OWNER_FINGERPRINT", ""),
+                  },
+                  observed_repository=g["GITHUB_REPOSITORY"],
+                  observed_environment=g["AVUHZ_BOUND_ENVIRONMENT"],
+                  observed_owner_identity="github:" + g["GITHUB_ACTOR"],
+                  observed_auth_project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
+                  observed_data_project_ref=DEVELOPMENT_DATA_PROJECT_REF,
+              )
+          except (DevelopmentTrustAnchorStop, Exception):
+              # Never print environment values, exception bodies or identities.
+              raise SystemExit("HANDOFF_DEVELOPMENT_ENVIRONMENT_PUBLIC_PIN_UNVERIFIED") from None
+
+          if (
+              candidate.actual_github_environment_setting_verified
+              or candidate.independent_owner_identity_verified
+              or candidate.owner_key_enrolled_in_trusted_runner
+              or candidate.signed_stage_approvals_verified
+              or candidate.credential_resolution_authorized
+              or candidate.live_command_authorized
+          ):
+              raise SystemExit("HANDOFF_OWNER_ANCHOR_AUTHORITY_BYPASS")
+
+          print("github_development_environment_public_variables_match=PASS")
+          print("git_source_and_owner_dispatch_context=PASS")
+          print("human_owner_binding_verified=false")
+          print("signed_stage_approvals_verified=false")
+          print("credential_resolution_authorized=false")
+          print("live_command_authorized=false")
+          print("supabase_contact_attempted=false")
+          PY

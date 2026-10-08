@@ -75,6 +75,7 @@ def verify_trusted_github_invocation(
         not isinstance(environment, Mapping)
         or not REQUIRED_ENVIRONMENT <= set(environment)
         or not isinstance(event, dict)
+        or not event
     ):
         _deny("HANDOFF_GITHUB_INVOCATION_MISSING")
     try:

@@ -38,7 +38,20 @@ FAILURE = "sha256:63c1246fb571cc86cf01bbb994942c36d4438f9cd720028114abd53d3b5144
 STOPPED = "sha256:9bcf3c8a65985a96c3f4f1a8f9095f376a92be73639ea3ea414621551c2e100b"
 STEP1_EVIDENCE = "sha256:1f5e8fb6fa6301deacbc6af77aba926760d6c88f402d4bf1550673411f04e567"
 STEP1_RESULT = "sha256:1965169e8daee90640da9a385eab12bce790c7389ffc3cc5868084d58b8b78d7"
-EXECUTION_PROGRESS = "sha256:b039f5495d2f8a1be85827dd8afe3e7d090479c5e7809201b74fc7107f24ad7b"
+STEP2_EVIDENCE = "sha256:688f22f028dacb8a6c92c36895f6d8c1c4e2d62223638fe4c6080fd970084bf7"
+STEP3_EVIDENCE = "sha256:40b1e3916bfbf750581a76f7cc8b2c1aa329c517995ea534801e88278d1f9e20"
+STEP4_EVIDENCE = "sha256:8619f39ae3b45e82ec745abd02356efb3e7e64e26c2909bbc341554bdf1bac04"
+STEP5_EVIDENCE = "sha256:9780ee259516fd6662da9f925e69f63bf607243b6cafe828fa1ad2014897d98d"
+STEP2_RESULT = "sha256:54e4d79ed0a72dd94af8844b33d4978a214da9034d742a16d33517a684481edd"
+STEP3_RESULT = "sha256:63eaf7a4e1677885a4542d8c99bb3cc4248eb065a1c5e3fb253f41bb37f853e4"
+STEP4_RESULT = "sha256:f856b640840d6c9535e38aa4db722629ac3cd9b4965282c5f0709376783439d1"
+STEP5_RESULT = "sha256:f0eb401b17b6810bf38a8684c7100f9f65e19c22cb726ea9644c9fd323840a5e"
+STEP2_AUTH = "sha256:c4a806f7584a855b1484b03aeaec68e057ebbb170667fc6c28d8f56ff5238c0a"
+STEP3_AUTH = "sha256:16582e6c75cfa36516494662f57f8e9470d188cf4a3eb843387a1f4e6fe7d8f1"
+STEP4_AUTH = "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854"
+STEP5_AUTH = "sha256:c77d5d601bef711d7a8418ef992fc0053d52e279d9fa041c5e3497908d7a7ca7"
+EXECUTION_PROGRESS = "sha256:21c51f1655487edabc0a8dd5d902e0dc8fc0efa91f68c3c5fc44ed5aa60ba0fb"
+COMPLETED_AT = "2026-10-08T12:20:38Z"
 
 
 def load(suffix: str) -> dict:
@@ -53,6 +66,10 @@ def main() -> int:
     progress = load(".progress.json")
     approval = load(".approval.json")
     step1_evidence = load("-step1-success.evidence.json")
+    step2_evidence = load("-step2-success.evidence.json")
+    step3_evidence = load("-step3-success.evidence.json")
+    step4_evidence = load("-step4-success.evidence.json")
+    step5_evidence = load("-step5-success.evidence.json")
     execution_progress = load(".execution-progress.json")
 
     validate_plan(plan, S)
@@ -188,31 +205,80 @@ def main() -> int:
     assert step1_evidence["execution_observation"]["provider_mutation_attempted"] is False
     assert all(value is False for value in step1_evidence["security_state"].values())
 
+    for evidence_obj, expected_digest, expected_type, expected_result, expected_auth in (
+        (step2_evidence, STEP2_EVIDENCE, "auth.provider-adapter-positive-auth.admin-credential.retired", STEP2_RESULT, STEP2_AUTH),
+        (step3_evidence, STEP3_EVIDENCE, "auth.provider-adapter-positive-auth.github-binding.retired", STEP3_RESULT, STEP3_AUTH),
+        (step4_evidence, STEP4_EVIDENCE, "auth.provider-adapter-positive-auth.admin-credential.absence-verified", STEP4_RESULT, STEP4_AUTH),
+        (step5_evidence, STEP5_EVIDENCE, "auth.provider-adapter-positive-auth.github-binding.absence-verified", STEP5_RESULT, STEP5_AUTH),
+    ):
+        assert evidence_digest(evidence_obj) == expected_digest
+        assert evidence_obj["evidence_type"] == expected_type
+        assert evidence_obj["plan_id"] == PLAN_ID
+        assert evidence_obj["plan_digest"] == PLAN_DIGEST
+        assert evidence_obj["approval_id"] == APPROVAL_ID
+        assert evidence_obj["approval_digest"] == APPROVAL_DIGEST
+        assert evidence_obj["attempt"] == 1
+        assert evidence_obj["outcome"] == "SUCCEEDED_VERIFIED"
+        assert evidence_obj["authorization_observation_digest"] == expected_auth == canonical_digest(evidence_obj["authorization_observation"])
+        assert evidence_obj["result_digest"] == expected_result == canonical_digest(evidence_obj["sanitized_result"])
+        assert evidence_obj["recorded_at"] == COMPLETED_AT
+        assert not any(evidence_obj["security_state"].values())
+
+    assert step2_evidence["sanitized_result"] == {
+        "key_name": KEY, "retired": True, "credential_material_observed": False, "other_key_changed": False
+    }
+    assert step3_evidence["sanitized_result"] == {
+        "repository": "AnonymousKoo/avuhz-infra", "environment": "development", "secret_name": GH,
+        "retired": True, "secret_value_observed": False, "other_secret_changed": False
+    }
+    assert step4_evidence["sanitized_result"] == {
+        "key_name": KEY, "absent": True, "credential_material_observed": False,
+        "other_key_inspected": False, "provider_mutation_performed": False
+    }
+    assert step5_evidence["sanitized_result"] == {
+        "repository": "AnonymousKoo/avuhz-infra", "environment": "development", "secret_name": GH,
+        "exact_secret_reference_count": 0, "absent": True, "secret_value_requested": False,
+        "secret_value_observed": False, "provider_mutation_performed": False
+    }
+
     assert execution_progress["progress_digest"] == EXECUTION_PROGRESS == progress_digest(execution_progress)
-    assert execution_progress["record_version"] == 2
-    assert execution_progress["overall_state"] == "IN_PROGRESS"
-    first_state = execution_progress["step_states"][0]
-    assert (
-        first_state["authorization_state"],
-        first_state["execution_state"],
-        first_state["verification_state"],
-        first_state["authorization_consumed"],
-    ) == ("CONSUMED","SUCCEEDED","PASS",True)
-    assert first_state["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
-    assert first_state["observed_postcondition"] == steps[0]["expected_postcondition"]
-    assert all(
-        (
+    assert execution_progress["record_version"] == 6
+    assert execution_progress["overall_state"] == "COMPLETED"
+    assert execution_progress["updated_at"] == COMPLETED_AT
+    expected_evidence = [STEP1_EVIDENCE, STEP2_EVIDENCE, STEP3_EVIDENCE, STEP4_EVIDENCE, STEP5_EVIDENCE]
+    expected_results = [STEP1_RESULT, STEP2_RESULT, STEP3_RESULT, STEP4_RESULT, STEP5_RESULT]
+    for idx, state in enumerate(execution_progress["step_states"]):
+        assert (
             state["authorization_state"],
             state["execution_state"],
             state["verification_state"],
             state["authorization_consumed"],
-        ) == ("PENDING","NOT_STARTED","NOT_STARTED",False)
-        for state in execution_progress["step_states"][1:]
-    )
+        ) == ("CONSUMED","SUCCEEDED","PASS",True)
+        assert state["safe_error_code"] is None
+        assert state["observed_postcondition"] == steps[idx]["expected_postcondition"]
+        assert state["evidence"][0]["evidence_digest"] == expected_evidence[idx]
+        produced = [
+            item for item in state["binding_assertions"]
+            if item["phase"] == "PRODUCED_BY_CURRENT_STEP"
+        ]
+        assert len(produced) == 1
+        assert produced[0]["evidence_digest"] == expected_evidence[idx]
+        assert produced[0]["value_digest"] == expected_results[idx]
+
+    for idx, expected_auth in zip(range(1,5), (STEP2_AUTH, STEP3_AUTH, STEP4_AUTH, STEP5_AUTH)):
+        preflight = [
+            item for item in execution_progress["step_states"][idx]["binding_assertions"]
+            if item["phase"] == "RESOLVED_BY_STEP_PREFLIGHT"
+        ]
+        assert len(preflight) == 1
+        assert preflight[0]["evidence_digest"] == expected_auth
+        assert preflight[0]["value_digest"] == expected_auth
+        assert preflight[0]["recorded_at"] == COMPLETED_AT
+
     assert (B / f"{N}.execution-progress.json").exists()
 
     rendered = "\n".join((B / f"{N}{suffix}").read_text() for suffix in (
-        ".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json",".execution-progress.json","-step1-success.evidence.json"
+        ".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json",".execution-progress.json","-step1-success.evidence.json","-step2-success.evidence.json","-step3-success.evidence.json","-step4-success.evidence.json","-step5-success.evidence.json"
     ))
     assert DATA_PROJECT not in rendered
     assert "sb_secret_" not in rendered
@@ -220,7 +286,8 @@ def main() -> int:
 
     print(
         "DEVELOPMENT v14 continuation corrective cleanup v1: PASS "
-        "(APPROVED / STEP 1 CONSUMED SUCCEEDED PASS; zero-state verified; retirement steps 2-5 pending)"
+        "(COMPLETED; Steps 1-5 CONSUMED/SUCCEEDED/PASS; zero-state verified; "
+        "v14 Supabase key and GitHub binding retired and independently verified absent)"
     )
     return 0
 

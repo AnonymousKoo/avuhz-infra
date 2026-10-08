@@ -32,7 +32,8 @@ APPROVAL = "sha256:9410d2e10b6fd7febe0d2c0d873608d54bdd1e9ca7c9da0e8aeec631847d3
 STEP1_EVIDENCE = "sha256:d4aff55bac16e73efc867b327ef88eab79fd3f0db6dcac04fd82233e34cf1b18"
 STEP2_EVIDENCE = "sha256:62ee203e20be12f515e698cd69a10ced3422f46eb4b7f21e67ba157fc53adab1"
 STEP3_EVIDENCE = "sha256:3590b89ce68436bb0109025b08869d7a4184a7207f65b52b67dca38e9d9395e0"
-EXECUTION_PROGRESS = "sha256:cea5798de4dcc2bfb3546ad3f75dec04ae07e0f5b23cbe90d47a4dc2489155d8"
+STEP4_EVIDENCE = "sha256:a81f43f32718325822785e6c246f90f9f161e93a3b377301ba83a607c7e3b8b2"
+EXECUTION_PROGRESS = "sha256:4d3e44ca05339f980bbf5cced174f67f70d992b70456e9a94a64668ec643a096"
 V13_EXPIRY = "sha256:b1589e9ec8d0435c0f6d8f2ab4f5904d2cf5716c217221217878b5dfa3df4f69"
 V10_STOP = "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0"
 V10_FAILURE = "sha256:d55ff4f7bcca05b03c5fc878f5fa2a09d95cd3b36b1716e181e4cd8bf3df2228"
@@ -60,6 +61,7 @@ def main() -> int:
     step1_evidence = load(N + "-step01-success.evidence.json")
     step2_evidence = load(N + "-step02-success.evidence.json")
     step3_evidence = load(N + "-step03-success.evidence.json")
+    step4_evidence = load(N + "-step04-success.evidence.json")
     x = load(N + ".execution-progress.json")
     validate_plan(p, S)
     validate_progress(p, g, S)
@@ -224,6 +226,7 @@ def main() -> int:
     assert evidence_digest(step1_evidence) == STEP1_EVIDENCE
     assert evidence_digest(step2_evidence) == STEP2_EVIDENCE
     assert evidence_digest(step3_evidence) == STEP3_EVIDENCE
+    assert evidence_digest(step4_evidence) == STEP4_EVIDENCE
     assert step1_evidence["owner_confirmed_created"] is True
     assert step1_evidence["credential_material_retained"] is False
     assert step2_evidence["sanitized_result"]["binding_created"] is True
@@ -231,8 +234,13 @@ def main() -> int:
     assert step3_evidence["sanitized_result"]["binding_present"] is True
     assert step3_evidence["sanitized_result"]["value_read"] is False
     assert step3_evidence["credential_material_retained"] is False
+    assert step4_evidence["sanitized_result"] == {"classification":"EXPECTED_PRECHECK_COUNTS_MATCHED","auth_user_count":2,"target_identity_count":1,"target_password_null_count":1,"target_tenant_exact_count":1,"session_count":0,"refresh_token_count":0}
+    assert step4_evidence["execution_observation"]["approved_aggregate_select_attempts"] == 1
+    assert step4_evidence["execution_observation"]["additional_sql_executed"] is False
+    assert step4_evidence["execution_observation"]["retry_occurred"] is False
+    assert step4_evidence["execution_observation"]["step5_attempted"] is False
     assert x["progress_digest"] == EXECUTION_PROGRESS == progress_digest(x)
-    assert x["record_version"] == 4
+    assert x["record_version"] == 5
     assert x["overall_state"] == "IN_PROGRESS"
     assert all(
         (
@@ -241,7 +249,7 @@ def main() -> int:
             state["verification_state"],
             state["authorization_consumed"],
         ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
-        for state in x["step_states"][:3]
+        for state in x["step_states"][:4]
     )
     assert all(
         (
@@ -250,16 +258,16 @@ def main() -> int:
             state["verification_state"],
             state["authorization_consumed"],
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
-        for state in x["step_states"][3:]
+        for state in x["step_states"][4:]
     )
-    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json",".execution-progress.json","-step01-success.evidence.json","-step02-success.evidence.json","-step03-success.evidence.json"))
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json",".execution-progress.json","-step01-success.evidence.json","-step02-success.evidence.json","-step03-success.evidence.json","-step04-success.evidence.json"))
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
     assert "gnuqaefotwgkwurjpyik" not in rendered
     assert "Bearer eyJ" not in rendered
     assert "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL" not in p.__str__()
     assert "impl_handoff_provider_adapter_positive_auth_v10_ephemeral" not in p.__str__()
 
-    print("DEVELOPMENT provider-adapter positive-auth v14: PASS (APPROVED / STEPS 1-3 CONSUMED SUCCEEDED PASS; Step 4 pending; credential material absent)")
+    print("DEVELOPMENT provider-adapter positive-auth v14: PASS (APPROVED / STEPS 1-4 CONSUMED SUCCEEDED PASS; Step 5 pending; credential material absent)")
     return 0
 
 if __name__ == "__main__":

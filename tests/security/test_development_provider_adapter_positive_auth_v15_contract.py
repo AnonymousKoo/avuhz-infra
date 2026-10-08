@@ -93,13 +93,21 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
         self.assertEqual(plan["authorization_window"]["binding_state"], "BOUND")
         self.assertEqual(plan["authorization_window"]["starts_at"], "2026-10-08T17:00:00Z")
         self.assertEqual(plan["authorization_window"]["expires_at"], "2026-10-10T16:30:00Z")
-        self.assertEqual(progress["overall_state"], "NOT_STARTED")
+        self.assertEqual(progress["overall_state"], "IN_PROGRESS")
         self.assertEqual(progress["plan_digest"], plan["plan_digest"])
+        self.assertEqual(progress["record_version"], 7)
+        self.assertTrue(all(
+            state["authorization_state"] == "CONSUMED"
+            and state["execution_state"] == "SUCCEEDED"
+            and state["verification_state"] == "PASS"
+            and state["authorization_consumed"]
+            for state in progress["step_states"][:3]
+        ))
         self.assertTrue(all(
             state["authorization_state"] == "PENDING"
             and state["execution_state"] == "NOT_STARTED"
             and not state["authorization_consumed"]
-            for state in progress["step_states"]
+            for state in progress["step_states"][3:]
         ))
         self.assertEqual(approval["plan_id"], plan["plan_id"])
         self.assertEqual(approval["plan_version"], plan["plan_version"])
@@ -150,6 +158,34 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
         self.assertEqual(resource["planned_counts"]["live_http_probe"], 1)
         self.assertEqual(resource["planned_counts"]["retry"], 0)
 
+    def test_owner_confirmed_evidence_is_digest_bound_without_secret_values(self):
+        plan, progress = load("plan"), load("progress")
+        for i in range(3):
+            step, state = plan["steps"][i], progress["step_states"][i]
+            self.assertEqual(state["observed_postcondition"], step["expected_postcondition"])
+            self.assertIsNone(state["safe_error_code"])
+            self.assertEqual(len(state["evidence"]), 1)
+            record = state["evidence"][0]
+            source_file = BASE / record["evidence_reference"]
+            full = json.loads(source_file.read_text(encoding="utf-8"))
+            self.assertEqual(record["evidence_digest"], canonical_digest(full))
+            self.assertEqual(full["evidence_type"], record["evidence_type"])
+            self.assertEqual(full["step_id"], state["step_id"])
+            self.assertEqual(full["plan_digest"], plan["plan_digest"])
+            self.assertEqual(full["record_basis"], "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME")
+            self.assertFalse(full["recorded_at_is_execution_timestamp"])
+            self.assertFalse(full["not_claimed"]["independent_provider_key_metadata_read"])
+            self.assertFalse(full["not_claimed"]["independent_github_secret_metadata_read"])
+            self.assertFalse(full["not_claimed"]["new_session_issued"])
+            produced = [a for a in state["binding_assertions"]
+                        if a["phase"] == "PRODUCED_BY_CURRENT_STEP"]
+            self.assertEqual(len(produced), 1)
+            self.assertEqual(produced[0]["evidence_digest"], record["evidence_digest"])
+            self.assertEqual(
+                produced[0]["value_digest"],
+                canonical_digest(full["sanitized_result"]),
+            )
+
     def test_fail_closed_before_secret_resolution_when_authority_unavailable(self):
         from unittest.mock import patch
         with patch.object(candidate, "_load", side_effect=AuthorizationPlanStop("PLAN_NOT_READY")):
@@ -157,8 +193,12 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
                 candidate._load_and_authorize("2026-10-09T13:00:00Z")
 
     def test_no_live_credentials_committed(self):
-        for kind in ("plan", "progress", "resource", "approval"):
-            txt = (BASE / f"{NAME}.{kind}.json").read_text(encoding="utf-8")
+        paths = [BASE / f"{NAME}.{kind}.json"
+                 for kind in ("plan", "progress", "resource", "approval")]
+        paths.extend(BASE / f"{NAME}-step{i}-owner-confirmed.evidence.json"
+                     for i in range(1, 4))
+        for path in paths:
+            txt = path.read_text(encoding="utf-8")
             self.assertNotIn("sb_secret_", txt)
             self.assertNotIn("Bearer eyJ", txt)
             self.assertNotIn('"access_token":', txt)

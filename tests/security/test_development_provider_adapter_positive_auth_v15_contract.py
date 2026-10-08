@@ -1,0 +1,142 @@
+"""Offline contract checks for the intentionally blocked DEVELOPMENT v15 auth plan.
+
+This suite does not contact Supabase AUTH/DATA, GitHub secrets or Render.
+No provider approval, execution credential or session is made available.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import unittest
+from pathlib import Path
+
+from avuhz_engineering.authorization_plan import (
+    AuthorizationPlanStop,
+    plan_digest,
+    progress_digest,
+    validate_approval,
+    validate_plan,
+    validate_progress,
+)
+from avuhz_runtime.implementation_handoff import canonical_digest
+from scripts import development_provider_adapter_positive_auth_v15 as candidate
+
+ROOT = Path(__file__).resolve().parents[2]
+BASE = ROOT / "contracts/plans/v1"
+NAME = "development-implementation-handoff-provider-adapter-positive-auth-v15"
+
+
+def load(kind: str):
+    return json.loads((BASE / f"{NAME}.{kind}.json").read_text(encoding="utf-8"))
+
+
+def source_sha(path: str):
+    return "sha256:" + hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+
+
+class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
+    def test_plan_progress_schema_and_all_digests(self):
+        plan, progress, resource = load("plan"), load("progress"), load("resource")
+        schema_root = ROOT / "contracts/schemas/v1"
+        validate_plan(plan, schema_root)
+        validate_progress(plan, progress, schema_root)
+        self.assertEqual(plan["plan_digest"], plan_digest(plan))
+        self.assertEqual(progress["progress_digest"], progress_digest(progress))
+        self.assertEqual(resource["contract_digest"], canonical_digest({
+            key: value for key, value in resource.items() if key != "contract_digest"
+        }))
+        self.assertEqual(
+            {s["resource"]["exact_digest"] for s in plan["steps"]},
+            {resource["contract_digest"]},
+        )
+
+    def test_exact_bound_executor_workflow_probe_and_cleanup_plan(self):
+        resource = load("resource")
+        self.assertEqual(
+            resource["step4_executor_digest"],
+            source_sha("scripts/development_provider_adapter_positive_auth_v15.py"),
+        )
+        self.assertEqual(
+            resource["step4_workflow_digest"],
+            source_sha(".github/workflows/development-provider-adapter-positive-auth-v15-step4.yml"),
+        )
+        self.assertEqual(
+            resource["step4_probe_digest"],
+            source_sha("scripts/development_provider_adapter_live_identity_probe_v15.py"),
+        )
+        fallback = json.loads((
+            BASE / (NAME + "-corrective-cleanup-v1.plan.json")
+        ).read_text(encoding="utf-8"))
+        self.assertEqual(resource["fallback_plan_id"], fallback["plan_id"])
+        self.assertEqual(resource["fallback_plan_digest"], fallback["plan_digest"])
+        self.assertIsNone(resource["fallback_approval_digest"])
+        self.assertTrue(resource["fallback_approval_unresolved"])
+
+    def test_draft_is_unapproved_unexecutable_and_project_is_exact(self):
+        plan, progress, resource = load("plan"), load("progress"), load("resource")
+        self.assertEqual(plan["definition_status"], "DRAFT_BLOCKED")
+        self.assertEqual(plan["environment"], "DEVELOPMENT")
+        self.assertEqual(plan["target"]["project_reference"], "pwlhruwutoitnieactol")
+        self.assertEqual(plan["target"]["responsibility"], "AUTH")
+        self.assertEqual(plan["authority_effect"], "NONE_UNTIL_SEPARATELY_APPROVED")
+        self.assertEqual(plan["authorization_window"]["binding_state"], "UNRESOLVED_BLOCKER")
+        self.assertIsNone(plan["authorization_window"]["starts_at"])
+        self.assertIsNone(plan["authorization_window"]["expires_at"])
+        self.assertEqual(progress["overall_state"], "NOT_STARTED")
+        self.assertEqual(progress["plan_digest"], plan["plan_digest"])
+        self.assertTrue(all(
+            s["authorization_state"] == "PENDING"
+            and s["execution_state"] == "NOT_STARTED"
+            and not s["authorization_consumed"]
+            for s in progress["step_states"]
+        ))
+        self.assertFalse((BASE / (NAME + ".approval.json")).exists())
+        self.assertFalse(resource["retry_authorized"])
+        self.assertFalse(resource["data_operation_authorized"])
+        self.assertFalse(resource["production_authorized"])
+        self.assertFalse(resource["render_mutation_authorized"])
+        with self.assertRaises(AuthorizationPlanStop):
+            validate_approval(plan, {}, ROOT / "contracts/schemas/v1", "2026-10-09T13:00:00Z")
+
+    def test_one_lifecycle_and_no_separate_automation_or_data_path(self):
+        plan, resource = load("plan"), load("resource")
+        steps = plan["steps"]
+        self.assertEqual(len(steps), 9)
+        self.assertEqual(
+            [step["step_id"] for step in steps], plan["ordered_step_ids"]
+        )
+        self.assertTrue(all(
+            step["resource"]["resource_reference"].startswith(("supabase:pwlhruwutoitnieactol:", "github:AnonymousKoo/avuhz-infra:environment:development:"))
+            for step in steps
+        ))
+        lifecycle = steps[3]
+        self.assertEqual(lifecycle["step_id"], candidate.STEP_ID)
+        self.assertEqual(lifecycle["operation"], candidate.OPERATION)
+        self.assertEqual(lifecycle["credential_policy"]["allowed_classes"], ["SUPABASE_AUTH_ADMIN_EPHEMERAL"])
+        self.assertEqual(
+            lifecycle["unresolved_bindings"],
+            ["binding.development.provider-adapter-positive-auth-v15.fallback-owner-approval-required"],
+        )
+        self.assertEqual(lifecycle["resource"]["resource_reference"], "supabase:pwlhruwutoitnieactol:provider-adapter-positive-auth-v15-live-lifecycle")
+        self.assertTrue(all(step["execution_class"] in ("PROVIDER_MUTATION", "PROVIDER_READ") for step in steps))
+        self.assertFalse(resource["implementation_handoff_execution_authorized"])
+        self.assertEqual(resource["planned_counts"]["temporary_session_issue"], 1)
+        self.assertEqual(resource["planned_counts"]["live_http_probe"], 1)
+        self.assertEqual(resource["planned_counts"]["retry"], 0)
+
+    def test_fail_closed_before_secret_resolution_without_approval(self):
+        from unittest.mock import patch
+        with patch.object(candidate, "_load", side_effect=AuthorizationPlanStop("PLAN_NOT_READY")):
+            with self.assertRaises(AuthorizationPlanStop):
+                candidate._load_and_authorize("2026-10-09T13:00:00Z")
+
+    def test_no_live_credentials_committed(self):
+        for kind in ("plan", "progress", "resource"):
+            txt = (BASE / f"{NAME}.{kind}.json").read_text(encoding="utf-8")
+            self.assertNotIn("sb_secret_", txt)
+            self.assertNotIn("Bearer eyJ", txt)
+            self.assertNotIn("refresh_token", txt)
+
+
+if __name__ == "__main__":
+    unittest.main()

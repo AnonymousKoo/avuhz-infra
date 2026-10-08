@@ -15,6 +15,7 @@ sys.path[:0] = [
 ]
 
 from test_development_handoff_single_use_claim import SignedSingleUseClaimTests
+from test_development_handoff_approval_gate import AT
 from test_development_handoff_trusted_github_invocation import context
 from test_development_source_bound_handoff_lifecycle import callbacks
 
@@ -57,8 +58,7 @@ class TrustedOneShotExecutorTests(unittest.TestCase):
             observed_checkout_sha=self.source.canonical_main_sha,
             observed_remote_main_sha=self.source.canonical_main_sha,
             observed_git_origin="https://github.com/AnonymousKoo/avuhz-infra",
-            at_utc=self.f.fixture.invoke().stage.authorized_progress["updated_at"]
-            if False else __import__("test_development_handoff_approval_gate").AT,
+            at_utc=AT,
             stages=self.f.fixture.stages,
             signed_proofs=self.signed_proofs,
             owner_public_key=self.f.public,

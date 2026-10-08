@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import copy
-import json
 import sys
 import unittest
 from dataclasses import replace
@@ -10,7 +9,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tests/service")]
+
+from test_development_synthetic_handoff_offline_certification import (
+    CANONICAL_DEVELOPMENT_TENANT,
+    fictional_envelope,
+)
+from test_development_synthetic_handoff_preflight import CLOCK
 
 from avuhz_engineering.authorization_plan import (
     approval_digest,
@@ -25,8 +30,15 @@ from avuhz_engineering.development_handoff_approval_gate import (
     HandoffApprovalGateStop,
     StageAuthorizationDocuments,
     _bound_stage_resource_digest,
+    authorization_set_digest,
     prepare_handoff_stage_approval_state,
-    stage_authorization_digest,
+)
+from avuhz_engineering.development_source_bound_handoff_lifecycle import (
+    COMMAND_URL,
+    REPOSITORY,
+)
+from avuhz_engineering.development_synthetic_handoff_preflight import (
+    certify_synthetic_command,
 )
 from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_service.development import (
@@ -37,64 +49,31 @@ from avuhz_service.development import (
 )
 
 SCHEMAS = ROOT / "contracts/schemas/v1"
-MAIN_SHA = "1" * 40
-TENANT = "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0"
-AT = datetime(2030, 1, 15, 15, 0, 0, tzinfo=timezone.utc)
-NOW = "2030-01-15T15:00:00Z"
+MAIN_SHA = "45e16b380b5d823b9527501f64e954258ccd1509"
+TENANT = CANONICAL_DEVELOPMENT_TENANT
+AT = CLOCK
 
 
 class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
     def setUp(self):
-        fixture = json.loads(
-            (ROOT / "contracts/fixtures/v1/phase5d-implementation-package.cases.json").read_text()
-        )
-        handoff = copy.deepcopy(fixture["positive"]["implementation_handoff"])
-        handoff["tenant_id"] = TENANT
-        handoff.pop("handoff_digest")
-        handoff["handoff_digest"] = canonical_digest(handoff)
-        self.command = {
-            "command_id": "d5000000-0000-4000-8000-000000000090",
-            "command_type": "AcceptImplementationHandoff",
-            "command_schema_version": 1,
-            "tenant_id": TENANT,
-            "subject_type": "IMPLEMENTATION_HANDOFF",
-            "subject_id": handoff["implementation_handoff_id"],
-            "requested_by": "service.sekinfra-handoff-adapter",
-            "caller_type": "PROVIDER_ADAPTER",
-            "caller_identity": {
-                "subject": "service.sekinfra-handoff-adapter",
-                "audience": DEVELOPMENT_SERVICE_AUDIENCE,
-                "caller_type": "PROVIDER_ADAPTER",
-                "tenant_ids": [TENANT],
-                "capabilities": ["implementation_handoff:accept"],
-                "environment": "DEVELOPMENT",
-                "authentication_strength": "STRONG",
-                "step_up_performed": False,
-                "authenticated_at": "2030-01-15T14:00:00Z",
-                "expires_at": "2030-01-15T16:00:00Z",
-            },
-            "correlation_id": "d5000000-0000-4000-8000-000000000091",
-            "idempotency_key": "handoff.accept.approval-gate.0001",
-            "requested_at": NOW,
-            "environment": "DEVELOPMENT",
-            "payload_schema": (
-                "urn:avuhz:schema:contracts:commands:"
-                "accept-implementation-handoff-payload:v1"
-            ),
-            "payload_version": 1,
-            "payload": handoff,
-        }
+        self.command = fictional_envelope()
         self.base_source = DevelopmentHandoffSource(
-            repository="AnonymousKoo/avuhz-infra",
+            repository=REPOSITORY,
             canonical_main_sha=MAIN_SHA,
             authorization_plan_digest="sha256:" + "0" * 64,
-            command_digest=canonical_digest(self.command),
+            command_digest=certify_synthetic_command(
+                self.command, at_utc=AT
+            ).command_digest,
             tenant_id=TENANT,
             auth_project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
             data_project_ref=DEVELOPMENT_DATA_PROJECT_REF,
-            command_url="https://avuhz-command-dev.onrender.com/v1/commands",
+            command_url=COMMAND_URL,
         )
         self.stages = self._stage_documents(self.base_source)
+        self.source = replace(
+            self.base_source,
+            authorization_plan_digest=authorization_set_digest(self.stages),
+        )
 
     def _stage_documents(self, source):
         records = {}
@@ -122,11 +101,11 @@ class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
                     "audience_reference": DEVELOPMENT_SERVICE_AUDIENCE,
                 },
                 "owner_identity": "github:AnonymousKoo",
-                "created_at": "2030-01-15T14:00:00Z",
+                "created_at": "2026-10-08T18:00:00Z",
                 "authorization_window": {
                     "binding_state": "BOUND",
-                    "starts_at": "2030-01-15T14:30:00Z",
-                    "expires_at": "2030-01-15T15:30:00Z",
+                    "starts_at": "2026-10-08T18:30:00Z",
+                    "expires_at": "2026-10-08T19:20:00Z",
                 },
                 "ordered_step_ids": [f"handoff.stage.{index}"],
                 "steps": [{
@@ -179,9 +158,9 @@ class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
                 "owner_identity": "github:AnonymousKoo",
                 "decision": "APPROVE",
                 "environment": "DEVELOPMENT",
-                "effective_at": "2030-01-15T14:30:00Z",
-                "expires_at": "2030-01-15T15:30:00Z",
-                "approved_at": "2030-01-15T14:20:00Z",
+                "effective_at": "2026-10-08T18:30:00Z",
+                "expires_at": "2026-10-08T19:20:00Z",
+                "approved_at": "2026-10-08T18:20:00Z",
                 "status": "ACTIVE",
                 "authority_scope": "EXACT_PLAN_ONLY",
             }
@@ -190,7 +169,7 @@ class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
                 plan,
                 SCHEMAS,
                 f"a7400000-0000-4000-8000-{identifier}",
-                "2030-01-15T14:25:00Z",
+                "2026-10-08T18:25:00Z",
             )
             records[stage] = StageAuthorizationDocuments(
                 plan=plan,
@@ -200,28 +179,19 @@ class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
             )
         return records
 
-    def source_for(self, stage, documents=None):
-        documents = documents or self.stages[stage]
-        return replace(
-            self.base_source,
-            authorization_plan_digest=documents.plan["plan_digest"],
-        )
-
     def invoke(self, stage="DATA_COMMAND", **changes):
-        documents = changes.get("documents", self.stages[stage])
-        source = changes.get("source", self.source_for(stage, documents))
+        stages = changes.get("stages", self.stages)
+        source = changes.get("source", self.source)
         arguments = {
             "request": self.command,
             "source": source,
             "observed_main_sha": MAIN_SHA,
             "at_utc": AT,
             "stage": stage,
-            "documents": documents,
+            "stages": stages,
             "owner_source_verified": True,
             "observed_owner_identity": "github:AnonymousKoo",
-            "stage_authorization_attested_digest": stage_authorization_digest(
-                stage, documents
-            ),
+            "authorization_set_attested_digest": authorization_set_digest(stages),
         }
         arguments.update(changes)
         return prepare_handoff_stage_approval_state(**arguments)
@@ -256,18 +226,18 @@ class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
             {"owner_source_verified": False},
             {"observed_owner_identity": "github:imposter"},
             {"observed_main_sha": "2" * 40},
-            {"stage_authorization_attested_digest": "sha256:" + "f" * 64},
+            {"authorization_set_attested_digest": "sha256:" + "f" * 64},
         )
         for changes in invalid_cases:
             with self.subTest(changes=changes), self.assertRaises(HandoffApprovalGateStop):
                 self.invoke(**changes)
 
         wrong_url = replace(
-            self.source_for("DATA_COMMAND"),
+            self.source,
             command_url="https://wrong-development.example.invalid/v1/commands",
         )
         with self.assertRaisesRegex(
-            HandoffApprovalGateStop, "HANDOFF_SOURCE_BINDING_INVALID"
+            HandoffApprovalGateStop, "HANDOFF_REQUEST_SOURCE_INVALID"
         ):
             self.invoke(source=wrong_url)
 
@@ -277,46 +247,49 @@ class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
             DEVELOPMENT_AUTH_PROJECT_REF
         )
         with self.assertRaises(HandoffApprovalGateStop):
-            self.invoke(documents=documents)
+            self.invoke(stages={**self.stages, "DATA_COMMAND": documents})
 
         documents = copy.deepcopy(self.stages["AUTH_VERIFY"])
         documents.plan["steps"][0]["resource"]["exact_digest"] = (
             "sha256:" + "f" * 64
         )
         with self.assertRaises(HandoffApprovalGateStop):
-            self.invoke("AUTH_VERIFY", documents=documents)
+            self.invoke("AUTH_VERIFY", stages={**self.stages, "AUTH_VERIFY": documents})
 
     def test_malformed_stage_shapes_fail_with_bounded_errors(self):
         documents = copy.deepcopy(self.stages["DATA_COMMAND"])
         documents.plan["target"] = None
         with self.assertRaisesRegex(HandoffApprovalGateStop, "HANDOFF_APPROVAL_STAGE_INVALID"):
-            self.invoke(documents=documents)
+            self.invoke(stages={**self.stages, "DATA_COMMAND": documents})
 
         documents = copy.deepcopy(self.stages["DATA_COMMAND"])
         documents.plan["steps"][0]["resource"] = None
         with self.assertRaisesRegex(
             HandoffApprovalGateStop, "HANDOFF_APPROVAL_RESOURCE_MISMATCH"
         ):
-            self.invoke(documents=documents)
+            self.invoke(stages={**self.stages, "DATA_COMMAND": documents})
 
     def test_expired_or_replayed_authorization_fails_closed(self):
         with self.assertRaisesRegex(
             HandoffApprovalGateStop, "HANDOFF_AUTHORIZATION_ENGINE_DENIED"
         ):
-            self.invoke(at_utc=datetime(2030, 1, 15, 16, 0, tzinfo=timezone.utc))
+            self.invoke(at_utc=datetime(2026, 10, 8, 19, 25, tzinfo=timezone.utc))
 
         documents = copy.deepcopy(self.stages["AUTH_GLOBAL_LOGOUT"])
         documents.progress["step_states"][0][
             "authorization_consumed"
         ] = True
         with self.assertRaises(HandoffApprovalGateStop):
-            self.invoke("AUTH_GLOBAL_LOGOUT", documents=documents)
+            self.invoke(
+                "AUTH_GLOBAL_LOGOUT",
+                stages={**self.stages, "AUTH_GLOBAL_LOGOUT": documents},
+            )
 
     def test_command_contract_tenant_and_digest_drift_fail_closed(self):
         command = copy.deepcopy(self.command)
         command["tenant_id"] = "d5000000-0000-4000-8000-000000000099"
         drifted_source = replace(
-            self.source_for("DATA_COMMAND"), command_digest=canonical_digest(command)
+            self.source, command_digest=canonical_digest(command)
         )
         with self.assertRaisesRegex(
             HandoffApprovalGateStop, "HANDOFF_REQUEST_SOURCE_INVALID"
@@ -327,7 +300,7 @@ class DevelopmentHandoffApprovalGateTests(unittest.TestCase):
             HandoffApprovalGateStop, "HANDOFF_REQUEST_SOURCE_INVALID"
         ):
             self.invoke(source=replace(
-                self.source_for("DATA_COMMAND"),
+                self.source,
                 command_digest="sha256:" + "e" * 64,
             ))
 

@@ -13,26 +13,26 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Mapping
 
 from avuhz_engineering.authorization_plan import (
     AuthorizationPlanError,
     AuthorizationPlanStop,
     authorize_step,
 )
+from avuhz_engineering.development_source_bound_handoff_lifecycle import (
+    DevelopmentHandoffSource,
+    preflight_source_bound_handoff,
+)
 from avuhz_runtime.implementation_handoff import canonical_digest
-from avuhz_runtime.models import ValidationSuccess
-from avuhz_runtime.validation import CommandValidator
 from avuhz_service.development import (
     DEVELOPMENT_AUTH_PROJECT_REF,
     DEVELOPMENT_DATA_PROJECT_REF,
 )
 
 SCHEMA_ROOT = Path(__file__).resolve().parents[2] / "contracts/schemas/v1"
-EXPECTED_REPOSITORY = "AnonymousKoo/avuhz-infra"
 EXPECTED_OWNER = "github:AnonymousKoo"
 EXPECTED_ENVIRONMENT = "DEVELOPMENT"
-EXPECTED_TENANT_ID = "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0"
-DEVELOPMENT_COMMAND_URL = "https://avuhz-command-dev.onrender.com/v1/commands"
 EXPECTED_STAGES = (
     "AUTH_GLOBAL_LOGOUT",
     "AUTH_GENERATE",
@@ -40,7 +40,6 @@ EXPECTED_STAGES = (
     "DATA_COMMAND",
 )
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 # These operation names identify future, separately approved plan resources.
 # Their presence here creates no provider or command authority.
@@ -62,20 +61,6 @@ REQUIRED_PROHIBITIONS = frozenset({
 
 class HandoffApprovalGateStop(ValueError):
     """Fixed failure category with no untrusted or provider data in messages."""
-
-
-@dataclass(frozen=True)
-class DevelopmentHandoffSource:
-    """Exact non-secret source bindings supplied by a trusted outer workflow."""
-
-    repository: str
-    canonical_main_sha: str
-    authorization_plan_digest: str
-    command_digest: str
-    tenant_id: str
-    auth_project_ref: str
-    data_project_ref: str
-    command_url: str
 
 
 @dataclass(frozen=True)
@@ -103,7 +88,7 @@ class ProposedAuthorizationState:
 class GatePreflightResult:
     classification: str
     source_sha: str
-    stage_authorization_digest: str
+    authorization_set_digest: str
     command_digest: str
     stage: ProposedAuthorizationState
     remote_execution_authorized: bool = False
@@ -114,47 +99,6 @@ class GatePreflightResult:
 def _require(condition: bool, code: str) -> None:
     if not condition:
         raise HandoffApprovalGateStop(code)
-
-
-def _preflight_source_bound_handoff(
-    request: dict,
-    *,
-    source: DevelopmentHandoffSource,
-    observed_main_sha: str,
-) -> str:
-    """Validate the real command contract and exact offline source bindings."""
-
-    _require(type(source) is DevelopmentHandoffSource, "HANDOFF_SOURCE_INVALID")
-    _require(
-        source.repository == EXPECTED_REPOSITORY
-        and SHA_RE.fullmatch(source.canonical_main_sha) is not None
-        and observed_main_sha == source.canonical_main_sha
-        and DIGEST_RE.fullmatch(source.command_digest) is not None
-        and source.auth_project_ref == DEVELOPMENT_AUTH_PROJECT_REF
-        and source.data_project_ref == DEVELOPMENT_DATA_PROJECT_REF
-        and source.tenant_id == EXPECTED_TENANT_ID
-        and source.command_url == DEVELOPMENT_COMMAND_URL,
-        "HANDOFF_SOURCE_BINDING_INVALID",
-    )
-    _require(type(request) is dict, "HANDOFF_REQUEST_SOURCE_INVALID")
-    prepared = CommandValidator(SCHEMA_ROOT).prepare(copy.deepcopy(request))
-    _require(isinstance(prepared, ValidationSuccess), "HANDOFF_REQUEST_SOURCE_INVALID")
-    command = prepared.prepared
-    _require(
-        command.command_type == "AcceptImplementationHandoff"
-        and command.environment == EXPECTED_ENVIRONMENT
-        and command.tenant_id == source.tenant_id
-        and command.payload.get("tenant_id") == source.tenant_id
-        and request.get("caller_type") == "PROVIDER_ADAPTER"
-        and request.get("caller_identity", {}).get("environment") == EXPECTED_ENVIRONMENT
-        and request.get("caller_identity", {}).get("tenant_ids") == [source.tenant_id]
-        and request.get("caller_identity", {}).get("capabilities")
-        == ["implementation_handoff:accept"],
-        "HANDOFF_REQUEST_SOURCE_INVALID",
-    )
-    digest = canonical_digest(request)
-    _require(digest == source.command_digest, "HANDOFF_REQUEST_SOURCE_INVALID")
-    return digest
 
 
 def _bound_stage_resource_digest(source: DevelopmentHandoffSource, stage: str) -> str:
@@ -176,22 +120,25 @@ def _bound_stage_resource_digest(source: DevelopmentHandoffSource, stage: str) -
     })
 
 
-def stage_authorization_digest(
-    stage: str,
-    documents: StageAuthorizationDocuments,
+def authorization_set_digest(
+    stages: Mapping[str, StageAuthorizationDocuments],
 ) -> str:
-    """Bind one stage to one exact plan and approval without batch authority."""
+    """Bind all lifecycle approvals while conferring no batch authority."""
 
-    _require(stage in EXPECTED_STAGES, "HANDOFF_APPROVAL_STAGE_INVALID")
+    _require(type(stages) is dict and set(stages) == set(EXPECTED_STAGES),
+             "HANDOFF_APPROVAL_STAGE_SET_INVALID")
     try:
-        member = {
-            "stage": stage,
-            "plan_digest": documents.plan["plan_digest"],
-            "approval_digest": documents.approval["approval_digest"],
-        }
+        members = [
+            {
+                "stage": stage,
+                "plan_digest": stages[stage].plan["plan_digest"],
+                "approval_digest": stages[stage].approval["approval_digest"],
+            }
+            for stage in EXPECTED_STAGES
+        ]
     except (AttributeError, KeyError, TypeError):
-        raise HandoffApprovalGateStop("HANDOFF_APPROVAL_STAGE_INVALID") from None
-    return canonical_digest(member)
+        raise HandoffApprovalGateStop("HANDOFF_APPROVAL_STAGE_SET_INVALID") from None
+    return canonical_digest(members)
 
 
 def prepare_handoff_stage_approval_state(
@@ -201,16 +148,18 @@ def prepare_handoff_stage_approval_state(
     observed_main_sha: str,
     at_utc: datetime,
     stage: str,
-    documents: StageAuthorizationDocuments,
+    stages: Mapping[str, StageAuthorizationDocuments],
     owner_source_verified: bool,
     observed_owner_identity: str,
-    stage_authorization_attested_digest: str,
+    authorization_set_attested_digest: str,
 ) -> GatePreflightResult:
     """Return one proposed authorization state without external side effects.
 
-    Owner verification and the attested stage digest must originate from a
+    Owner verification and the attested authorization-set digest must originate from a
     separately trusted GitHub provenance verifier.  A caller-provided Boolean
-    alone is never proof of owner authority.
+    alone is never proof of owner authority.  The full set binding permits a
+    future lifecycle to reuse one source object, but this call validates and
+    proposes state for exactly one selected resource stage.
     """
 
     _require(owner_source_verified is True and observed_owner_identity == EXPECTED_OWNER,
@@ -219,16 +168,26 @@ def prepare_handoff_stage_approval_state(
              "HANDOFF_SOURCE_SHA_INVALID")
     _require(isinstance(at_utc, datetime) and at_utc.tzinfo is not None,
              "HANDOFF_AUTHORIZATION_TIME_INVALID")
-    command_digest = _preflight_source_bound_handoff(
-        request, source=source, observed_main_sha=observed_main_sha,
-    )
+    try:
+        candidate = preflight_source_bound_handoff(
+            request,
+            source=source,
+            observed_main_sha=observed_main_sha,
+            at_utc=at_utc,
+        )
+    except Exception:
+        raise HandoffApprovalGateStop("HANDOFF_REQUEST_SOURCE_INVALID") from None
+    command_digest = candidate.command_digest
     _require(stage in EXPECTED_STAGES, "HANDOFF_APPROVAL_STAGE_INVALID")
+    _require(type(stages) is dict and set(stages) == set(EXPECTED_STAGES),
+             "HANDOFF_APPROVAL_STAGE_SET_INVALID")
+    documents = stages[stage]
     _require(type(documents) is StageAuthorizationDocuments,
              "HANDOFF_APPROVAL_STAGE_INVALID")
-    authorization_digest = stage_authorization_digest(stage, documents)
+    set_digest = authorization_set_digest(stages)
     _require(
-        documents.plan.get("plan_digest") == source.authorization_plan_digest
-        and authorization_digest == stage_authorization_attested_digest,
+        set_digest == source.authorization_plan_digest
+        and set_digest == authorization_set_attested_digest,
         "HANDOFF_APPROVAL_BINDING_MISMATCH",
     )
     now = at_utc.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -355,7 +314,7 @@ def prepare_handoff_stage_approval_state(
     return GatePreflightResult(
         classification="OFFLINE_SINGLE_STAGE_AUTHORIZATION_PREPARED_PENDING_ATOMIC_CONSUMPTION",
         source_sha=observed_main_sha,
-        stage_authorization_digest=authorization_digest,
+        authorization_set_digest=set_digest,
         command_digest=command_digest,
         stage=proposed,
     )

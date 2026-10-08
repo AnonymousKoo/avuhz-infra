@@ -36,6 +36,9 @@ KEY = "impl_handoff_provider_adapter_positive_auth_v14_ephemeral"
 GH = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V14_EPHEMERAL"
 FAILURE = "sha256:63c1246fb571cc86cf01bbb994942c36d4438f9cd720028114abd53d3b5144aa"
 STOPPED = "sha256:9bcf3c8a65985a96c3f4f1a8f9095f376a92be73639ea3ea414621551c2e100b"
+STEP1_EVIDENCE = "sha256:1f5e8fb6fa6301deacbc6af77aba926760d6c88f402d4bf1550673411f04e567"
+STEP1_RESULT = "sha256:1965169e8daee90640da9a385eab12bce790c7389ffc3cc5868084d58b8b78d7"
+EXECUTION_PROGRESS = "sha256:b039f5495d2f8a1be85827dd8afe3e7d090479c5e7809201b74fc7107f24ad7b"
 
 
 def load(suffix: str) -> dict:
@@ -49,10 +52,13 @@ def main() -> int:
     plan = load(".plan.json")
     progress = load(".progress.json")
     approval = load(".approval.json")
+    step1_evidence = load("-step1-success.evidence.json")
+    execution_progress = load(".execution-progress.json")
 
     validate_plan(plan, S)
     validate_progress(plan, progress, S)
     validate_approval(plan, approval, S, START)
+    validate_progress(plan, execution_progress, S)
 
     assert resource["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
         {k: v for k, v in resource.items() if k != "contract_digest"}
@@ -165,10 +171,48 @@ def main() -> int:
     assert approval["status"] == "ACTIVE"
     assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
     assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
-    assert not (B / f"{N}.execution-progress.json").exists()
+
+    assert evidence_digest(step1_evidence) == STEP1_EVIDENCE
+    assert step1_evidence["evidence_type"] == "auth.provider-adapter-positive-auth.cleanup.verified"
+    assert step1_evidence["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step1_evidence["classification"] == "SESSION_REFRESH_ZERO_STATE_VERIFIED"
+    assert step1_evidence["sanitized_result"] == {
+        "classification": "SESSION_REFRESH_ZERO_STATE_VERIFIED",
+        "session_count": 0,
+        "refresh_token_count": 0,
+    }
+    assert step1_evidence["result_digest"] == STEP1_RESULT
+    assert step1_evidence["execution_observation"]["approved_aggregate_select_attempts"] == 1
+    assert step1_evidence["execution_observation"]["additional_sql_executed"] is False
+    assert step1_evidence["execution_observation"]["retry_occurred"] is False
+    assert step1_evidence["execution_observation"]["provider_mutation_attempted"] is False
+    assert all(value is False for value in step1_evidence["security_state"].values())
+
+    assert execution_progress["progress_digest"] == EXECUTION_PROGRESS == progress_digest(execution_progress)
+    assert execution_progress["record_version"] == 2
+    assert execution_progress["overall_state"] == "IN_PROGRESS"
+    first_state = execution_progress["step_states"][0]
+    assert (
+        first_state["authorization_state"],
+        first_state["execution_state"],
+        first_state["verification_state"],
+        first_state["authorization_consumed"],
+    ) == ("CONSUMED","SUCCEEDED","PASS",True)
+    assert first_state["evidence"][0]["evidence_digest"] == STEP1_EVIDENCE
+    assert first_state["observed_postcondition"] == steps[0]["expected_postcondition"]
+    assert all(
+        (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("PENDING","NOT_STARTED","NOT_STARTED",False)
+        for state in execution_progress["step_states"][1:]
+    )
+    assert (B / f"{N}.execution-progress.json").exists()
 
     rendered = "\n".join((B / f"{N}{suffix}").read_text() for suffix in (
-        ".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json"
+        ".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json",".execution-progress.json","-step1-success.evidence.json"
     ))
     assert DATA_PROJECT not in rendered
     assert "sb_secret_" not in rendered
@@ -176,7 +220,7 @@ def main() -> int:
 
     print(
         "DEVELOPMENT v14 continuation corrective cleanup v1: PASS "
-        "(APPROVED / UNEXECUTED; zero-state read before retirement; no auth retry; no new credentials)"
+        "(APPROVED / STEP 1 CONSUMED SUCCEEDED PASS; zero-state verified; retirement steps 2-5 pending)"
     )
     return 0
 

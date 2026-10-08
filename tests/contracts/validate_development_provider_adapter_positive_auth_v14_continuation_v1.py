@@ -5,8 +5,10 @@ import json
 from pathlib import Path
 
 from avuhz_engineering.authorization_plan import (
+    approval_digest,
     plan_digest,
     progress_digest,
+    validate_approval,
     validate_plan,
     validate_progress,
 )
@@ -26,6 +28,8 @@ PROGRESS = "sha256:89119cbc54fdd5273619c997aa6c84d2391e8289e6eb2e8ad3c2fb0b69a20
 EXECUTOR = "sha256:91e7a63a3550bd366179a797070dcfca55d23d87f05c9bba13b74c9209a4998d"
 WORKFLOW = "sha256:72f8de8a1979ec771fbe42ac4c8da173f79005b884e57ceabf68358bf6621e07"
 V14_FAILURE = "sha256:ddd3884f1edebc06d2c608a066146235c5864d10680e95a277140fb04261c1bc"
+APPROVED = "2026-10-08T10:07:10Z"
+APPROVAL = "sha256:f09c9c6b2d7f332ed3468288dd488f84801d0a71c36db42d62ee06baa98ea2f2"
 
 
 def load(suffix: str) -> dict:
@@ -41,12 +45,14 @@ def main() -> int:
     prep = load("-preparation.evidence.json")
     plan = load(".plan.json")
     progress = load(".progress.json")
+    approval = load(".approval.json")
     failure = json.loads(
         (BASE / "development-implementation-handoff-provider-adapter-positive-auth-v14-step05-authorization-preflight-failure.evidence.json").read_text()
     )
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_approval(plan, approval, SCHEMA_ROOT, "2026-10-08T11:00:00Z")
 
     assert resource["contract_digest"] == RESOURCE == canonical_digest(
         {k: v for k, v in resource.items() if k != "contract_digest"}
@@ -113,7 +119,20 @@ def main() -> int:
         for state in progress["step_states"]
     )
 
-    assert not (BASE / f"{N}.approval.json").exists()
+    assert approval["approval_id"] == "9d6f4e83-2a57-4cb1-b942-6e0f3a8c5d74"
+    assert approval["plan_id"] == plan["plan_id"]
+    assert approval["plan_version"] == 1
+    assert approval["plan_digest"] == plan["plan_digest"]
+    assert approval["owner_identity"] == plan["owner_identity"]
+    assert approval["decision"] == "APPROVE"
+    assert approval["environment"] == "DEVELOPMENT"
+    assert approval["approved_at"] == APPROVED
+    assert APPROVED < plan["authorization_window"]["starts_at"]
+    assert approval["effective_at"] == plan["authorization_window"]["starts_at"]
+    assert approval["expires_at"] == plan["authorization_window"]["expires_at"]
+    assert approval["status"] == "ACTIVE"
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert approval["approval_digest"] == APPROVAL == approval_digest(approval)
     assert not (BASE / f"{N}.execution-progress.json").exists()
 
     rendered = "\n".join(
@@ -123,6 +142,7 @@ def main() -> int:
             "-preparation.evidence.json",
             ".plan.json",
             ".progress.json",
+            ".approval.json",
         )
     )
     assert "gnuqaefotwgkwurjpyik" not in rendered

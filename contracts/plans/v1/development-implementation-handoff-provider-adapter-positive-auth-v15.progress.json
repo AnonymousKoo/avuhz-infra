@@ -1,0 +1,111 @@
+{
+  "progress_id": "0c9b39e3-4036-431b-a4d1-dc4fe96166ce",
+  "plan_id": "c91144ec-ca7b-4d3a-a231-128c7ebf0bd5",
+  "plan_version": 15,
+  "plan_digest": "sha256:8c3fac1bee44903cec9219d24afc1b3d1ec016b9e43eacd1cd36d481d6450534",
+  "record_version": 1,
+  "overall_state": "NOT_STARTED",
+  "step_states": [
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.01.verify-fresh-preflight",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.02.create-dedicated-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.03.bind-and-verify-github-secret",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.04.authenticate-live-and-logout-global",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.05.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.06.retire-dedicated-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.07.retire-github-binding",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.08.verify-key-absence",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.09.verify-github-binding-absence",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-08T15:00:00Z",
+  "progress_digest": "sha256:c772c56256e42e7a67e7e34c6d94ce8fad263270825b550a1cfeb531430b3b32"
+}

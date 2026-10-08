@@ -1,0 +1,35 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "c91144ec-ca7b-4d3a-a231-128c7ebf0bd5",
+  "plan_version": 15,
+  "plan_digest": "sha256:a7ea2c21d243fc2d15bae3e0eb4d52b6992182e637ac09801fb20c110bb32fef",
+  "approval_id": "cb87b6fa-5cf2-4dd1-a2d2-7c06ef2831a1",
+  "approval_digest": "sha256:6af1e572c49e50b5315a47da305d24c4ffbb096507d25aa9ca82deb9404c5fda",
+  "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.02.create-dedicated-key",
+  "attempt": 1,
+  "outcome": "OWNER_CONFIRMED_COMPLETED",
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-10-08T17:09:02Z",
+  "recorded_at_is_execution_timestamp": false,
+  "verification_scope": "OWNER_CONFIRMED_WITH_INDEPENDENT_READONLY_PRECHECK_WHERE_AVAILABLE",
+  "sanitized_result": {
+    "owner_confirmed": true,
+    "credential_created": true,
+    "credential_name": "impl_handoff_provider_adapter_positive_auth_v15_ephemeral",
+    "auth_project": "pwlhruwutoitnieactol",
+    "verification_basis": "OWNER_VERIFIED_NAME_ONLY",
+    "credential_value_observed": false,
+    "credential_value_persisted": false,
+    "other_key_change": "NOT_IN_SCOPE_NOT_CHECKED"
+  },
+  "not_claimed": {
+    "independent_provider_key_metadata_read": false,
+    "independent_github_secret_metadata_read": false,
+    "new_session_issued": false,
+    "live_auth_probe_executed": false
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.corrective-cleanup-retirement.prepared",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v14-continuation-v1-corrective-cleanup-retirement-v1",
+  "observed_at": "2026-10-08T11:42:33Z",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "canonical_main_at_start": "c3340647ba7e46deac9b2c7d03734490f4b322ff",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "project_reference": "pwlhruwutoitnieactol",
+  "action_class": "REPOSITORY_LOCAL",
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED",
+  "resource_contract_digest": "sha256:9351b23974715a563f279cef43202ac967e98d6c5a6817483d6434706dda158e",
+  "lineage": {
+    "stopped_continuation_plan_id": "7fb19d54-8a32-4c6e-b741-2d9f5a03c861",
+    "stopped_continuation_plan_digest": "sha256:d98a32bc384782a0436976459092b7ee2f62c8155353856923d066bbd0324f8b",
+    "stopped_continuation_approval_digest": "sha256:f09c9c6b2d7f332ed3468288dd488f84801d0a71c36db42d62ee06baa98ea2f2",
+    "stopped_continuation_execution_progress_digest": "sha256:9bcf3c8a65985a96c3f4f1a8f9095f376a92be73639ea3ea414621551c2e100b",
+    "stopped_continuation_step1_failure_evidence_digest": "sha256:63c1246fb571cc86cf01bbb994942c36d4438f9cd720028114abd53d3b5144aa",
+    "failed_workflow_run_id": 37770555664,
+    "failed_workflow_run_attempt": 1,
+    "failed_execution_sha": "2c9c92e1f49f6e911600978d53f33e29b5550f7b"
+  },
+  "entry_state": {
+    "provider_mutation_attempted": true,
+    "temporary_session_state": "UNKNOWN",
+    "global_logout_acceptance_proven": false,
+    "cleanup_verified": false,
+    "retry_authorized": false,
+    "credential_retirement_obligation_remains": true,
+    "continuation_later_steps_blocked": true
+  },
+  "design": {
+    "first_action": "ONE_AGGREGATE_ONLY_SESSION_REFRESH_COUNT_READ_VIA_SUPABASE_MCP",
+    "retirement_requires_zero_counts": true,
+    "nonzero_or_ambiguous_counts": "STOP_BEFORE_RETIREMENT_AND_REQUIRE_SEPARATE_SESSION_CLEANUP",
+    "ordered_resources": [
+      "supabase:pwlhruwutoitnieactol:session-refresh-zero-verification",
+      "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v14_ephemeral",
+      "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V14_EPHEMERAL",
+      "supabase:pwlhruwutoitnieactol:secret-key:impl_handoff_provider_adapter_positive_auth_v14_ephemeral",
+      "github:AnonymousKoo/avuhz-infra:environment:development:secret:AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V14_EPHEMERAL"
+    ]
+  },
+  "authorization_window": {
+    "starts_at": "2026-10-08T12:00:00Z",
+    "expires_at": "2026-10-08T16:00:00Z"
+  },
+  "security_state": {
+    "provider_contact_performed": false,
+    "provider_mutation_performed": false,
+    "credential_material_observed": false,
+    "credential_material_digest_recorded": false,
+    "secret_value_read": false,
+    "raw_rows_observed": false,
+    "pii_observed": false,
+    "history_rewritten": false,
+    "approval_created": false,
+    "execution_progress_created": false,
+    "result_evidence_created": false
+  },
+  "readiness": "Repository preparation only. Exact owner approval is required before Step 1. Zero-state proof is required before either retirement mutation can execute.",
+  "evidence_digest": "sha256:c7d75fe424b8228f2bdc93ddfc3046b1386481b010a10be5261609a2c8e2a7a5"
+}

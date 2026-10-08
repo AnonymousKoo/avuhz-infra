@@ -9,6 +9,12 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+V15_PROVIDER_ADAPTER_POSITIVE_AUTH_APPROVAL_PATH = (
+    ROOT / "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v15.approval.json"
+)
+V15_PROVIDER_ADAPTER_POSITIVE_AUTH_APPROVAL_FILE_DIGEST = (
+    "sha256:f38605d17c21a8a8b9c23c7648fd845648ffd6cd783926a1f27133c6e67f57de"
+)
 V15_PROVIDER_ADAPTER_CLEANUP_APPROVAL_PATH = (
     ROOT / "contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v15-corrective-cleanup-v1.approval.json"
 )
@@ -642,6 +648,7 @@ def file_digest(path: Path) -> str:
 def main() -> int:
     approvals_root = ROOT / "contracts/plans/v1"
     expected_approval_paths = {
+        V15_PROVIDER_ADAPTER_POSITIVE_AUTH_APPROVAL_PATH,
         V15_PROVIDER_ADAPTER_CLEANUP_APPROVAL_PATH,
         legacy.V8_APPROVAL_PATH,
         legacy.V9_APPROVAL_PATH,
@@ -842,6 +849,8 @@ def main() -> int:
         != RENDER_DATA_SUPAVISOR_SESSION_DSN_V2_APPROVAL_FILE_DIGEST
     ):
         raise SystemExit("exact authorized Render Supavisor session DSN v2 approval file digest mismatch")
+    if file_digest(V15_PROVIDER_ADAPTER_POSITIVE_AUTH_APPROVAL_PATH) != V15_PROVIDER_ADAPTER_POSITIVE_AUTH_APPROVAL_FILE_DIGEST:
+        raise SystemExit("exact authorized DEVELOPMENT provider-adapter v15 positive-auth approval file digest mismatch")
     if file_digest(V15_PROVIDER_ADAPTER_CLEANUP_APPROVAL_PATH) != V15_PROVIDER_ADAPTER_CLEANUP_APPROVAL_FILE_DIGEST:
         raise SystemExit("exact authorized DEVELOPMENT v15 cleanup fallback approval file digest mismatch")
     if file_digest(V15_APPROVAL_PATH) != V15_APPROVAL_FILE_DIGEST:

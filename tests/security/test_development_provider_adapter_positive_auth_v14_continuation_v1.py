@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from avuhz_engineering.authorization_plan import AuthorizationPlanStop
+from avuhz_engineering.authorization_plan import AuthorizationPlanStop, approval_digest
 from avuhz_engineering.development_auth_token_lifecycle import (
     IssuedSession,
     JwtValidationResult,
@@ -146,6 +146,46 @@ class PositiveAuthV14ContinuationV1SecurityTests(unittest.TestCase):
         self.assertEqual(payload["safe_error_code"], "LIVE_AUTH_PROBE_FAILED")
         self.assertTrue(payload["provider_mutation_attempted"])
         self.assertTrue(payload["credential_retirement_required"])
+
+
+    def test_exact_runtime_preflight_authorizes_with_schema_valid_plan(self) -> None:
+        plan = json.loads(executor.PLAN_PATH.read_text())
+        progress = json.loads(executor.PROGRESS_PATH.read_text())
+        self.assertTrue(all(len(step["required_evidence"]) <= 16 for step in plan["steps"]))
+
+        approval = {
+            "approval_id": "c8d39f56-1a24-4eb7-b963-5f0d7c28a641",
+            "plan_id": plan["plan_id"],
+            "plan_version": plan["plan_version"],
+            "plan_digest": plan["plan_digest"],
+            "owner_identity": plan["owner_identity"],
+            "decision": "APPROVE",
+            "environment": "DEVELOPMENT",
+            "effective_at": "2026-10-08T11:00:00Z",
+            "expires_at": "2026-10-08T15:00:00Z",
+            "approved_at": "2026-10-08T10:30:00Z",
+            "status": "ACTIVE",
+            "authority_scope": "EXACT_PLAN_ONLY",
+        }
+        approval["approval_digest"] = approval_digest(approval)
+
+        def local_load(path):
+            path = Path(path)
+            if path == executor.APPROVAL_PATH:
+                return json.loads(json.dumps(approval))
+            return json.loads(path.read_text())
+
+        with patch.object(executor.original.prior, "_load", side_effect=local_load):
+            loaded_plan, authorized = executor._load_and_authorize(
+                "2026-10-08T11:00:01Z"
+            )
+
+        self.assertEqual(loaded_plan["plan_digest"], plan["plan_digest"])
+        self.assertEqual(progress["overall_state"], "NOT_STARTED")
+        state = authorized["step_states"][0]
+        self.assertEqual(state["authorization_state"], "AUTHORIZED")
+        self.assertFalse(state["authorization_consumed"])
+        self.assertEqual(state["execution_state"], "NOT_STARTED")
 
     def test_reuses_v14_secret_namespace_without_new_secret(self) -> None:
         self.assertEqual(

@@ -1,0 +1,55 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v8.key-retirement-v1.post-invalidation-delete-observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "71372198-c690-4886-bfb4-ebe201d4c83a",
+  "plan_version": 1,
+  "plan_digest": "sha256:0675583489849cb3f93063e13aa3a1691e864bef4f9410375ab967dc9e1207a2",
+  "approval_id": "b1fd38d3-fdb6-4a66-9507-25e6b401e271",
+  "approval_digest": "sha256:943468fef4816fd40d38ffa3f75c105e23ced952a329e72a44fce5773c9d5645",
+  "preexecution_invalidation_evidence_digest": "sha256:6664a48710ed032272b0236e81c901ccdde1548fd185c26e2f0248f8a39b4b47",
+  "authority_state": "APPROVED_BUT_NONEXECUTABLE",
+  "outcome": "NONCONFORMING_PROVIDER_MUTATION_AFTER_PREEXECUTION_INVALIDATION",
+  "safe_error_code": "PLAN_STATE_INVALID",
+  "sanitized_result": {
+    "key_name": "impl_handoff_provider_adapter_positive_auth_v8_ephemeral",
+    "deletion_reported_by_owner": true,
+    "credential_material_observed": false,
+    "other_key_change_reported": false,
+    "github_binding_change_reported": false
+  },
+  "execution_observation": {
+    "execution_timestamp_retained": false,
+    "recorded_at_is_execution_timestamp": false,
+    "provider_key_delete_attempts_reported": 1,
+    "credential_value_read": false,
+    "retry_occurred": false
+  },
+  "provider_effects": {
+    "provider_key_delete_reported": true,
+    "other_provider_key_change_reported": false,
+    "github_secret_mutation_reported": false,
+    "session_issued_reported": false,
+    "token_issued_reported": false,
+    "implementation_handoff_attempted": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "raw_provider_response_retained": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_POST_INVALIDATION_DELETION_OUTCOME",
+  "continuation_rule": "PREPARE_FRESH_FORWARD_ONLY_V8_KEY_RETIREMENT_V2_ABSENCE_RECONCILIATION",
+  "recorded_at": "2026-10-06T13:03:20Z",
+  "evidence_digest": "sha256:6f9fe1bd43637cf64002c7758846f56fdb6959aa254fc5228468b368656ce3b4"
+}

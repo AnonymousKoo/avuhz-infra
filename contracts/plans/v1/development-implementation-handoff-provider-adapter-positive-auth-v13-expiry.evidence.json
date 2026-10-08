@@ -1,0 +1,32 @@
+{
+  "record_type": "DEVELOPMENT_PROVIDER_ADAPTER_POSITIVE_AUTH_V13_EXPIRY_AUDIT",
+  "record_version": 1,
+  "plan_id": "5d9f7b32-4e86-4ca1-b230-7f3d6e8a9b52",
+  "plan_version": 13,
+  "plan_digest": "sha256:284d6ed4ee9d3651e29afa83108642037f569db76bd1161fb7700a725f63b964",
+  "approval_id": "7b4e2c91-6d35-4f8a-b120-9c5e3d7a6f42",
+  "approval_digest": "sha256:8b8d6d842dcce50bfb013c2dde1c1a7296917f4f4e8dc43f2c3c07c8a74414ae",
+  "approval_file_digest": "sha256:6b8b8476ef1ec8c7437601d308904ce07738cbf56fa0387f5a251a3ef90cf6f1",
+  "progress_digest": "sha256:b0227e09710a65df4bc317a718b37183fd10d7de075db7b39c28aeb8537cc048",
+  "environment": "DEVELOPMENT",
+  "effective_at": "2026-10-07T03:30:00Z",
+  "expires_at": "2026-10-07T05:30:00Z",
+  "observed_at": "2026-10-07T15:09:01Z",
+  "outcome": "EXPIRED_UNEXECUTED",
+  "progress_state": {
+    "overall_state": "NOT_STARTED",
+    "step_count": 10,
+    "all_steps_pending": true,
+    "all_steps_not_started": true,
+    "authorization_consumed": false
+  },
+  "effects": {
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "credential_used": false,
+    "github_secret_mutation_attempted": false,
+    "session_issued": false,
+    "token_issued": false
+  },
+  "continuation_rule": "DO_NOT_REUSE_APPROVAL_OR_WINDOW; CREATE_FRESH_FORWARD_ONLY_POSITIVE_AUTH_V14"
+}

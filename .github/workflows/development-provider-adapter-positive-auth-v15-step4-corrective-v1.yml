@@ -1,0 +1,178 @@
+name: DEVELOPMENT Provider Adapter Positive Auth v15 Step 4 Corrective v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Select the exact corrective confirmation (no manual typing)'
+        required: true
+        type: choice
+        options:
+          - RUN_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_STEP4
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-provider-adapter-positive-auth-v15-step4-corrective-v1
+  cancel-in-progress: false
+
+jobs:
+  positive-auth-v15-corrective:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.run_number == 1 &&
+      github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: 'src:.'
+      AVUHZ_ENVIRONMENT: development
+      AVUHZ_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Checkout exact protected main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Fail closed on incorrect confirmation before any credential resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "AnonymousKoo/avuhz-infra"
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$AVUHZ_ENVIRONMENT" = "development"
+          if [ "$AVUHZ_CONFIRMATION" != "RUN_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_STEP4" ]; then
+            echo "CORRECTIVE_CONFIRMATION_INVALID"
+            exit 1
+          fi
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Install pinned authorization and JWT dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3' 'PyJWT[crypto]==2.14.0' 'cryptography==50.0.1'
+
+      - name: Validate separate corrective owner approval and exact source-bound workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          from pathlib import Path
+          from avuhz_engineering.authorization_plan import (
+              validate_plan, validate_approval, validate_progress, authorize_step
+          )
+          root = Path.cwd()
+          b = root / 'contracts/plans/v1'
+          p = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15-step4-corrective-dispatch-v1.plan.json').read_text())
+          a = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15-step4-corrective-dispatch-v1.approval.json').read_text())
+          g = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15-step4-corrective-dispatch-v1.progress.json').read_text())
+          v = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15.plan.json').read_text())
+          v_a = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15.approval.json').read_text())
+          v_g = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15.progress.json').read_text())
+          fallback = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15-corrective-cleanup-v1.plan.json').read_text())
+          fallback_a = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15-corrective-cleanup-v1.approval.json').read_text())
+          fallback_g = json.loads((b / 'development-implementation-handoff-provider-adapter-positive-auth-v15-corrective-cleanup-v1.progress.json').read_text())
+          schema = root / 'contracts/schemas/v1'
+          now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00', 'Z')
+          for item in (p, v, fallback):
+              validate_plan(item, schema)
+          for item, state in ((p, g), (v, v_g), (fallback, fallback_g)):
+              validate_progress(item, state, schema)
+          for item, approval in ((p, a), (v, v_a), (fallback, fallback_a)):
+              validate_approval(item, approval, schema, now)
+          if p['target']['project_reference'] != 'pwlhruwutoitnieactol' or p['environment'] != 'DEVELOPMENT':
+              raise SystemExit('CORRECTIVE_PROJECT_MISMATCH')
+          if v['plan_id'] != 'c91144ec-ca7b-4d3a-a231-128c7ebf0bd5' or v_g['overall_state'] != 'IN_PROGRESS':
+              raise SystemExit('CORRECTIVE_PRIOR_AUTHORITY_MISMATCH')
+          if any(
+              x['authorization_state'] != 'CONSUMED' or
+              x['execution_state'] != 'SUCCEEDED' or
+              x['verification_state'] != 'PASS'
+              for x in v_g['step_states'][:3]
+          ) or any(x['authorization_state'] != 'PENDING' or x['execution_state'] != 'NOT_STARTED'
+                   for x in v_g['step_states'][3:]):
+              raise SystemExit('CORRECTIVE_PREDECESSOR_INVALID')
+          if fallback_g['overall_state'] != 'NOT_STARTED':
+              raise SystemExit('CORRECTIVE_FALLBACK_UNAVAILABLE')
+          digest = 'sha256:' + hashlib.sha256((root / '.github/workflows/development-provider-adapter-positive-auth-v15-step4-corrective-v1.yml').read_bytes()).hexdigest()
+          if p['steps'][0]['resource']['exact_digest'] != digest:
+              raise SystemExit('CORRECTIVE_WORKFLOW_DIGEST_MISMATCH')
+          required = p['steps'][0]['required_evidence']
+          actual = v_g['step_states'][2]['evidence']
+          if len(required) != 1 or len(actual) != 1 or required[0]['exact_digest'] != actual[0]['evidence_digest']:
+              raise SystemExit('CORRECTIVE_PREDECESSOR_EVIDENCE_MISMATCH')
+          s = p['steps'][0]
+          request = {
+              'plan_id': p['plan_id'], 'plan_version': p['plan_version'],
+              'plan_digest': p['plan_digest'], 'environment': p['environment'],
+              'provider_reference': p['target']['provider_reference'],
+              'project_reference': p['target']['project_reference'],
+              'responsibility': p['target']['responsibility'],
+              'issuer_reference': p['target']['issuer_reference'],
+              'audience_reference': p['target']['audience_reference'],
+              'step_id': s['step_id'], 'resource_reference': s['resource']['resource_reference'],
+              'resource_version': s['resource']['exact_version'],
+              'resource_digest': s['resource']['exact_digest'], 'operation': s['operation'],
+              'execution_class': s['execution_class'],
+              'credential_class': 'OWNER_INTERACTIVE_SESSION',
+              'required_evidence': [{
+                  'evidence_type': required[0]['evidence_type'],
+                  'evidence_digest': required[0]['exact_digest'],
+              }],
+              'prior_evidence_digests': [],
+              'unexpected_remote_state': False, 'extra_privileges': False,
+              'unauthorized_migration_surface': False, 'scope_expansion': False,
+          }
+          authorized = authorize_step(p, a, g, request, schema, now)
+          if authorized['step_states'][0]['authorization_state'] != 'AUTHORIZED':
+              raise SystemExit('CORRECTIVE_DISPATCH_NOT_AUTHORIZED')
+          print('corrective_dispatch_authorization=PASS')
+          PY
+
+      - name: Verify fresh DEVELOPMENT public readiness without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 - <<'PY'
+          from scripts.development_public_readiness_v1 import run_probe
+          result = run_probe()
+          if result['classification'] != 'DEVELOPMENT_PUBLIC_READINESS_PASS':
+              raise SystemExit('DEVELOPMENT_PUBLIC_READINESS_FAILED')
+          print('development_public_readiness=PASS')
+          PY
+
+      - name: Validate original v15 Step 4 executable authority before secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          python3 scripts/development_provider_adapter_positive_auth_v15.py --preflight-only
+
+      - name: Execute original v15 one-session lifecycle once; never retry
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          python3 scripts/development_provider_adapter_positive_auth_v15.py

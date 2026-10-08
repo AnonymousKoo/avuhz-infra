@@ -1,0 +1,40 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v8.key-retirement-v2.prepared",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "canonical_main_at_preparation": "cff75ef3dfe68135f89e22977f850df7febacbbc",
+  "resource_contract_digest": "sha256:6d72f77f2511242ef0053f490bdb1fddf2132d6d891cf2d009f02f2184cad698",
+  "authorization_window": {
+    "starts_at": "2026-10-06T14:00:00Z",
+    "expires_at": "2026-10-06T17:00:00Z"
+  },
+  "prerequisites": {
+    "v8_corrected_stopped_progress": "sha256:45c6d902458eee68f2f2782aaac82598d8cef7a2c022124691d3db4f08222b8d",
+    "v8_corrected_step1_key_creation": "sha256:e2f4cc24eb5bbe974ee51d2086262af68314a29a136c5f630f949bbf6699c420",
+    "v8_corrected_step2_plan_integrity_failure": "sha256:eb2138a99751165302f01b9e063fdd883919c69c1df3f67db040c001879d9ae5",
+    "v8_recording_correction": "sha256:8ec18cfe0586881e072aa6157012c15fcc9be3cd80d359731e12f3f99e7d75a0",
+    "v1_preexecution_invalidation": "sha256:6664a48710ed032272b0236e81c901ccdde1548fd185c26e2f0248f8a39b4b47",
+    "v1_post_invalidation_delete": "sha256:6f9fe1bd43637cf64002c7758846f56fdb6959aa254fc5228468b368656ce3b4",
+    "v1_authority_state": "APPROVED_BUT_NONEXECUTABLE",
+    "v1_execution_conforming": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "token_material_retained": false,
+    "pii_retained": false,
+    "github_secret_changed": false,
+    "provider_key_changed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "CANONICAL_POST_INVALIDATION_DELETE_REQUIRES_READ_ONLY_FORWARD_RECONCILIATION",
+  "recorded_at": "2026-10-06T13:13:38Z",
+  "evidence_digest": "sha256:b1f1b2b444ae579e1f001d14523059e4ed97c362290519ef39fd7e93a19ae0fb"
+}

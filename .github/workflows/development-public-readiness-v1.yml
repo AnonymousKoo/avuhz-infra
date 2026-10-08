@@ -1,0 +1,57 @@
+name: DEVELOPMENT Public Readiness v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Exact confirmation VERIFY_AVUHZ_DEVELOPMENT_PUBLIC_READINESS_V1'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-public-readiness-v1
+  cancel-in-progress: false
+
+jobs:
+  public-readiness:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.run_attempt == 1 &&
+      inputs.confirmation == 'VERIFY_AVUHZ_DEVELOPMENT_PUBLIC_READINESS_V1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: "src:."
+      AVUHZ_CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Checkout exact canonical main SHA
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          ref: ${{ github.sha }}
+
+      - name: Verify exact DEVELOPMENT-only dispatch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "AnonymousKoo/avuhz-infra"
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "development_public_readiness_preflight=PASS"
+          echo "credential_resolution=NONE"
+          echo "provider_mutation=NONE"
+
+      - name: Verify three exact public DEVELOPMENT health endpoints once
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/development_public_readiness_v1.py

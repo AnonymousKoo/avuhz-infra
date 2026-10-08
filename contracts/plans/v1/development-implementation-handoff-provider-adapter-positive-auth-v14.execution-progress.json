@@ -1,0 +1,245 @@
+{
+  "progress_id": "9c4e2f65-7b19-4ad3-a580-1f6e8c2d4b73",
+  "plan_id": "6ea08c43-5f97-4db2-b341-8f4e7c9a2d60",
+  "plan_version": 14,
+  "plan_digest": "sha256:8da4655cf8167a661935f88e340fe51d7da1821db807e9254ffca88b8b9ef47f",
+  "record_version": 5,
+  "overall_state": "IN_PROGRESS",
+  "step_states": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.01.create-fresh-auth-admin-key",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v14-step01-success.evidence.json",
+          "evidence_digest": "sha256:d4aff55bac16e73efc867b327ef88eab79fd3f0db6dcac04fd82233e34cf1b18",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        }
+      ],
+      "observed_postcondition": "In DEVELOPMENT AUTH, create exactly one fresh dedicated secret key named impl_handoff_provider_adapter_positive_auth_v14_ephemeral. Only the owner may transfer its value directly to the separately authorized GitHub binding step. No value, digest, copy, log, prompt, repository file, identity, session, DATA, Render, n8n, staging, or production change is permitted.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v14.fresh-key-created",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "evidence_digest": "sha256:d4aff55bac16e73efc867b327ef88eab79fd3f0db6dcac04fd82233e34cf1b18",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:d7d7cdfeaa1127c19182a60e896ef71b4863ee211d4db8ab3f9cf89ccba29266",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.02.bind-fresh-key-github-development",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v14-step02-success.evidence.json",
+          "evidence_digest": "sha256:62ee203e20be12f515e698cd69a10ced3422f46eb4b7f21e67ba157fc53adab1",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        }
+      ],
+      "observed_postcondition": "Using only an owner-interactive GitHub operation, bind the fresh key from Step 1 to environment development as AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V14_EPHEMERAL. The value must transfer directly from owner to GitHub and never enter agent context, logs, evidence, digests, prompts, or files. No other secret or provider resource changes.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v14.fresh-key-created",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.01.create-fresh-auth-admin-key",
+          "evidence_type": "auth.provider-adapter-positive-auth.admin-credential.created",
+          "evidence_digest": "sha256:d4aff55bac16e73efc867b327ef88eab79fd3f0db6dcac04fd82233e34cf1b18",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:d7d7cdfeaa1127c19182a60e896ef71b4863ee211d4db8ab3f9cf89ccba29266",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v14.github-binding-created",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "evidence_digest": "sha256:62ee203e20be12f515e698cd69a10ced3422f46eb4b7f21e67ba157fc53adab1",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:a50da377685ab06d08cd36f8fce32a909c5161c630d78fb1add9a3005f435811",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.03.verify-github-binding-presence",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v14-step03-success.evidence.json",
+          "evidence_digest": "sha256:3590b89ce68436bb0109025b08869d7a4184a7207f65b52b67dca38e9d9395e0",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        }
+      ],
+      "observed_postcondition": "A separate owner-interactive read-only GitHub environment inspection proves exactly the secret reference AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V14_EPHEMERAL exists in repository AnonymousKoo/avuhz-infra environment development by name only. No secret value is requested or returned and no mutation occurs.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v14.github-binding-created",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.02.bind-fresh-key-github-development",
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.created",
+          "evidence_digest": "sha256:62ee203e20be12f515e698cd69a10ced3422f46eb4b7f21e67ba157fc53adab1",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:a50da377685ab06d08cd36f8fce32a909c5161c630d78fb1add9a3005f435811",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v14.github-binding-verified",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "evidence_digest": "sha256:3590b89ce68436bb0109025b08869d7a4184a7207f65b52b67dca38e9d9395e0",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:ead482104ef8015fa83d9f19d6804a0353fbc03e0d7204b602b1960e093b2cad",
+          "recorded_at": "2026-10-08T08:22:39Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.04.verify-fresh-auth-preflight",
+      "authorization_state": "CONSUMED",
+      "execution_state": "SUCCEEDED",
+      "verification_state": "PASS",
+      "authorization_consumed": true,
+      "evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.preflight.verified",
+          "evidence_reference": "development-implementation-handoff-provider-adapter-positive-auth-v14-step04-success.evidence.json",
+          "evidence_digest": "sha256:a81f43f32718325822785e6c246f90f9f161e93a3b377301ba83a607c7e3b8b2",
+          "recorded_at": "2026-10-08T08:32:24Z"
+        }
+      ],
+      "observed_postcondition": "Using only supabase.mcp.execute_sql against DEVELOPMENT AUTH project pwlhruwutoitnieactol, execute exactly the resource-bound aggregate SELECT once and return exactly auth_user_count=2, target_identity_count=1, target_password_null_count=1, target_tenant_exact_count=1, session_count=0, and refresh_token_count=0. The exact query text and SHA-256 are bound in the v14 resource. Stop on any deviation. No additional SQL, retry, mutation, raw Auth row, PII, credential material, GitHub secret access, session/token issuance, or Step 5 execution is authorized.",
+      "safe_error_code": null,
+      "binding_assertions": [
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v14.github-binding-verified",
+          "phase": "DERIVED_FROM_SOURCE_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.03.verify-github-binding-presence",
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "evidence_digest": "sha256:3590b89ce68436bb0109025b08869d7a4184a7207f65b52b67dca38e9d9395e0",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:ead482104ef8015fa83d9f19d6804a0353fbc03e0d7204b602b1960e093b2cad",
+          "recorded_at": "2026-10-08T08:32:24Z"
+        },
+        {
+          "binding_id": "binding.development.provider-adapter-positive-auth-v14.auth-preflight",
+          "phase": "PRODUCED_BY_CURRENT_STEP",
+          "value_class": "CONTENT_DIGEST",
+          "source_step_id": null,
+          "evidence_type": "auth.provider-adapter-positive-auth.preflight.verified",
+          "evidence_digest": "sha256:a81f43f32718325822785e6c246f90f9f161e93a3b377301ba83a607c7e3b8b2",
+          "digest_policy": "REQUIRED",
+          "persistence_policy": "DIGEST_ONLY",
+          "sanitized_value": null,
+          "value_digest": "sha256:7ab8f21ff7442882eca413794bfc85c1145bc9d1856648fd3482d9b554f8edbb",
+          "recorded_at": "2026-10-08T08:32:24Z"
+        }
+      ]
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.05.authenticate-live-and-logout-global",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.06.verify-zero-session-refresh-state",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.07.retire-fresh-auth-admin-key",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.08.retire-github-secret-binding",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.09.verify-fresh-auth-admin-key-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    },
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v14.step.10.verify-github-secret-binding-absent",
+      "authorization_state": "PENDING",
+      "execution_state": "NOT_STARTED",
+      "verification_state": "NOT_STARTED",
+      "authorization_consumed": false,
+      "evidence": [],
+      "observed_postcondition": null,
+      "safe_error_code": null,
+      "binding_assertions": []
+    }
+  ],
+  "updated_at": "2026-10-08T08:32:24Z",
+  "progress_digest": "sha256:4d3e44ca05339f980bbf5cced174f67f70d992b70456e9a94a64668ec643a096"
+}

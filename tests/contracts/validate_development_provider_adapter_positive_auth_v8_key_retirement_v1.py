@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import json,re,sys
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT)); sys.path.insert(0,str(ROOT/'src'))
+
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
+from avuhz_runtime.implementation_handoff import canonical_digest
+
+B=ROOT/'contracts/plans/v1'; S=ROOT/'contracts/schemas/v1'
+N='development-implementation-handoff-provider-adapter-positive-auth-v8-key-retirement-v1'
+V8='development-implementation-handoff-provider-adapter-positive-auth-v8'
+OBS='2026-10-06T12:28:13Z'
+START='2026-10-06T13:00:00Z'
+END='2026-10-06T17:00:00Z'
+APPROVED='2026-10-06T12:41:53Z'
+APPROVAL='sha256:943468fef4816fd40d38ffa3f75c105e23ced952a329e72a44fce5773c9d5645'
+RESOURCE='sha256:cbd92eb0848549c21be7ae0d7a68ad12e1c61e332511c7e0c39d6c24ae63ea50'
+PREP='sha256:7a127efc5018002f2c1a258cca5ac9d1b14b7212e595d42adead2de27822a548'
+PLAN='sha256:0675583489849cb3f93063e13aa3a1691e864bef4f9410375ab967dc9e1207a2'
+PROGRESS='sha256:3c01c7db130cd08e5e1a0810bd4d3986d39d8055be754299e0d9a5caf9aa8f7c'
+V8_STOP_OLD='sha256:f84949e6a754181aae0d32b37b4426d849b418fe7ea670f97a294716f5731f4a'
+V8_STEP1_OLD='sha256:45716b85ea5732486e6bc81319a8aa24b8cfce25a26cfd6775740fd35c3ca6da'
+V8_STEP2_FAIL_OLD='sha256:2b80c361d731a38a406729136fd6b0f21f94e9e6eb582efbdb3e46a988bd68d1'
+V8_STOP='sha256:45c6d902458eee68f2f2782aaac82598d8cef7a2c022124691d3db4f08222b8d'
+V8_STEP1='sha256:e2f4cc24eb5bbe974ee51d2086262af68314a29a136c5f630f949bbf6699c420'
+V8_STEP2_FAIL='sha256:eb2138a99751165302f01b9e063fdd883919c69c1df3f67db040c001879d9ae5'
+V8_CORRECTION='sha256:8ec18cfe0586881e072aa6157012c15fcc9be3cd80d359731e12f3f99e7d75a0'
+INVALIDATION='sha256:6664a48710ed032272b0236e81c901ccdde1548fd185c26e2f0248f8a39b4b47'
+POST_DELETE='sha256:6f9fe1bd43637cf64002c7758846f56fdb6959aa254fc5228468b368656ce3b4'
+POST_DELETE_RECORDED='2026-10-06T13:03:20Z'
+
+def load(name): return json.loads((B/name).read_text())
+
+def main():
+    r=load(N+'.resource.json')
+    prep=load(N+'-preparation.evidence.json')
+    p=load(N+'.plan.json')
+    g=load(N+'.progress.json')
+    a=load(N+'.approval.json')
+    v8x=load(V8+'.execution-progress.json')
+    v8e1=load(V8+'-step01-success.evidence.json')
+    v8e2=load(V8+'-step02-plan-integrity-failure.evidence.json')
+    correction=load(V8+'-recording-step-id-correction-v1.evidence.json')
+    invalidation=load(N+'-preexecution-invalidation.evidence.json')
+    post_delete=load(N+'-post-invalidation-delete.evidence.json')
+
+    validate_plan(p,S); validate_progress(p,g,S); validate_approval(p,a,S,START)
+
+    assert r['contract_digest']==RESOURCE==canonical_digest({k:v for k,v in r.items() if k!='contract_digest'})
+    assert prep['evidence_digest']==PREP==canonical_digest({k:v for k,v in prep.items() if k!='evidence_digest'})
+    assert p['plan_id']=='71372198-c690-4886-bfb4-ebe201d4c83a'
+    assert p['plan_version']==1 and p['plan_digest']==PLAN==plan_digest(p)
+    assert p['definition_status']=='READY_FOR_APPROVAL'
+    assert p['authority_effect']=='NONE_UNTIL_SEPARATELY_APPROVED'
+    assert p['environment']=='DEVELOPMENT'
+    assert p['target']['project_reference']=='pwlhruwutoitnieactol'
+    assert p['target']['responsibility']=='AUTH'
+    assert p['authorization_window']=={'binding_state':'BOUND','starts_at':START,'expires_at':END}
+
+    assert a['approval_id']=='b1fd38d3-fdb6-4a66-9507-25e6b401e271'
+    assert a['plan_id']==p['plan_id'] and a['plan_version']==1 and a['plan_digest']==p['plan_digest']
+    assert a['owner_identity']==p['owner_identity'] and a['decision']=='APPROVE' and a['environment']=='DEVELOPMENT'
+    assert a['approved_at']==APPROVED and APPROVED < START
+    assert a['effective_at']==START and a['expires_at']==END
+    assert a['status']=='ACTIVE' and a['authority_scope']=='EXACT_PLAN_ONLY'
+    assert a['approval_digest']==APPROVAL==approval_digest(a)
+
+    assert r['resource_id']=='832f9872-e758-464f-aacd-c458630bfd25'
+    assert r['resource_version']=='provider-adapter-positive-auth-v8-key-retirement.v1'
+    assert r['boundary']==N
+    assert r['target_key_reference']=='impl_handoff_provider_adapter_positive_auth_v8_ephemeral'
+    assert r['github_secret_binding_name']=='AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V8_EPHEMERAL'
+    assert r['lineage']['v8_execution_progress_digest']==V8_STOP_OLD
+    assert r['lineage']['v8_step1_key_creation_evidence_digest']==V8_STEP1_OLD
+    assert r['lineage']['v8_step2_plan_integrity_failure_evidence_digest']==V8_STEP2_FAIL_OLD
+    assert r['lineage']['v8_overall_state']=='STOPPED'
+    assert r['lineage']['v8_github_binding_created'] is False
+    assert r['authorized_counts']=={
+        'supabase_key_delete':1,'supabase_key_absence_read':1,'github_secret_absence_read':1,
+        'github_environment_secret_delete':0,'credential_create':0,'session_issue':0,
+        'token_issue':0,'implementation_handoff_execute':0
+    }
+    assert all(v is False for v in r['security_rules'].values())
+    assert r['failure_handling']['v8_execution_must_remain_blocked'] is True
+    assert r['failure_handling']['retirement_obligation_remains'] is True
+    assert r['failure_handling']['github_binding_mutation_authorized'] is False
+    assert r['failure_handling']['retry_v8_authorized'] is False
+
+    assert v8x['overall_state']=='STOPPED' and v8x['progress_digest']==V8_STOP==progress_digest(v8x)
+    assert canonical_digest(v8e1)==V8_STEP1
+    assert canonical_digest(v8e2)==V8_STEP2_FAIL
+    assert v8e1['owner_confirmed_created'] is True and v8e1['credential_material_retained'] is False
+    assert v8e2['outcome']=='FAILED_PREEXECUTION_PLAN_INTEGRITY'
+    assert v8e2['sanitized_result']['binding_created'] is False
+    assert correction['evidence_digest']==V8_CORRECTION==canonical_digest({k:v for k,v in correction.items() if k!='evidence_digest'})
+    assert correction['original_record']=={
+        'step1_evidence_digest':V8_STEP1_OLD,
+        'step2_evidence_digest':V8_STEP2_FAIL_OLD,
+        'execution_progress_digest':V8_STOP_OLD,
+        'defect':'STEP_ID_BINDING_MISMATCH',
+    }
+    assert correction['corrected_record']['step1_evidence_digest']==V8_STEP1
+    assert correction['corrected_record']['step2_evidence_digest']==V8_STEP2_FAIL
+    assert correction['corrected_record']['execution_progress_digest']==V8_STOP
+
+    assert invalidation['evidence_digest']==INVALIDATION==canonical_digest({k:v for k,v in invalidation.items() if k!='evidence_digest'})
+    assert invalidation['plan_id']==p['plan_id'] and invalidation['plan_digest']==p['plan_digest']
+    assert invalidation['approval_id']==a['approval_id'] and invalidation['approval_digest']==a['approval_digest']
+    assert invalidation['classification']=='UPSTREAM_V8_RECORDING_BINDING_CORRECTION_INVALIDATED_APPROVED_RETIREMENT_V1'
+    assert invalidation['safe_error_code']=='PLAN_STATE_INVALID'
+    assert invalidation['approval_state']=='APPROVED_BUT_NONEXECUTABLE'
+    assert invalidation['invalidated_prerequisites']=={
+        'v8_stopped_progress':V8_STOP_OLD,
+        'v8_step1_key_creation':V8_STEP1_OLD,
+        'v8_step2_plan_integrity_failure':V8_STEP2_FAIL_OLD,
+    }
+    assert invalidation['corrected_prerequisites']=={
+        'v8_stopped_progress':V8_STOP_OLD,
+        'v8_step1_key_creation':V8_STEP1_OLD,
+        'v8_step2_plan_integrity_failure':V8_STEP2_FAIL_OLD,
+        'v8_recording_correction':V8_CORRECTION,
+    }
+    assert all(v is False for v in invalidation['provider_effects'].values())
+    assert invalidation['continuation_rule']=='PREPARE_FRESH_FORWARD_ONLY_V8_KEY_RETIREMENT_V2'
+
+    assert post_delete['evidence_digest']==POST_DELETE==canonical_digest({k:v for k,v in post_delete.items() if k!='evidence_digest'})
+    assert post_delete['plan_id']==p['plan_id'] and post_delete['plan_digest']==p['plan_digest']
+    assert post_delete['approval_id']==a['approval_id'] and post_delete['approval_digest']==a['approval_digest']
+    assert post_delete['preexecution_invalidation_evidence_digest']==INVALIDATION
+    assert post_delete['authority_state']=='APPROVED_BUT_NONEXECUTABLE'
+    assert post_delete['outcome']=='NONCONFORMING_PROVIDER_MUTATION_AFTER_PREEXECUTION_INVALIDATION'
+    assert post_delete['safe_error_code']=='PLAN_STATE_INVALID'
+    assert post_delete['sanitized_result']=={
+        'key_name':'impl_handoff_provider_adapter_positive_auth_v8_ephemeral',
+        'deletion_reported_by_owner':True,
+        'credential_material_observed':False,
+        'other_key_change_reported':False,
+        'github_binding_change_reported':False,
+    }
+    assert post_delete['execution_observation']=={
+        'execution_timestamp_retained':False,
+        'recorded_at_is_execution_timestamp':False,
+        'provider_key_delete_attempts_reported':1,
+        'credential_value_read':False,
+        'retry_occurred':False,
+    }
+    assert post_delete['provider_effects']['provider_key_delete_reported'] is True
+    assert all(v is False for k,v in post_delete['provider_effects'].items() if k!='provider_key_delete_reported')
+    assert all(v is False for v in post_delete['security_state'].values())
+    assert post_delete['record_basis']=='OWNER_CONFIRMED_SANITIZED_POST_INVALIDATION_DELETION_OUTCOME'
+    assert post_delete['continuation_rule']=='PREPARE_FRESH_FORWARD_ONLY_V8_KEY_RETIREMENT_V2_ABSENCE_RECONCILIATION'
+    assert post_delete['recorded_at']==POST_DELETE_RECORDED
+
+    assert prep['canonical_main_at_preparation']=='cc8c41d6e0b068daf30cfc5091cf2be5d883a852'
+    assert prep['resource_contract_digest']==RESOURCE
+    assert prep['authorization_window']=={'starts_at':START,'expires_at':END}
+    assert prep['prerequisites']=={
+        'v8_stopped_progress':V8_STOP,
+        'v8_step1_key_creation':V8_STEP1,
+        'v8_step2_plan_integrity_failure':V8_STEP2_FAIL,
+        'v8_overall_state':'STOPPED',
+        'v8_github_binding_created':False,
+    }
+    assert all(v is False for v in prep['security_state'].values())
+
+    assert [s['operation'] for s in p['steps']]==[
+        'provider.auth-admin-credential.delete-dedicated-secret-key',
+        'provider.auth-admin-credential.verify-dedicated-secret-key-absent',
+        'provider.auth-secret-binding.verify-github-environment-reference-absent',
+    ]
+    assert all(s['resource']['exact_version']=='provider-adapter-positive-auth-v8-key-retirement.v1' and s['resource']['exact_digest']==RESOURCE for s in p['steps'])
+    step1=p['steps'][0]
+    assert any(e['evidence_type']=='auth.provider-adapter-positive-auth.admin-credential.created' and e['exact_digest']==V8_STEP1_OLD for e in step1['required_evidence'])
+    assert any(e['evidence_type']=='authorization-plan.execution-progress' and e['exact_digest']==V8_STOP_OLD for e in step1['required_evidence'])
+    assert any(e['evidence_type']=='auth.provider-adapter-positive-auth.github-binding.created' and e['exact_digest']==V8_STEP2_FAIL_OLD for e in step1['required_evidence'])
+    assert any(e['evidence_type']=='auth.provider-adapter-positive-auth-v8.key-retirement-v1.prepared' and e['exact_digest']==PREP for e in step1['required_evidence'])
+
+    assert g['progress_id']=='05a084cc-6862-42d3-872a-01d51b59efdc'
+    assert g['progress_digest']==PROGRESS==progress_digest(g)
+    assert g['overall_state']=='NOT_STARTED' and g['record_version']==1
+    assert g==initial_progress(p,S,g['progress_id'],OBS)
+    assert not (B/(N+'.execution-progress.json')).exists()
+
+    rendered='\n'.join((B/(N+s)).read_text() for s in ('.resource.json','-preparation.evidence.json','.plan.json','.progress.json','.approval.json','-preexecution-invalidation.evidence.json','-post-invalidation-delete.evidence.json'))
+    assert re.search(r'sb_secret_[A-Za-z0-9._-]{8,}',rendered) is None
+    assert 'gnuqaefotwgkwurjpyik' not in rendered
+    assert 'service_role' not in rendered and 'Bearer eyJ' not in rendered
+
+    print('DEVELOPMENT provider-adapter positive-auth v8 key retirement v1: PASS (PREEXECUTION-INVALIDATED; post-invalidation delete recorded as nonconforming; forward-only v2 absence reconciliation required)')
+
+if __name__=='__main__': main()

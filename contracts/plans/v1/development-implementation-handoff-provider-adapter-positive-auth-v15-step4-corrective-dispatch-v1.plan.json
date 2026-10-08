@@ -1,0 +1,103 @@
+{
+  "plan_id": "4fcaf2f0-53d9-40bb-ac8a-a8cde8869f7c",
+  "plan_version": 1,
+  "plan_digest": "sha256:3899c114617d712c458afd4ee061f7b5545710a054c318c9b3b8d54cb795d084",
+  "definition_status": "READY_FOR_APPROVAL",
+  "environment": "DEVELOPMENT",
+  "target": {
+    "provider_class": "identity.provider",
+    "provider_reference": "supabase",
+    "project_reference": "pwlhruwutoitnieactol",
+    "responsibility": "AUTH",
+    "issuer_reference": "https://pwlhruwutoitnieactol.supabase.co/auth/v1",
+    "audience_reference": "audience.avuhz.command-service.development"
+  },
+  "owner_identity": "github:AnonymousKoo",
+  "created_at": "2026-10-08T17:25:56Z",
+  "authorization_window": {
+    "binding_state": "BOUND",
+    "starts_at": "2026-10-08T18:00:00Z",
+    "expires_at": "2026-10-10T16:30:00Z"
+  },
+  "ordered_step_ids": [
+    "development.implementation-handoff.provider-adapter-positive-auth-v15-step4-corrective-dispatch-v1.step.01.dispatch-exact"
+  ],
+  "steps": [
+    {
+      "step_id": "development.implementation-handoff.provider-adapter-positive-auth-v15-step4-corrective-dispatch-v1.step.01.dispatch-exact",
+      "ordinal": 1,
+      "resource": {
+        "resource_type": "github.workflow-dispatch",
+        "resource_reference": "github:AnonymousKoo/avuhz-infra:workflow:development-provider-adapter-positive-auth-v15-step4-corrective-v1.yml",
+        "binding_state": "BOUND",
+        "exact_version": "provider-adapter-positive-auth-v15-step4-corrective.v1",
+        "exact_digest": "sha256:d3b79f34b159d66451dd4aaa80c24d125bbf3a357784e9f2dda1c28192a5f26c"
+      },
+      "operation": "github.workflow-dispatch.corrective-v15-step4-once",
+      "dependency_step_ids": [],
+      "required_evidence": [
+        {
+          "evidence_type": "auth.provider-adapter-positive-auth.github-binding.verified",
+          "source_step_id": null,
+          "binding_state": "BOUND",
+          "exact_digest": "sha256:ff6d8d43bb714115ef0f6e6929ead03fe6c6c701f2767a906af790751d885555"
+        }
+      ],
+      "expected_postcondition": "One fresh, separately owner-approved one-shot GitHub dispatch uses the unchanged v15 Step 4 executor and independent cleanup fallback, without retry or any additional credential creation.",
+      "prohibited_actions": [
+        "auth.credential.create",
+        "auth.identity.modify",
+        "auth.session.retry",
+        "data.operation",
+        "github.secret.mutate",
+        "implementation-handoff.execute",
+        "n8n.operation",
+        "production.target",
+        "render.mutation",
+        "workflow.original-v15.retry"
+      ],
+      "stop_conditions": [
+        "approval.missing",
+        "approval.expired",
+        "authorization.original-plan.invalid",
+        "confirmation.invalid",
+        "predecessor.invalid",
+        "project.mismatch",
+        "run-number.invalid",
+        "secret.material.exposed",
+        "source-digest.invalid",
+        "workflow.attempt.invalid"
+      ],
+      "correction_reference": "correction.stop-and-retire-temporary-credentials",
+      "execution_class": "PROVIDER_MUTATION",
+      "credential_policy": {
+        "permitted": true,
+        "allowed_classes": [
+          "OWNER_INTERACTIVE_SESSION"
+        ],
+        "values_stored": false
+      },
+      "unresolved_bindings": []
+    }
+  ],
+  "prohibited_actions": [
+    "authentication.new-infrastructure",
+    "auth.credential.create",
+    "auth.session.retry",
+    "data.operation",
+    "github.secret.mutate",
+    "implementation-handoff.execute",
+    "n8n.operation",
+    "production.target",
+    "render.mutation"
+  ],
+  "stop_conditions": [
+    "approval.absent",
+    "authorization.window-inactive",
+    "original-plan.progress.mismatch",
+    "original-workflow.replay",
+    "project.mismatch",
+    "resource.source-digest.invalid"
+  ],
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED"
+}

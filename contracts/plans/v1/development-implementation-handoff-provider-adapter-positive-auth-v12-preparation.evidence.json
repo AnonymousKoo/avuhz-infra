@@ -1,0 +1,60 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v12.preparation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "canonical_source_main": "0130d38094e12c09c0428a23c132feb5535ed586",
+  "resource_contract_digest": "sha256:db58972f9a26950a6067382fae64d7c1d957015148b320df23cf5f60d9cffbb5",
+  "authorization_window": {
+    "starts_at": "2026-10-07T01:45:00Z",
+    "expires_at": "2026-10-07T03:30:00Z"
+  },
+  "predecessor_state": {
+    "v10_overall_state": "STOPPED",
+    "v10_stopped_progress_digest": "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0",
+    "v10_plan_integrity_failure_evidence_digest": "sha256:d55ff4f7bcca05b03c5fc878f5fa2a09d95cd3b36b1716e181e4cd8bf3df2228",
+    "v10_retirement_v1_overall_state": "IN_PROGRESS",
+    "v10_retirement_v1_steps1_2_progress_digest": "sha256:980bd163d03623f901d1f80e0fd25fbb70a8e06f1e3de1620af29cfb56c6e5a2",
+    "v10_key_retirement_evidence_digest": "sha256:35044d1166daa983e06781334c05d0002f877992cc9d9ca2ebe6a8bff597815e",
+    "v10_key_absence_evidence_digest": "sha256:cfaeca271afa9a51db7ff0390f45548a6e7b9e1864436c51e7d3acd1a89ae0e7",
+    "v10_post_window_github_outcome_evidence_digest": "sha256:45c5a8f402d6d675ef25e1b4d77c1ad4c6a9f2a5090d1d11e36ed00bea873355",
+    "v10_retirement_v2_overall_state": "COMPLETED",
+    "v10_retirement_v2_progress_digest": "sha256:edc6600fb780bdff9b9b699d884d2fe739abcf1876f9af2cee27b246b1b5fd4a",
+    "v10_github_absence_evidence_digest": "sha256:1bef85f2ce88601d1a895ea9cb0ce5c9d2bb35a61ffcb05dbf15ecb9d15eacea",
+    "v11_plan_id": "1f7c3e92-5a64-4b8d-a210-6e9c2d5f7b41",
+    "v11_plan_digest": "sha256:3fd1c42b6a5eb10958c13b9c99e64be806f7278e16415d6b931c2410de09f7fa",
+    "v11_late_rejection_evidence_digest": "sha256:81d4aa6893f1d378863ad15d33b88543de4ed1e8f5f99a252deb4ad0408e5380",
+    "v11_approval_outcome": "REJECTED_LATE_APPROVAL_NONCANONICALIZABLE",
+    "v11_provider_authority_activated": false
+  },
+  "whole_boundary_integrity": {
+    "active_version": "v12",
+    "stale_active_v10_namespace_allowed": false,
+    "step4_resource_wording": "v12",
+    "step5_credential_wording": "v12",
+    "evidence_body_digest_helper_required": true,
+    "evidence_digest_source_digest": "sha256:ceed8cb7681f0fc195c7bfff9cd4dd06dbaee728efbf29f52e61b982acd53d34",
+    "source_validator_required": true,
+    "stale_active_v11_namespace_allowed": false
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "provider_mutation_performed": false,
+    "github_secret_mutated": false,
+    "session_issued": false,
+    "token_issued": false,
+    "implementation_handoff_attempted": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "CANONICAL_V10_STOP_PLUS_V10_RETIREMENT_V1_PARTIAL_HISTORY_AND_COMPLETED_V10_RETIREMENT_V2_AND_SEALED_V12_SOURCE",
+  "recorded_at": "2026-10-07T00:28:21Z",
+  "prepared_at": "2026-10-07T01:16:01Z",
+  "evidence_digest": "sha256:ae3cc1c1c3163afdc6140b622c0feb4594a2127328e49d65a11e78c0dab3bd3c"
+}

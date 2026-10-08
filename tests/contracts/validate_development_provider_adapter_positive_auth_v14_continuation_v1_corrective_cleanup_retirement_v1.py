@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+
+import validate_development_provider_adapter_positive_auth_v14_continuation_v1 as continuation
+from avuhz_engineering.authorization_plan import approval_digest, initial_progress, plan_digest, progress_digest, validate_approval, validate_plan, validate_progress
+from avuhz_engineering.evidence_digest import evidence_digest
+from avuhz_runtime.implementation_handoff import canonical_digest
+
+B = ROOT / "contracts/plans/v1"
+S = ROOT / "contracts/schemas/v1"
+N = "development-implementation-handoff-provider-adapter-positive-auth-v14-continuation-v1-corrective-cleanup-retirement-v1"
+
+PLAN_ID = "84c2e761-3d95-4ab8-b520-6f1e9d3c7a42"
+PLAN_DIGEST = "sha256:e57d45366fdfb740d75dd4d044a1a1f94e8f7064fb59d7df1346037d3f9502f4"
+RESOURCE_DIGEST = "sha256:9351b23974715a563f279cef43202ac967e98d6c5a6817483d6434706dda158e"
+PREP_DIGEST = "sha256:c7d75fe424b8228f2bdc93ddfc3046b1386481b010a10be5261609a2c8e2a7a5"
+PROGRESS_ID = "5d8a3c71-2e64-4fb9-a310-7c5e1d8b6f24"
+PROGRESS_DIGEST = "sha256:e45e0e05b12b9d9bc10ff40c8868fde7b8f324e340f42ee134c3de813ace5481"
+CREATED = "2026-10-08T11:42:33Z"
+START = "2026-10-08T12:00:00Z"
+END = "2026-10-08T16:00:00Z"
+APPROVED = "2026-10-08T11:56:44Z"
+APPROVAL_ID = "4a6d8f21-7c35-4be9-a120-5f3d9c7e2b64"
+APPROVAL_DIGEST = "sha256:f9c75a55135f67956f52a3fd5792468f0ca55f2e7a845e588d8c128cbb1ee6d0"
+PROJECT = "pwlhruwutoitnieactol"
+DATA_PROJECT = "gnuqaefotwgkwurjpyik"
+KEY = "impl_handoff_provider_adapter_positive_auth_v14_ephemeral"
+GH = "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V14_EPHEMERAL"
+FAILURE = "sha256:63c1246fb571cc86cf01bbb994942c36d4438f9cd720028114abd53d3b5144aa"
+STOPPED = "sha256:9bcf3c8a65985a96c3f4f1a8f9095f376a92be73639ea3ea414621551c2e100b"
+STEP1_EVIDENCE = "sha256:1f5e8fb6fa6301deacbc6af77aba926760d6c88f402d4bf1550673411f04e567"
+STEP1_RESULT = "sha256:1965169e8daee90640da9a385eab12bce790c7389ffc3cc5868084d58b8b78d7"
+STEP2_EVIDENCE = "sha256:688f22f028dacb8a6c92c36895f6d8c1c4e2d62223638fe4c6080fd970084bf7"
+STEP3_EVIDENCE = "sha256:40b1e3916bfbf750581a76f7cc8b2c1aa329c517995ea534801e88278d1f9e20"
+STEP4_EVIDENCE = "sha256:8619f39ae3b45e82ec745abd02356efb3e7e64e26c2909bbc341554bdf1bac04"
+STEP5_EVIDENCE = "sha256:9780ee259516fd6662da9f925e69f63bf607243b6cafe828fa1ad2014897d98d"
+STEP2_RESULT = "sha256:54e4d79ed0a72dd94af8844b33d4978a214da9034d742a16d33517a684481edd"
+STEP3_RESULT = "sha256:63eaf7a4e1677885a4542d8c99bb3cc4248eb065a1c5e3fb253f41bb37f853e4"
+STEP4_RESULT = "sha256:f856b640840d6c9535e38aa4db722629ac3cd9b4965282c5f0709376783439d1"
+STEP5_RESULT = "sha256:f0eb401b17b6810bf38a8684c7100f9f65e19c22cb726ea9644c9fd323840a5e"
+STEP2_AUTH = "sha256:c4a806f7584a855b1484b03aeaec68e057ebbb170667fc6c28d8f56ff5238c0a"
+STEP3_AUTH = "sha256:16582e6c75cfa36516494662f57f8e9470d188cf4a3eb843387a1f4e6fe7d8f1"
+STEP4_AUTH = "sha256:df63ff6ca2232bf9e916fdcc0e1bd5101aadcd5cec661df2de55a87df16a4854"
+STEP5_AUTH = "sha256:c77d5d601bef711d7a8418ef992fc0053d52e279d9fa041c5e3497908d7a7ca7"
+EXECUTION_PROGRESS = "sha256:21c51f1655487edabc0a8dd5d902e0dc8fc0efa91f68c3c5fc44ed5aa60ba0fb"
+COMPLETED_AT = "2026-10-08T12:20:38Z"
+
+
+def load(suffix: str) -> dict:
+    return json.loads((B / f"{N}{suffix}").read_text())
+
+
+def main() -> int:
+    continuation.main()
+    resource = load(".resource.json")
+    prep = load("-preparation.evidence.json")
+    plan = load(".plan.json")
+    progress = load(".progress.json")
+    approval = load(".approval.json")
+    step1_evidence = load("-step1-success.evidence.json")
+    step2_evidence = load("-step2-success.evidence.json")
+    step3_evidence = load("-step3-success.evidence.json")
+    step4_evidence = load("-step4-success.evidence.json")
+    step5_evidence = load("-step5-success.evidence.json")
+    execution_progress = load(".execution-progress.json")
+
+    validate_plan(plan, S)
+    validate_progress(plan, progress, S)
+    validate_approval(plan, approval, S, START)
+    validate_progress(plan, execution_progress, S)
+
+    assert resource["contract_digest"] == RESOURCE_DIGEST == canonical_digest(
+        {k: v for k, v in resource.items() if k != "contract_digest"}
+    )
+    assert prep["evidence_digest"] == PREP_DIGEST == evidence_digest(prep)
+    assert plan["plan_id"] == PLAN_ID
+    assert plan["plan_version"] == 1
+    assert plan["plan_digest"] == PLAN_DIGEST == plan_digest(plan)
+    assert plan["definition_status"] == "READY_FOR_APPROVAL"
+    assert plan["authority_effect"] == "NONE_UNTIL_SEPARATELY_APPROVED"
+    assert plan["authorization_window"] == {
+        "binding_state": "BOUND", "starts_at": START, "expires_at": END
+    }
+    assert plan["target"]["project_reference"] == PROJECT
+    assert plan["target"]["responsibility"] == "AUTH"
+
+    assert resource["project_reference"] == PROJECT
+    assert resource["fresh_provider_key_reference"] == KEY
+    assert resource["github_secret_binding_name"] == GH
+    assert resource["lineage"]["stopped_continuation_plan_id"] == "7fb19d54-8a32-4c6e-b741-2d9f5a03c861"
+    assert resource["lineage"]["stopped_continuation_execution_progress_digest"] == STOPPED
+    assert resource["lineage"]["stopped_continuation_step1_failure_evidence_digest"] == FAILURE
+    assert resource["lineage"]["failed_workflow_run_id"] == 37770555664
+    assert resource["lineage"]["failed_execution_sha"] == "2c9c92e1f49f6e911600978d53f33e29b5550f7b"
+
+    session = resource["session_state_verification"]
+    assert session["interaction_surface"] == "supabase.mcp.execute_sql"
+    assert session["credential_class"] == "NONE"
+    assert session["query_count"] == 1
+    assert session["result_fields"] == ["session_count", "refresh_token_count"]
+    assert session["expected_result"] == {"session_count": 0, "refresh_token_count": 0}
+    assert session["aggregate_only"] is True
+    assert session["raw_rows_authorized"] is False
+    assert session["additional_sql_authorized"] is False
+    assert session["retry_authorized"] is False
+
+    assert resource["authorized_counts"] == {
+        "session_state_aggregate_read": 1,
+        "supabase_key_delete": 1,
+        "github_environment_secret_delete": 1,
+        "supabase_key_absence_read": 1,
+        "github_secret_absence_read": 1,
+        "session_cleanup_mutation": 0,
+        "positive_auth_retry": 0,
+        "new_authentication": 0,
+        "session_issue": 0,
+        "token_issue": 0,
+        "implementation_handoff_execute": 0,
+    }
+    assert all(value is False for value in resource["security_rules"].values())
+    assert resource["failure_handling"]["unknown_session_state_at_entry"] is True
+    assert resource["failure_handling"]["zero_state_required_before_retirement"] is True
+    assert resource["failure_handling"]["retry_failed_positive_auth_authorized"] is False
+
+    assert prep["provider_authority"] == "NONE"
+    assert prep["external_provider_contact"] == "PROHIBITED"
+    assert prep["canonical_main_at_start"] == "c3340647ba7e46deac9b2c7d03734490f4b322ff"
+    assert prep["lineage"]["stopped_continuation_execution_progress_digest"] == STOPPED
+    assert prep["lineage"]["stopped_continuation_step1_failure_evidence_digest"] == FAILURE
+    assert all(value is False for value in prep["security_state"].values())
+
+    steps = plan["steps"]
+    assert len(steps) == 5
+    assert [s["ordinal"] for s in steps] == [1,2,3,4,5]
+    assert [s["execution_class"] for s in steps] == [
+        "PROVIDER_READ","PROVIDER_MUTATION","PROVIDER_MUTATION","PROVIDER_READ","PROVIDER_READ"
+    ]
+    assert steps[0]["operation"] == "provider.auth-session-state.inspect-read-only-via-supabase-mcp"
+    assert steps[0]["credential_policy"] == {
+        "permitted": False, "allowed_classes": ["NONE"], "values_stored": False
+    }
+    assert KEY in steps[1]["resource"]["resource_reference"]
+    assert GH in steps[2]["resource"]["resource_reference"]
+    assert KEY in steps[3]["resource"]["resource_reference"]
+    assert GH in steps[4]["resource"]["resource_reference"]
+    for idx in range(1,5):
+        assert steps[idx]["dependency_step_ids"] == [steps[idx-1]["step_id"]]
+
+    first = {(x["evidence_type"], x["exact_digest"]) for x in steps[0]["required_evidence"]}
+    for item in (
+        ("auth.provider-adapter-positive-auth.live-verified-logout-accepted", FAILURE),
+        ("authorization-plan.execution-progress", STOPPED),
+        ("auth.provider-adapter-positive-auth.admin-credential.created", "sha256:d4aff55bac16e73efc867b327ef88eab79fd3f0db6dcac04fd82233e34cf1b18"),
+        ("auth.provider-adapter-positive-auth.github-binding.created", "sha256:62ee203e20be12f515e698cd69a10ced3422f46eb4b7f21e67ba157fc53adab1"),
+        ("auth.provider-adapter-positive-auth.github-binding.verified", "sha256:3590b89ce68436bb0109025b08869d7a4184a7207f65b52b67dca38e9d9395e0"),
+        ("auth.provider-adapter-positive-auth.preflight.verified", "sha256:a81f43f32718325822785e6c246f90f9f161e93a3b377301ba83a607c7e3b8b2"),
+        ("auth.provider-adapter-positive-auth.corrective-cleanup-retirement.prepared", PREP_DIGEST),
+    ):
+        assert item in first
+
+    assert progress == initial_progress(plan, S, PROGRESS_ID, CREATED)
+    assert progress["progress_digest"] == PROGRESS_DIGEST == progress_digest(progress)
+    assert progress["overall_state"] == "NOT_STARTED"
+    assert all(
+        (x["authorization_state"],x["execution_state"],x["verification_state"],x["authorization_consumed"])
+        == ("PENDING","NOT_STARTED","NOT_STARTED",False)
+        for x in progress["step_states"]
+    )
+    assert approval["approval_id"] == APPROVAL_ID
+    assert approval["plan_id"] == PLAN_ID
+    assert approval["plan_version"] == 1
+    assert approval["plan_digest"] == PLAN_DIGEST
+    assert approval["owner_identity"] == plan["owner_identity"]
+    assert approval["decision"] == "APPROVE"
+    assert approval["environment"] == "DEVELOPMENT"
+    assert approval["approved_at"] == APPROVED
+    assert APPROVED < START
+    assert approval["effective_at"] == START
+    assert approval["expires_at"] == END
+    assert approval["status"] == "ACTIVE"
+    assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
+    assert approval["approval_digest"] == APPROVAL_DIGEST == approval_digest(approval)
+
+    assert evidence_digest(step1_evidence) == STEP1_EVIDENCE
+    assert step1_evidence["evidence_type"] == "auth.provider-adapter-positive-auth.cleanup.verified"
+    assert step1_evidence["outcome"] == "SUCCEEDED_VERIFIED"
+    assert step1_evidence["classification"] == "SESSION_REFRESH_ZERO_STATE_VERIFIED"
+    assert step1_evidence["sanitized_result"] == {
+        "classification": "SESSION_REFRESH_ZERO_STATE_VERIFIED",
+        "session_count": 0,
+        "refresh_token_count": 0,
+    }
+    assert step1_evidence["result_digest"] == STEP1_RESULT
+    assert step1_evidence["execution_observation"]["approved_aggregate_select_attempts"] == 1
+    assert step1_evidence["execution_observation"]["additional_sql_executed"] is False
+    assert step1_evidence["execution_observation"]["retry_occurred"] is False
+    assert step1_evidence["execution_observation"]["provider_mutation_attempted"] is False
+    assert all(value is False for value in step1_evidence["security_state"].values())
+
+    for evidence_obj, expected_digest, expected_type, expected_result, expected_auth in (
+        (step2_evidence, STEP2_EVIDENCE, "auth.provider-adapter-positive-auth.admin-credential.retired", STEP2_RESULT, STEP2_AUTH),
+        (step3_evidence, STEP3_EVIDENCE, "auth.provider-adapter-positive-auth.github-binding.retired", STEP3_RESULT, STEP3_AUTH),
+        (step4_evidence, STEP4_EVIDENCE, "auth.provider-adapter-positive-auth.admin-credential.absence-verified", STEP4_RESULT, STEP4_AUTH),
+        (step5_evidence, STEP5_EVIDENCE, "auth.provider-adapter-positive-auth.github-binding.absence-verified", STEP5_RESULT, STEP5_AUTH),
+    ):
+        assert evidence_digest(evidence_obj) == expected_digest
+        assert evidence_obj["evidence_type"] == expected_type
+        assert evidence_obj["plan_id"] == PLAN_ID
+        assert evidence_obj["plan_digest"] == PLAN_DIGEST
+        assert evidence_obj["approval_id"] == APPROVAL_ID
+        assert evidence_obj["approval_digest"] == APPROVAL_DIGEST
+        assert evidence_obj["attempt"] == 1
+        assert evidence_obj["outcome"] == "SUCCEEDED_VERIFIED"
+        assert evidence_obj["authorization_observation_digest"] == expected_auth == canonical_digest(evidence_obj["authorization_observation"])
+        assert evidence_obj["result_digest"] == expected_result == canonical_digest(evidence_obj["sanitized_result"])
+        assert evidence_obj["recorded_at"] == COMPLETED_AT
+        assert not any(evidence_obj["security_state"].values())
+
+    assert step2_evidence["sanitized_result"] == {
+        "key_name": KEY, "retired": True, "credential_material_observed": False, "other_key_changed": False
+    }
+    assert step3_evidence["sanitized_result"] == {
+        "repository": "AnonymousKoo/avuhz-infra", "environment": "development", "secret_name": GH,
+        "retired": True, "secret_value_observed": False, "other_secret_changed": False
+    }
+    assert step4_evidence["sanitized_result"] == {
+        "key_name": KEY, "absent": True, "credential_material_observed": False,
+        "other_key_inspected": False, "provider_mutation_performed": False
+    }
+    assert step5_evidence["sanitized_result"] == {
+        "repository": "AnonymousKoo/avuhz-infra", "environment": "development", "secret_name": GH,
+        "exact_secret_reference_count": 0, "absent": True, "secret_value_requested": False,
+        "secret_value_observed": False, "provider_mutation_performed": False
+    }
+
+    assert execution_progress["progress_digest"] == EXECUTION_PROGRESS == progress_digest(execution_progress)
+    assert execution_progress["record_version"] == 6
+    assert execution_progress["overall_state"] == "COMPLETED"
+    assert execution_progress["updated_at"] == COMPLETED_AT
+    expected_evidence = [STEP1_EVIDENCE, STEP2_EVIDENCE, STEP3_EVIDENCE, STEP4_EVIDENCE, STEP5_EVIDENCE]
+    expected_results = [STEP1_RESULT, STEP2_RESULT, STEP3_RESULT, STEP4_RESULT, STEP5_RESULT]
+    for idx, state in enumerate(execution_progress["step_states"]):
+        assert (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("CONSUMED","SUCCEEDED","PASS",True)
+        assert state["safe_error_code"] is None
+        assert state["observed_postcondition"] == steps[idx]["expected_postcondition"]
+        assert state["evidence"][0]["evidence_digest"] == expected_evidence[idx]
+        produced = [
+            item for item in state["binding_assertions"]
+            if item["phase"] == "PRODUCED_BY_CURRENT_STEP"
+        ]
+        assert len(produced) == 1
+        assert produced[0]["evidence_digest"] == expected_evidence[idx]
+        assert produced[0]["value_digest"] == expected_results[idx]
+
+    for idx, expected_auth in zip(range(1,5), (STEP2_AUTH, STEP3_AUTH, STEP4_AUTH, STEP5_AUTH)):
+        preflight = [
+            item for item in execution_progress["step_states"][idx]["binding_assertions"]
+            if item["phase"] == "RESOLVED_BY_STEP_PREFLIGHT"
+        ]
+        assert len(preflight) == 1
+        assert preflight[0]["evidence_digest"] == expected_auth
+        assert preflight[0]["value_digest"] == expected_auth
+        assert preflight[0]["recorded_at"] == COMPLETED_AT
+
+    assert (B / f"{N}.execution-progress.json").exists()
+
+    rendered = "\n".join((B / f"{N}{suffix}").read_text() for suffix in (
+        ".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json",".execution-progress.json","-step1-success.evidence.json","-step2-success.evidence.json","-step3-success.evidence.json","-step4-success.evidence.json","-step5-success.evidence.json"
+    ))
+    assert DATA_PROJECT not in rendered
+    assert "sb_secret_" not in rendered
+    assert "sb_publishable_" not in rendered
+
+    print(
+        "DEVELOPMENT v14 continuation corrective cleanup v1: PASS "
+        "(COMPLETED; Steps 1-5 CONSUMED/SUCCEEDED/PASS; zero-state verified; "
+        "v14 Supabase key and GitHub binding retired and independently verified absent)"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

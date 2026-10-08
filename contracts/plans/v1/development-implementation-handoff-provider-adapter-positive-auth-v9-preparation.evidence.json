@@ -1,0 +1,46 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v9.preparation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "canonical_source_main": "9239e3e357789003d3563f9f2bb682a54be91618",
+  "resource_contract_digest": "sha256:798fa6cdd64f3c5cee74380eb255661cc9fe5de53dfbb96916309b3dfe78c3b3",
+  "authorization_window": {
+    "starts_at": "2026-10-06T17:00:00Z",
+    "expires_at": "2026-10-06T23:00:00Z"
+  },
+  "predecessor_state": {
+    "v8_overall_state": "STOPPED",
+    "v8_stopped_progress_digest": "sha256:45c6d902458eee68f2f2782aaac82598d8cef7a2c022124691d3db4f08222b8d",
+    "v8_retirement_v2_overall_state": "COMPLETED",
+    "v8_retirement_v2_progress_digest": "sha256:dda26efb46d17998b71072edfec3ce3490478b595e92e31ce58ee645b211bade",
+    "v8_key_absence_evidence_digest": "sha256:4568bc1310f24c0e2db15dc9922b751bfff0565fd2c811e8477ca433aaa9046f",
+    "v8_github_absence_evidence_digest": "sha256:4d4e4f695b60e90c5c6e230a10004bade558e22c69aa4c9fe3d477518d50015a"
+  },
+  "whole_boundary_integrity": {
+    "active_version": "v9",
+    "stale_active_v8_namespace_allowed": false,
+    "step4_resource_wording": "v9",
+    "step5_credential_wording": "v9",
+    "source_validator_required": true
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "provider_mutation_performed": false,
+    "github_secret_mutated": false,
+    "session_issued": false,
+    "token_issued": false,
+    "implementation_handoff_attempted": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "CANONICAL_V8_STOP_PLUS_COMPLETED_V8_RETIREMENT_V2_AND_CANONICAL_V9_SOURCE",
+  "recorded_at": "2026-10-06T15:37:03Z",
+  "evidence_digest": "sha256:1198068f3a86bc49b77823856eece87e9b50803d227a9fa02051d3f0900c2a68"
+}

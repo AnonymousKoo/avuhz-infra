@@ -1,0 +1,51 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v4.github-binding-drift.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "github",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "github_environment": "development",
+  "observed_at": "2026-10-06T01:35:01Z",
+  "canonical_main_at_observation": "3f21d10ba477da72c62a456c9c1227250057bb6e",
+  "prior_retirement": {
+    "plan_id": "dbcc6075-ce98-5c0d-910c-f90efc4f62d3",
+    "plan_digest": "sha256:b012b3340f63afc8838d0516ca83c3a7b51d8c829528c40be0050a4cd48cef15",
+    "execution_progress_digest": "sha256:d6a071034f35d1ddf55f3265286e964687f9879a711c02e4fd63f6f2644be0c1",
+    "github_binding_retired_evidence_digest": "sha256:6248e91633b2274b7d4e953426fc2dbb542df7d2ea051d801a3252ea3bef0da0",
+    "github_binding_absence_evidence_digest": "sha256:c9da22e43c568c9f276eb86c78ce730b394740bb02161afc9adbd4cd6c66b98f",
+    "supabase_key_absence_evidence_digest": "sha256:89596d6e8895213059840d3af8b84202bee52b4069365afa5df8e75ec11d9a7e"
+  },
+  "later_authorized_recreation_review": {
+    "v5_preactivation_rejection_evidence_digest": "sha256:e29e56af04b0b2664aa8d6749c367184f2c06446c2eb50fa1cbad4e394c09468",
+    "v5_github_secret_changed": false,
+    "v6_step2_integrity_failure_evidence_digest": "sha256:fdd233c078ee3e60bae0dd95128535526dc073759c54ee5cd21c8070cac15937",
+    "v6_github_secret_mutation_attempted": false,
+    "authorized_recreation_found": false
+  },
+  "sanitized_observation": {
+    "secret_name": "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V4_EPHEMERAL",
+    "exact_secret_reference_count": 1,
+    "present": true,
+    "secret_value_requested": false,
+    "secret_value_observed": false,
+    "provider_mutation_performed": false,
+    "other_secret_names_retained": false
+  },
+  "classification": "POST_RETIREMENT_GITHUB_BINDING_DRIFT",
+  "disposition": "PREPARE_FRESH_FORWARD_ONLY_DRIFT_RETIREMENT_BOUNDARY",
+  "security_state": {
+    "secret_value_observed": false,
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "credential_material_digest_recorded": false,
+    "pii_retained": false,
+    "provider_mutation_performed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "record_basis": "OWNER_CONFIRMED_SCREENSHOT_NAMES_ONLY_INSPECTION_PLUS_CANONICAL_REPOSITORY_LINEAGE_REVIEW",
+  "evidence_digest": "sha256:d3f503921d8b27d698e95dcb05651a8c42b20403267673720643e25e28b5944c"
+}

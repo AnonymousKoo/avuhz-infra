@@ -1,0 +1,37 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v10.key-retirement-v2.prepared",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "github",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "github_environment": "development",
+  "canonical_main_at_preparation": "6f11525b6e7877f190f2b5b0402da781cd36f57e",
+  "resource_contract_digest": "sha256:48b4b14ffa86294ef442bb0b72855abb3bcf5d892247dd82958195a33a96f4f3",
+  "authorization_window": {
+    "starts_at": "2026-10-06T23:45:00Z",
+    "expires_at": "2026-10-07T01:00:00Z"
+  },
+  "prerequisites": {
+    "v1_step1_key_retirement": "sha256:35044d1166daa983e06781334c05d0002f877992cc9d9ca2ebe6a8bff597815e",
+    "v1_step2_key_absence": "sha256:cfaeca271afa9a51db7ff0390f45548a6e7b9e1864436c51e7d3acd1a89ae0e7",
+    "v1_steps1_2_progress": "sha256:980bd163d03623f901d1f80e0fd25fbb70a8e06f1e3de1620af29cfb56c6e5a2",
+    "v1_post_window_github_outcome": "sha256:45c5a8f402d6d675ef25e1b4d77c1ad4c6a9f2a5090d1d11e36ed00bea873355",
+    "v1_steps1_2_conforming": true,
+    "v1_steps3_4_recordable_as_authorized": false
+  },
+  "provider_authority": "NONE",
+  "external_provider_contact": "PROHIBITED_UNTIL_SEPARATELY_APPROVED_AND_WINDOW_ACTIVE",
+  "security_state": {
+    "secret_value_requested": false,
+    "secret_value_observed": false,
+    "github_secret_mutated": false,
+    "provider_mutation_performed": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "recorded_at": "2026-10-06T23:13:55Z",
+  "evidence_digest": "sha256:486acbf417a1677d11eecce754aa8301e7c0401fedcdb89167701066466b3bc6"
+}

@@ -29,6 +29,10 @@ START = "2026-10-08T08:00:00Z"
 END = "2026-10-08T12:00:00Z"
 APPROVED = "2026-10-08T06:55:12Z"
 APPROVAL = "sha256:9410d2e10b6fd7febe0d2c0d873608d54bdd1e9ca7c9da0e8aeec631847d36e0"
+STEP1_EVIDENCE = "sha256:d4aff55bac16e73efc867b327ef88eab79fd3f0db6dcac04fd82233e34cf1b18"
+STEP2_EVIDENCE = "sha256:62ee203e20be12f515e698cd69a10ced3422f46eb4b7f21e67ba157fc53adab1"
+STEP3_EVIDENCE = "sha256:3590b89ce68436bb0109025b08869d7a4184a7207f65b52b67dca38e9d9395e0"
+EXECUTION_PROGRESS = "sha256:cea5798de4dcc2bfb3546ad3f75dec04ae07e0f5b23cbe90d47a4dc2489155d8"
 V13_EXPIRY = "sha256:b1589e9ec8d0435c0f6d8f2ab4f5904d2cf5716c217221217878b5dfa3df4f69"
 V10_STOP = "sha256:38e26a596ebe6d3429c60f5f5cc8a49d13dc2da8868eb1f4bc75c42a11c74cd0"
 V10_FAILURE = "sha256:d55ff4f7bcca05b03c5fc878f5fa2a09d95cd3b36b1716e181e4cd8bf3df2228"
@@ -53,9 +57,14 @@ def main() -> int:
     p = load(N + ".plan.json")
     g = load(N + ".progress.json")
     a = load(N + ".approval.json")
+    step1_evidence = load(N + "-step01-success.evidence.json")
+    step2_evidence = load(N + "-step02-success.evidence.json")
+    step3_evidence = load(N + "-step03-success.evidence.json")
+    x = load(N + ".execution-progress.json")
     validate_plan(p, S)
     validate_progress(p, g, S)
     validate_approval(p, a, S, START)
+    validate_progress(p, x, S)
 
     assert r["contract_digest"] == RESOURCE == canonical_digest({k:v for k,v in r.items() if k != "contract_digest"})
     assert prep["evidence_digest"] == PREP == evidence_digest(prep)
@@ -211,16 +220,46 @@ def main() -> int:
     assert a["status"] == "ACTIVE"
     assert a["authority_scope"] == "EXACT_PLAN_ONLY"
     assert a["approval_digest"] == APPROVAL == approval_digest(a)
-    assert not (B / (N + ".execution-progress.json")).exists()
 
-    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json"))
+    assert evidence_digest(step1_evidence) == STEP1_EVIDENCE
+    assert evidence_digest(step2_evidence) == STEP2_EVIDENCE
+    assert evidence_digest(step3_evidence) == STEP3_EVIDENCE
+    assert step1_evidence["owner_confirmed_created"] is True
+    assert step1_evidence["credential_material_retained"] is False
+    assert step2_evidence["sanitized_result"]["binding_created"] is True
+    assert step2_evidence["credential_material_retained"] is False
+    assert step3_evidence["sanitized_result"]["binding_present"] is True
+    assert step3_evidence["sanitized_result"]["value_read"] is False
+    assert step3_evidence["credential_material_retained"] is False
+    assert x["progress_digest"] == EXECUTION_PROGRESS == progress_digest(x)
+    assert x["record_version"] == 4
+    assert x["overall_state"] == "IN_PROGRESS"
+    assert all(
+        (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("CONSUMED", "SUCCEEDED", "PASS", True)
+        for state in x["step_states"][:3]
+    )
+    assert all(
+        (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
+        for state in x["step_states"][3:]
+    )
+    rendered = "\n".join((B / (N + suffix)).read_text() for suffix in (".resource.json","-preparation.evidence.json",".plan.json",".progress.json",".approval.json",".execution-progress.json","-step01-success.evidence.json","-step02-success.evidence.json","-step03-success.evidence.json"))
     assert re.search(r"sb_secret_[A-Za-z0-9._-]{8,}", rendered) is None
     assert "gnuqaefotwgkwurjpyik" not in rendered
     assert "Bearer eyJ" not in rendered
     assert "AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V10_EPHEMERAL" not in p.__str__()
     assert "impl_handoff_provider_adapter_positive_auth_v10_ephemeral" not in p.__str__()
 
-    print("DEVELOPMENT provider-adapter positive-auth v14: PASS (APPROVED / UNEXECUTED; pre-window exact-plan approval candidate; no provider action)")
+    print("DEVELOPMENT provider-adapter positive-auth v14: PASS (APPROVED / STEPS 1-3 CONSUMED SUCCEEDED PASS; Step 4 pending; credential material absent)")
     return 0
 
 if __name__ == "__main__":

@@ -1,0 +1,41 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth.preflight.verified",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "supabase",
+  "project_reference": "pwlhruwutoitnieactol",
+  "plan_id": "c91144ec-ca7b-4d3a-a231-128c7ebf0bd5",
+  "plan_version": 15,
+  "plan_digest": "sha256:a7ea2c21d243fc2d15bae3e0eb4d52b6992182e637ac09801fb20c110bb32fef",
+  "approval_id": "cb87b6fa-5cf2-4dd1-a2d2-7c06ef2831a1",
+  "approval_digest": "sha256:6af1e572c49e50b5315a47da305d24c4ffbb096507d25aa9ca82deb9404c5fda",
+  "step_id": "development-implementation-handoff-provider-adapter-positive-auth-v15.step.01.verify-fresh-preflight",
+  "attempt": 1,
+  "outcome": "OWNER_CONFIRMED_COMPLETED",
+  "record_basis": "OWNER_CONFIRMED_SANITIZED_EXECUTION_OUTCOME",
+  "recorded_at": "2026-10-08T17:09:02Z",
+  "recorded_at_is_execution_timestamp": false,
+  "verification_scope": "OWNER_CONFIRMED_WITH_INDEPENDENT_READONLY_PRECHECK_WHERE_AVAILABLE",
+  "sanitized_result": {
+    "owner_confirmed": true,
+    "preflight_completed": true,
+    "github_browser": "Firefox",
+    "readiness_source": "OWNER_VERIFIED_200_200_200",
+    "readiness_independently_observed": false,
+    "auth_project_status": "ACTIVE_HEALTHY",
+    "session_count": 0,
+    "refresh_token_count": 0,
+    "render_plan": "0.5c-512mb",
+    "render_latest_status": "live",
+    "repo_main_sha": "4de2242246fb9a5c7ca0b4a2f8943e5b797bba14",
+    "existing_identity_allowlist_source": "REPOSITORY_VERIFIED",
+    "key_absence_before_creation": "OWNER_ATTESTED",
+    "github_binding_absence_before_creation": "OWNER_ATTESTED"
+  },
+  "not_claimed": {
+    "independent_provider_key_metadata_read": false,
+    "independent_github_secret_metadata_read": false,
+    "new_session_issued": false,
+    "live_auth_probe_executed": false
+  }
+}

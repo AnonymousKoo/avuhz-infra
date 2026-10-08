@@ -18,8 +18,8 @@
   "step4_probe_digest": "sha256:5f1179969ad0f5dffb5b5d29eb631a406e00c79ac34a5ac539baabdf40841f73",
   "fallback_plan_id": "ebb59f16-fff6-4603-a6fa-71391c83c690",
   "fallback_plan_digest": "sha256:699347e403c1f5f595b8c2652f085ab7ff09cb39e0c0f3d001af0bc97528ba4b",
-  "fallback_approval_digest": null,
-  "fallback_approval_unresolved": true,
+  "fallback_approval_digest": "sha256:07d2f848a13230d22ff4833f5a589e7c3ea006906ca37afbb538ef82a889b357",
+  "fallback_approval_unresolved": false,
   "planned_counts": {
     "auth_admin_key_create": 1,
     "github_secret_binding_create": 1,
@@ -41,6 +41,6 @@
   "staging_authorized": false,
   "secret_values_stored": false,
   "session_or_token_persistence_authorized": false,
-  "observation": "DRAFT_BLOCKED_NO_APPROVAL_OR_PROVIDER_AUTHORITY",
-  "contract_digest": "sha256:359f495e8b7a5a7091c5636932f9d3c026524bd2c2831eb64905a0cc1e82b5b1"
+  "observation": "FALLBACK_APPROVED_MAIN_AUTH_SEPARATE_APPROVAL_REQUIRED",
+  "contract_digest": "sha256:e20c9ec6178e50523334d4b6c1678aab4aebc0bc768cefabb15f568447549b64"
 }

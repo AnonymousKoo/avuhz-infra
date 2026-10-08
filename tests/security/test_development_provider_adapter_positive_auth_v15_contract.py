@@ -1,7 +1,7 @@
-"""Offline contract checks for the intentionally blocked DEVELOPMENT v15 auth plan.
+"""Offline contract checks for the approval-ready but unapproved DEVELOPMENT v15 auth plan.
 
 This suite does not contact Supabase AUTH/DATA, GitHub secrets or Render.
-No provider approval, execution credential or session is made available.
+No main-plan approval, execution credential or session is made available.
 """
 from __future__ import annotations
 
@@ -70,19 +70,27 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8"))
         self.assertEqual(resource["fallback_plan_id"], fallback["plan_id"])
         self.assertEqual(resource["fallback_plan_digest"], fallback["plan_digest"])
-        self.assertIsNone(resource["fallback_approval_digest"])
-        self.assertTrue(resource["fallback_approval_unresolved"])
+        fallback_approval = json.loads((
+            BASE / (NAME + "-corrective-cleanup-v1.approval.json")
+        ).read_text(encoding="utf-8"))
+        self.assertEqual(resource["fallback_approval_digest"], fallback_approval["approval_digest"])
+        self.assertFalse(resource["fallback_approval_unresolved"])
+        self.assertEqual(fallback_approval["plan_digest"], fallback["plan_digest"])
+        validate_approval(
+            fallback, fallback_approval, ROOT / "contracts/schemas/v1",
+            "2026-10-08T16:30:00Z",
+        )
 
-    def test_draft_is_unapproved_unexecutable_and_project_is_exact(self):
+    def test_main_is_ready_but_unapproved_and_auth_project_is_exact(self):
         plan, progress, resource = load("plan"), load("progress"), load("resource")
-        self.assertEqual(plan["definition_status"], "DRAFT_BLOCKED")
+        self.assertEqual(plan["definition_status"], "READY_FOR_APPROVAL")
         self.assertEqual(plan["environment"], "DEVELOPMENT")
         self.assertEqual(plan["target"]["project_reference"], "pwlhruwutoitnieactol")
         self.assertEqual(plan["target"]["responsibility"], "AUTH")
         self.assertEqual(plan["authority_effect"], "NONE_UNTIL_SEPARATELY_APPROVED")
-        self.assertEqual(plan["authorization_window"]["binding_state"], "UNRESOLVED_BLOCKER")
-        self.assertIsNone(plan["authorization_window"]["starts_at"])
-        self.assertIsNone(plan["authorization_window"]["expires_at"])
+        self.assertEqual(plan["authorization_window"]["binding_state"], "BOUND")
+        self.assertEqual(plan["authorization_window"]["starts_at"], "2026-10-08T17:00:00Z")
+        self.assertEqual(plan["authorization_window"]["expires_at"], "2026-10-10T16:30:00Z")
         self.assertEqual(progress["overall_state"], "NOT_STARTED")
         self.assertEqual(progress["plan_digest"], plan["plan_digest"])
         self.assertTrue(all(
@@ -96,8 +104,8 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
         self.assertFalse(resource["data_operation_authorized"])
         self.assertFalse(resource["production_authorized"])
         self.assertFalse(resource["render_mutation_authorized"])
-        # A shape-valid, in-memory fixture cannot grant authority to DRAFT_BLOCKED.
-        # Never create an approval artifact or authorize a provider operation.
+        # In-memory shape-valid approval tests the time gate only; it never
+        # creates an approval artifact or authorizes provider operations.
         fake_approval = {
             "approval_id": "32b0e879-3bf8-47cb-a98a-f995d37711e0",
             "plan_id": plan["plan_id"],
@@ -106,16 +114,18 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
             "owner_identity": plan["owner_identity"],
             "decision": "APPROVE",
             "environment": "DEVELOPMENT",
-            "effective_at": "2026-10-09T13:00:00Z",
-            "expires_at": "2026-10-11T13:00:00Z",
-            "approved_at": "2026-10-08T15:00:00Z",
+            "effective_at": "2026-10-08T17:00:00Z",
+            "expires_at": "2026-10-10T16:30:00Z",
+            "approved_at": "2026-10-08T16:18:39Z",
             "status": "ACTIVE",
             "authority_scope": "EXACT_PLAN_ONLY",
         }
         fake_approval["approval_digest"] = approval_digest(fake_approval)
-        with self.assertRaises(AuthorizationPlanStop) as stopped:
-            validate_approval(plan, fake_approval, ROOT / "contracts/schemas/v1", "2026-10-09T13:00:00Z")
-        self.assertEqual(str(stopped.exception), "PLAN_UNRESOLVED")
+        validate_approval(plan, fake_approval, ROOT / "contracts/schemas/v1", "2026-10-08T17:00:00Z")
+        for outside in ("2026-10-08T16:59:59Z", "2026-10-10T16:30:00Z"):
+            with self.subTest(outside=outside), self.assertRaises(AuthorizationPlanStop) as stopped:
+                validate_approval(plan, fake_approval, ROOT / "contracts/schemas/v1", outside)
+            self.assertEqual(str(stopped.exception), "PLAN_AUTHORIZATION_EXPIRED")
 
     def test_one_lifecycle_and_no_separate_automation_or_data_path(self):
         plan, resource = load("plan"), load("resource")
@@ -132,10 +142,7 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
         self.assertEqual(lifecycle["step_id"], candidate.STEP_ID)
         self.assertEqual(lifecycle["operation"], candidate.OPERATION)
         self.assertEqual(lifecycle["credential_policy"]["allowed_classes"], ["SUPABASE_AUTH_ADMIN_EPHEMERAL"])
-        self.assertEqual(
-            lifecycle["unresolved_bindings"],
-            ["binding.development.provider-adapter-positive-auth-v15.fallback-owner-approval-required"],
-        )
+        self.assertEqual(lifecycle["unresolved_bindings"], [])
         self.assertEqual(lifecycle["resource"]["resource_reference"], "supabase:pwlhruwutoitnieactol:provider-adapter-positive-auth-v15-live-lifecycle")
         self.assertTrue(all(step["execution_class"] in ("PROVIDER_MUTATION", "PROVIDER_READ") for step in steps))
         self.assertFalse(resource["implementation_handoff_execution_authorized"])
@@ -143,7 +150,7 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
         self.assertEqual(resource["planned_counts"]["live_http_probe"], 1)
         self.assertEqual(resource["planned_counts"]["retry"], 0)
 
-    def test_fail_closed_before_secret_resolution_without_approval(self):
+    def test_fail_closed_before_secret_resolution_without_main_approval(self):
         from unittest.mock import patch
         with patch.object(candidate, "_load", side_effect=AuthorizationPlanStop("PLAN_NOT_READY")):
             with self.assertRaises(AuthorizationPlanStop):

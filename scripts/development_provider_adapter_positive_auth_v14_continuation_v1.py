@@ -28,6 +28,7 @@ from avuhz_engineering.authorization_plan import (
     validate_plan,
     validate_progress,
 )
+from avuhz_engineering.development_auth_token_lifecycle import SafeLifecycleStop
 from avuhz_engineering.evidence_digest import evidence_digest
 from avuhz_runtime.implementation_handoff import canonical_digest
 from avuhz_service.development import DEVELOPMENT_AUTH_PROJECT_REF
@@ -340,6 +341,8 @@ def main(environment: Mapping[str, str] | None = None, *, preflight_only: bool =
         return 0
     except (AuthorizationPlanError, AuthorizationPlanStop) as exc:
         return original._safe_failure(str(exc), provider_mutation_attempted=attempted)
+    except SafeLifecycleStop as exc:
+        return original._safe_failure(exc.code, provider_mutation_attempted=attempted)
     except Exception:
         return original._safe_failure("AUTHORITY_INVALID", provider_mutation_attempted=attempted)
     finally:

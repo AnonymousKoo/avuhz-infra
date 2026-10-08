@@ -1,12 +1,18 @@
 """Credential-free tests for composed first GitHub DEVELOPMENT handoff execution."""
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import sqlite3
 import sys
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest.mock import patch
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [
@@ -19,6 +25,9 @@ from test_development_handoff_approval_gate import AT
 from test_development_handoff_trusted_github_invocation import context
 from test_development_source_bound_handoff_lifecycle import callbacks
 
+from avuhz_engineering.development_handoff_owner_trust_anchor import (
+    ENV_FINGERPRINT, ENV_PUBLIC_KEY,
+)
 from avuhz_engineering.development_handoff_trusted_one_shot_executor import (
     SignedStageProof, TrustedOneShotStop, execute_trusted_development_handoff_once,
 )
@@ -36,6 +45,19 @@ class TrustedOneShotExecutorTests(unittest.TestCase):
             self.env[key] = sha
         self.event["inputs"]["source_sha"] = sha
         self.env["AVUHZ_AUTHORIZATION_SET_DIGEST"] = self.source.authorization_plan_digest
+        # The production key remains the source-pinned public key. For offline
+        # tests only, replace that pin with this freshly generated TEST key.
+        # The patch lifetime is the whole test, including concurrency workers.
+        self.test_public_b64 = base64.b64encode(self.f.public).decode("ascii")
+        self.env[ENV_PUBLIC_KEY] = self.test_public_b64
+        self.env[ENV_FINGERPRINT] = self.f.anchor
+        key_pin = patch.multiple(
+            "avuhz_engineering.development_handoff_owner_trust_anchor",
+            OWNER_ED25519_PUBLIC_KEY_BASE64=self.test_public_b64,
+            OWNER_ED25519_FINGERPRINT=self.f.anchor,
+        )
+        key_pin.start()
+        self.addCleanup(key_pin.stop)
         self.event["inputs"]["authorization_set_digest"] = self.source.authorization_plan_digest
         self.signed_proofs = {}
         for stage in self.f.fixture.stages:
@@ -119,6 +141,94 @@ class TrustedOneShotExecutorTests(unittest.TestCase):
         events = []
         with self.assertRaisesRegex(TrustedOneShotStop, "HANDOFF_STAGE_OWNER_SIGNATURE_UNVERIFIED"):
             self.run_once(events, signed_proofs=bad)
+        self.assertEqual(events, [])
+        self.assertEqual(self.ledger_rows(), [])
+
+    def test_unset_development_environment_pin_stops_before_any_effect(self):
+        for missing in (ENV_PUBLIC_KEY, ENV_FINGERPRINT):
+            env = dict(self.env)
+            env.pop(missing)
+            events = []
+            with self.subTest(missing=missing), self.assertRaisesRegex(
+                TrustedOneShotStop, "HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED"
+            ):
+                self.run_once(events, github_environment=env)
+            self.assertEqual(events, [])
+            self.assertEqual(self.ledger_rows(), [])
+
+    def test_forged_environment_public_values_fail_closed(self):
+        altered = [
+            {**self.env, ENV_FINGERPRINT: "sha256:" + "1" * 64},
+            {**self.env, ENV_PUBLIC_KEY: "ZmFrZQ=="},
+            {**self.env, ENV_PUBLIC_KEY: self.test_public_b64 + " "},
+        ]
+        for env in altered:
+            events = []
+            with self.subTest(key_value=env[ENV_PUBLIC_KEY]), self.assertRaisesRegex(
+                TrustedOneShotStop, "HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED"
+            ):
+                self.run_once(events, github_environment=env)
+            self.assertEqual(events, [])
+            self.assertEqual(self.ledger_rows(), [])
+
+    def test_caller_must_not_substitute_its_own_valid_signer_and_digest(self):
+        # Regression: previously any fresh Ed25519 key + its own SHA-256
+        # could sign all four stages and pass the executor signature checks.
+        attacker = Ed25519PrivateKey.generate()
+        pub = attacker.public_key().public_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PublicFormat.Raw,
+        )
+        own_digest = "sha256:" + hashlib.sha256(pub).hexdigest()
+        fraudulent = {
+            stage: SignedStageProof(
+                claims=proof.claims,
+                signature=attacker.sign(json.dumps(
+                    proof.claims, sort_keys=True, separators=(",", ":"),
+                    ensure_ascii=True,
+                ).encode("utf-8")),
+            )
+            for stage, proof in self.signed_proofs.items()
+        }
+        events = []
+        with self.assertRaisesRegex(
+            TrustedOneShotStop, "HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED"
+        ):
+            self.run_once(
+                events, owner_public_key=pub,
+                independently_pinned_key_digest=own_digest,
+                signed_proofs=fraudulent,
+            )
+        self.assertEqual(events, [])
+        self.assertEqual(self.ledger_rows(), [])
+
+        # Even if a caller forges both *environment candidate* values to match
+        # that substitute key, the repository-pinned key remains authoritative.
+        env = {
+            **self.env,
+            ENV_PUBLIC_KEY: base64.b64encode(pub).decode(),
+            ENV_FINGERPRINT: own_digest,
+        }
+        with self.assertRaisesRegex(
+            TrustedOneShotStop, "HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED"
+        ):
+            self.run_once(
+                events, github_environment=env,
+                owner_public_key=pub, independently_pinned_key_digest=own_digest,
+                signed_proofs=fraudulent,
+            )
+        self.assertEqual(events, [])
+        self.assertEqual(self.ledger_rows(), [])
+
+    def test_digest_substitution_denied_even_for_exact_public_key(self):
+        events = []
+        with self.assertRaisesRegex(
+            TrustedOneShotStop, "HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED"
+        ):
+            self.run_once(
+                events,
+                independently_pinned_key_digest="sha256:" + "a" * 64,
+            )
         self.assertEqual(events, [])
         self.assertEqual(self.ledger_rows(), [])
 

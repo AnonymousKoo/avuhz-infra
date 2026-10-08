@@ -217,7 +217,9 @@ def execute_source_bound_handoff(
         outcome = dispatch_one_synthetic_handoff(
             request, at_utc=at_utc, approved_command_digest=source.command_digest,
             authorization_check=lambda exact: exact == candidate,
-            access_token=session._access_text(),
+            access_token=(
+                session._access_text()
+            ),
             send_once=send_once,
         )
         attempted = outcome.send_attempted

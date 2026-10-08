@@ -1,0 +1,103 @@
+name: DEVELOPMENT Provider Adapter Positive Auth v15 Step 4
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Exact owner-approved confirmation for v15 Step 4 only'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-provider-adapter-positive-auth-v15-step4
+  cancel-in-progress: false
+
+jobs:
+  positive-auth-v15:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.run_number == 1 &&
+      github.run_attempt == 1 &&
+      inputs.confirmation == 'RUN_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_STEP4'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment: development
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: "src:."
+      AVUHZ_ENVIRONMENT: development
+      AVUHZ_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify one-shot DEVELOPMENT invocation and exact source bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "AnonymousKoo/avuhz-infra"
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$AVUHZ_ENVIRONMENT" = "development"
+          test "$AVUHZ_CONFIRMATION" = "RUN_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_STEP4"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path.cwd()
+          resource = json.loads((root / 'contracts/plans/v1/development-implementation-handoff-provider-adapter-positive-auth-v15.resource.json').read_text())
+          expected = resource['step4_executor_digest']
+          actual = 'sha256:' + hashlib.sha256((root / 'scripts/development_provider_adapter_positive_auth_v15.py').read_bytes()).hexdigest()
+          if actual != expected:
+              raise SystemExit('EXECUTOR_SOURCE_BINDING_INVALID')
+          PY
+
+      - name: Install exact pinned local authorization and JWT dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input \
+            'jsonschema==4.10.3' 'PyJWT[crypto]==2.14.0' 'cryptography==50.0.1'
+
+      - name: Verify fresh DEVELOPMENT public readiness without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 - <<'PY'
+          from scripts.development_public_readiness_v1 import run_probe
+          result = run_probe()
+          if result['classification'] != 'DEVELOPMENT_PUBLIC_READINESS_PASS':
+              raise SystemExit('DEVELOPMENT_PUBLIC_READINESS_FAILED')
+          print('development_public_readiness=PASS')
+          PY
+
+      - name: Validate exact v15 plan and independent cleanup approval before secret resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          python3 scripts/development_provider_adapter_positive_auth_v15.py --preflight-only
+
+      - name: Execute one exact DEVELOPMENT positive-auth lifecycle
+        shell: bash
+        env:
+          AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_EPHEMERAL: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_AUTH_PROVIDER_ADAPTER_POSITIVE_AUTH_V15_EPHEMERAL }}
+          AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.AVUHZ_DEVELOPMENT_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          python3 scripts/development_provider_adapter_positive_auth_v15.py

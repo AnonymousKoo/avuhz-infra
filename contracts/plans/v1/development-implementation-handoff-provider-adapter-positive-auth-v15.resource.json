@@ -17,7 +17,7 @@
   "step4_workflow_digest": "sha256:aa04d3a4bcbf5e4be17427551abc554447060d8972a5687031a1331c26bd5bcd",
   "step4_probe_digest": "sha256:5f1179969ad0f5dffb5b5d29eb631a406e00c79ac34a5ac539baabdf40841f73",
   "fallback_plan_id": "ebb59f16-fff6-4603-a6fa-71391c83c690",
-  "fallback_plan_digest": "sha256:fc75eb9b008852d5c6cbfd6c9c2ebb8b6b909c25ac0b52017da314de97da6c69",
+  "fallback_plan_digest": "sha256:699347e403c1f5f595b8c2652f085ab7ff09cb39e0c0f3d001af0bc97528ba4b",
   "fallback_approval_digest": null,
   "fallback_approval_unresolved": true,
   "planned_counts": {
@@ -42,5 +42,5 @@
   "secret_values_stored": false,
   "session_or_token_persistence_authorized": false,
   "observation": "DRAFT_BLOCKED_NO_APPROVAL_OR_PROVIDER_AUTHORITY",
-  "contract_digest": "sha256:8f73225186b501c8e7110df7a14ddbd88fe6ceb9ef099e72873391f5ecddd5ae"
+  "contract_digest": "sha256:359f495e8b7a5a7091c5636932f9d3c026524bd2c2831eb64905a0cc1e82b5b1"
 }

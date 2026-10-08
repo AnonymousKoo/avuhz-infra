@@ -1,0 +1,110 @@
+name: DEVELOPMENT First Handoff Trusted Dispatch v1 (OFFLINE ONLY)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'One-shot offline source/owner context verification only; NO live handoff'
+        required: true
+        type: choice
+        options:
+          - VERIFY_TRUSTED_DEVELOPMENT_HANDOFF_DISPATCH_V1
+      source_sha:
+        description: 'Exact current protected main commit SHA'
+        required: true
+        type: string
+      authorization_set_digest:
+        description: 'Non-secret claimed SHA-256 authorization-set digest (NOT approval)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-first-handoff-trusted-dispatch-v1
+  cancel-in-progress: false
+
+jobs:
+  trusted-dispatch:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'AnonymousKoo' &&
+      github.actor_id == 168945054 &&
+      github.repository == 'AnonymousKoo/avuhz-infra' &&
+      github.run_number == 1 &&
+      github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    environment: development
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: 'src:.'
+      AVUHZ_ENVIRONMENT: development
+      AVUHZ_CONFIRMATION: ${{ inputs.confirmation }}
+      AVUHZ_EXPECTED_SOURCE_SHA: ${{ inputs.source_sha }}
+      AVUHZ_AUTHORIZATION_SET_DIGEST: ${{ inputs.authorization_set_digest }}
+
+    steps:
+      - name: Checkout exact GitHub dispatch source without persistence
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Verify protected main, GitHub owner dispatch and first attempt
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+          from avuhz_engineering.development_handoff_trusted_github_invocation import (
+              TrustedInvocationStop, verify_trusted_github_invocation,
+          )
+
+          def git_value(*args):
+              return subprocess.check_output(
+                  ["git", *args], text=True, timeout=20, stderr=subprocess.DEVNULL
+              ).strip()
+
+          try:
+              event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+              remote = git_value("ls-remote", "--exit-code", "origin", "refs/heads/main")
+              parts = remote.split()
+              if len(parts) != 2 or parts[1] != "refs/heads/main":
+                  raise ValueError("source observation invalid")
+              result = verify_trusted_github_invocation(
+                  os.environ,
+                  event,
+                  observed_checkout_sha=git_value("rev-parse", "HEAD"),
+                  observed_remote_main_sha=parts[0],
+                  observed_git_origin=git_value("remote", "get-url", "origin"),
+              )
+          except TrustedInvocationStop as exc:
+              raise SystemExit(str(exc)) from None
+          except Exception:
+              raise SystemExit("HANDOFF_GITHUB_INVOCATION_UNVERIFIED") from None
+
+          if result.live_command_authorized or result.credential_resolution_authorized:
+              raise SystemExit("HANDOFF_GITHUB_AUTHORITY_BYPASS")
+          print("trusted_development_github_dispatch=PASS")
+          print("one_shot_workflow_counter=PASS")
+          print("owner_approval_verified=false")
+          print("distributed_authorization_consumed=false")
+          print("provider_contact_attempted=false")
+          print("live_handoff_attempted=false")
+          PY
+
+      - name: Affirm offline-only authority boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'NO LIVE COMMAND, CREDENTIAL, SUPABASE MUTATION, OR DATA READBACK IS PERMITTED.'
+          echo 'Separate owner-signed stage approval, trusted signing-key enrollment,'
+          echo 'distributed one-time consumption, and exact provider authority remain required.'

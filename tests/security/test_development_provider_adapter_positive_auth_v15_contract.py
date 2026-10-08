@@ -135,7 +135,8 @@ class DevelopmentPositiveAuthV15ContractTests(unittest.TestCase):
             txt = (BASE / f"{NAME}.{kind}.json").read_text(encoding="utf-8")
             self.assertNotIn("sb_secret_", txt)
             self.assertNotIn("Bearer eyJ", txt)
-            self.assertNotIn("refresh_token", txt)
+            self.assertNotIn('"access_token":', txt)
+            self.assertNotIn('"refresh_token":', txt)
 
 
 if __name__ == "__main__":

@@ -200,12 +200,16 @@ def execute_source_bound_handoff(
         identity = DEVELOPMENT_PROVIDER_ADAPTER_IMPLEMENTATION_HANDOFF_ENTRY
         _stop(
             getattr(proof, "algorithm", None) == "ES256"
+            and getattr(proof, "issuer", None) == "https://pwlhruwutoitnieactol.supabase.co/auth/v1"
+            and getattr(proof, "audience", None) == "audience.avuhz.command-service.development"
             and getattr(proof, "subject_digest", None) == identity.subject_digest
             and getattr(proof, "tenant_id", None) == identity.tenant_id
             and getattr(proof, "caller_type", None) == "PROVIDER_ADAPTER"
             and getattr(proof, "capabilities", None) == ("implementation_handoff:accept",)
             and getattr(proof, "authority_roles", None) == ()
-            and getattr(proof, "role", None) == "authenticated",
+            and getattr(proof, "role", None) == "authenticated"
+            and getattr(proof, "aal", None) == "aal1"
+            and getattr(proof, "is_anonymous", None) is False,
             "HANDOFF_JWT_POLICY_INVALID",
         )
         # dispatch_one_synthetic_handoff independently checks the same

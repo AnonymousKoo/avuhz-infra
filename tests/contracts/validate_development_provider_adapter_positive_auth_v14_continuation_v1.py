@@ -30,6 +30,10 @@ WORKFLOW = "sha256:72f8de8a1979ec771fbe42ac4c8da173f79005b884e57ceabf68358bf6621
 V14_FAILURE = "sha256:ddd3884f1edebc06d2c608a066146235c5864d10680e95a277140fb04261c1bc"
 APPROVED = "2026-10-08T10:07:10Z"
 APPROVAL = "sha256:f09c9c6b2d7f332ed3468288dd488f84801d0a71c36db42d62ee06baa98ea2f2"
+CURRENT_FAILURE = "sha256:63c1246fb571cc86cf01bbb994942c36d4438f9cd720028114abd53d3b5144aa"
+EXECUTION_PROGRESS = "sha256:9bcf3c8a65985a96c3f4f1a8f9095f376a92be73639ea3ea414621551c2e100b"
+CAPABILITY = "sha256:8a1695d0ff544091215771af39446a21c01c285e55354d4d8f88d04b10002afb"
+WORKFLOW_RUN_ID = 37770555664
 
 
 def load(suffix: str) -> dict:
@@ -49,9 +53,12 @@ def main() -> int:
     failure = json.loads(
         (BASE / "development-implementation-handoff-provider-adapter-positive-auth-v14-step05-authorization-preflight-failure.evidence.json").read_text()
     )
+    current_failure = load("-step1-failure.evidence.json")
+    execution = load(".execution-progress.json")
 
     validate_plan(plan, SCHEMA_ROOT)
     validate_progress(plan, progress, SCHEMA_ROOT)
+    validate_progress(plan, execution, SCHEMA_ROOT)
     validate_approval(plan, approval, SCHEMA_ROOT, "2026-10-08T11:00:00Z")
 
     assert resource["contract_digest"] == RESOURCE == canonical_digest(
@@ -107,6 +114,37 @@ def main() -> int:
     assert failure["execution_observation"]["secret_resolution_attempted"] is False
     assert failure["execution_observation"]["provider_mutation_attempted"] is False
 
+    assert evidence_digest(current_failure) == CURRENT_FAILURE
+    assert current_failure["plan_id"] == plan["plan_id"]
+    assert current_failure["plan_digest"] == plan["plan_digest"]
+    assert current_failure["approval_id"] == approval["approval_id"]
+    assert current_failure["approval_digest"] == approval["approval_digest"]
+    assert current_failure["step_id"] == plan["steps"][0]["step_id"]
+    assert current_failure["attempt"] == 1
+    assert current_failure["outcome"] == "FAILED_UNVERIFIED"
+    assert current_failure["safe_error_code"] == "LIVE_AUTH_PROBE_FAILED"
+    assert current_failure["classification"] == "PROVIDER_ADAPTER_POSITIVE_AUTH_UNVERIFIED"
+    assert current_failure["failure_stage"] == "live_runtime_probe"
+    assert current_failure["execution_observation"]["workflow_run_id"] == WORKFLOW_RUN_ID
+    assert current_failure["execution_observation"]["execution_sha"] == "2c9c92e1f49f6e911600978d53f33e29b5550f7b"
+    assert current_failure["execution_observation"]["run_number"] == 1
+    assert current_failure["execution_observation"]["run_attempt"] == 1
+    assert current_failure["execution_observation"]["authorization_preflight_passed_before_runtime_secret_resolution"] is True
+    assert current_failure["execution_observation"]["secret_resolution_attempted"] is True
+    assert current_failure["execution_observation"]["provider_mutation_attempted"] is True
+    assert current_failure["execution_observation"]["retry_occurred"] is False
+    assert current_failure["sanitized_runtime_outcome"]["cleanup_verified"] is False
+    assert current_failure["sanitized_runtime_outcome"]["session_state_readback_required"] is True
+    assert current_failure["sanitized_runtime_outcome"]["credential_retirement_obligation_remains"] is True
+    assert current_failure["sanitized_runtime_outcome"]["github_binding_retirement_obligation_remains"] is True
+    assert current_failure["sanitized_runtime_outcome"]["retry_authorized"] is False
+    assert current_failure["sanitized_runtime_outcome"]["ordinary_later_steps_authorized"] is False
+    assert current_failure["credential_material_retained"] is False
+    assert current_failure["token_material_retained"] is False
+    assert current_failure["provider_payload_retained"] is False
+    assert current_failure["pii_retained"] is False
+    assert not any(current_failure["security_state"].values())
+
     assert progress["overall_state"] == "NOT_STARTED"
     assert progress["record_version"] == 1
     assert all(
@@ -117,6 +155,42 @@ def main() -> int:
             state["authorization_consumed"],
         ) == ("PENDING", "NOT_STARTED", "NOT_STARTED", False)
         for state in progress["step_states"]
+    )
+
+    assert execution["progress_digest"] == EXECUTION_PROGRESS == progress_digest(execution)
+    assert execution["record_version"] == 3
+    assert execution["overall_state"] == "STOPPED"
+    first = execution["step_states"][0]
+    assert (
+        first["authorization_state"],
+        first["execution_state"],
+        first["verification_state"],
+        first["authorization_consumed"],
+        first["safe_error_code"],
+    ) == ("CONSUMED", "FAILED", "FAIL", True, "LIVE_AUTH_PROBE_FAILED")
+    assert first["evidence"] == [{
+        "evidence_type": current_failure["evidence_type"],
+        "evidence_reference": "github.actions.run.37770555664.step1.attempt1.failed-unverified",
+        "evidence_digest": CURRENT_FAILURE,
+        "recorded_at": "2026-10-08T11:34:15Z",
+    }]
+    assert len(first["binding_assertions"]) == 1
+    binding = first["binding_assertions"][0]
+    assert binding["binding_id"] == "binding.development.provider-adapter-positive-auth-v14-continuation-v1.admin-executor-capability"
+    assert binding["phase"] == "RESOLVED_BY_STEP_PREFLIGHT"
+    assert binding["evidence_type"] == "auth.admin-executor-capability.observed"
+    assert binding["evidence_digest"] == CAPABILITY
+    assert binding["value_digest"] == CAPABILITY
+    assert binding["sanitized_value"] is None
+    assert binding["recorded_at"] == "2026-10-08T11:31:12Z"
+    assert all(
+        (
+            state["authorization_state"],
+            state["execution_state"],
+            state["verification_state"],
+            state["authorization_consumed"],
+        ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False)
+        for state in execution["step_states"][1:]
     )
 
     assert approval["approval_id"] == "9d6f4e83-2a57-4cb1-b942-6e0f3a8c5d74"
@@ -133,7 +207,7 @@ def main() -> int:
     assert approval["status"] == "ACTIVE"
     assert approval["authority_scope"] == "EXACT_PLAN_ONLY"
     assert approval["approval_digest"] == APPROVAL == approval_digest(approval)
-    assert not (BASE / f"{N}.execution-progress.json").exists()
+    assert (BASE / f"{N}.execution-progress.json").exists()
 
     rendered = "\n".join(
         (BASE / f"{N}{suffix}").read_text()
@@ -143,6 +217,8 @@ def main() -> int:
             ".plan.json",
             ".progress.json",
             ".approval.json",
+            "-step1-failure.evidence.json",
+            ".execution-progress.json",
         )
     )
     assert "gnuqaefotwgkwurjpyik" not in rendered
@@ -152,8 +228,9 @@ def main() -> int:
 
     print(
         "DEVELOPMENT provider-adapter positive-auth v14 continuation v1: PASS "
-        "(schema-valid 6-step continuation; existing v14 key/binding reused; "
-        "exact runtime preflight regression present; READY_FOR_APPROVAL / UNEXECUTED)"
+        "(STOPPED; Step 1 CONSUMED/FAILED/FAIL at live runtime probe; "
+        "provider mutation attempted; session state UNKNOWN; retry prohibited; "
+        "Steps 2-6 BLOCKED; corrective cleanup/retirement required)"
     )
     return 0
 

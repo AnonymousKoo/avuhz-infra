@@ -1,0 +1,57 @@
+{
+  "evidence_type": "auth.provider-adapter-positive-auth-v14-continuation-v1.preparation.observed",
+  "environment": "DEVELOPMENT",
+  "responsibility": "AUTH",
+  "provider_reference": "repository",
+  "project_reference": "pwlhruwutoitnieactol",
+  "repository": "AnonymousKoo/avuhz-infra",
+  "boundary": "development-implementation-handoff-provider-adapter-positive-auth-v14-continuation-v1",
+  "prepared_at": "2026-10-08T09:54:17Z",
+  "canonical_source_main": "c534d4df0fb839d70a78e7fd8898c77b429c7d78",
+  "resource_contract_digest": "sha256:19ac6ac911e168a1a8e5a750504188b5724c153b5dd99bfd338df7927c040ef3",
+  "executor_source_digest": "sha256:91e7a63a3550bd366179a797070dcfca55d23d87f05c9bba13b74c9209a4998d",
+  "workflow_source_digest": "sha256:72f8de8a1979ec771fbe42ac4c8da173f79005b884e57ceabf68358bf6621e07",
+  "authorization_window": {
+    "starts_at": "2026-10-08T11:00:00Z",
+    "expires_at": "2026-10-08T15:00:00Z"
+  },
+  "predecessor_state": {
+    "v14_plan_id": "6ea08c43-5f97-4db2-b341-8f4e7c9a2d60",
+    "v14_plan_digest": "sha256:8da4655cf8167a661935f88e340fe51d7da1821db807e9254ffca88b8b9ef47f",
+    "v14_approval_id": "8c5f3d72-7e46-4a9b-b231-0d6e4f8a5c73",
+    "v14_approval_digest": "sha256:9410d2e10b6fd7febe0d2c0d873608d54bdd1e9ca7c9da0e8aeec631847d36e0",
+    "v14_steps1_4_progress_digest": "sha256:4d3e44ca05339f980bbf5cced174f67f70d992b70456e9a94a64668ec643a096",
+    "v14_step1_evidence_digest": "sha256:d4aff55bac16e73efc867b327ef88eab79fd3f0db6dcac04fd82233e34cf1b18",
+    "v14_step2_evidence_digest": "sha256:62ee203e20be12f515e698cd69a10ced3422f46eb4b7f21e67ba157fc53adab1",
+    "v14_step3_evidence_digest": "sha256:3590b89ce68436bb0109025b08869d7a4184a7207f65b52b67dca38e9d9395e0",
+    "v14_step4_evidence_digest": "sha256:a81f43f32718325822785e6c246f90f9f161e93a3b377301ba83a607c7e3b8b2",
+    "v14_step5_failure_evidence_digest": "sha256:ddd3884f1edebc06d2c608a066146235c5864d10680e95a277140fb04261c1bc",
+    "v14_step5_outcome": "FAILED_CLOSED_BEFORE_SECRET_RESOLUTION",
+    "v14_secret_resolution_attempted": false,
+    "v14_provider_mutation_attempted": false
+  },
+  "continuation_scope": {
+    "existing_key_reused": true,
+    "existing_github_binding_reused": true,
+    "key_create_authorized": false,
+    "github_binding_create_authorized": false,
+    "fresh_live_auth_attempt_authorized_only_after_separate_approval": true,
+    "readback_and_retirement_mandatory": true
+  },
+  "security_state": {
+    "credential_material_observed": false,
+    "credential_material_retained": false,
+    "provider_contact_attempted": false,
+    "provider_mutation_attempted": false,
+    "session_issued": false,
+    "token_issued": false,
+    "implementation_handoff_attempted": false,
+    "data_touched": false,
+    "render_touched": false,
+    "n8n_touched": false,
+    "staging_touched": false,
+    "production_touched": false
+  },
+  "authority_effect": "NONE_UNTIL_SEPARATELY_APPROVED",
+  "evidence_digest": "sha256:c9c60020941d6fc8e3d9296880c45ee113a4153f90bfaee8cddbb1675c0ef2e8"
+}

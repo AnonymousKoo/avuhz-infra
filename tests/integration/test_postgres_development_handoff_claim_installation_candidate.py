@@ -153,6 +153,84 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         with psycopg.connect(DSN) as db:
             return db.execute(f"select count(*) from {TABLE}").fetchone()[0]
 
+    @staticmethod
+    def migration_api_statements() -> str:
+        """Exact SQL body for the migration API, not raw SQL execution."""
+        path = ROOT / (
+            "supabase/provider-artifacts/development-data/current/"
+            "development_data_handoff_claim_ledger_install_v1.sql"
+        )
+        source = path.read_text(encoding="utf-8")
+        marker = "-- MIGRATION_API_STATEMENTS_BEGIN\\n"
+        if source.count(marker) != 1:
+            raise AssertionError("MIGRATION_API_ARTIFACT_MARKER_DRIFT")
+        api_sql = source.split(marker, 1)[1].strip()
+        wrapped = INSTALLATION_CANDIDATE_SQL.strip()
+        if not (wrapped.startswith("BEGIN;") and wrapped.endswith("COMMIT;")):
+            raise AssertionError("CANDIDATE_TRANSACTION_WRAPPER_DRIFT")
+        expected = wrapped[len("BEGIN;"):-len("COMMIT;")].strip()
+        if api_sql != expected:
+            raise AssertionError("MIGRATION_API_SOURCE_SQL_DRIFT")
+        return api_sql
+
+    def test_migration_api_rolls_back_ddl_when_history_write_fails(self):
+        """Failure recording history rolls back the proposed role and table."""
+        require_disposable_postgres()
+        statements = self.migration_api_statements()
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                "create temporary table avuhz_disposable_migration_history "
+                "(name text primary key)"
+            )
+            db.execute(
+                "insert into avuhz_disposable_migration_history values "
+                "('already-recorded')"
+            )
+            with self.assertRaises(psycopg.errors.UniqueViolation):
+                with db.transaction():
+                    db.execute(statements)
+                    db.execute(
+                        "insert into avuhz_disposable_migration_history values "
+                        "('already-recorded')"
+                    )
+            self.assertIsNone(db.execute(
+                "select to_regnamespace(%s)", (SCHEMA,)
+            ).fetchone()[0])
+            self.assertFalse(db.execute(
+                "select exists(select 1 from pg_roles where rolname=%s)",
+                (ROLE,)
+            ).fetchone()[0])
+            self.assertEqual(db.execute(
+                "select count(*) from avuhz_disposable_migration_history"
+            ).fetchone()[0], 1)
+
+    def test_migration_api_commits_ddl_with_history_in_one_transaction(self):
+        """Disposable stand-in for API-managed DDL and history atomicity."""
+        require_disposable_postgres()
+        statements = self.migration_api_statements()
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                "create temporary table avuhz_disposable_migration_history "
+                "(name text primary key)"
+            )
+            with db.transaction():
+                db.execute(statements)
+                db.execute(
+                    "insert into avuhz_disposable_migration_history values "
+                    "('handoff_claim_ledger_install_v1')"
+                )
+            self.assertEqual(db.execute(
+                "select count(*) from avuhz_disposable_migration_history"
+            ).fetchone()[0], 1)
+            self.assertEqual(db.execute(
+                "select relrowsecurity,relforcerowsecurity "
+                "from pg_class where oid=to_regclass(%s)", (TABLE,)
+            ).fetchone(), (True, True))
+            self.assertTrue(db.execute(
+                "select exists(select 1 from pg_roles where rolname=%s)",
+                (ROLE,)
+            ).fetchone()[0])
+
     def test_install_has_forced_rls_and_exact_writer_policy(self):
         self.install()
         with psycopg.connect(DSN) as db:

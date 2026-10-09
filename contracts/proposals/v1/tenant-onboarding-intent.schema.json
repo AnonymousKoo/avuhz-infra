@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:avuhz:schema:contracts:domain:tenant-onboarding-intent:v1",
+  "title": "Avuhz Tenant Onboarding Intent v1 (non-authoritative)",
+  "description": "Bounded provider-neutral intent to request consideration for one business tenant on shared Avuhz services. An intent is not a canonical Tenant, organization membership, owner identity, authenticated principal, approved service entitlement, commercial fact, automation dispatch, or authority to inspect or change systems. No runtime command, database migration, endpoint, or live provisioning is activated by this contract. The trusted Avuhz service must independently verify business ownership, identity, environment, tenant isolation, entitlements, and every requested shared-service capability before taking any separately authorized action.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent_version",
+    "business_reference",
+    "onboarding_purpose",
+    "requested_shared_services",
+    "idempotency_key"
+  ],
+  "properties": {
+    "intent_version": {
+      "const": 1,
+      "description": "Contract version, not a business or tenant identity version."
+    },
+    "business_reference": {
+      "description": "Opaque external business reference for later authoritative resolution; never sufficient proof of ownership or tenant membership. Must not contain a business contact, email, phone number, credential, or personal data.",
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/opaqueReferenceId"
+    },
+    "onboarding_purpose": {
+      "description": "Declared intent only; it cannot select the actual deployment environment or bypass approvals.",
+      "type": "string",
+      "enum": ["OWNER_OPERATED_PILOT", "STANDARD_BUSINESS_ONBOARDING"]
+    },
+    "requested_shared_services": {
+      "description": "Requested shared Avuhz service families, not permissions, enabled products, price plans, or evidence of implemented features. Vertical-specific automation/auth/billing paths are not allowed.",
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {
+        "type": "string",
+        "enum": [
+          "ACQUISITION",
+          "ENGAGEMENT_MANAGEMENT",
+          "WORKFLOW_ORCHESTRATION",
+          "COMMUNICATIONS",
+          "BILLING",
+          "OPERATIONS_REPORTING"
+        ]
+      }
+    },
+    "idempotency_key": {
+      "description": "Opaque retry key with no PII or credential content. Deduplication must be enforced by the future authoritative service, not by this schema.",
+      "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/idempotencyKey"
+    }
+  }
+}

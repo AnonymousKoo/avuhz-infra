@@ -153,8 +153,8 @@ class AuthenticatedRunnerDisposableTests(unittest.TestCase):
                 )
             )
             method = db.execute(
-                "select rolpassword like 'SCRAM-SHA-256$%' "
-                "from pg_authid where rolname=%s", (RUNNER,)
+                "select rolpassword like %s "
+                "from pg_authid where rolname=%s", ("SCRAM-SHA-256$%", RUNNER)
             ).fetchone()
             if method != (True,):
                 raise RuntimeError("DISPOSABLE_AUTH_RUNNER_PASSWORD_NOT_SCRAM")

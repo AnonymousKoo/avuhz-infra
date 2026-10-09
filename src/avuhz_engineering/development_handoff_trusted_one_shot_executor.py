@@ -8,8 +8,9 @@ injected provider callback.
 NO workflow step imports/runs this module by default. NO credential source,
 HTTP client, signing key or live approval is bundled. The existing one-run
 GitHub workflow is OFFLINE ONLY. A future approved executor must separately
-verify the signing-key enrollment, runner/ledger durability, provider
-credentials, stage scopes, DATA postconditions and secret retirement.
+verify independent human owner attribution and actual runner variable provenance,
+runner/ledger durability, provider credentials, stage scopes, DATA postconditions
+and secret retirement. Caller-provided public key/digest are NEVER sufficient.
 
 The pre-provisioned SQLite ledger is shared only among processes using that
 exact host file. GitHub's run_number==1/attempt==1 guard makes one exact
@@ -18,6 +19,7 @@ workflow dispatch non-repeatable but is NOT a general distributed claim store.
 from __future__ import annotations
 
 import copy
+import hmac
 import json
 import sqlite3
 from dataclasses import dataclass
@@ -29,6 +31,10 @@ from avuhz_engineering.development_handoff_approval_gate import (
     EXPECTED_OWNER, EXPECTED_STAGES, GatePreflightResult,
     HandoffApprovalGateStop, StageAuthorizationDocuments,
     authorization_set_digest, prepare_handoff_stage_approval_state,
+)
+from avuhz_engineering.development_handoff_owner_trust_anchor import (
+    DevelopmentTrustAnchorStop, ENV_PUBLIC_KEY, ENV_FINGERPRINT,
+    prepare_development_owner_trust_anchor_candidate,
 )
 from avuhz_engineering.development_handoff_single_use_claim import (
     SingleUseClaimStop, _PURPOSE, _NONCE, _CLAIM_FIELDS, _checked_ledger,
@@ -76,6 +82,49 @@ def _stop(code: str) -> None:
 
 def _time(now: datetime) -> str:
     return now.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _require_development_owner_signing_pin(
+    github_environment: Mapping[str, str],
+    *,
+    source: DevelopmentHandoffSource,
+    owner_public_key: bytes,
+    independently_pinned_key_digest: str,
+) -> None:
+    """Reject caller-substituted signing identities before claims or callbacks.
+
+    The reviewed DEVELOPMENT source pin is the root of comparison, NOT the
+    supplied public key plus a self-matching digest. The future trusted job
+    must inject GitHub `development` **environment variables** (not secrets).
+    Matching values alone still do NOT establish independent human attribution
+    or cross-run authorization consumption.
+    """
+    if (
+        type(owner_public_key) is not bytes or len(owner_public_key) != 32
+        or type(independently_pinned_key_digest) is not str
+    ):
+        _stop("HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED")
+    try:
+        anchor = prepare_development_owner_trust_anchor_candidate(
+            environment_values={
+                ENV_PUBLIC_KEY: github_environment.get(ENV_PUBLIC_KEY),
+                ENV_FINGERPRINT: github_environment.get(ENV_FINGERPRINT),
+            },
+            observed_repository=github_environment["GITHUB_REPOSITORY"],
+            observed_environment=github_environment["AVUHZ_ENVIRONMENT"],
+            observed_owner_identity="github:" + github_environment["GITHUB_ACTOR"],
+            observed_auth_project_ref=source.auth_project_ref,
+            observed_data_project_ref=source.data_project_ref,
+        )
+    except (DevelopmentTrustAnchorStop, KeyError, TypeError, ValueError):
+        _stop("HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED")
+    if not (
+        hmac.compare_digest(owner_public_key, anchor.public_key)
+        and hmac.compare_digest(
+            independently_pinned_key_digest, anchor.public_key_fingerprint
+        )
+    ):
+        _stop("HANDOFF_OWNER_SIGNING_PIN_UNVERIFIED")
 
 
 def _validate_proof(
@@ -238,6 +287,17 @@ def execute_trusted_development_handoff_once(
         _stop("HANDOFF_AUTHORIZATION_SET_INVALID")
     if digest != source.authorization_plan_digest:
         _stop("HANDOFF_AUTHORIZATION_SET_INVALID")
+
+    # Require the exact reviewed source-pinned public key and both future
+    # GitHub DEVELOPMENT environment variable values before ANY stage proof,
+    # ledger claim, credential resolution or injected callback. This is NOT
+    # independent human owner attribution, enrolled-runner proof or authority
+    # to execute a live operation; the workflow is still OFFLINE ONLY.
+    _require_development_owner_signing_pin(
+        github_environment, source=source,
+        owner_public_key=owner_public_key,
+        independently_pinned_key_digest=independently_pinned_key_digest,
+    )
 
     # Validate every signed approval and plan before *any* claim/credential.
     proposals = []

@@ -1,17 +1,15 @@
 -- DEVELOPMENT DATA shared handoff claim ledger installation artifact v1.
--- REVIEW ONLY. Remote application is UNAUTHORIZED by this PR or CI success.
--- One atomic installation bundle: private schema/table, dedicated NOLOGIN writer,
--- FORCE RLS, insert-only policy and explicit access denial. No runner grant or key.
--- Future target: DEVELOPMENT DATA gnuqaefotwgkwurjpyik ONLY.
--- DO NOT APPLY to AUTH pwlhruwutoitnieactol, staging, production or a customer DB.
--- Before any execution: fresh exact-source owner approval, project/provider preflight,
--- explicit chosen SQL executor, migration-history handling, and postcondition readback.
--- The SQL below is byte-identical to the updated disposable PostgreSQL candidate
--- (apart from surrounding whitespace). Provider-specific role membership is
--- explicitly validated; remote use still needs separate owner authorization.
--- TESTED_SQL_BEGIN
-BEGIN;
-
+-- REVIEW ONLY: Remote application requires fresh, exact owner authorization.
+-- Future provider target only: DEVELOPMENT DATA gnuqaefotwgkwurjpyik.
+-- DEVELOPMENT AUTH pwlhruwutoitnieactol and production are OUT OF SCOPE.
+-- Source SQL is the tested disposable candidate with only its OUTER BEGIN and
+-- COMMIT statements removed, so the Supabase apply_migration transaction can
+-- own BOTH the DDL and its migration-history record. Never submit as raw SQL.
+-- Neither this file nor a green CI run authorizes a provider mutation.
+-- No credential, runtime writer login, trusted runner, workflow or business call.
+-- Must preflight source SHA, target ref, privileges and absence; fail-closed
+-- post-verify private schema/table, FORCE tenant RLS, grants and role membership.
+-- MIGRATION_API_STATEMENTS_BEGIN
 DO $avuhz_handoff_install_preflight$
 BEGIN
   -- Stop instead of adopting, replacing, or repairing unknown provider state.
@@ -174,4 +172,3 @@ END
 $avuhz_handoff_writer_membership_postcondition$;
 
 -- No writer LOGIN, runtime SET membership, DSN, runner binding or provider key.
-COMMIT;

@@ -143,6 +143,7 @@ supabase/provider-artifacts/development-data/current/development_data_migration_
 supabase/provider-artifacts/development-data/current/development_data_migration_role_binding_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_outbox_search_path_repair_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_handoff_claim_ledger_install_v1.sql
+supabase/provider-artifacts/development-data/current/development_data_handoff_claim_runner_role_create_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_runtime_login_v2.sql
 supabase/provider-artifacts/development-data/current/development_data_runtime_login_v3.sql
 supabase/provider-artifacts/development-data/current/development_data_runtime_login_v4.sql
@@ -187,6 +188,7 @@ while IFS= read -r sql_path; do
     supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_outbox_search_path_repair_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_handoff_claim_ledger_install_v1.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_handoff_claim_runner_role_create_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_runtime_login_v2.sql|\
     supabase/provider-artifacts/development-data/current/development_data_runtime_login_v3.sql|\
     supabase/provider-artifacts/development-data/current/development_data_runtime_login_v4.sql|\

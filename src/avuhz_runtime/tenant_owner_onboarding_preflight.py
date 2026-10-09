@@ -131,7 +131,7 @@ def _validated_intent(intent: object) -> bool:
     if (not isinstance(business, str) or not 3 <= len(business) <= 128
             or not _OPAQUE_REF.fullmatch(business)):
         return False
-    if intent["onboarding_purpose"] not in _ALLOWED_PURPOSES:
+    if not isinstance(intent["onboarding_purpose"], str) or intent["onboarding_purpose"] not in _ALLOWED_PURPOSES:
         return False
     services = intent["requested_shared_services"]
     if (type(services) is not list or not 1 <= len(services) <= 6

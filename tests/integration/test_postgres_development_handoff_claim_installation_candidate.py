@@ -30,6 +30,7 @@ from avuhz_service.development import (
 
 DSN = os.environ.get("AVUHZ_POSTGRES_DSN")
 ROLE = "avuhz_handoff_claim_writer"
+RUNNER = "avuhz_handoff_claim_runner_dev"
 SCHEMA = "avuhz_handoff_control"
 TABLE = "avuhz_handoff_control.avuhz_handoff_approval_claims"
 UNPRIVILEGED_ROLE = "avuhz_handoff_unprivileged_candidate"
@@ -64,10 +65,11 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         with psycopg.connect(DSN, autocommit=True) as db:
             state = db.execute(
                 "select to_regnamespace(%s) is not null, "
+                "exists(select 1 from pg_roles where rolname=%s), "
                 "exists(select 1 from pg_roles where rolname=%s)",
-                (SCHEMA, ROLE),
+                (SCHEMA, ROLE, RUNNER),
             ).fetchone()
-            if state != (False, False):
+            if state != (False, False, False):
                 raise AssertionError("DISPOSABLE_CLAIM_FIXTURE_NOT_CLEAN")
 
     def tearDown(self) -> None:
@@ -75,6 +77,7 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         require_disposable_postgres()
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute("drop schema if exists avuhz_handoff_control cascade")
+            db.execute("drop role if exists avuhz_handoff_claim_runner_dev")
             db.execute("drop role if exists avuhz_handoff_claim_writer")
             db.execute("drop role if exists avuhz_handoff_unprivileged_candidate")
             if db.execute(
@@ -96,11 +99,36 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute(INSTALLATION_CANDIDATE_SQL)
 
+    @classmethod
+    def install_with_disposable_runner(cls) -> None:
+        """Provision only a test impersonation identity, NEVER provider access.
+
+        The actual reviewed installation SQL creates the isolated writer
+        without a runner grant. Retain that distinction in standalone
+        installation-policy tests; the extra role and SET-only membership
+        exist only while local adapter tests execute.
+        """
+        cls.install()
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                "create role avuhz_handoff_claim_runner_dev "
+                "login password null connection limit 1 noinherit "
+                "nosuperuser nobypassrls nocreatedb nocreaterole noreplication"
+            )
+            db.execute(
+                "grant avuhz_handoff_claim_writer to "
+                "avuhz_handoff_claim_runner_dev "
+                "with admin false, inherit false, set true"
+            )
+
     @staticmethod
     def writer() -> psycopg.Connection:
         require_disposable_postgres()
         db = psycopg.connect(DSN)
         try:
+            # PostgreSQL 17 disposable-superuser-only simulation; not a
+            # genuine authenticated runner connection or live credential.
+            db.execute("set session authorization avuhz_handoff_claim_runner_dev")
             db.execute("set role avuhz_handoff_claim_writer")
             db.commit()
             return db
@@ -363,7 +391,7 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
             ).fetchone()[0])
 
     def test_exact_adapter_consumes_four_once_and_denies_replay(self):
-        self.install()
+        self.install_with_disposable_runner()
         receipt = self.run_claim()
         self.assertEqual(receipt.claimed_stage_count, 4)
         self.assertFalse(receipt.live_execution_authorized)
@@ -377,7 +405,7 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         self.assertEqual(self.count_rows(), 4)
 
     def test_six_independent_concurrent_claims_only_one_wins(self):
-        self.install()
+        self.install_with_disposable_runner()
         with ThreadPoolExecutor(max_workers=6) as pool:
             futures = [pool.submit(self.run_claim) for _ in range(6)]
             successes, blocked = [], []
@@ -391,7 +419,7 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         self.assertEqual(self.count_rows(), 4)
 
     def test_existing_stage_collision_rolls_back_other_three(self):
-        self.install()
+        self.install_with_disposable_runner()
         with psycopg.connect(DSN) as db:
             self.insert_stage(db)
         with self.assertRaisesRegex(
@@ -401,7 +429,7 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         self.assertEqual(self.count_rows(), 1)
 
     def test_forced_rls_denies_missing_and_other_tenant(self):
-        self.install()
+        self.install_with_disposable_runner()
         with self.writer() as db:
             with self.assertRaises(psycopg.errors.InsufficientPrivilege):
                 with db.transaction():
@@ -416,7 +444,7 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
         self.assertEqual(self.count_rows(), 0)
 
     def test_stage_project_mismatch_rejected_at_database_boundary(self):
-        self.install()
+        self.install_with_disposable_runner()
         with self.writer() as db:
             with self.assertRaises(psycopg.errors.CheckViolation):
                 with db.transaction():
@@ -425,6 +453,33 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
                         (TENANT,),
                     )
                     self.insert_stage(db, project=DEVELOPMENT_DATA_PROJECT_REF)
+        self.assertEqual(self.count_rows(), 0)
+
+    def test_general_postgres_set_role_still_fails_runner_provenance(self):
+        self.install_with_disposable_runner()
+        def privileged_role_spoof():
+            db = psycopg.connect(DSN)
+            try:
+                db.execute("set role avuhz_handoff_claim_writer")
+                db.commit()
+                return db
+            except Exception:
+                db.close()
+                raise
+
+        with self.assertRaisesRegex(
+            DurableHandoffClaimStop, "HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED"
+        ):
+            claim_four_stages_candidate(
+                connection_factory=privileged_role_spoof,
+                tenant_id=TENANT,
+                source_sha="a" * 40,
+                authorization_set_digest=AUTH_SET,
+                command_digest=COMMAND,
+                auth_project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
+                data_project_ref=DEVELOPMENT_DATA_PROJECT_REF,
+                claims=self.claims(),
+            )
         self.assertEqual(self.count_rows(), 0)
 
     def test_preexisting_schema_refuses_atomic_install(self):

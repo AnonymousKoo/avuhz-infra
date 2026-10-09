@@ -16,7 +16,7 @@ ARTIFACT = ROOT / (
 SOURCE = ROOT / (
     "tests/integration/development_handoff_claim_installation_candidate.py"
 )
-MARKER = "-- TESTED_SQL_BEGIN\n"
+MARKER = "-- MIGRATION_API_STATEMENTS_BEGIN\n"
 
 
 class DevelopmentHandoffClaimSqlArtifactTests(unittest.TestCase):
@@ -38,14 +38,17 @@ class DevelopmentHandoffClaimSqlArtifactTests(unittest.TestCase):
 
     def test_artifact_byte_matches_disposable_postgres_certified_sql(self) -> None:
         tested_sql, artifact_sql = self.sql_parts()
-        self.assertEqual(artifact_sql, tested_sql)
+        self.assertTrue(tested_sql.startswith("BEGIN;"))
+        self.assertTrue(tested_sql.endswith("COMMIT;"))
+        expected_api_sql = tested_sql[len("BEGIN;"):-len("COMMIT;")].strip()
+        self.assertEqual(artifact_sql, expected_api_sql)
 
     def test_transactional_tenant_rls_and_replay_invariants(self) -> None:
         _, sql = self.sql_parts()
-        self.assertTrue(sql.startswith("BEGIN;"))
-        self.assertTrue(sql.endswith("COMMIT;"))
-        self.assertEqual(sql.count("BEGIN;"), 1)
-        self.assertEqual(sql.count("COMMIT;"), 1)
+        self.assertFalse(sql.startswith("BEGIN;"))
+        self.assertFalse(sql.endswith("COMMIT;"))
+        self.assertNotIn("\nBEGIN;", sql)
+        self.assertNotIn("\nCOMMIT;", sql)
         self.assertIn("FORCE ROW LEVEL SECURITY;", sql)
         self.assertIn("ENABLE ROW LEVEL SECURITY;", sql)
         self.assertIn("NOBYPASSRLS NOINHERIT", sql)
@@ -68,8 +71,10 @@ class DevelopmentHandoffClaimSqlArtifactTests(unittest.TestCase):
             )
         )
         text = ARTIFACT.read_text(encoding="utf-8")
-        self.assertIn("Remote application is UNAUTHORIZED", text)
-        self.assertIn("DO NOT APPLY to AUTH", text)
+        self.assertIn("Remote application requires fresh, exact owner authorization", text)
+        self.assertIn("DEVELOPMENT AUTH", text)
+        self.assertIn("Supabase apply_migration transaction", text)
+        self.assertIn("Never submit as raw SQL", text)
 
 
 if __name__ == "__main__":

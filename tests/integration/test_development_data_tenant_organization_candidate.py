@@ -47,9 +47,10 @@ BEGIN
          AND NOT rolsuper AND NOT rolcanlogin
      )
      OR NOT EXISTS (
-       SELECT 1 FROM pg_class
-       WHERE oid = 'public.avuhz_engagements'::regclass
-         AND relrowsecurity
+       SELECT 1 FROM pg_class c
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE n.nspname = 'public' AND c.relname = 'avuhz_engagements'
+         AND c.relrowsecurity
      ) THEN
     RAISE EXCEPTION 'TENANT_ORG_CANONICAL_DATA_BASELINE_MISSING';
   END IF;
@@ -189,8 +190,10 @@ class TenantOrganizationCandidatePostgresTests(unittest.TestCase):
             "'public.avuhz_tenant_organizations', 'SELECT')::int;"
             "select has_table_privilege('avuhz_command_service', "
             "'public.avuhz_tenant_organizations', 'INSERT')::int;"
-            "select has_table_privilege('public', "
-            "'public.avuhz_tenant_organizations', 'SELECT')::int;"
+            "select count(*) from information_schema.role_table_grants "
+            "where table_schema='public' and "
+            "table_name='avuhz_tenant_organizations' "
+            "and grantee in ('PUBLIC','anon','authenticated','service_role');"
         )
         self.assertEqual(result.stdout.decode().strip().splitlines(),
                          ["1:1", "1", "0", "0", "0"])

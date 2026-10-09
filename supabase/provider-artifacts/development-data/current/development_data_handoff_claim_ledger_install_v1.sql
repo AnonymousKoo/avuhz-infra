@@ -6,8 +6,9 @@
 -- DO NOT APPLY to AUTH pwlhruwutoitnieactol, staging, production or a customer DB.
 -- Before any execution: fresh exact-source owner approval, project/provider preflight,
 -- explicit chosen SQL executor, migration-history handling, and postcondition readback.
--- The original SQL below is byte-for-byte the tested disposable candidate (apart
--- from surrounding whitespace); tests enforce equality, not live provider safety.
+-- The SQL below is byte-identical to the updated disposable PostgreSQL candidate
+-- (apart from surrounding whitespace). Provider-specific role membership is
+-- explicitly validated; remote use still needs separate owner authorization.
 -- TESTED_SQL_BEGIN
 BEGIN;
 
@@ -39,6 +40,12 @@ BEGIN
       current_user, current_database(), 'CREATE'
     ) THEN
     RAISE EXCEPTION 'HANDOFF_CLAIM_MIGRATION_IDENTITY_UNVERIFIED';
+  END IF;
+  -- PostgreSQL 17 non-superuser CREATEROLE normally creates one bootstrap-
+  -- granted ADMIN-only membership, not SET/INHERIT authority. Reject altered
+  -- provider self-grant defaults before attempting a migration.
+  IF coalesce(current_setting('createrole_self_grant', true), '') <> '' THEN
+    RAISE EXCEPTION 'HANDOFF_CLAIM_CREATOR_SELF_GRANT_UNTRUSTED';
   END IF;
 END
 $avuhz_handoff_install_preflight$;
@@ -126,5 +133,45 @@ GRANT INSERT ON TABLE
   avuhz_handoff_control.avuhz_handoff_approval_claims
   TO avuhz_handoff_claim_writer;
 
--- No writer LOGIN, role membership, DSN, runner binding, or provider change.
+-- PostgreSQL 17 creates an ADMIN-only membership back to a CREATEROLE
+-- non-superuser. The hosted DATA migration identity (postgres) is such a
+-- role. A disposable superuser creates no such edge. Explicitly permit
+-- only the exact PostgreSQL-managed edge, never inherited/SET/runtime access.
+DO $avuhz_handoff_writer_membership_postcondition$
+DECLARE
+  writer_oid oid;
+  creator_oid oid;
+  creator_super boolean;
+  edge_count integer;
+  expected_edge_count integer;
+BEGIN
+  SELECT oid INTO STRICT writer_oid FROM pg_roles
+    WHERE rolname = 'avuhz_handoff_claim_writer';
+  SELECT oid, rolsuper INTO STRICT creator_oid, creator_super FROM pg_roles
+    WHERE rolname = current_user;
+  IF EXISTS (SELECT 1 FROM pg_auth_members WHERE member = writer_oid) THEN
+    RAISE EXCEPTION 'HANDOFF_CLAIM_WRITER_MEMBERSHIP_UNTRUSTED';
+  END IF;
+  SELECT count(*) INTO edge_count FROM pg_auth_members WHERE roleid = writer_oid;
+  IF creator_super THEN
+    IF edge_count <> 0 THEN
+      RAISE EXCEPTION 'HANDOFF_CLAIM_WRITER_MEMBERSHIP_UNTRUSTED';
+    END IF;
+  ELSE
+    SELECT count(*) INTO expected_edge_count
+      FROM pg_auth_members m JOIN pg_roles grantor ON grantor.oid=m.grantor
+      WHERE m.roleid=writer_oid
+        AND m.member=creator_oid
+        AND grantor.rolsuper
+        AND m.admin_option
+        AND NOT m.inherit_option
+        AND NOT m.set_option;
+    IF edge_count <> 1 OR expected_edge_count <> 1 THEN
+      RAISE EXCEPTION 'HANDOFF_CLAIM_WRITER_MEMBERSHIP_UNTRUSTED';
+    END IF;
+  END IF;
+END
+$avuhz_handoff_writer_membership_postcondition$;
+
+-- No writer LOGIN, runtime SET membership, DSN, runner binding or provider key.
 COMMIT;

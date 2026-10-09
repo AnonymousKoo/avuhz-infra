@@ -21,9 +21,7 @@ sys.path[:0] = [
 ]
 
 from development_handoff_claim_installation_candidate import INSTALLATION_CANDIDATE_SQL
-from test_development_handoff_trusted_one_shot_executor import (
-    TrustedOneShotExecutorTests,
-)
+import test_development_handoff_trusted_one_shot_executor as signed_fixture_module
 from avuhz_engineering.development_handoff_trusted_one_shot_executor import (
     SignedStageProof, TrustedOneShotStop,
     claim_signed_handoff_stages_postgres_candidate,
@@ -61,7 +59,7 @@ class SignedPostgresHandoffBridgeTests(unittest.TestCase):
 
     def setUp(self) -> None:
         disposable_scope()
-        self.signed = TrustedOneShotExecutorTests(
+        self.signed = signed_fixture_module.TrustedOneShotExecutorTests(
             methodName="test_four_exact_signed_stage_claims_precede_single_send_and_logout"
         )
         self.signed.setUp()

@@ -28,6 +28,7 @@ _SHA = re.compile(r"^[0-9a-f]{40}$")
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
 _ROLE = "avuhz_handoff_claim_writer"
+_RUNNER = "avuhz_handoff_claim_runner_dev"
 _TABLE = "avuhz_handoff_control.avuhz_handoff_approval_claims"
 
 
@@ -130,9 +131,44 @@ def claim_four_stages_candidate(
             with connection.transaction():
                 # The caller is responsible for a TRUSTED writer connection,
                 # not a customer session, AUTH DB connection or service_role.
-                actual = connection.execute("select current_user").fetchone()
-                if actual != (_ROLE,):
-                    _stop("HANDOFF_DURABLE_CLAIM_WRITER_UNTRUSTED")
+                # Guard against a privileged/general-purpose session
+                # impersonating the writer with SET ROLE. This proves only
+                # PostgreSQL session/role provenance, NOT independent GitHub
+                # runner attribution, signed human-owner authority, or tenant.
+                observed = connection.execute(
+                    "select session_user,current_user"
+                ).fetchone()
+                if observed != (_RUNNER, _ROLE):
+                    _stop("HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED")
+                attributes = connection.execute(
+                    "select rolcanlogin,rolinherit,rolsuper,rolbypassrls,"
+                    "rolcreatedb,rolcreaterole,rolreplication "
+                    "from pg_roles where rolname=%s",
+                    (_RUNNER,),
+                ).fetchone()
+                if attributes != (True, False, False, False, False, False, False):
+                    _stop("HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED")
+                edges = connection.execute(
+                    "select m.admin_option,m.inherit_option,m.set_option "
+                    "from pg_auth_members m "
+                    "join pg_roles member on member.oid=m.member "
+                    "join pg_roles granted on granted.oid=m.roleid "
+                    "where member.rolname=%s and granted.rolname=%s",
+                    (_RUNNER, _ROLE),
+                ).fetchall()
+                if edges != [(False, False, True)]:
+                    _stop("HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED")
+                if (
+                    connection.execute(
+                        "select pg_has_role(%s,%s,'USAGE')",
+                        (_RUNNER, _ROLE),
+                    ).fetchone() != (False,)
+                    or connection.execute(
+                        "select has_table_privilege(%s,%s,'INSERT')",
+                        (_RUNNER, _TABLE),
+                    ).fetchone() != (False,)
+                ):
+                    _stop("HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED")
                 contract = connection.execute(
                     "select c.relrowsecurity, c.relforcerowsecurity "
                     "from pg_class c where c.oid="

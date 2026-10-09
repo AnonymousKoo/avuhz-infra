@@ -74,6 +74,12 @@ create policy avuhz_handoff_claim_writer_tenant on
 grant usage on schema avuhz_handoff_control to avuhz_handoff_claim_writer;
 grant insert on avuhz_handoff_control.avuhz_handoff_approval_claims
   to avuhz_handoff_claim_writer;
+-- Disposable-only session identity, NO password, no direct grants.
+create role avuhz_handoff_claim_runner_dev login password null
+  connection limit 1 noinherit nosuperuser nobypassrls
+  nocreatedb nocreaterole noreplication;
+grant avuhz_handoff_claim_writer to avuhz_handoff_claim_runner_dev
+  with admin false, inherit false, set true;
 """
 
 
@@ -89,6 +95,7 @@ class DurableHandoffCandidatePostgresTests(unittest.TestCase):
     def tearDownClass(cls):
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute("drop schema avuhz_handoff_control cascade")
+            db.execute("drop role avuhz_handoff_claim_runner_dev")
             db.execute("drop role avuhz_handoff_claim_writer")
         super().tearDownClass()
 
@@ -100,6 +107,9 @@ class DurableHandoffCandidatePostgresTests(unittest.TestCase):
     def writer():
         db = psycopg.connect(DSN)
         try:
+            # Simulate a separate runner session without a usable password.
+            # Disposable postgres fixture may SET SESSION AUTHORIZATION.
+            db.execute("set session authorization avuhz_handoff_claim_runner_dev")
             db.execute("set role avuhz_handoff_claim_writer")
             db.commit()
         except Exception:
@@ -264,7 +274,7 @@ class DurableHandoffCandidatePostgresTests(unittest.TestCase):
 
     def test_wrong_role_and_invalid_scope_never_insert(self):
         with self.assertRaisesRegex(
-            DurableHandoffClaimStop, "HANDOFF_DURABLE_CLAIM_WRITER_UNTRUSTED"
+            DurableHandoffClaimStop, "HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED"
         ):
             self.run_claim(connection_factory=lambda: psycopg.connect(DSN))
         cases = (
@@ -283,6 +293,24 @@ class DurableHandoffCandidatePostgresTests(unittest.TestCase):
                 DurableHandoffClaimStop, "HANDOFF_DURABLE_CLAIM_SCOPE_INVALID"
             ):
                 self.run_claim(**invalid)
+        self.assertEqual(self.rows(), [])
+
+    def test_postgres_session_set_role_cannot_spoof_dedicated_runner(self):
+        """A postgres session with current_user=writer is not a trusted runner."""
+        def privileged_writer():
+            db = psycopg.connect(DSN)
+            try:
+                db.execute("set role avuhz_handoff_claim_writer")
+                db.commit()
+                return db
+            except Exception:
+                db.close()
+                raise
+
+        with self.assertRaisesRegex(
+            DurableHandoffClaimStop, "HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED"
+        ):
+            self.run_claim(connection_factory=privileged_writer)
         self.assertEqual(self.rows(), [])
 
     def test_unavailable_store_never_reports_an_unconsumed_approval(self):

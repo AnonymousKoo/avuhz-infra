@@ -21,7 +21,7 @@ jobs:
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONPATH: "src:."
       AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-main-pr-gate-postgres
-      AVUHZ_POSTGRES_IMAGE: postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
+      AVUHZ_POSTGRES_IMAGE: public.ecr.aws/docker/library/postgres@sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
       AVUHZ_POSTGRES_DIGEST: sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675
       AVUHZ_INTEGRATION_DATABASE: avuhz_main_pr_gate
       AVUHZ_POSTGRES_DSN: "host=127.0.0.1 port=5432 dbname=avuhz_main_pr_gate user=postgres"
@@ -183,63 +183,6 @@ jobs:
           test -f tests/cross_repo/test_sekinfra_handoff.py
           echo "cross_repo_suite_included=false"
           echo "cross_repo_suite_portable=false"
-
-      - name: Configure public Docker Hub cache on disposable runner
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # Google Artifact Registry's public mirror only serves cached
-          # Docker Hub images. The requested postgres@sha256 digest,
-          # independent RepoDigests assertion and PostgreSQL 17 version
-          # checks in the next step MUST remain unchanged. No credentials.
-          sudo python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          config_path = Path("/etc/docker/daemon.json")
-          config = json.loads(config_path.read_text()) if config_path.exists() else {}
-          if not isinstance(config, dict):
-              raise SystemExit("Docker daemon configuration must be a JSON object")
-          existing = config.get("registry-mirrors", [])
-          if not isinstance(existing, list) or any(
-              not isinstance(entry, str) or not entry.startswith("https://")
-              for entry in existing
-          ):
-              raise SystemExit("Cannot safely extend Docker registry mirrors")
-
-          mirror = "https://mirror.gcr.io"
-          config["registry-mirrors"] = [
-              mirror,
-              *(entry for entry in existing if entry.rstrip("/") != mirror),
-          ]
-          config_path.parent.mkdir(parents=True, exist_ok=True)
-          config_path.write_text(json.dumps(config, sort_keys=True) + "\n")
-          PY
-
-          # Ephemeral test runner only; Docker is not hosting a service yet.
-          sudo systemctl restart docker
-          for _ in $(seq 1 15); do
-            if docker info >/dev/null 2>&1; then
-              break
-            fi
-            sleep 1
-          done
-          mirrors="$(docker info --format '{{json .RegistryConfig.Mirrors}}')"
-          python3 - "$mirrors" <<'PY'
-          import json
-          import sys
-
-          mirrors = json.loads(sys.argv[1])
-          if not isinstance(mirrors, list) or not any(
-              isinstance(value, str)
-              and value.rstrip("/") == "https://mirror.gcr.io"
-              for value in mirrors
-          ):
-              raise SystemExit("The public Docker Hub cache was not activated")
-          print("postgres_image_cache_configured=true")
-          print("dockerhub_credentials_added=false")
-          PY
 
       - name: Start stable disposable PostgreSQL 17
         shell: bash

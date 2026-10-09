@@ -32,6 +32,10 @@ from avuhz_engineering.development_handoff_approval_gate import (
     HandoffApprovalGateStop, StageAuthorizationDocuments,
     authorization_set_digest, prepare_handoff_stage_approval_state,
 )
+from avuhz_engineering.development_handoff_durable_claim_candidate import (
+    DurableHandoffClaimStop, DurableStageClaim, DurableClaimCandidateReceipt,
+    claim_four_stages_candidate,
+)
 from avuhz_engineering.development_handoff_owner_trust_anchor import (
     DevelopmentTrustAnchorStop, ENV_PUBLIC_KEY, ENV_FINGERPRINT,
     prepare_development_owner_trust_anchor_candidate,
@@ -233,7 +237,7 @@ def _claim_four_stages_once(
             connection.close()
 
 
-def execute_trusted_development_handoff_once(
+def _prepare_verified_four_stages(
     request: dict,
     *,
     source: DevelopmentHandoffSource,
@@ -247,21 +251,11 @@ def execute_trusted_development_handoff_once(
     signed_proofs: dict[str, SignedStageProof],
     owner_public_key: bytes,
     independently_pinned_key_digest: str,
-    shared_runner_ledger: Path,
-    admin_secret_supplier: Callable[[], str],
-    publishable_key_supplier: Callable[[], str],
-    existing_user_email_supplier: Callable[[], str],
-    generate: Callable[..., Any],
-    verify: Callable[..., Any],
-    validate_jwt: Callable[[str], Any],
-    logout_global: Callable[..., None],
-    send_once: Callable[[dict, str], tuple[int, bytes]],
-) -> TrustedOneShotOutcome:
-    """Authorize, atomically claim, then permit one bounded injected lifecycle.
+) -> tuple[Any, datetime, list[tuple[str, StageAuthorizationDocuments, GatePreflightResult]]]:
+    """Common fail-closed GitHub/source/owner-pin/signature/plan verification.
 
-    This must only be called by a trusted owner-enrolled, first-dispatch
-    DEVELOPMENT runner with separately reviewed credential and provider
-    transport dependencies. It does not issue or sign approvals itself.
+    Does not open any database connection or resolve provider credentials.
+    A caller-supplied GitHub mapping is NOT independent owner attribution.
     """
     try:
         invocation = verify_trusted_github_invocation(
@@ -329,6 +323,49 @@ def execute_trusted_development_handoff_once(
             _stop("HANDOFF_STAGE_APPROVAL_UNVERIFIED")
         proposals.append((stage, document, proposal))
 
+    return invocation, now, proposals
+
+
+def execute_trusted_development_handoff_once(
+    request: dict,
+    *,
+    source: DevelopmentHandoffSource,
+    github_environment: Mapping[str, str],
+    github_event: dict,
+    observed_checkout_sha: str,
+    observed_remote_main_sha: str,
+    observed_git_origin: str,
+    at_utc: datetime,
+    stages: dict[str, StageAuthorizationDocuments],
+    signed_proofs: dict[str, SignedStageProof],
+    owner_public_key: bytes,
+    independently_pinned_key_digest: str,
+    shared_runner_ledger: Path,
+    admin_secret_supplier: Callable[[], str],
+    publishable_key_supplier: Callable[[], str],
+    existing_user_email_supplier: Callable[[], str],
+    generate: Callable[..., Any],
+    verify: Callable[..., Any],
+    validate_jwt: Callable[[str], Any],
+    logout_global: Callable[..., None],
+    send_once: Callable[[dict, str], tuple[int, bytes]],
+) -> TrustedOneShotOutcome:
+    """Authorize, atomically claim, then permit one bounded injected lifecycle.
+
+    This must only be called by a trusted owner-enrolled, first-dispatch
+    DEVELOPMENT runner with separately reviewed credential and provider
+    transport dependencies. It does not issue or sign approvals itself.
+    """
+    invocation, now, proposals = _prepare_verified_four_stages(
+        request, source=source, github_environment=github_environment,
+        github_event=github_event, observed_checkout_sha=observed_checkout_sha,
+        observed_remote_main_sha=observed_remote_main_sha,
+        observed_git_origin=observed_git_origin, at_utc=at_utc,
+        stages=stages, signed_proofs=signed_proofs,
+        owner_public_key=owner_public_key,
+        independently_pinned_key_digest=independently_pinned_key_digest,
+    )
+
     # Four claims are one sqlite transaction shared by this runner. A
     # duplicate, expired proof, or error before COMMIT executes NO provider call.
     _claim_four_stages_once(
@@ -368,3 +405,64 @@ def execute_trusted_development_handoff_once(
         run_id=invocation.github_run_id, command_digest=source.command_digest,
         claimed_stage_count=len(proposals), lifecycle=lifecycle,
     )
+
+def claim_signed_handoff_stages_postgres_candidate(
+    request: dict,
+    *,
+    source: DevelopmentHandoffSource,
+    github_environment: Mapping[str, str],
+    github_event: dict,
+    observed_checkout_sha: str,
+    observed_remote_main_sha: str,
+    observed_git_origin: str,
+    at_utc: datetime,
+    stages: dict[str, StageAuthorizationDocuments],
+    signed_proofs: dict[str, SignedStageProof],
+    owner_public_key: bytes,
+    independently_pinned_key_digest: str,
+    connection_factory: Callable[[], Any],
+) -> DurableClaimCandidateReceipt:
+    """Test-only shared PostgreSQL claim bridge. NEVER an execution grant.
+
+    Reuses the existing reviewed owner/source/four-stage gate, then invokes
+    the standalone PostgreSQL atomic-insert adapter. No credential supplier,
+    HTTP client, SQLite fallback or live workflow integration is provided.
+    No input mapping alone attests the owner or GitHub runner identity.
+    An uncertain claim outcome is terminal; never retry.
+    """
+    invocation, _, proposals = _prepare_verified_four_stages(
+        request, source=source, github_environment=github_environment,
+        github_event=github_event, observed_checkout_sha=observed_checkout_sha,
+        observed_remote_main_sha=observed_remote_main_sha,
+        observed_git_origin=observed_git_origin, at_utc=at_utc,
+        stages=stages, signed_proofs=signed_proofs,
+        owner_public_key=owner_public_key,
+        independently_pinned_key_digest=independently_pinned_key_digest,
+    )
+    try:
+        claims = tuple(
+            DurableStageClaim(
+                stage=stage,
+                plan_id=doc.plan["plan_id"],
+                step_id=doc.plan["steps"][0]["step_id"],
+                plan_digest=proposal.stage.plan_digest,
+                approval_digest=proposal.stage.approval_digest,
+                project_reference=proposal.stage.project_reference,
+            )
+            for stage, doc, proposal in proposals
+        )
+        return claim_four_stages_candidate(
+            connection_factory=connection_factory,
+            tenant_id=source.tenant_id,
+            source_sha=invocation.canonical_main_sha,
+            authorization_set_digest=source.authorization_plan_digest,
+            command_digest=source.command_digest,
+            auth_project_ref=DEVELOPMENT_AUTH_PROJECT_REF,
+            data_project_ref=DEVELOPMENT_DATA_PROJECT_REF,
+            claims=claims,
+        )
+    except DurableHandoffClaimStop as exc:
+        # Existing adapter has bounded stop codes (never raw DB payloads).
+        raise TrustedOneShotStop(str(exc)) from None
+    except Exception:
+        _stop("HANDOFF_DURABLE_CLAIM_OUTCOME_UNVERIFIED")

@@ -72,11 +72,24 @@ class SignedPostgresHandoffBridgeTests(unittest.TestCase):
             ).fetchone()[0]:
                 raise AssertionError("DISPOSABLE_CLAIM_SCHEMA_NOT_CLEAN")
             db.execute(INSTALLATION_CANDIDATE_SQL)
+            # Disposable-only post-install runner/session grant test fixture.
+            db.execute(
+                "create role avuhz_handoff_claim_runner_dev "
+                "login password null connection limit 1 "
+                "noinherit nosuperuser nobypassrls "
+                "nocreatedb nocreaterole noreplication"
+            )
+            db.execute(
+                "grant avuhz_handoff_claim_writer to "
+                "avuhz_handoff_claim_runner_dev "
+                "with admin false, inherit false, set true"
+            )
 
     def tearDown(self) -> None:
         disposable_scope()
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute("drop schema if exists avuhz_handoff_control cascade")
+            db.execute("drop role if exists avuhz_handoff_claim_runner_dev")
             db.execute("drop role if exists avuhz_handoff_claim_writer")
         super().tearDown()
 
@@ -85,6 +98,7 @@ class SignedPostgresHandoffBridgeTests(unittest.TestCase):
         disposable_scope()
         db = psycopg.connect(DSN)
         try:
+            db.execute("set session authorization avuhz_handoff_claim_runner_dev")
             db.execute("set role avuhz_handoff_claim_writer")
             db.commit()
             return db
@@ -187,7 +201,7 @@ class SignedPostgresHandoffBridgeTests(unittest.TestCase):
 
     def test_wrong_writer_and_connection_failure_stop_without_leaks(self):
         with self.assertRaisesRegex(
-            TrustedOneShotStop, "HANDOFF_DURABLE_CLAIM_WRITER_UNTRUSTED"
+            TrustedOneShotStop, "HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED"
         ):
             self.claim(connection_factory=lambda: psycopg.connect(DSN))
         def unavailable():
@@ -197,6 +211,23 @@ class SignedPostgresHandoffBridgeTests(unittest.TestCase):
         ) as caught:
             self.claim(connection_factory=unavailable)
         self.assertNotIn("private test transport diagnostic", str(caught.exception))
+        self.assertEqual(self.count(), 0)
+
+    def test_postgres_superuser_set_role_is_not_runner_identity(self):
+        def impersonated_writer():
+            db = psycopg.connect(DSN)
+            try:
+                db.execute("set role avuhz_handoff_claim_writer")
+                db.commit()
+                return db
+            except Exception:
+                db.close()
+                raise
+
+        with self.assertRaisesRegex(
+            TrustedOneShotStop, "HANDOFF_DURABLE_CLAIM_RUNNER_UNTRUSTED"
+        ):
+            self.claim(connection_factory=impersonated_writer)
         self.assertEqual(self.count(), 0)
 
     def test_four_connections_contend_single_winner(self):

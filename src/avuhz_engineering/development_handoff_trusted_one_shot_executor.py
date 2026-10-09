@@ -352,7 +352,11 @@ def execute_trusted_development_handoff_once(
 ) -> TrustedOneShotOutcome:
     """Authorize, atomically claim, then permit one bounded injected lifecycle.
 
-    This must only be called by a tr    invocation, now, proposals = _prepare_verified_four_stages(
+    This must only be called by a trusted owner-enrolled, first-dispatch
+    DEVELOPMENT runner with separately reviewed credential and provider
+    transport dependencies. It does not issue or sign approvals itself.
+    """
+    invocation, now, proposals = _prepare_verified_four_stages(
         request, source=source, github_environment=github_environment,
         github_event=github_event, observed_checkout_sha=observed_checkout_sha,
         observed_remote_main_sha=observed_remote_main_sha,
@@ -361,11 +365,6 @@ def execute_trusted_development_handoff_once(
         owner_public_key=owner_public_key,
         independently_pinned_key_digest=independently_pinned_key_digest,
     )
-
-age.authorized_progress["step_states"][0]["authorization_consumed"]
-        ):
-            _stop("HANDOFF_STAGE_APPROVAL_UNVERIFIED")
-        proposals.append((stage, document, proposal))
 
     # Four claims are one sqlite transaction shared by this runner. A
     # duplicate, expired proof, or error before COMMIT executes NO provider call.

@@ -161,7 +161,7 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
             "development_data_handoff_claim_ledger_install_v1.sql"
         )
         source = path.read_text(encoding="utf-8")
-        marker = "-- MIGRATION_API_STATEMENTS_BEGIN\\n"
+        marker = "-- MIGRATION_API_STATEMENTS_BEGIN\n"
         if source.count(marker) != 1:
             raise AssertionError("MIGRATION_API_ARTIFACT_MARKER_DRIFT")
         api_sql = source.split(marker, 1)[1].strip()

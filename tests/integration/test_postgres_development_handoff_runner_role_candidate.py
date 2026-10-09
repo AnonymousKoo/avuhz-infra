@@ -135,6 +135,7 @@ class DevelopmentHandoffRunnerRoleCandidateTests(unittest.TestCase):
                 "HANDOFF_RUNNER_PREEXISTING_ROLE_STOP",
             ):
                 db.execute(CREATE_RUNNER_CANDIDATE_SQL)
+            db.execute("rollback")  # expected BEGIN failure leaves txn aborted
             self.assertEqual(db.execute(
                 "select count(*) from pg_roles where rolname=%s", (RUNNER,),
             ).fetchone()[0],1)
@@ -147,6 +148,7 @@ class DevelopmentHandoffRunnerRoleCandidateTests(unittest.TestCase):
                 "HANDOFF_RUNNER_DATA_LEDGER_UNVERIFIED",
             ):
                 db.execute(CREATE_RUNNER_CANDIDATE_SQL)
+            db.execute("rollback")  # expected BEGIN failure leaves txn aborted
             self.assertFalse(db.execute(
                 "select exists(select 1 from pg_roles where rolname=%s)",(RUNNER,),
             ).fetchone()[0])
@@ -157,6 +159,13 @@ class DevelopmentHandoffRunnerRoleCandidateTests(unittest.TestCase):
                 "create role avuhz_runner_role_creator_fixture "
                 "nologin nosuperuser createrole noinherit "
                 "nobypassrls nocreatedb noreplication"
+            )
+            # Hosted non-superuser migration identity owns the private schema.
+            # This disposable actor needs USAGE only to inspect the RLS catalog.
+            # The writer's table permissions are never granted to this fixture.
+            db.execute(
+                "grant usage on schema avuhz_handoff_control "
+                "to avuhz_runner_role_creator_fixture"
             )
             db.execute("set role avuhz_runner_role_creator_fixture")
             try:
@@ -233,6 +242,7 @@ class DevelopmentHandoffRunnerRoleCandidateTests(unittest.TestCase):
                 "HANDOFF_RUNNER_MEMBERSHIP_PREEXISTING_STOP",
             ):
                 db.execute(GRANT_WRITER_SET_CANDIDATE_SQL)
+            db.execute("rollback")  # expected BEGIN failure leaves txn aborted
             self.assertFalse(db.execute(
                 "select pg_has_role(%s,%s,'SET')",(RUNNER,WRITER),
             ).fetchone()[0])

@@ -107,6 +107,7 @@ class AuthenticatedRunnerDisposableTests(unittest.TestCase):
                 "--publish", "127.0.0.1::5432",
                 "--env", "POSTGRES_PASSWORD",
                 "--env", "POSTGRES_HOST_AUTH_METHOD=scram-sha-256",
+                "--env", "POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256",
                 IMAGE, env=docker_env,
             )
         finally:

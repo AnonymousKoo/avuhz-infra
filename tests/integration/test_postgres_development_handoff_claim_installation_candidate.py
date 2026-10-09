@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import psycopg
+from psycopg import sql as psql
 from psycopg.conninfo import conninfo_to_dict
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +33,7 @@ ROLE = "avuhz_handoff_claim_writer"
 SCHEMA = "avuhz_handoff_control"
 TABLE = "avuhz_handoff_control.avuhz_handoff_approval_claims"
 UNPRIVILEGED_ROLE = "avuhz_handoff_unprivileged_candidate"
+NON_SUPER_CREATOR = "avuhz_handoff_creator_fixture"
 TENANT = "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f0"
 OTHER_TENANT = "1ad3998c-92ab-4a36-9d1c-ed97f2fa98f1"
 AUTH_SET = "sha256:" + "b" * 64
@@ -75,6 +77,17 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
             db.execute("drop schema if exists avuhz_handoff_control cascade")
             db.execute("drop role if exists avuhz_handoff_claim_writer")
             db.execute("drop role if exists avuhz_handoff_unprivileged_candidate")
+            if db.execute(
+                "select exists(select 1 from pg_roles where rolname=%s)",
+                (NON_SUPER_CREATOR,),
+            ).fetchone()[0]:
+                db.execute(
+                    psql.SQL("revoke create on database {} from {}").format(
+                        psql.Identifier(os.environ["AVUHZ_INTEGRATION_DATABASE"]),
+                        psql.Identifier(NON_SUPER_CREATOR),
+                    )
+                )
+                db.execute("drop role avuhz_handoff_creator_fixture")
         super().tearDown()
 
     @staticmethod
@@ -176,6 +189,65 @@ class HandoffClaimInstallationCandidateTests(unittest.TestCase):
                     (ROLE, ROLE),
                 ).fetchone()[0], 0,
             )
+
+    def test_non_superuser_creator_has_exact_postgresql17_admin_edge(self):
+        """Emulate hosted DATA's non-superuser postgres CREATEROLE identity.
+
+        The ordinary disposable fixture uses a superuser, which has no
+        automatically granted role edge. Hosted PostgreSQL 17 instead creates
+        one bootstrap-granted ADMIN TRUE, SET FALSE, INHERIT FALSE edge.
+        """
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                "create role avuhz_handoff_creator_fixture "
+                "nologin nosuperuser createrole noinherit nocreatedb "
+                "nobypassrls noreplication"
+            )
+            db.execute(
+                psql.SQL("grant create on database {} to {}").format(
+                    psql.Identifier(os.environ["AVUHZ_INTEGRATION_DATABASE"]),
+                    psql.Identifier(NON_SUPER_CREATOR),
+                )
+            )
+            db.execute("set role avuhz_handoff_creator_fixture")
+            try:
+                self.assertEqual(
+                    db.execute(
+                        "select current_user, rolsuper from pg_roles "
+                        "where rolname=current_user"
+                    ).fetchone(),
+                    (NON_SUPER_CREATOR, False),
+                )
+                db.execute(INSTALLATION_CANDIDATE_SQL)
+            finally:
+                db.execute("reset role")
+            edges = db.execute(
+                "select member.rolname, grantor.rolsuper, m.admin_option,"
+                " m.inherit_option, m.set_option "
+                "from pg_auth_members m "
+                "join pg_roles granted on granted.oid=m.roleid "
+                "join pg_roles member on member.oid=m.member "
+                "join pg_roles grantor on grantor.oid=m.grantor "
+                "where granted.rolname=%s",
+                (ROLE,),
+            ).fetchall()
+            self.assertEqual(
+                edges, [(NON_SUPER_CREATOR, True, True, False, False)]
+            )
+            self.assertFalse(
+                db.execute("select pg_has_role(%s,%s,'SET')",
+                           (NON_SUPER_CREATOR, ROLE)).fetchone()[0]
+            )
+            self.assertFalse(
+                db.execute("select pg_has_role(%s,%s,'USAGE')",
+                           (NON_SUPER_CREATOR, ROLE)).fetchone()[0]
+            )
+            self.assertEqual(
+                db.execute("select relrowsecurity,relforcerowsecurity "
+                           "from pg_class where oid=to_regclass(%s)",
+                           (TABLE,)).fetchone(), (True, True)
+            )
+        self.assertEqual(self.count_rows(), 0)
 
     def test_no_exposed_role_or_business_command_direct_access(self):
         self.install()

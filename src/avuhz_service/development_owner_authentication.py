@@ -30,7 +30,7 @@ src/avuhz_service/development_owner_authentication.py
 >>> class TestOnlyJwks:
 ...     def get_signing_key_from_jwt(self, _token):
 ...         return SimpleNamespace(key=private_key.public_key())
->>> verifier = DevelopmentSupabaseEs256JwtVerifier(TestOnlyJwks())
+>>> verifier = DevelopmentSupabaseEs256JwtVerifier(TestOnlyJwks(), audience="authenticated")
 >>> checkpoint = DevelopmentOwnerAuthenticationCheckpoint(verifier)
 >>> now = int(time.time())
 >>> claims = dict(iss=DEVELOPMENT_AUTH_ISSUER, aud="authenticated",
@@ -112,8 +112,11 @@ class DevelopmentOwnerAuthenticationCheckpoint:
     def __init__(self, jwt_verifier: DevelopmentSupabaseEs256JwtVerifier):
         # Prevent accidental substitution with a caller-supplied verifier
         # that trusts decoded-but-unsigned or other-project JWT claims.
-        if type(jwt_verifier) is not DevelopmentSupabaseEs256JwtVerifier:
-            raise ValueError("approved DEVELOPMENT AUTH JWT verifier required")
+        if (
+            type(jwt_verifier) is not DevelopmentSupabaseEs256JwtVerifier
+            or jwt_verifier.audience != _PRE_TENANT_AUTH_AUDIENCE
+        ):
+            raise ValueError("approved pre-tenant DEVELOPMENT AUTH JWT verifier required")
         self._verifier = jwt_verifier
 
     def inspect(self, untrusted_bearer: object) -> ProvisionalOwnerAuthentication:

@@ -33,7 +33,7 @@ src/avuhz_service/development_owner_authentication.py
 >>> verifier = DevelopmentSupabaseEs256JwtVerifier(TestOnlyJwks())
 >>> checkpoint = DevelopmentOwnerAuthenticationCheckpoint(verifier)
 >>> now = int(time.time())
->>> claims = dict(iss=DEVELOPMENT_AUTH_ISSUER, aud=DEVELOPMENT_SERVICE_AUDIENCE,
+>>> claims = dict(iss=DEVELOPMENT_AUTH_ISSUER, aud="authenticated",
 ...     sub="11111111-1111-4111-8111-111111111111", role="authenticated",
 ...     is_anonymous=False, aal="aal2", iat=now-5, exp=now+300)
 >>> signed = jwt.encode(claims, private_key, algorithm="ES256")
@@ -71,7 +71,6 @@ from typing import Mapping
 
 from .development import (
     DEVELOPMENT_AUTH_ISSUER,
-    DEVELOPMENT_SERVICE_AUDIENCE,
 )
 from .development_supabase_identity import DEVELOPMENT_IDENTITY_ALLOWLIST
 from .development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
@@ -85,6 +84,11 @@ _KNOWN_TEST_SUBJECT_DIGESTS = frozenset(
 )
 _MAX_TOKEN_AGE_SECONDS = 900
 _MAX_TOKEN_LIFETIME_SECONDS = 3600
+# The installed AUTH hook rewrites aud to the command-service value only
+# AFTER provider-owned app_metadata contains a tenant binding. A first owner
+# cannot have that binding yet, so require the standard pre-tenant audience.
+# No command capability or tenant RLS authority is ever granted here.
+_PRE_TENANT_AUTH_AUDIENCE = "authenticated"
 _DENIED = "development owner authentication checkpoint denied"
 
 
@@ -122,7 +126,7 @@ class DevelopmentOwnerAuthenticationCheckpoint:
                 raise PermissionError
 
             if (claims.get("iss") != DEVELOPMENT_AUTH_ISSUER
-                    or claims.get("aud") != DEVELOPMENT_SERVICE_AUDIENCE
+                    or claims.get("aud") != _PRE_TENANT_AUTH_AUDIENCE
                     or claims.get("role") != "authenticated"
                     or claims.get("aal") != "aal2"
                     or claims.get("is_anonymous") is not False):
@@ -131,6 +135,9 @@ class DevelopmentOwnerAuthenticationCheckpoint:
             # Never permit the existing tenant-bound synthetic/provider JWT to
             # bootstrap an independent, real-business organization.
             if "avuhz_tenant_id" in claims:
+                raise PermissionError
+            app_metadata = claims.get("app_metadata")
+            if isinstance(app_metadata, Mapping) and "avuhz_tenant_id" in app_metadata:
                 raise PermissionError
             subject = claims.get("sub")
             if not isinstance(subject, str) or not _CANONICAL_SUBJECT.fullmatch(subject):

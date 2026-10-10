@@ -237,7 +237,18 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         statement, parameters = connection.executions[0]
         self.assertIn("rolbypassrls", statement)
         self.assertIn("relrowsecurity", statement)
-        self.assertEqual(parameters, (CANONICAL_APPLICATION_DATABASE_ROLE,))
+        self.assertEqual(
+            parameters,
+            (
+                CANONICAL_APPLICATION_DATABASE_ROLE,
+                "avuhz_tenant_organizations",
+                "avuhz_tenant_owner_memberships",
+                "avuhz_acquisition_intake_requests",
+                "avuhz_tenant_organizations",
+                "avuhz_tenant_owner_memberships",
+                "avuhz_acquisition_intake_requests",
+            ),
+        )
         self.assertNotIn("gnuqaefotwgkwurjpyik", statement)
         self.assertEqual((connection.rollbacks, connection.closed), (1, True))
         self.assertFalse(create_local_development_data_composition(
@@ -290,10 +301,29 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertIn("format('%%I.%%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertNotIn("format('%I.%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertEqual(readiness_sql.count("like 'avuhz_%%'"), 5)
+        # 19 canonical DEVELOPMENT tables; the original 16 alone retain
+        # command-role SELECT. The three new registries must be FORCE RLS
+        # and unavailable for any command-role SELECT/INSERT/UPDATE/DELETE.
+        self.assertIn("where schemaname='public' and tablename like 'avuhz_%%') = 19", readiness_sql)
+        self.assertIn("and relation.relkind in ('r','p') and relation.relrowsecurity) = 19", readiness_sql)
+        self.assertIn("and policy.polname='avuhz_command_service_tenant_isolation') = 19", readiness_sql)
+        self.assertIn("relation.relforcerowsecurity) = 3", readiness_sql)
+        self.assertIn("'SELECT,INSERT,UPDATE,DELETE')) = 0", readiness_sql)
+        self.assertIn("'SELECT')) = 16", readiness_sql)
+        self.assertEqual(readiness_sql.count("and relation.relname in (%s,%s,%s)"), 1)
+        self.assertEqual(readiness_sql.count("and table_info.tablename in (%s,%s,%s)"), 1)
         self.assertNotIn("like 'avuhz_%'", readiness_sql.replace("like 'avuhz_%%'", ""))
         self.assertEqual(
             readiness_parameters,
-            (CANONICAL_APPLICATION_DATABASE_ROLE,),
+            (
+                CANONICAL_APPLICATION_DATABASE_ROLE,
+                "avuhz_tenant_organizations",
+                "avuhz_tenant_owner_memberships",
+                "avuhz_acquisition_intake_requests",
+                "avuhz_tenant_organizations",
+                "avuhz_tenant_owner_memberships",
+                "avuhz_acquisition_intake_requests",
+            ),
         )
         self.assertEqual((connection.rollbacks, connection.closed), (1, True))
 

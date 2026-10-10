@@ -118,7 +118,7 @@ class ReceiveAcquisitionIntakeCandidate:
     def __init__(
         self,
         store,
-        rate_limit_admit: Callable[[str, str, str], bool],
+        rate_limit_admit: Callable[[str, str], bool],
     ):
         if store is None or not callable(rate_limit_admit):
             raise ValueError("trusted writer dependencies required")
@@ -135,10 +135,12 @@ class ReceiveAcquisitionIntakeCandidate:
         authority = _require_service_context(context, evaluated_at)
         request = validate_acquisition_intake(payload)
 
-        # Only opaque references leave this module to the limiter, not PII.
+        # The caller-supplied request UUID must NEVER be a rate-limit key:
+        # rotating it would bypass admission limits. Only server-bound,
+        # stable opaque tenant/service identity is provided here.
         try:
             admitted = self._rate_limit_admit(
-                authority.tenant_id, authority.principal_id, request.external_request_id
+                authority.tenant_id, authority.principal_id
             )
         except Exception:
             raise PermissionError(_DENIED) from None
@@ -154,14 +156,15 @@ class ReceiveAcquisitionIntakeCandidate:
             connection = uow.connection
             bound = connection.execute(
                 "select 1 as authorized from public.avuhz_tenant_organizations as org "
+                "join public.avuhz_tenant_owner_memberships as member "
+                "on member.tenant_id=org.tenant_id "
+                "and member.organization_id=org.organization_id "
                 "where org.tenant_id=%s and org.organization_id=%s "
-                "and org.lifecycle_state='ACTIVE' and exists ("
-                "select 1 from public.avuhz_tenant_owner_memberships as owner "
-                "where owner.tenant_id=org.tenant_id "
-                "and owner.organization_id=org.organization_id "
-                "and owner.member_role='OWNER' "
-                "and owner.membership_state='ACTIVE' "
-                "and owner.verified_at is not null)",
+                "and org.lifecycle_state='ACTIVE' "
+                "and member.member_role='OWNER' "
+                "and member.membership_state='ACTIVE' "
+                "and member.verified_at is not null "
+                "limit 1 for share of org, member",
                 (authority.tenant_id, authority.organization_id),
             ).fetchone()
             if not bound:

@@ -100,7 +100,7 @@ class RegistrationCandidateTests(unittest.TestCase):
         now = int(time.time())
         self.claims = {
             "iss": DEVELOPMENT_AUTH_ISSUER,
-            "aud": DEVELOPMENT_SERVICE_AUDIENCE,
+            "aud": "authenticated",
             "sub": "33333333-3333-4333-8333-333333333333",
             "role": "authenticated", "is_anonymous": False,
             "aal": "aal2", "iat": now - 5, "exp": now + 300,
@@ -184,6 +184,26 @@ class RegistrationCandidateTests(unittest.TestCase):
                 untrusted_bearer=forged, business_reference="business.fictional",
             )
         self.assertEqual(c.calls, [])
+
+    def test_pretenant_owner_rejects_command_audience_and_metadata_tenant(self):
+        for overrides in (
+            {"aud": DEVELOPMENT_SERVICE_AUDIENCE},
+            {"app_metadata": {"avuhz_tenant_id": "55555555-5555-4555-8555-555555555555"}},
+        ):
+            with self.subTest(overrides=overrides):
+                candidate = jwt.encode(
+                    {**self.claims, **overrides},
+                    self.private, algorithm="ES256",
+                )
+                connection = Connection()
+                with self.assertRaisesRegex(
+                    PermissionError, "^tenant_registration_not_authorized$"
+                ):
+                    self.candidate(connection=connection).propose(
+                        untrusted_bearer=candidate,
+                        business_reference="business.fictional",
+                    )
+                self.assertEqual(connection.calls, [])
 
     def test_org_collision_never_creates_owner_or_commits(self):
         c = Connection(org_conflict=True)

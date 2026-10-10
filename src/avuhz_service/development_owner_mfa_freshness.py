@@ -27,7 +27,7 @@ import uuid
 from typing import Callable, Mapping
 from urllib import request as url_request
 
-from .development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
+from .development_pretenant_supabase_jwt import DevelopmentPreTenantEs256JwtVerifier
 from .development import DEVELOPMENT_AUTH_ISSUER
 
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$", re.ASCII)
@@ -58,12 +58,12 @@ class DevelopmentOwnerMfaFreshnessCheck:
 
     def __init__(
         self,
-        verifier: DevelopmentSupabaseEs256JwtVerifier,
+        verifier: DevelopmentPreTenantEs256JwtVerifier,
         *,
         confirm_live_session: Callable[[str, str, str], bool],
     ):
         if (
-            type(verifier) is not DevelopmentSupabaseEs256JwtVerifier
+            type(verifier) is not DevelopmentPreTenantEs256JwtVerifier
             or verifier.audience != _PRE_TENANT_AUTH_AUDIENCE
         ):
             raise ValueError("approved pre-tenant DEVELOPMENT AUTH JWT verifier required")

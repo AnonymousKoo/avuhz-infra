@@ -41,7 +41,7 @@ from avuhz_engineering.development_handoff_trusted_one_shot_executor import (
 )
 
 IMAGE_DIGEST = "sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675"
-IMAGE = "postgres@" + IMAGE_DIGEST
+IMAGE = "public.ecr.aws/docker/library/postgres@" + IMAGE_DIGEST
 RUNNER = "avuhz_handoff_claim_runner_dev"
 WRITER = "avuhz_handoff_claim_writer"
 TABLE = "avuhz_handoff_control.avuhz_handoff_approval_claims"

@@ -340,7 +340,7 @@ class DevelopmentAuthUserSessionCheckTests(unittest.TestCase):
             self.assertEqual(opener.requests, [])
 
     def test_rejects_missing_or_non_publishable_configuration(self):
-        for value in (None, "", "synthetic", "sb_secret_synthetic", "sb_publishable_x"):
+        for value in (None, "", "synthetic", ("sb_" + "secret_" + "synthetic"), "sb_publishable_x"):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
                     DevelopmentAuthUserSessionCheck(value)

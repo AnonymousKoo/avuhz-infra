@@ -62,8 +62,11 @@ class DevelopmentOwnerMfaFreshnessCheck:
         *,
         confirm_live_session: Callable[[str, str, str], bool],
     ):
-        if type(verifier) is not DevelopmentSupabaseEs256JwtVerifier:
-            raise ValueError("approved DEVELOPMENT AUTH JWT verifier required")
+        if (
+            type(verifier) is not DevelopmentSupabaseEs256JwtVerifier
+            or verifier.audience != _PRE_TENANT_AUTH_AUDIENCE
+        ):
+            raise ValueError("approved pre-tenant DEVELOPMENT AUTH JWT verifier required")
         if not callable(confirm_live_session):
             raise ValueError("independent AUTH session verifier required")
         self._verifier = verifier

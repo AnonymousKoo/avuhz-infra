@@ -80,21 +80,21 @@ class DevelopmentOneShotCommandHttps:
             # Any exception or 5xx after this point is ambiguous. No retry.
             self._attempted = True
 
-        req = urllib.request.Request(
-            COMMAND_URL, method="POST", data=body,
-            headers={
-                "Authorization": "Bearer " + access_token,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "Cache-Control": "no-store",
-            },
-        )
-        # Only a fixed HTTPS origin; no environment proxies or redirects.
-        # Uses Python's standard system-CA TLS verification.
-        opener = urllib.request.build_opener(
-            urllib.request.ProxyHandler({}), _NeverRedirectBearer(),
-        )
         try:
+            req = urllib.request.Request(
+                COMMAND_URL, method="POST", data=body,
+                headers={
+                    "Authorization": "Bearer " + access_token,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Cache-Control": "no-store",
+                },
+            )
+            # Only a fixed HTTPS origin; no environment proxies or redirects.
+            # Uses Python's standard system-CA TLS verification.
+            opener = urllib.request.build_opener(
+                urllib.request.ProxyHandler({}), _NeverRedirectBearer(),
+            )
             with opener.open(req, timeout=_TIMEOUT_SECONDS) as response:
                 status = response.status
                 if type(status) is not int or not 100 <= status <= 599:

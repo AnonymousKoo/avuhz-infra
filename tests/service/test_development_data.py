@@ -237,7 +237,18 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         statement, parameters = connection.executions[0]
         self.assertIn("rolbypassrls", statement)
         self.assertIn("relrowsecurity", statement)
-        self.assertEqual(parameters, (CANONICAL_APPLICATION_DATABASE_ROLE,))
+        self.assertEqual(
+            parameters,
+            (
+                CANONICAL_APPLICATION_DATABASE_ROLE,
+                "avuhz_tenant_organizations",
+                "avuhz_tenant_owner_memberships",
+                "avuhz_acquisition_intake_requests",
+                "avuhz_tenant_organizations",
+                "avuhz_tenant_owner_memberships",
+                "avuhz_acquisition_intake_requests",
+            ),
+        )
         self.assertNotIn("gnuqaefotwgkwurjpyik", statement)
         self.assertEqual((connection.rollbacks, connection.closed), (1, True))
         self.assertFalse(create_local_development_data_composition(

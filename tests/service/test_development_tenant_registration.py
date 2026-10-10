@@ -25,6 +25,7 @@ from avuhz_service.development_owner_authentication import (
     DevelopmentOwnerAuthenticationCheckpoint,
 )
 from avuhz_service.development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
+from avuhz_service.development_pretenant_supabase_jwt import DevelopmentPreTenantEs256JwtVerifier
 from avuhz_service.development_tenant_registration import (
     DevelopmentTenantRegistrationCandidate,
     TenantRegistrationConflict,
@@ -93,14 +94,14 @@ class Store:
 class RegistrationCandidateTests(unittest.TestCase):
     def setUp(self):
         self.private = ec.generate_private_key(ec.SECP256R1())
-        verifier = DevelopmentSupabaseEs256JwtVerifier(
+        verifier = DevelopmentPreTenantEs256JwtVerifier(
             KeySet(self.private.public_key())
         )
         self.checkpoint = DevelopmentOwnerAuthenticationCheckpoint(verifier)
         now = int(time.time())
         self.claims = {
             "iss": DEVELOPMENT_AUTH_ISSUER,
-            "aud": DEVELOPMENT_SERVICE_AUDIENCE,
+            "aud": "authenticated",
             "sub": "33333333-3333-4333-8333-333333333333",
             "role": "authenticated", "is_anonymous": False,
             "aal": "aal2", "iat": now - 5, "exp": now + 300,
@@ -151,6 +152,13 @@ class RegistrationCandidateTests(unittest.TestCase):
             for statement, _ in self.db.calls
         ))
 
+    def test_first_owner_checkpoint_rejects_command_service_jwt_verifier(self):
+        command_verifier = DevelopmentSupabaseEs256JwtVerifier(
+            KeySet(self.private.public_key())
+        )
+        with self.assertRaises(ValueError):
+            DevelopmentOwnerAuthenticationCheckpoint(command_verifier)
+
     def test_aal2_jwt_alone_never_proves_recent_mfa_or_business_ownership(self):
         for mfa, owner in ((False, True), (True, False), (False, False)):
             with self.subTest(mfa=mfa, owner=owner):
@@ -184,6 +192,26 @@ class RegistrationCandidateTests(unittest.TestCase):
                 untrusted_bearer=forged, business_reference="business.fictional",
             )
         self.assertEqual(c.calls, [])
+
+    def test_pretenant_owner_rejects_command_audience_and_metadata_tenant(self):
+        for overrides in (
+            {"aud": DEVELOPMENT_SERVICE_AUDIENCE},
+            {"app_metadata": {"avuhz_tenant_id": "55555555-5555-4555-8555-555555555555"}},
+        ):
+            with self.subTest(overrides=overrides):
+                candidate = jwt.encode(
+                    {**self.claims, **overrides},
+                    self.private, algorithm="ES256",
+                )
+                connection = Connection()
+                with self.assertRaisesRegex(
+                    PermissionError, "^tenant_registration_not_authorized$"
+                ):
+                    self.candidate(connection=connection).propose(
+                        untrusted_bearer=candidate,
+                        business_reference="business.fictional",
+                    )
+                self.assertEqual(connection.calls, [])
 
     def test_org_collision_never_creates_owner_or_commits(self):
         c = Connection(org_conflict=True)

@@ -65,7 +65,9 @@ class DevelopmentSupabaseEs256JwtVerifier:
                 token,
                 key=key,
                 algorithms=list(_ALLOWED_ALGORITHMS),
-                audience=self._audience,
+                audience=DEVELOPMENT_SERVICE_AUDIENCE
+                if self._audience == DEVELOPMENT_SERVICE_AUDIENCE
+                else _PRE_TENANT_AUTH_AUDIENCE,
                 issuer=DEVELOPMENT_AUTH_ISSUER,
                 options={
                     "require": list(_REQUIRED_CLAIMS),

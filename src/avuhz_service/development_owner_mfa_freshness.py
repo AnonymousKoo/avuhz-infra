@@ -182,7 +182,7 @@ class DevelopmentAuthUserSessionCheck:
                 or not _canonical_uuid(session_id)
                 or not isinstance(bearer, str)
                 or not 32 <= len(bearer) <= 16384
-                or any(c in bearer for c in (" ", "\\r", "\\n", "\\t"))
+                or any(ord(c) < 33 or ord(c) > 126 for c in bearer)
             ):
                 return False
             req = url_request.Request(

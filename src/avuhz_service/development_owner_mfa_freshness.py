@@ -28,11 +28,13 @@ from typing import Callable, Mapping
 from urllib import request as url_request
 
 from .development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
-from .development import DEVELOPMENT_AUTH_ISSUER, DEVELOPMENT_SERVICE_AUDIENCE
+from .development import DEVELOPMENT_AUTH_ISSUER
 
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$", re.ASCII)
 _MAX_MFA_AGE = 300
 _MAX_TOKEN_AGE = 900
+# The AUTH hook preserves this audience until a tenant is registered.
+_PRE_TENANT_AUTH_AUDIENCE = "authenticated"
 
 
 def _canonical_uuid(value: object) -> bool:
@@ -81,12 +83,15 @@ class DevelopmentOwnerMfaFreshnessCheck:
                 return False
             if (
                 claims.get("iss") != DEVELOPMENT_AUTH_ISSUER
-                or claims.get("aud") != DEVELOPMENT_SERVICE_AUDIENCE
+                or claims.get("aud") != _PRE_TENANT_AUTH_AUDIENCE
                 or claims.get("role") != "authenticated"
                 or claims.get("is_anonymous") is not False
                 or claims.get("aal") != "aal2"
                 or "avuhz_tenant_id" in claims
             ):
+                return False
+            app_metadata = claims.get("app_metadata")
+            if isinstance(app_metadata, Mapping) and "avuhz_tenant_id" in app_metadata:
                 return False
 
             subject = claims.get("sub")

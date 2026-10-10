@@ -99,7 +99,7 @@ class OwnerMfaFreshnessTests(unittest.TestCase):
     def setUp(self):
         self.private = ec.generate_private_key(ec.SECP256R1())
         self.verifier = DevelopmentSupabaseEs256JwtVerifier(
-            TestJwks(self.private.public_key())
+            TestJwks(self.private.public_key()), audience="authenticated"
         )
         self.now = int(time.time())
         self.claims = {
@@ -138,6 +138,23 @@ class OwnerMfaFreshnessTests(unittest.TestCase):
         self.assertTrue(self.gate()(bearer, self.digest))
         self.assertEqual(self.checked, [(_SUBJECT, _SESSION)])
         self.assertEqual(self.seen_bearers, [bearer])
+
+    def test_existing_command_service_verifier_default_remains_strict(self):
+        # Runtime commands still reject tokens issued for pre-tenant Auth.
+        runtime = DevelopmentSupabaseEs256JwtVerifier(
+            TestJwks(self.private.public_key())
+        )
+        self.assertEqual(runtime.audience, DEVELOPMENT_SERVICE_AUDIENCE)
+        with self.assertRaises(PermissionError):
+            runtime.verify(self.token())
+        with self.assertRaises(ValueError):
+            DevelopmentOwnerMfaFreshnessCheck(
+                runtime, confirm_live_session=lambda *_: True
+            )
+        with self.assertRaises(ValueError):
+            DevelopmentSupabaseEs256JwtVerifier(
+                TestJwks(self.private.public_key()), audience="unsafe-audience"
+            )
 
     def test_aal2_and_recent_iat_do_not_substitute_for_mfa(self):
         variations = [

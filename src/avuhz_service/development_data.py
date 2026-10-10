@@ -32,6 +32,13 @@ DEVELOPMENT_DATA_ALLOWED_ENDPOINT_HOSTS = frozenset({
     DEVELOPMENT_DATA_SESSION_POOLER_HOST,
 })
 DEVELOPMENT_POSTGRES_DSN_ENV = "AVUHZ_POSTGRES_DSN"
+# Installed DEVELOPMENT DATA registries are separately permissioned.
+# Being present and protected does NOT authorize this read-only runtime to use them.
+_CURRENT_NO_RUNTIME_ACCESS_REGISTRIES = (
+    "avuhz_tenant_organizations",
+    "avuhz_tenant_owner_memberships",
+    "avuhz_acquisition_intake_requests",
+)
 _INTERNAL_RUNTIME_AUDIENCE = "avuhz-command-api"
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 _DATABASE_NAME = re.compile(r"^avuhz_development_disposable_[a-z0-9_]{1,48}$")
@@ -183,16 +190,29 @@ class DevelopmentPostgresDataProbe:
                 "and not rol.rolsuper and not rol.rolbypassrls and not rol.rolcreatedb "
                 "and not rol.rolcreaterole and not rol.rolreplication) "
                 "and (select count(*) from pg_catalog.pg_tables "
-                "where schemaname='public' and tablename like 'avuhz_%%') = 16 "
+                "where schemaname='public' and tablename like 'avuhz_%%') = 19 "
                 "and (select count(*) from pg_catalog.pg_class relation "
                 "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
                 "where namespace.nspname='public' and relation.relname like 'avuhz_%%' "
-                "and relation.relkind in ('r','p') and relation.relrowsecurity) = 16 "
+                "and relation.relkind in ('r','p') and relation.relrowsecurity) = 19 "
                 "and (select count(*) from pg_catalog.pg_policy policy "
                 "join pg_catalog.pg_class relation on relation.oid=policy.polrelid "
                 "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
                 "where namespace.nspname='public' and relation.relname like 'avuhz_%%' "
-                "and policy.polname='avuhz_command_service_tenant_isolation') = 16 "
+                "and policy.polname='avuhz_command_service_tenant_isolation') = 19 "
+                # All three new registries must retain FORCE RLS and zero
+                # effective CRUD privileges for the bounded command role.
+                "and (select count(*) from pg_catalog.pg_class relation "
+                "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
+                "where namespace.nspname='public' "
+                "and relation.relname in (%s,%s,%s) "
+                "and relation.relrowsecurity and relation.relforcerowsecurity) = 3 "
+                "and (select count(*) from pg_catalog.pg_tables table_info "
+                "where table_info.schemaname='public' "
+                "and table_info.tablename in (%s,%s,%s) "
+                "and has_table_privilege(current_user,"
+                "format('%%I.%%I',table_info.schemaname,table_info.tablename),"
+                "'SELECT,INSERT,UPDATE,DELETE')) = 0 "
                 "and (select count(*) from pg_catalog.pg_tables table_info "
                 "where table_info.schemaname='public' and table_info.tablename like 'avuhz_%%' "
                 "and has_table_privilege(current_user,"
@@ -203,7 +223,11 @@ class DevelopmentPostgresDataProbe:
                 "format('%%I.%%I',table_info.schemaname,table_info.tablename),'DELETE')) = 0 "
                 "and has_schema_privilege(current_user,'public','USAGE') "
                 "and not has_schema_privilege(current_user,'public','CREATE') as ready",
-                (CANONICAL_APPLICATION_DATABASE_ROLE,),
+                (
+                    CANONICAL_APPLICATION_DATABASE_ROLE,
+                    *_CURRENT_NO_RUNTIME_ACCESS_REGISTRIES,
+                    *_CURRENT_NO_RUNTIME_ACCESS_REGISTRIES,
+                ),
             ).fetchone()
             return bool(row and row.get("ready") is True)
         except Exception:

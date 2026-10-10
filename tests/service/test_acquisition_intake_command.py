@@ -114,8 +114,8 @@ def existing_row():
 class IntakeWriterCandidateTests(unittest.TestCase):
     def service(self, connection, limiter=None):
         self.limiter_calls = []
-        def admit(tenant, principal, request):
-            self.limiter_calls.append((tenant, principal, request))
+        def admit(tenant, principal):
+            self.limiter_calls.append((tenant, principal))
             return True
         return ReceiveAcquisitionIntakeCandidate(
             Store(connection), limiter if limiter is not None else admit
@@ -131,19 +131,39 @@ class IntakeWriterCandidateTests(unittest.TestCase):
         self.assertEqual(connection.commits, 1)
         self.assertEqual(connection.rollbacks, 0)
         self.assertEqual(connection.closes, 1)
-        self.assertEqual(self.limiter_calls, [(TENANT, "service.website-test", REQUEST)])
+        self.assertEqual(self.limiter_calls, [(TENANT, "service.website-test")])
         self.assertEqual(len(connection.calls), 3)
         self.assertIn("set_config('avuhz.tenant_id'", connection.calls[0][0])
         self.assertEqual(connection.calls[0][1], (TENANT,))
         self.assertIn("lifecycle_state='ACTIVE'", connection.calls[1][0])
         self.assertIn("membership_state='ACTIVE'", connection.calls[1][0])
         self.assertIn("verified_at is not null", connection.calls[1][0])
+        self.assertIn("join public.avuhz_tenant_owner_memberships", connection.calls[1][0])
+        self.assertIn("limit 1 for share of org, member", connection.calls[1][0])
         self.assertEqual(connection.calls[1][1], (TENANT, ORG))
         self.assertIn("on conflict (tenant_id,external_request_id) do nothing",
                       connection.calls[2][0])
         self.assertEqual(connection.calls[2][1][1:4], (TENANT, ORG, REQUEST))
         self.assertNotIn("tenant_id", payload())
         self.assertNotIn("organization_id", payload())
+
+    def test_rate_limit_identity_does_not_depend_on_client_request_uuid(self):
+        connection = Connection()
+        seen = []
+        service = self.service(
+            connection, limiter=lambda tenant, principal: seen.append(
+                (tenant, principal)
+            ) or True
+        )
+        first = payload()
+        second = payload()
+        second["external_request_id"] = "a4730000-0000-4000-8000-000000000099"
+        service.receive(first, service_context(), evaluated_at=NOW)
+        service.receive(second, service_context(), evaluated_at=NOW)
+        self.assertEqual(
+            seen,
+            [(TENANT, "service.website-test"), (TENANT, "service.website-test")],
+        )
 
     def test_exact_replay_returns_same_receipt_without_duplicate_insert(self):
         connection = Connection(existing=existing_row())

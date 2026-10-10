@@ -94,7 +94,7 @@ class RegistrationCandidateTests(unittest.TestCase):
     def setUp(self):
         self.private = ec.generate_private_key(ec.SECP256R1())
         verifier = DevelopmentSupabaseEs256JwtVerifier(
-            KeySet(self.private.public_key())
+            KeySet(self.private.public_key()), audience="authenticated"
         )
         self.checkpoint = DevelopmentOwnerAuthenticationCheckpoint(verifier)
         now = int(time.time())
@@ -150,6 +150,14 @@ class RegistrationCandidateTests(unittest.TestCase):
             "ACTIVE" in statement or "GRANT " in statement
             for statement, _ in self.db.calls
         ))
+
+    def test_first_owner_checkpoint_rejects_command_service_jwt_verifier(self):
+        command_verifier = DevelopmentSupabaseEs256JwtVerifier(
+            KeySet(self.private.public_key())
+        )
+        self.assertEqual(command_verifier.audience, DEVELOPMENT_SERVICE_AUDIENCE)
+        with self.assertRaises(ValueError):
+            DevelopmentOwnerAuthenticationCheckpoint(command_verifier)
 
     def test_aal2_jwt_alone_never_proves_recent_mfa_or_business_ownership(self):
         for mfa, owner in ((False, True), (True, False), (False, False)):

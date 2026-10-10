@@ -190,7 +190,14 @@ class DevelopmentAuthUserSessionCheck:
                 or not _canonical_uuid(session_id)
                 or not isinstance(bearer, str)
                 or not 32 <= len(bearer) <= 16384
-                or any(ord(c) < 33 or ord(c) > 126 for c in bearer)
+                # Compact Supabase JWTs contain three base64url segments.
+                # Backslashes, whitespace, quoting and control characters
+                # must be rejected locally before any provider contact.
+                or re.fullmatch(
+                    r"[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+",
+                    bearer,
+                    flags=re.ASCII,
+                ) is None
             ):
                 return False
             req = url_request.Request(

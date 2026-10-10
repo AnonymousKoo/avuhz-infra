@@ -104,7 +104,7 @@ class OwnerMfaFreshnessTests(unittest.TestCase):
         self.now = int(time.time())
         self.claims = {
             "iss": DEVELOPMENT_AUTH_ISSUER,
-            "aud": DEVELOPMENT_SERVICE_AUDIENCE,
+            "aud": "authenticated",
             "sub": _SUBJECT,
             "session_id": _SESSION,
             "role": "authenticated",
@@ -167,6 +167,8 @@ class OwnerMfaFreshnessTests(unittest.TestCase):
             {"is_anonymous": True},
             {"iss": "https://different-project.example/auth/v1"},
             {"aud": "browser"},
+            {"aud": DEVELOPMENT_SERVICE_AUDIENCE},
+            {"app_metadata": {"avuhz_tenant_id": "55555555-5555-4555-8555-555555555555"}},
             {"sub": "not-a-uuid"},
             {"avuhz_tenant_id": "55555555-5555-4555-8555-555555555555"},
         ]

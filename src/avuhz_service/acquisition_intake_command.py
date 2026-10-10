@@ -33,6 +33,14 @@ class AcquisitionIntakeUnavailable(RuntimeError):
     """Sanitized failure; never propagate PostgreSQL exceptions or input PII."""
 
 
+class AcquisitionIntakeConflict(ValueError):
+    """Conflicting replay without disclosure of previously submitted PII."""
+
+
+class _AcquisitionIntakeDenied(PermissionError):
+    """Internal denial from the independently stored active-tenant check."""
+
+
 @dataclass(frozen=True, slots=True)
 class AcquisitionIntakeReceipt:
     intake_id: str
@@ -157,7 +165,7 @@ class ReceiveAcquisitionIntakeCandidate:
                 (authority.tenant_id, authority.organization_id),
             ).fetchone()
             if not bound:
-                raise PermissionError(_DENIED)
+                raise _AcquisitionIntakeDenied(_DENIED)
 
             intake_id = str(uuid.uuid4())
             inserted = connection.execute(
@@ -194,20 +202,24 @@ class ReceiveAcquisitionIntakeCandidate:
                     ),
                 ).fetchone()
                 if original is None or not _content_matches(original, request):
-                    raise ValueError(_CONFLICT)
+                    raise AcquisitionIntakeConflict(_CONFLICT)
                 receipt = AcquisitionIntakeReceipt(str(original["intake_id"]), True)
 
             uow.commit()
             committed = True
             return receipt
-        except (PermissionError, ValueError):
+        except (_AcquisitionIntakeDenied, AcquisitionIntakeConflict):
             raise
         except Exception:
             raise AcquisitionIntakeUnavailable(_UNAVAILABLE) from None
         finally:
             if uow is not None:
-                try:
-                    if not committed:
+                if not committed:
+                    try:
                         uow.rollback()
-                finally:
+                    except Exception:
+                        pass  # Preserve sanitized denial; never expose SQL/PII.
+                try:
                     uow.close()
+                except Exception:
+                    pass  # Connection cleanup cannot leak provider diagnostics.

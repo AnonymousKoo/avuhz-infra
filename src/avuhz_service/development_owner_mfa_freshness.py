@@ -194,7 +194,7 @@ class DevelopmentAuthUserSessionCheck:
                 # Backslashes, whitespace, quoting and control characters
                 # must be rejected locally before any provider contact.
                 or re.fullmatch(
-                    r"[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+",
+                    r"[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
                     bearer,
                     flags=re.ASCII,
                 ) is None

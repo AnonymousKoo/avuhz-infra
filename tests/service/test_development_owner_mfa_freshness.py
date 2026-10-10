@@ -31,6 +31,7 @@ from avuhz_service.development_owner_mfa_freshness import (
 from avuhz_service.development_supabase_jwt import (
     DevelopmentSupabaseEs256JwtVerifier,
 )
+from avuhz_service.development_pretenant_supabase_jwt import DevelopmentPreTenantEs256JwtVerifier
 from avuhz_service.development_owner_authentication import (
     DevelopmentOwnerAuthenticationCheckpoint,
 )
@@ -98,8 +99,8 @@ class FakeStore:
 class OwnerMfaFreshnessTests(unittest.TestCase):
     def setUp(self):
         self.private = ec.generate_private_key(ec.SECP256R1())
-        self.verifier = DevelopmentSupabaseEs256JwtVerifier(
-            TestJwks(self.private.public_key()), audience="authenticated"
+        self.verifier = DevelopmentPreTenantEs256JwtVerifier(
+            TestJwks(self.private.public_key())
         )
         self.now = int(time.time())
         self.claims = {
@@ -144,15 +145,14 @@ class OwnerMfaFreshnessTests(unittest.TestCase):
         runtime = DevelopmentSupabaseEs256JwtVerifier(
             TestJwks(self.private.public_key())
         )
-        self.assertEqual(runtime.audience, DEVELOPMENT_SERVICE_AUDIENCE)
         with self.assertRaises(PermissionError):
             runtime.verify(self.token())
         with self.assertRaises(ValueError):
             DevelopmentOwnerMfaFreshnessCheck(
                 runtime, confirm_live_session=lambda *_: True
             )
-        with self.assertRaises(ValueError):
-            DevelopmentSupabaseEs256JwtVerifier(
+        with self.assertRaises(TypeError):
+            DevelopmentPreTenantEs256JwtVerifier(
                 TestJwks(self.private.public_key()), audience="unsafe-audience"
             )
 

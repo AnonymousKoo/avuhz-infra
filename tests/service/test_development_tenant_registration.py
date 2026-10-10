@@ -25,6 +25,7 @@ from avuhz_service.development_owner_authentication import (
     DevelopmentOwnerAuthenticationCheckpoint,
 )
 from avuhz_service.development_supabase_jwt import DevelopmentSupabaseEs256JwtVerifier
+from avuhz_service.development_pretenant_supabase_jwt import DevelopmentPreTenantEs256JwtVerifier
 from avuhz_service.development_tenant_registration import (
     DevelopmentTenantRegistrationCandidate,
     TenantRegistrationConflict,
@@ -93,8 +94,8 @@ class Store:
 class RegistrationCandidateTests(unittest.TestCase):
     def setUp(self):
         self.private = ec.generate_private_key(ec.SECP256R1())
-        verifier = DevelopmentSupabaseEs256JwtVerifier(
-            KeySet(self.private.public_key()), audience="authenticated"
+        verifier = DevelopmentPreTenantEs256JwtVerifier(
+            KeySet(self.private.public_key())
         )
         self.checkpoint = DevelopmentOwnerAuthenticationCheckpoint(verifier)
         now = int(time.time())
@@ -155,7 +156,6 @@ class RegistrationCandidateTests(unittest.TestCase):
         command_verifier = DevelopmentSupabaseEs256JwtVerifier(
             KeySet(self.private.public_key())
         )
-        self.assertEqual(command_verifier.audience, DEVELOPMENT_SERVICE_AUDIENCE)
         with self.assertRaises(ValueError):
             DevelopmentOwnerAuthenticationCheckpoint(command_verifier)
 

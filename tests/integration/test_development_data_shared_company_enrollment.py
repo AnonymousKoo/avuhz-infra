@@ -293,10 +293,16 @@ class SharedCompanyEnrollmentPostgresTests(unittest.TestCase):
                         "select has_table_privilege(%s,%s,%s) as permitted",
                         ("avuhz_command_service", "public." + table, privilege),
                     ).fetchone()["permitted"])
-                self.assertFalse(db.execute(
-                    "select has_table_privilege(%s,%s,%s) as permitted",
-                    ("anon", "public." + table, "SELECT"),
-                ).fetchone()["permitted"])
+                # Provider-neutral local PG does not necessarily create
+                # Supabase's anon role; never fabricate an AUTH/API role.
+                anon_exists = db.execute(
+                    "select exists(select 1 from pg_roles where rolname='anon') as present"
+                ).fetchone()["present"]
+                if anon_exists:
+                    self.assertFalse(db.execute(
+                        "select has_table_privilege(%s,%s,%s) as permitted",
+                        ("anon", "public." + table, "SELECT"),
+                    ).fetchone()["permitted"])
 
     def test_wrong_verified_owner_cannot_activate_another_tenant(self):
         pending = self.registration.propose(

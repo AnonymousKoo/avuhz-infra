@@ -28,7 +28,7 @@ from collections.abc import Mapping
 
 _TABLE = "public.avuhz_acquisition_rate_limit_counters"
 _WINDOW_SECONDS = 300
-_MAX_REQUESTS = 30
+_MAX_REQUESTS = 10
 _SERVICE_PRINCIPAL = re.compile(r"[a-z][a-z0-9._:-]{1,127}", re.ASCII)
 
 # The one database statement is atomic under PostgreSQL's unique-key conflict
@@ -56,7 +56,7 @@ do update set
   end
 where public.avuhz_acquisition_rate_limit_counters.window_started_at
       <= excluded.window_started_at - interval '300 seconds'
-   or public.avuhz_acquisition_rate_limit_counters.request_count < 30
+   or public.avuhz_acquisition_rate_limit_counters.request_count < 10
 returning request_count
 """
 

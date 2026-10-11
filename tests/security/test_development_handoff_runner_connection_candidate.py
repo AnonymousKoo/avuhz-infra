@@ -84,7 +84,7 @@ class FakeConnection:
         if normalized == "set role avuhz_handoff_claim_writer":
             self.role_set = True
             return FakeResult()
-        if normalized == "select session_user, current_user":
+        if normalized in {"select session_user, current_user", "select session_user,current_user"}:
             return FakeResult(self.after_role if self.role_set else self.identity[:2])
         if "from pg_roles where rolname=%s" in normalized:
             return FakeResult((True, False, False, False, False, False, False))

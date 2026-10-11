@@ -66,7 +66,9 @@ def _utc_timestamp(value: object) -> datetime | None:
     return timestamp if timestamp.utcoffset() == timedelta(0) else None
 
 
-def _require_service_context(context: object, now: datetime) -> TrustedExecutionContext:
+def _require_service_context(
+    context: object, now: datetime, *, require_organization: bool = True,
+) -> TrustedExecutionContext:
     """Server-only guard. It does not mint identity, grants or owner proof."""
     if (
         type(context) is not TrustedExecutionContext
@@ -78,7 +80,7 @@ def _require_service_context(context: object, now: datetime) -> TrustedExecution
         or not isinstance(context.principal_id, str)
         or not context.principal_id
         or not _canonical_uuid(context.tenant_id)
-        or not _canonical_uuid(context.organization_id)
+        or (require_organization and not _canonical_uuid(context.organization_id))
         or type(context.capabilities) is not frozenset
         or _RECEIVE_CAPABILITY not in context.capabilities
     ):

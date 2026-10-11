@@ -22,7 +22,9 @@ _CALLER_TYPES = frozenset({
     "SCHEDULED_AUTOMATION", "SECURITY_AUTOMATION",
 })
 _AUTHENTICATION_STRENGTHS = frozenset({"STANDARD", "STRONG", "STEP_UP"})
-_COMMAND_QUERY_CAPABILITIES = frozenset({QUERY_READ_CAPABILITY, *COMMAND_CAPABILITIES.values()})
+# The shared intake permission is recognized but not granted to any hosted
+# DEVELOPMENT identity: the current provider allowlist remains unchanged.
+_COMMAND_QUERY_CAPABILITIES = frozenset({QUERY_READ_CAPABILITY, *COMMAND_CAPABILITIES.values(), "acquisition_intake:receive"})
 _OPAQUE_REFERENCE = re.compile(r"^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$")
 _CANONICAL_UUID = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"

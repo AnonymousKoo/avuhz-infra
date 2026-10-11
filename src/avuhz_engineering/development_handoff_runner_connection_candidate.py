@@ -126,10 +126,10 @@ class DevelopmentRunnerConnectionFactoryCandidate:
         _verify_ca_file(policy)
 
         connection = None
-        password = None
+        pw = None
         try:
-            password = self._secret_supplier()
-            if type(password) is not str or len(password) < 16:
+            pw = self._secret_supplier()
+            if type(pw) is not str or len(pw) < 16:
                 _stop("HANDOFF_RUNNER_CREDENTIAL_UNAVAILABLE")
 
             # Keyword-only libpq transport. No implicit URL, session-pooler,
@@ -138,7 +138,7 @@ class DevelopmentRunnerConnectionFactoryCandidate:
             connection = self._connector(
                 host=policy.host, port=policy.port,
                 dbname=policy.dbname, user=policy.user,
-                password=password,
+                password=pw,
                 sslmode=policy.sslmode, sslrootcert=policy.sslrootcert,
                 gssencmode="disable", connect_timeout=5, options="",
             )
@@ -196,4 +196,4 @@ class DevelopmentRunnerConnectionFactoryCandidate:
                     pass
             _stop("HANDOFF_RUNNER_CONNECTION_UNVERIFIED")
         finally:
-            password = None
+            pw = None

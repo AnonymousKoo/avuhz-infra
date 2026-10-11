@@ -126,7 +126,7 @@ class PersistentAcquisitionRateLimiterTests(unittest.TestCase):
         self.assertIn("on conflict (tenant_id, principal_digest)", sql)
         self.assertIn("returning request_count", sql)
         self.assertIn("where public.avuhz_acquisition_rate_limit_counters.window_started_at", sql)
-        self.assertIn("request_count < 30", sql)
+        self.assertIn("request_count < 10", sql)
         self.assertIn("interval '300 seconds'", sql)
         self.assertNotIn("external_request_id", sql)
         self.assertNotIn("request_uuid", sql)
@@ -135,16 +135,16 @@ class PersistentAcquisitionRateLimiterTests(unittest.TestCase):
         self.assertNotIn("grant ", sql)
         self.assertNotIn("create table", sql)
 
-    def test_thirtieth_accepted_thirty_first_denied_and_window_resets(self):
+    def test_tenth_accepted_eleventh_denied_and_window_resets(self):
         db = SharedCounterDatabase()
         first_store = Store(db)
         first = DevelopmentPostgresAcquisitionRateLimiter(first_store)
-        for index in range(30):
+        for index in range(10):
             with self.subTest(index=index):
                 self.assertIs(first(TENANT_A, PRINCIPAL), True)
         self.assertIs(first(TENANT_A, PRINCIPAL), False)
         self.assertEqual(len(db.counters), 1)
-        self.assertEqual(next(iter(db.counters.values()))[1], 30)
+        self.assertEqual(next(iter(db.counters.values()))[1], 10)
         rejected = first_store.connections[-1]
         self.assertEqual(rejected.commits, 0)
         self.assertEqual(rejected.rollbacks, 1)
@@ -248,7 +248,7 @@ class PersistentAcquisitionRateLimiterTests(unittest.TestCase):
                 service_context(),
                 evaluated_at=NOW,
             )
-        self.assertEqual(writer_connection.commits, 30)
+        self.assertEqual(writer_connection.commits, 10)
         self.assertEqual(len(db.counters), 1)
 
     def test_source_remains_unmounted_and_hosted_grants_unavailable(self):

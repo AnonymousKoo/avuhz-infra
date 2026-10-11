@@ -244,6 +244,7 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
                 "avuhz_tenant_organizations",
                 "avuhz_tenant_owner_memberships",
                 "avuhz_acquisition_intake_requests",
+                "avuhz_acquisition_rate_limit_counters",
                 "avuhz_tenant_organizations",
                 "avuhz_tenant_owner_memberships",
                 "avuhz_acquisition_intake_requests",
@@ -301,16 +302,23 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertIn("format('%%I.%%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertNotIn("format('%I.%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertEqual(readiness_sql.count("like 'avuhz_%%'"), 5)
-        # 19 canonical DEVELOPMENT tables; the original 16 alone retain
-        # command-role SELECT. The three new registries must be FORCE RLS
-        # and unavailable for any command-role SELECT/INSERT/UPDATE/DELETE.
-        self.assertIn("where schemaname='public' and tablename like 'avuhz_%%') = 19", readiness_sql)
-        self.assertIn("and relation.relkind in ('r','p') and relation.relrowsecurity) = 19", readiness_sql)
-        self.assertIn("and policy.polname='avuhz_command_service_tenant_isolation') = 19", readiness_sql)
-        self.assertIn("relation.relforcerowsecurity) = 3", readiness_sql)
+        # 20 canonical DEVELOPMENT tables; the original 16 alone retain
+        # table-wide SELECT. All four registries must be FORCE RLS; only
+        # the rate counter has narrowly scoped column-level access.
+        self.assertIn("where schemaname='public' and tablename like 'avuhz_%%') = 20", readiness_sql)
+        self.assertIn("and relation.relkind in ('r','p') and relation.relrowsecurity) = 20", readiness_sql)
+        self.assertIn("and policy.polname='avuhz_command_service_tenant_isolation') = 20", readiness_sql)
+        self.assertIn("relation.relforcerowsecurity) = 4", readiness_sql)
         self.assertIn("'SELECT,INSERT,UPDATE,DELETE')) = 0", readiness_sql)
+        self.assertIn("'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')", readiness_sql)
+        self.assertIn("column_info.attname,'SELECT')", readiness_sql)
+        self.assertIn("column_info.attname,'INSERT')) = 4", readiness_sql)
+        self.assertIn("'window_started_at','UPDATE')", readiness_sql)
+        self.assertIn("'request_count','UPDATE')", readiness_sql)
+        self.assertIn("'tenant_id','UPDATE')", readiness_sql)
+        self.assertIn("'principal_digest','UPDATE')", readiness_sql)
         self.assertIn("'SELECT')) = 16", readiness_sql)
-        self.assertEqual(readiness_sql.count("and relation.relname in (%s,%s,%s)"), 1)
+        self.assertEqual(readiness_sql.count("and relation.relname in (%s,%s,%s,%s)"), 1)
         self.assertEqual(readiness_sql.count("and table_info.tablename in (%s,%s,%s)"), 1)
         self.assertNotIn("like 'avuhz_%'", readiness_sql.replace("like 'avuhz_%%'", ""))
         self.assertEqual(
@@ -320,6 +328,7 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
                 "avuhz_tenant_organizations",
                 "avuhz_tenant_owner_memberships",
                 "avuhz_acquisition_intake_requests",
+                "avuhz_acquisition_rate_limit_counters",
                 "avuhz_tenant_organizations",
                 "avuhz_tenant_owner_memberships",
                 "avuhz_acquisition_intake_requests",

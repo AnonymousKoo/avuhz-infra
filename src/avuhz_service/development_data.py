@@ -39,6 +39,10 @@ _CURRENT_NO_RUNTIME_ACCESS_REGISTRIES = (
     "avuhz_tenant_owner_memberships",
     "avuhz_acquisition_intake_requests",
 )
+_CURRENT_FORCED_RLS_REGISTRIES = (
+    *_CURRENT_NO_RUNTIME_ACCESS_REGISTRIES,
+    "avuhz_acquisition_rate_limit_counters",
+)
 _INTERNAL_RUNTIME_AUDIENCE = "avuhz-command-api"
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 _DATABASE_NAME = re.compile(r"^avuhz_development_disposable_[a-z0-9_]{1,48}$")
@@ -190,29 +194,58 @@ class DevelopmentPostgresDataProbe:
                 "and not rol.rolsuper and not rol.rolbypassrls and not rol.rolcreatedb "
                 "and not rol.rolcreaterole and not rol.rolreplication) "
                 "and (select count(*) from pg_catalog.pg_tables "
-                "where schemaname='public' and tablename like 'avuhz_%%') = 19 "
+                "where schemaname='public' and tablename like 'avuhz_%%') = 20 "
                 "and (select count(*) from pg_catalog.pg_class relation "
                 "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
                 "where namespace.nspname='public' and relation.relname like 'avuhz_%%' "
-                "and relation.relkind in ('r','p') and relation.relrowsecurity) = 19 "
+                "and relation.relkind in ('r','p') and relation.relrowsecurity) = 20 "
                 "and (select count(*) from pg_catalog.pg_policy policy "
                 "join pg_catalog.pg_class relation on relation.oid=policy.polrelid "
                 "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
                 "where namespace.nspname='public' and relation.relname like 'avuhz_%%' "
-                "and policy.polname='avuhz_command_service_tenant_isolation') = 19 "
-                # All three new registries must retain FORCE RLS and zero
-                # effective CRUD privileges for the bounded command role.
+                "and policy.polname='avuhz_command_service_tenant_isolation') = 20 "
+                # All four DEVELOPMENT registries require FORCE RLS. The first
+                # three remain completely inaccessible to the command role;
+                # the counter permits only reviewed column-scoped access.
                 "and (select count(*) from pg_catalog.pg_class relation "
                 "join pg_catalog.pg_namespace namespace on namespace.oid=relation.relnamespace "
                 "where namespace.nspname='public' "
-                "and relation.relname in (%s,%s,%s) "
-                "and relation.relrowsecurity and relation.relforcerowsecurity) = 3 "
+                "and relation.relname in (%s,%s,%s,%s) "
+                "and relation.relrowsecurity and relation.relforcerowsecurity) = 4 "
                 "and (select count(*) from pg_catalog.pg_tables table_info "
                 "where table_info.schemaname='public' "
                 "and table_info.tablename in (%s,%s,%s) "
                 "and has_table_privilege(current_user,"
                 "format('%%I.%%I',table_info.schemaname,table_info.tablename),"
                 "'SELECT,INSERT,UPDATE,DELETE')) = 0 "
+                # The rate counter must have no table-wide grants, but must
+                # retain all four SELECT/INSERT column grants and only two
+                # UPDATE column grants. Never authorize tenant/key rewrites.
+                "and not has_table_privilege(current_user,"
+                "'public.avuhz_acquisition_rate_limit_counters',"
+                "'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') "
+                "and (select count(*) from pg_catalog.pg_attribute column_info "
+                "where column_info.attrelid="
+                "'public.avuhz_acquisition_rate_limit_counters'::regclass "
+                "and column_info.attnum>0 and not column_info.attisdropped "
+                "and has_column_privilege(current_user,"
+                "'public.avuhz_acquisition_rate_limit_counters',"
+                "column_info.attname,'SELECT') "
+                "and has_column_privilege(current_user,"
+                "'public.avuhz_acquisition_rate_limit_counters',"
+                "column_info.attname,'INSERT')) = 4 "
+                "and has_column_privilege(current_user,"
+                "'public.avuhz_acquisition_rate_limit_counters',"
+                "'window_started_at','UPDATE') "
+                "and has_column_privilege(current_user,"
+                "'public.avuhz_acquisition_rate_limit_counters',"
+                "'request_count','UPDATE') "
+                "and not has_column_privilege(current_user,"
+                "'public.avuhz_acquisition_rate_limit_counters',"
+                "'tenant_id','UPDATE') "
+                "and not has_column_privilege(current_user,"
+                "'public.avuhz_acquisition_rate_limit_counters',"
+                "'principal_digest','UPDATE') "
                 "and (select count(*) from pg_catalog.pg_tables table_info "
                 "where table_info.schemaname='public' and table_info.tablename like 'avuhz_%%' "
                 "and has_table_privilege(current_user,"
@@ -225,7 +258,7 @@ class DevelopmentPostgresDataProbe:
                 "and not has_schema_privilege(current_user,'public','CREATE') as ready",
                 (
                     CANONICAL_APPLICATION_DATABASE_ROLE,
-                    *_CURRENT_NO_RUNTIME_ACCESS_REGISTRIES,
+                    *_CURRENT_FORCED_RLS_REGISTRIES,
                     *_CURRENT_NO_RUNTIME_ACCESS_REGISTRIES,
                 ),
             ).fetchone()

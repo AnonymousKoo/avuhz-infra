@@ -27,11 +27,14 @@ from avuhz_engineering.development_handoff_trusted_one_shot_executor import (
     claim_signed_handoff_stages_postgres_candidate,
 )
 from avuhz_service.development import DEVELOPMENT_DATA_PROJECT_REF
+from avuhz_service.development_data import DEVELOPMENT_DATA_SESSION_POOLER_HOST
 from test_development_handoff_trusted_one_shot_executor import TrustedOneShotExecutorTests
 from test_development_handoff_approval_gate import AT
 
 HOST = "db.gnuqaefotwgkwurjpyik.supabase.co"
+POOLER_HOST = DEVELOPMENT_DATA_SESSION_POOLER_HOST
 RUNNER = "avuhz_handoff_claim_runner_dev"
+POOLER_USER = RUNNER + "." + DEVELOPMENT_DATA_PROJECT_REF
 WRITER = "avuhz_handoff_claim_writer"
 
 
@@ -150,8 +153,10 @@ class DevelopmentRunnerConnectionOfflineTests(unittest.TestCase):
         self.assertEqual(kwargs["gssencmode"], "disable")
         self.assertEqual(kwargs["options"], "")
         self.assertEqual(kwargs["connect_timeout"], 5)
-        self.assertEqual(kwargs["host"], HOST)
-        self.assertEqual(kwargs["user"], RUNNER)
+        self.assertIn(
+            (kwargs["host"], kwargs["user"]),
+            {(HOST, RUNNER), (POOLER_HOST, POOLER_USER)},
+        )
         connection = FakeConnection(kwargs)
         self.connections.append(connection)
         return connection
@@ -179,6 +184,33 @@ class DevelopmentRunnerConnectionOfflineTests(unittest.TestCase):
         self.assertNotIn(self.secret, repr(factory))
         self.assertNotIn(self.secret, repr(connection))
         connection.close()
+
+    def test_exact_ipv4_session_pooler_has_project_suffix_and_backend_runner_identity(self):
+        policy = dataclasses.replace(
+            self.policy, host=POOLER_HOST, user=POOLER_USER,
+        )
+        with patch("socket.create_connection", side_effect=AssertionError("network forbidden")):
+            connection = self.make(policy=policy)()
+        self.assertEqual(self.calls, ["supplier", "connector"])
+        self.assertEqual(connection.info.host, POOLER_HOST)
+        self.assertEqual(connection.info.user, POOLER_USER)
+        self.assertEqual(connection.identity[0], RUNNER)
+        self.assertEqual(connection.after_role, (RUNNER, WRITER))
+        self.assertTrue(connection.role_set)
+        connection.close()
+
+    def test_wrong_pooler_user_or_host_pair_denied_before_credential(self):
+        for host, user in (
+            (POOLER_HOST, RUNNER),
+            (HOST, POOLER_USER),
+            (POOLER_HOST, RUNNER + ".pwlhruwutoitnieactol"),
+            ("aws-0-us-west-2.pooler.supabase.com", POOLER_USER),
+        ):
+            with self.subTest(host=host, user=user), self.assertRaisesRegex(
+                DevelopmentRunnerTransportStop, "HANDOFF_RUNNER_CONNECTION_POLICY_INVALID"
+            ):
+                dataclasses.replace(self.policy, host=host, user=user)
+        self.assertEqual(self.calls, [])
 
     def test_policy_rejects_auth_project_wrong_host_and_tls_downgrade(self):
         for field, value in (

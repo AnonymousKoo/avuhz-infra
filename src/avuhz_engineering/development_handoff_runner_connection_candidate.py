@@ -170,17 +170,23 @@ class DevelopmentRunnerConnectionFactoryCandidate:
                 or parameters.get("gssencmode") != "disable"
             ):
                 _stop("HANDOFF_RUNNER_TLS_OR_ENDPOINT_UNVERIFIED")
-            tls = connection.execute(
-                "select ssl, version from pg_stat_ssl where pid=pg_backend_pid()"
-            ).fetchone()
-            if (
-                not isinstance(tls, tuple)
-                or len(tls) != 2
-                or tls[0] is not True
-                or type(tls[1]) is not str
-                or not tls[1].startswith("TLSv")
-            ):
-                _stop("HANDOFF_RUNNER_TLS_OR_ENDPOINT_UNVERIFIED")
+            # For direct Postgres, pg_stat_ssl describes this client session.
+            # For Supavisor it describes the pooler-to-Postgres upstream hop,
+            # not the runner-to-pooler TLS link, so it must NOT substitute for
+            # or contradict the client libpq verify-full certificate check.
+            # libpq verifies the provided CA and hostname during connect().
+            if policy.host == _HOST:
+                tls = connection.execute(
+                    "select ssl, version from pg_stat_ssl where pid=pg_backend_pid()"
+                ).fetchone()
+                if (
+                    not isinstance(tls, tuple)
+                    or len(tls) != 2
+                    or tls[0] is not True
+                    or type(tls[1]) is not str
+                    or not tls[1].startswith("TLSv")
+                ):
+                    _stop("HANDOFF_RUNNER_TLS_OR_ENDPOINT_UNVERIFIED")
             before = connection.execute(
                 "select session_user, current_user, current_database()"
             ).fetchone()

@@ -158,8 +158,13 @@ class SharedCompanyEnrollmentPostgresTests(unittest.TestCase):
                 "alter table public.avuhz_tenant_organizations "
                 "drop constraint if exists avuhz_test_block_organization_activation"
             )
-            db.execute("truncate table public.avuhz_tenant_owner_memberships")
-            db.execute("truncate table public.avuhz_tenant_organizations")
+            # PostgreSQL requires FK-linked tables in the same TRUNCATE.
+            # Both tables are isolated to this disposable CI database.
+            # Avoid CASCADE: it could conceal unintended dependencies.
+            db.execute(
+                "truncate table public.avuhz_tenant_owner_memberships, "
+                "public.avuhz_tenant_organizations"
+            )
         self.private = ec.generate_private_key(ec.SECP256R1())
         verifier = DevelopmentPreTenantEs256JwtVerifier(
             _SyntheticJwks(self.private.public_key())

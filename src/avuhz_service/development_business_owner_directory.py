@@ -29,7 +29,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Mapping
 
-from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
@@ -88,7 +87,7 @@ class DevelopmentBusinessOwnerDirectoryCheck:
         fetch_signed_decision: Callable[[str, str], SignedBusinessOwnerDecision],
     ):
         if (
-            type(directory_public_key) is not Ed25519PublicKey
+            not isinstance(directory_public_key, Ed25519PublicKey)
             or type(pinned_fingerprint) is not str
             or not _DIGEST.fullmatch(pinned_fingerprint)
             or not callable(fetch_signed_decision)
@@ -156,7 +155,7 @@ class DevelopmentBusinessOwnerDirectoryCheck:
             ).encode("utf-8")
             self._public_key.verify(result.signature, canonical)
             return True
-        except (InvalidSignature, Exception):
+        except Exception:
             # No PII, attestation, signature, underlying provider details or
             # ownership directory errors should leave this trust boundary.
             return False

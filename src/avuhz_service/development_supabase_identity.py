@@ -23,21 +23,9 @@ _OPAQUE_REFERENCE = re.compile(r"^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$")
 _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 _READ_ONLY_CAPABILITIES = frozenset({"engagement:read"})
 _PROVIDER_ADAPTER_CAPABILITIES = frozenset({"implementation_handoff:accept"})
-# Candidate policy type only. No hosted subject, credential, AUTH enrollment or
-# DATA grant is activated by recognizing this distinct shared service role.
-_ACQUISITION_SERVICE_CAPABILITIES = frozenset({"acquisition_intake:receive"})
 _SYNTHETIC_CALLER_TYPE = "HUMAN"
 _PROVIDER_ADAPTER_CALLER_TYPE = "PROVIDER_ADAPTER"
-_ACQUISITION_SERVICE_CALLER_TYPE = "INTERNAL_SERVICE"
-_ALLOWED_POLICY_CALLER_TYPES = frozenset({
-    _SYNTHETIC_CALLER_TYPE, _PROVIDER_ADAPTER_CALLER_TYPE,
-    _ACQUISITION_SERVICE_CALLER_TYPE,
-})
-_EXACT_CAPABILITIES = {
-    _SYNTHETIC_CALLER_TYPE: _READ_ONLY_CAPABILITIES,
-    _PROVIDER_ADAPTER_CALLER_TYPE: _PROVIDER_ADAPTER_CAPABILITIES,
-    _ACQUISITION_SERVICE_CALLER_TYPE: _ACQUISITION_SERVICE_CAPABILITIES,
-}
+_ALLOWED_POLICY_CALLER_TYPES = frozenset({_SYNTHETIC_CALLER_TYPE, _PROVIDER_ADAPTER_CALLER_TYPE})
 
 
 class DevelopmentSupabaseJwtVerifier(Protocol):
@@ -70,7 +58,11 @@ class DevelopmentIdentityAllowlistEntry:
             raise ValueError("bounded DEVELOPMENT caller type is required")
         if type(self.capabilities) is not frozenset:
             raise ValueError("bounded DEVELOPMENT capabilities are required")
-        expected = _EXACT_CAPABILITIES[self.caller_type]
+        expected = (
+            _READ_ONLY_CAPABILITIES
+            if self.caller_type == _SYNTHETIC_CALLER_TYPE
+            else _PROVIDER_ADAPTER_CAPABILITIES
+        )
         if self.capabilities != expected:
             raise ValueError("exact caller capability policy is required")
 
@@ -123,8 +115,8 @@ class DevelopmentSupabaseIdentityVerifier:
     ):
         if jwt_verifier is None or not callable(getattr(jwt_verifier, "verify", None)):
             raise ValueError("trusted Supabase JWT verifier is required")
-        if type(allowlist) is not tuple or not 1 <= len(allowlist) <= 3:
-            raise ValueError("one to three DEVELOPMENT identity allowlist entries are required")
+        if type(allowlist) is not tuple or not 1 <= len(allowlist) <= 2:
+            raise ValueError("one or two DEVELOPMENT identity allowlist entries are required")
         if any(type(entry) is not DevelopmentIdentityAllowlistEntry for entry in allowlist):
             raise ValueError("valid DEVELOPMENT identity allowlist entries are required")
         if len({entry.subject_digest for entry in allowlist}) != len(allowlist):
@@ -139,25 +131,10 @@ class DevelopmentSupabaseIdentityVerifier:
         provider_adapter_entries = tuple(
             entry for entry in allowlist if entry.caller_type == _PROVIDER_ADAPTER_CALLER_TYPE
         )
-        acquisition_service_entries = tuple(
-            entry for entry in allowlist if entry.caller_type == _ACQUISITION_SERVICE_CALLER_TYPE
-        )
-        if (
-            len(synthetic_entries) != 1
-            or len(provider_adapter_entries) > 1
-            or len(acquisition_service_entries) > 1
-            or len(allowlist) != (
-                len(synthetic_entries) + len(provider_adapter_entries)
-                + len(acquisition_service_entries)
-            )
-        ):
+        if len(synthetic_entries) != 1 or len(provider_adapter_entries) > 1:
             raise ValueError("exact DEVELOPMENT identity policy composition is required")
-        # At most one distinct, explicitly injected intake-service policy;
-        # the canonical hosted tuple above stays exactly two historical entries.
-        if len(allowlist) == 3 and (
-            len(provider_adapter_entries) != 1 or len(acquisition_service_entries) != 1
-        ):
-            raise ValueError("three-entry policy requires separate service and provider")
+        if len(allowlist) == 2 and len(provider_adapter_entries) != 1:
+            raise ValueError("second DEVELOPMENT identity must be a provider adapter")
         self._jwt_verifier = jwt_verifier
         self._allowlist = allowlist
 
@@ -200,19 +177,6 @@ class DevelopmentSupabaseIdentityVerifier:
             if len(matches) != 1:
                 raise PermissionError
             entry = matches[0]
-            if entry.caller_type == _ACQUISITION_SERVICE_CALLER_TYPE:
-                # A regular user JWT, even with a pinned sub or browser-supplied
-                # "service" fields, must not become an INTERNAL_SERVICE.
-                # app_metadata is included in the verified AUTH-signed JWT,
-                # and must be set by a separately authorized admin enrollment.
-                # No enrollment or issuance is introduced by this candidate.
-                metadata = claims.get("app_metadata")
-                if (
-                    not isinstance(metadata, Mapping)
-                    or metadata.get("avuhz_workload") != "acquisition_intake"
-                    or metadata.get("avuhz_tenant_id") != entry.tenant_id
-                ):
-                    raise PermissionError
 
             authenticated_at = _utc_timestamp(issued_at)
             expires_at_text = _utc_timestamp(expires_at)

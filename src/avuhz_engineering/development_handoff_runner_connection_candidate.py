@@ -18,9 +18,16 @@ from threading import Lock
 from typing import Any, Callable
 
 from avuhz_service.development import DEVELOPMENT_DATA_PROJECT_REF
+from avuhz_service.development_data import (
+    DEVELOPMENT_DATA_ENDPOINT_HOST,
+    DEVELOPMENT_DATA_SESSION_POOLER_HOST,
+    DEVELOPMENT_DATA_ENDPOINT_PORT,
+)
 
-_HOST = "db.gnuqaefotwgkwurjpyik.supabase.co"
+_HOST = DEVELOPMENT_DATA_ENDPOINT_HOST
+_POOLER_HOST = DEVELOPMENT_DATA_SESSION_POOLER_HOST
 _RUNNER = "avuhz_handoff_claim_runner_dev"
+_POOLER_USER = _RUNNER + "." + DEVELOPMENT_DATA_PROJECT_REF
 _WRITER = "avuhz_handoff_claim_writer"
 _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 _CA_MAX_BYTES = 65536
@@ -36,10 +43,15 @@ def _stop(code: str) -> None:
 
 @dataclass(frozen=True)
 class DevelopmentRunnerConnectionPolicy:
-    """Exact direct-connection profile; the CA digest must be pinned separately.
+    """Exact DEVELOPMENT direct or Supavisor *session* profile.
 
-    Constructing this profile does not establish runner, owner, or tenant trust.
-    The profile intentionally has no password, DSN, hostaddr, role or GUC field.
+    On IPv4-only GitHub Actions, the direct Postgres endpoint may be unreachable
+    without a separately confirmed IPv4 add-on. Session-mode Supavisor uses
+    the existing project-scoped pooler host, port 5432 and a role.project_ref
+    login name, but the effective database session_user must remain _RUNNER.
+    The trusted CA digest must come from separately pinned configuration.
+    Constructing a profile does not establish owner, runner or tenant trust.
+    No password, DSN, hostaddr, role or GUC may be caller-supplied here.
     """
 
     project_ref: str
@@ -54,10 +66,12 @@ class DevelopmentRunnerConnectionPolicy:
     def __post_init__(self) -> None:
         if not (
             self.project_ref == DEVELOPMENT_DATA_PROJECT_REF
-            and self.host == _HOST
-            and type(self.port) is int and self.port == 5432
+            and (self.host, self.user) in {
+                (_HOST, _RUNNER),
+                (_POOLER_HOST, _POOLER_USER),
+            }
+            and type(self.port) is int and self.port == DEVELOPMENT_DATA_ENDPOINT_PORT
             and self.dbname == "postgres"
-            and self.user == _RUNNER
             and self.sslmode == "verify-full"
             and type(self.sslrootcert) is str
             and bool(self.sslrootcert)
@@ -132,8 +146,9 @@ class DevelopmentRunnerConnectionFactoryCandidate:
             if type(pw) is not str or len(pw) < 16:
                 _stop("HANDOFF_RUNNER_CREDENTIAL_UNAVAILABLE")
 
-            # Keyword-only libpq transport. No implicit URL, session-pooler,
-            # transaction pooler, service role, caller-supplied options or GUC.
+            # Keyword-only transport: exact direct or session-mode pooler,
+            # never the transaction pooler, privileged role, URL, hostaddr,
+            # caller-supplied session options or tenant GUC.
             # verify-full checks both CA trust and the server hostname.
             connection = self._connector(
                 host=policy.host, port=policy.port,
@@ -155,17 +170,23 @@ class DevelopmentRunnerConnectionFactoryCandidate:
                 or parameters.get("gssencmode") != "disable"
             ):
                 _stop("HANDOFF_RUNNER_TLS_OR_ENDPOINT_UNVERIFIED")
-            tls = connection.execute(
-                "select ssl, version from pg_stat_ssl where pid=pg_backend_pid()"
-            ).fetchone()
-            if (
-                not isinstance(tls, tuple)
-                or len(tls) != 2
-                or tls[0] is not True
-                or type(tls[1]) is not str
-                or not tls[1].startswith("TLSv")
-            ):
-                _stop("HANDOFF_RUNNER_TLS_OR_ENDPOINT_UNVERIFIED")
+            # For direct Postgres, pg_stat_ssl describes this client session.
+            # For Supavisor it describes the pooler-to-Postgres upstream hop,
+            # not the runner-to-pooler TLS link, so it must NOT substitute for
+            # or contradict the client libpq verify-full certificate check.
+            # libpq verifies the provided CA and hostname during connect().
+            if policy.host == _HOST:
+                tls = connection.execute(
+                    "select ssl, version from pg_stat_ssl where pid=pg_backend_pid()"
+                ).fetchone()
+                if (
+                    not isinstance(tls, tuple)
+                    or len(tls) != 2
+                    or tls[0] is not True
+                    or type(tls[1]) is not str
+                    or not tls[1].startswith("TLSv")
+                ):
+                    _stop("HANDOFF_RUNNER_TLS_OR_ENDPOINT_UNVERIFIED")
             before = connection.execute(
                 "select session_user, current_user, current_database()"
             ).fetchone()

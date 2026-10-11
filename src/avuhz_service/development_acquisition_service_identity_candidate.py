@@ -30,7 +30,7 @@ from .development_supabase_identity import DEVELOPMENT_IDENTITY_ALLOWLIST
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 _SHA = re.compile(r"^sha256:[0-9a-f]{64}$")
-_PRINCIPAL = re.compile(r"^service\\.[a-z][a-z0-9._:-]{2,120}$")
+_PRINCIPAL = re.compile(r"^service\.[a-z][a-z0-9._:-]{2,120}$")
 _SERVICE_CLASS = "acquisition_intake"
 _CAPABILITIES = frozenset({"acquisition_intake:receive"})
 _DENIED = "acquisition_service_identity_invalid"

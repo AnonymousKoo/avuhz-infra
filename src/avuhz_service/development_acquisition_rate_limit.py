@@ -39,7 +39,7 @@ _ATOMIC_ADMISSION_SQL = """
 with tick as (select clock_timestamp() as checked_at)
 insert into public.avuhz_acquisition_rate_limit_counters
   (tenant_id, principal_digest, window_started_at, request_count)
-select %s, %s, tick.checked_at, 1 from tick
+select %s, %s, tick.checked_at, 1 from tick where true
 on conflict (tenant_id, principal_digest)
 do update set
   window_started_at = case

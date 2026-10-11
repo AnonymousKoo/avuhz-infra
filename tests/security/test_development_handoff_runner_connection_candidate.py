@@ -199,6 +199,42 @@ class DevelopmentRunnerConnectionOfflineTests(unittest.TestCase):
         self.assertTrue(connection.role_set)
         connection.close()
 
+    def test_session_pooler_does_not_confuse_upstream_ssl_with_client_tls(self):
+        # Supavisor's pg_stat_ssl belongs to its upstream Postgres session.
+        # A fake connection cannot attest real client-side TLS; libpq's
+        # verify-full authentication must succeed before connect() returns.
+        policy = dataclasses.replace(
+            self.policy, host=POOLER_HOST, user=POOLER_USER,
+        )
+        def connector(**kwargs):
+            connection = self.connector(**kwargs)
+            connection.tls = (False, None)
+            return connection
+
+        with patch("socket.create_connection", side_effect=AssertionError("network forbidden")):
+            connection = self.make(policy=policy, connector=connector)()
+        self.assertTrue(connection.role_set)
+        self.assertFalse(
+            any("pg_stat_ssl" in statement for statement in connection.statements)
+        )
+        connection.close()
+
+    def test_pooler_verify_full_downgrade_denied_before_role(self):
+        policy = dataclasses.replace(
+            self.policy, host=POOLER_HOST, user=POOLER_USER,
+        )
+        def connector(**kwargs):
+            connection = self.connector(**kwargs)
+            connection.info.params["sslmode"] = "require"
+            return connection
+
+        with self.assertRaisesRegex(
+            DevelopmentRunnerTransportStop, "HANDOFF_RUNNER_TLS_OR_ENDPOINT_UNVERIFIED"
+        ):
+            self.make(policy=policy, connector=connector)()
+        self.assertTrue(self.connections[-1].closed)
+        self.assertFalse(self.connections[-1].role_set)
+
     def test_wrong_pooler_user_or_host_pair_denied_before_credential(self):
         for host, user in (
             (POOLER_HOST, RUNNER),

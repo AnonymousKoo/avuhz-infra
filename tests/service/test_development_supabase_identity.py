@@ -14,6 +14,7 @@ from avuhz_service.development import (
     DEVELOPMENT_SERVICE_AUDIENCE,
 )
 from avuhz_service.development_supabase_identity import (
+    DEVELOPMENT_IDENTITY_ALLOWLIST,
     DevelopmentIdentityAllowlistEntry,
     DevelopmentSupabaseIdentityVerifier,
 )
@@ -156,6 +157,93 @@ class DevelopmentSupabaseIdentityVerifierTests(unittest.TestCase):
         self.assertNotIn("engagement:read", evidence.capabilities)
         self.assertEqual(evidence.authority_roles, frozenset())
         self.assertEqual(evidence.authentication_strength, "STANDARD")
+
+    def test_offline_acquisition_service_identity_requires_pinned_signed_workload(self):
+        # This is an injection-only candidate: no AUTH subject is enrolled,
+        # no credential issued and no live allowlist entry activated.
+        provider_subject = "33333333-3333-4333-8333-333333333333"
+        service_subject = "44444444-4444-4444-8444-444444444444"
+        provider = DevelopmentIdentityAllowlistEntry(
+            subject_digest=digest(provider_subject),
+            principal_reference="provider-adapter.sekinfra-development",
+            tenant_id=TENANT,
+            caller_type="PROVIDER_ADAPTER",
+            capabilities=frozenset({"implementation_handoff:accept"}),
+        )
+        service = DevelopmentIdentityAllowlistEntry(
+            subject_digest=digest(service_subject),
+            principal_reference="service.acquisition-development",
+            tenant_id=TENANT,
+            caller_type="INTERNAL_SERVICE",
+            capabilities=frozenset({"acquisition_intake:receive"}),
+        )
+        allowlist = (entry(), provider, service)
+        approved_metadata = {
+            "avuhz_workload": "acquisition_intake",
+            "avuhz_tenant_id": TENANT,
+        }
+        assert len(DEVELOPMENT_IDENTITY_ALLOWLIST) == 2
+        assert all(e.caller_type != "INTERNAL_SERVICE" for e in DEVELOPMENT_IDENTITY_ALLOWLIST)
+        actual = DevelopmentSupabaseIdentityVerifier(
+            FakeCryptographicVerifier(claims(
+                sub=service_subject, app_metadata=approved_metadata,
+            )),
+            allowlist=allowlist,
+        ).verify(TOKEN)
+        self.assertEqual(actual.subject, "service.acquisition-development")
+        self.assertEqual(actual.tenant_id, TENANT)
+        self.assertEqual(actual.caller_type, "INTERNAL_SERVICE")
+        self.assertEqual(actual.capabilities, frozenset({"acquisition_intake:receive"}))
+        self.assertEqual(actual.authority_roles, frozenset())
+        self.assertNotIn("engagement:read", actual.capabilities)
+        self.assertNotIn("implementation_handoff:accept", actual.capabilities)
+
+        for untrusted in (
+            claims(sub=service_subject),
+            claims(sub=service_subject, user_metadata=approved_metadata),
+            claims(sub=service_subject, app_metadata={"avuhz_workload": "acquisition_intake"}),
+            claims(sub=service_subject, app_metadata={
+                "avuhz_workload": "acquisition_intake",
+                "avuhz_tenant_id": "55555555-5555-4555-8555-555555555555",
+            }),
+            claims(sub=service_subject, app_metadata={
+                "avuhz_workload": "implementation_handoff",
+                "avuhz_tenant_id": TENANT,
+            }),
+            claims(sub=service_subject, app_metadata="acquisition_intake"),
+            claims(sub="66666666-6666-4666-8666-666666666666",
+                   app_metadata=approved_metadata),
+            claims(sub=service_subject, role="service_role",
+                   app_metadata=approved_metadata),
+            claims(sub=service_subject, avuhz_tenant_id="77777777-7777-4777-8777-777777777777",
+                   app_metadata=approved_metadata),
+        ):
+            with self.subTest(untrusted=sorted(untrusted)), self.assertRaises(PermissionError):
+                DevelopmentSupabaseIdentityVerifier(
+                    FakeCryptographicVerifier(untrusted), allowlist=allowlist,
+                ).verify(TOKEN)
+
+        for invalid in (
+            {"capabilities": frozenset({"engagement:read"})},
+            {"capabilities": frozenset({"implementation_handoff:accept"})},
+            {"capabilities": frozenset({"acquisition_intake:receive", "engagement:read"})},
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                DevelopmentIdentityAllowlistEntry(
+                    subject_digest=digest(service_subject),
+                    principal_reference="service.acquisition-development",
+                    tenant_id=TENANT, caller_type="INTERNAL_SERVICE", **invalid,
+                )
+
+        # An unactivated service policy cannot reclassify the existing
+        # provider-adapter identity or confer rights to the hosted allowlist.
+        with self.assertRaises(PermissionError):
+            DevelopmentSupabaseIdentityVerifier(
+                FakeCryptographicVerifier(claims(
+                    sub=service_subject, app_metadata=approved_metadata,
+                )),
+                allowlist=DEVELOPMENT_IDENTITY_ALLOWLIST,
+            ).verify(TOKEN)
 
     def test_allowlist_shape_is_bounded_unique_and_caller_capabilities_are_exact(self):
         provider_subject = "33333333-3333-4333-8333-333333333333"

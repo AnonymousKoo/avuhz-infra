@@ -238,8 +238,22 @@ class SharedAcquisitionCounterCandidatePostgresTests(unittest.TestCase):
             "'public.avuhz_acquisition_rate_limit_counters','INSERT') "
             "or has_table_privilege(rolname,"
             "'public.avuhz_acquisition_rate_limit_counters','UPDATE'));"
+            # Column grants are intentionally NOT table-wide grants. Assert
+            # their absence first, then independently verify all four columns
+            # have only the required SELECT + INSERT capability.
             "select has_table_privilege('avuhz_command_service',"
-            "'public.avuhz_acquisition_rate_limit_counters','SELECT,INSERT,UPDATE')::int;"
+            "'public.avuhz_acquisition_rate_limit_counters','SELECT')::int;"
+            "select has_table_privilege('avuhz_command_service',"
+            "'public.avuhz_acquisition_rate_limit_counters','INSERT')::int;"
+            "select has_table_privilege('avuhz_command_service',"
+            "'public.avuhz_acquisition_rate_limit_counters','UPDATE')::int;"
+            "select count(*) from (values "
+            "('tenant_id'),('principal_digest'),"
+            "('window_started_at'),('request_count')) as allowed(col) "
+            "where has_column_privilege('avuhz_command_service',"
+            "'public.avuhz_acquisition_rate_limit_counters',allowed.col,'SELECT') "
+            "and has_column_privilege('avuhz_command_service',"
+            "'public.avuhz_acquisition_rate_limit_counters',allowed.col,'INSERT');"
             "select has_table_privilege('avuhz_command_service',"
             "'public.avuhz_acquisition_rate_limit_counters','DELETE')::int;"
             "select has_column_privilege('avuhz_command_service',"
@@ -251,7 +265,7 @@ class SharedAcquisitionCounterCandidatePostgresTests(unittest.TestCase):
         )
         self.assertEqual(
             result.stdout.decode().strip().splitlines(),
-            ["1:1", "1", "0", "1", "0", "0", "0", "1"],
+            ["1:1", "1", "0", "0", "0", "0", "4", "0", "0", "0", "1"],
         )
 
     def test_real_shared_writer_sql_admits_ten_then_denies_eleventh(self):

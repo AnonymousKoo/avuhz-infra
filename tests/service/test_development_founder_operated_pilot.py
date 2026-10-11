@@ -226,15 +226,9 @@ class FounderOperatedPilotOfflineTests(unittest.TestCase):
             self.directory(decision="PENDING_VERIFICATION"),
             self.directory(business="business.someone-else"),
             self.directory(signer=Ed25519PrivateKey.generate()),
-            lambda *_: True,  # unverifiable self-assertion is not sufficient
         ):
             self.connection = _Connection()
             with self.subTest(kind=type(directory).__name__):
-                # The fourth case is a demonstration of why arbitrary
-                # true-returning callbacks MUST NOT be hosted: test stubs can
-                # simulate authority. Do not treat this as a denial case.
-                if not isinstance(directory, DevelopmentBusinessOwnerDirectoryCheck):
-                    continue
                 with self.assertRaisesRegex(
                     PermissionError, "^tenant_registration_not_authorized$"
                 ):

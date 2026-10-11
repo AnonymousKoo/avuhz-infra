@@ -34,6 +34,7 @@ from .development_owner_authentication import DevelopmentOwnerAuthenticationChec
 
 _BUSINESS = re.compile(r"^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$", re.ASCII)
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$", re.ASCII)
+_FORBIDDEN_BUSINESS_PARTS = ("password", "secret", "token", "bearer", "api_key")
 _DENIED = "company_activation_not_authorized"
 _CONFLICT = "company_activation_state_conflict"
 _UNAVAILABLE = "company_activation_unavailable"
@@ -110,6 +111,7 @@ class DevelopmentCompanyActivationCandidate:
             or type(business_reference) is not str
             or not 3 <= len(business_reference) <= 128
             or not _BUSINESS.fullmatch(business_reference)
+            or any(part in business_reference for part in _FORBIDDEN_BUSINESS_PARTS)
         ):
             raise PermissionError(_DENIED)
 

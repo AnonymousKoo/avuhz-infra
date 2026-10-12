@@ -60,7 +60,15 @@ class SharedAcquisitionColumnGrantPostgresTests(unittest.TestCase):
             stderr=subprocess.PIPE, timeout=110, check=False,
         )
         if check and proc.returncode:
-            raise AssertionError("DISPOSABLE_POSTGRES_FAILED")
+            # CI fixtures are synthetic. Show only a bounded PostgreSQL ERROR
+            # summary: never log SQL payloads, DETAIL, CONTEXT, or raw PII.
+            errors = [line.split("ERROR:", 1)[1].strip()
+                      for line in proc.stderr.decode(errors="replace").splitlines()
+                      if "ERROR:" in line]
+            diagnostic = errors[0] if errors else "UNCLASSIFIED"
+            diagnostic = re.sub(r"'[^\']*'", "'REDACTED'", diagnostic)
+            diagnostic = re.sub(r"[^A-Za-z0-9_ .:-]", "", diagnostic)[:140]
+            raise AssertionError("DISPOSABLE_POSTGRES_FAILED: " + diagnostic)
         return proc
 
     def query(self, sql, *, check=True):

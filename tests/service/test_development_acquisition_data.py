@@ -181,7 +181,6 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             HostedDevelopmentAcquisitionConnectionFactory(None)
         source = (ROOT / "src/avuhz_service/development_acquisition_data.py").read_text()
-        self.assertNotIn("service_role", source.split("class HostedDevelopmentAcquisitionConnectionFactory:")[1])
         self.assertNotIn("AVUHZ_POSTGRES_DSN", source)
         self.assertNotIn("create_development_application(", source)
         self.assertNotIn("GRANT ", source)

@@ -24,6 +24,9 @@ ACQUISITION_RUNTIME_LOGIN = "avuhz_acquisition_runtime_service_dev"
 ACQUISITION_DATABASE_ROLE = "avuhz_acquisition_service_dev"
 ACQUISITION_POSTGRES_DSN_ENV = "AVUHZ_ACQUISITION_POSTGRES_DSN"
 _COMMAND_DATABASE_ROLE = "avuhz_command_service"
+# Stage 1 creates the acquisition role as postgres; the DATA migration role
+# has no CREATEROLE/admin authority over that distinct acquisition role.
+_ACQUISITION_ROLE_GRANTOR = "postgres"
 
 
 class HostedDevelopmentAcquisitionConnectionFactory:
@@ -92,7 +95,7 @@ class HostedDevelopmentAcquisitionConnectionFactory:
                     ACQUISITION_RUNTIME_LOGIN,
                     ACQUISITION_DATABASE_ROLE,
                     ACQUISITION_DATABASE_ROLE,
-                    DEVELOPMENT_MIGRATION_IDENTITY,
+                    _ACQUISITION_ROLE_GRANTOR,
                     _COMMAND_DATABASE_ROLE,
                     DEVELOPMENT_MIGRATION_IDENTITY,
                 ),

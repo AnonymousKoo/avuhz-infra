@@ -180,9 +180,9 @@ class AcquisitionIntakeCandidateStaticTests(unittest.TestCase):
             migration = file.read_text().lower()
             self.assertIn("alter table public.avuhz_lifecycle_events", migration)
             self.assertIn("relrowsecurity and relforcerowsecurity", migration)
-            self.assertNotRegex(migration, r"(?im)^\\s*create\\s+table\\b")
-            self.assertNotRegex(migration, r"(?im)^\\s*grant\\b")
-            self.assertNotRegex(migration, r"(?im)^\\s*(?:insert|update|delete)\\b")
+            self.assertNotRegex(migration, r"(?im)^\s*create\s+table\b")
+            self.assertNotRegex(migration, r"(?im)^\s*grant\b")
+            self.assertNotRegex(migration, r"(?im)^\s*(?:insert|update|delete)\b")
 
 
 @unittest.skipUnless(CONTAINER, "requires disposable PostgreSQL 17 CI container")

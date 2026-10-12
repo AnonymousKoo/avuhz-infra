@@ -1,6 +1,8 @@
 """Dormant shared acquisition-intake PostgreSQL writer candidate.
 
 This is NOT a public command, route, entitlement or registered handler.
+Newly accepted intakes append a sanitized RECEIVED lifecycle event and outbox
+intent in the same transaction. This code does not activate n8n or hosted intake.
 No current DEVELOPMENT identity carries acquisition_intake:receive. The
 three registries currently have no command-role SELECT/INSERT grants.
 Before activation, a separately verified server-owned website binding,
@@ -193,6 +195,34 @@ class ReceiveAcquisitionIntakeCandidate:
             ).fetchone()
             if inserted:
                 receipt = AcquisitionIntakeReceipt(str(inserted["intake_id"]), False)
+                # Emit only after the authoritative intake INSERT succeeded.
+                # Both append operations participate in this exact same UoW;
+                # any failure rolls back the PII-bearing intake row as well.
+                # This event asserts RECEIVED only, never qualification.
+                event_id = str(uuid.uuid4())
+                uow.lifecycle_events.append({
+                    "event_id": event_id,
+                    "event_type": "acquisition.intake.received",
+                    "event_schema_version": 1,
+                    "tenant_id": authority.tenant_id,
+                    "authoritative_subject_reference": {
+                        "reference_type": "ACQUISITION_INTAKE",
+                        "reference_id": receipt.intake_id,
+                    },
+                    "authoritative_subject_version": 1,
+                    "occurred_at": evaluated_at.isoformat(
+                        timespec="seconds"
+                    ).replace("+00:00", "Z"),
+                    "producer_reference": authority.principal_id,
+                    "correlation_id": str(uuid.uuid4()),
+                    "idempotency_key": "acquisition-intake:" + receipt.intake_id,
+                    "visibility": "INTEGRATION_INTERNAL",
+                    "sanitized_metadata": {
+                        "intake_id": receipt.intake_id,
+                        "intake_state": "RECEIVED",
+                    },
+                })
+                uow.outbox.append({"event_id": event_id, "status": "PENDING"})
             else:
                 original = connection.execute(
                     "select intake_id,source_system,route_reference,business_name,"

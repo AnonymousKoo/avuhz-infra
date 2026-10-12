@@ -139,7 +139,7 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
         self.assertIn("'public.avuhz_engagements','SELECT'", effective)
         self.assertIn("'principal_subject_digest','SELECT'", effective)
         self.assertIn("'intake_state','SELECT'", effective)
-        self.assertIn("'avuhz_outbox_deliveries','UPDATE'", effective)
+        self.assertIn("'public.avuhz_outbox_deliveries','UPDATE'", effective)
         self.assertNotIn("set_config('avuhz.tenant_id'", effective)
         conn.rollback()
         conn.close()

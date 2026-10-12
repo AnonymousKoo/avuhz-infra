@@ -40,8 +40,7 @@ BEGIN
           OR m.set_option OR m.inherit_option))
      OR pg_has_role('avuhz_acquisition_service_dev',
                     'avuhz_command_service','MEMBER')
-     OR pg_has_role('avuhz_acquisition_service_dev',
-                    'avuhz_data_migration_service_dev','MEMBER')
+
   THEN
     RAISE EXCEPTION 'ACQ_RUNTIME_LOGIN_STAGE1_ROLE_DRIFT_STOP';
   END IF;
@@ -106,8 +105,7 @@ BEGIN
                     'avuhz_acquisition_service_dev','MEMBER')
      OR pg_has_role('avuhz_acquisition_runtime_service_dev',
                     'avuhz_command_service','MEMBER')
-     OR pg_has_role('avuhz_acquisition_runtime_service_dev',
-                    'avuhz_data_migration_service_dev','MEMBER')
+
      OR (SELECT count(*) FROM information_schema.role_table_grants
          WHERE grantee='avuhz_acquisition_runtime_service_dev')<>0
      OR EXISTS (SELECT 1 FROM pg_class c

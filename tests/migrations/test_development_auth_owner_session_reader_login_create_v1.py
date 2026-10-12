@@ -138,6 +138,10 @@ class AuthReaderLoginPostgres17Tests(unittest.TestCase):
             f"ALTER TABLE auth.sessions OWNER TO {TABLE_OWNER};"
             f"ALTER TABLE auth.mfa_factors OWNER TO {TABLE_OWNER};"
             f"ALTER SCHEMA auth OWNER TO {SCHEMA_OWNER};"
+            # Hosted AUTH postgres has schema USAGE, not CREATE. The
+            # synthetic NOSUPERUSER executor must match that exact state
+            # so catalog privilege introspection can resolve auth tables.
+            f"GRANT USAGE ON SCHEMA auth TO {EXECUTOR};"
             "ALTER TABLE auth.sessions ENABLE ROW LEVEL SECURITY;"
             "ALTER TABLE auth.mfa_factors ENABLE ROW LEVEL SECURITY;"
         )

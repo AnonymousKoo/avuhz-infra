@@ -108,7 +108,7 @@ class AcquisitionIntakeOwnerWrapperPostgresTests(unittest.TestCase):
     @classmethod
     def docker(cls, *args, input_bytes=None, check=True):
         result = subprocess.run(
-            ["docker", "exec", *("-i",) if input_bytes is not None else [], CONTAINER, *args],
+            ["docker", "exec", *(("-i",) if input_bytes is not None else []), CONTAINER, *args],
             input=input_bytes, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, check=False,
         )

@@ -142,6 +142,7 @@ supabase/provider-artifacts/development-data/current/development_data_migration_
 supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_acquisition_intake_event_owner_wrapper_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_shared_acquisition_registry_role_v1.sql
+supabase/provider-artifacts/development-data/current/development_data_acquisition_runtime_login_create_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_acquisition_event_outbox_owner_grants_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_migration_role_binding_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_outbox_search_path_repair_v1.sql
@@ -190,6 +191,7 @@ while IFS= read -r sql_path; do
     supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_acquisition_intake_event_owner_wrapper_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_shared_acquisition_registry_role_v1.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_acquisition_runtime_login_create_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_acquisition_event_outbox_owner_grants_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_migration_role_binding_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql|\

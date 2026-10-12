@@ -122,6 +122,15 @@ BEGIN
       WHERE rolname='avuhz_acquisition_service_dev'
         AND NOT rolcanlogin AND NOT rolinherit AND NOT rolcreaterole
         AND NOT rolbypassrls AND NOT rolsuper)
+     -- A non-superuser CREATEROLE creator may automatically receive an
+     -- ADMIN/NOSET/NOINHERIT membership in PostgreSQL 17. Permit only
+     -- that well-known administrative edge, never runtime SET or INHERIT.
+     OR EXISTS (SELECT 1 FROM pg_auth_members m
+       JOIN pg_roles r ON r.oid=m.roleid
+       JOIN pg_roles grantee ON grantee.oid=m.member
+       WHERE r.rolname='avuhz_acquisition_service_dev'
+         AND (grantee.rolname<>'postgres' OR NOT m.admin_option
+              OR m.set_option OR m.inherit_option))
      OR EXISTS (SELECT 1 FROM pg_auth_members m
        JOIN pg_roles r ON r.oid=m.member
        WHERE r.rolname='avuhz_acquisition_service_dev')

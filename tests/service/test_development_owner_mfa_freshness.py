@@ -298,17 +298,20 @@ class DevelopmentAuthUserSessionCheckTests(unittest.TestCase):
         self.key = "sb_" + "publishable_" + ("x" * 32)
         self.bearer = ("a" * 48) + "." + ("b" * 48) + "." + ("c" * 48)
 
-    def build(self, response=None, failure=None):
+    def build(self, response=None, failure=None, *, confirm_session_record=None):
         opener = FakeAuthOpener(
             response or FakeAuthUserResponse({"id": _SUBJECT}), failure=failure
         )
         with patch.object(url_request, "build_opener", return_value=opener):
-            checker = DevelopmentAuthUserSessionCheck(self.key)
+            checker = DevelopmentAuthUserSessionCheck(
+                self.key, confirm_session_record=confirm_session_record
+            )
         return checker, opener
 
-    def test_fixed_development_auth_user_request_and_no_elevated_key(self):
+    def test_user_endpoint_is_not_active_session_proof(self):
+        # A 200 with a matching subject after sign-out is not sufficient.
         checker, opener = self.build()
-        self.assertTrue(checker(_SUBJECT, _SESSION, self.bearer))
+        self.assertFalse(checker(_SUBJECT, _SESSION, self.bearer))
         self.assertEqual(len(opener.requests), 1)
         req, timeout = opener.requests[0]
         self.assertEqual(req.full_url, "https://pwlhruwutoitnieactol.supabase.co/auth/v1/user")
@@ -319,6 +322,46 @@ class DevelopmentAuthUserSessionCheckTests(unittest.TestCase):
         self.assertNotIn("service_role", repr(checker))
         self.assertNotIn(self.bearer, repr(checker))
         self.assertNotIn(self.key, repr(checker))
+
+    def test_separate_exact_subject_session_record_required(self):
+        checked = []
+        def session_record(subject, session):
+            checked.append((subject, session))
+            return subject == _SUBJECT and session == _SESSION
+
+        checker, opener = self.build(confirm_session_record=session_record)
+        self.assertTrue(checker(_SUBJECT, _SESSION, self.bearer))
+        self.assertEqual(checked, [(_SUBJECT, _SESSION)])
+        self.assertEqual(len(opener.requests), 1)
+        self.assertFalse(checker(_SUBJECT, "66666666-6666-4666-8666-666666666666", self.bearer))
+        self.assertEqual(checked[-1], (_SUBJECT, "66666666-6666-4666-8666-666666666666"))
+
+    def test_revoked_absent_nonboolean_or_broken_session_proof_denies(self):
+        for answer in (False, None, 1, "true"):
+            with self.subTest(answer=repr(answer)):
+                seen = []
+                def denied(subject, session):
+                    seen.append((subject, session))
+                    return answer
+                checker, _ = self.build(confirm_session_record=denied)
+                self.assertFalse(checker(_SUBJECT, _SESSION, self.bearer))
+                self.assertEqual(seen, [(_SUBJECT, _SESSION)])
+
+        def provider_error(_subject, _session):
+            raise RuntimeError("private AUTH session catalog data")
+        checker, _ = self.build(confirm_session_record=provider_error)
+        self.assertFalse(checker(_SUBJECT, _SESSION, self.bearer))
+        with self.assertRaises(ValueError):
+            DevelopmentAuthUserSessionCheck(self.key, confirm_session_record="not-callable")
+
+    def test_invalid_user_never_invokes_session_record_proof(self):
+        calls = []
+        checker, _ = self.build(
+            FakeAuthUserResponse({"id": "55555555-5555-4555-8555-555555555555"}),
+            confirm_session_record=lambda *_: calls.append("called") or True,
+        )
+        self.assertFalse(checker(_SUBJECT, _SESSION, self.bearer))
+        self.assertEqual(calls, [])
 
     def test_denies_nonmatching_or_bad_auth_user_responses(self):
         for response in (
@@ -364,15 +407,28 @@ class DevelopmentAuthUserSessionCheckTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     DevelopmentAuthUserSessionCheck(value)
 
-    def test_mfa_gate_invokes_live_provider_with_exact_verified_bearer(self):
+    def test_mfa_gate_requires_authenticated_user_and_live_session_record(self):
         original = OwnerMfaFreshnessTests("test_signed_recent_totp_and_live_subject_session_match")
         original.setUp()
         token = original.token()
-        checker, opener = self.build(FakeAuthUserResponse({"id": _SUBJECT}))
+        user_only, user_opener = self.build(FakeAuthUserResponse({"id": _SUBJECT}))
+        user_gate = DevelopmentOwnerMfaFreshnessCheck(
+            original.verifier, confirm_live_session=user_only
+        )
+        self.assertFalse(user_gate(token, original.digest))
+        self.assertEqual(len(user_opener.requests), 1)
+        checked = []
+        def active_record(subject, session):
+            checked.append((subject, session))
+            return subject == _SUBJECT and session == _SESSION
+        checker, opener = self.build(
+            FakeAuthUserResponse({"id": _SUBJECT}), confirm_session_record=active_record
+        )
         gate = DevelopmentOwnerMfaFreshnessCheck(
             original.verifier, confirm_live_session=checker
         )
         self.assertTrue(gate(token, original.digest))
+        self.assertEqual(checked, [(_SUBJECT, _SESSION)])
         self.assertEqual(len(opener.requests), 1)
         self.assertEqual(
             opener.requests[0][0].get_header("Authorization"), "Bearer " + token

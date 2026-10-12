@@ -52,8 +52,10 @@ class DevelopmentOwnerMfaFreshnessCheck:
     confirm_live_session(auth_subject, session_id, bearer) MUST perform a
     separate request to the exact DEVELOPMENT AUTH server and return True
     only for a current, authenticated user matching the signed JWT subject.
-    The session ID is verified in the signed JWT; the AUTH check revalidates
-    that same bearer against the live provider, not against copied claims.
+    The session ID is verified in the signed JWT, and the injected check
+    MUST independently establish that the exact subject/session record remains
+    active in DEVELOPMENT AUTH. A /auth/v1/user lookup alone CANNOT satisfy
+    that requirement, even if it returns the expected user ID.
     """
 
     def __init__(
@@ -159,16 +161,27 @@ class DevelopmentAuthUserSessionCheck:
     for JWT TOTP verification. The token is cryptographically checked by
     DevelopmentOwnerMfaFreshnessCheck before this class is invoked.
 
-    Supabase's Auth `getUser` request revalidates a bearer with the provider,
-    unlike local JWT decoding. No response fields besides the user UUID are
-    used. The separately signed session_id is accepted only as a required
-    canonical JWT identifier; Auth's user endpoint does not return it.
+    Supabase's Auth `getUser` request independently checks the signed bearer
+    and user ID, but DOES NOT prove that the token's session_id remains active.
+    To avoid accepting a signed JWT after logout/session revocation, this
+    checker ALWAYS denies if confirm_session_record is absent. A configured
+    callback must query authoritative, current DEVELOPMENT AUTH session state
+    by *both* verified subject and signed session UUID. A synthetic callback,
+    a copied token, or a /user response cannot authorize hosted onboarding.
 
-    Activation still requires independent business ownership proof and a
-    reviewed server-only publishable-key binding. Never use service_role.
+    The callback must be a separately approved, server-only, read-only
+    AUTH session-record source with revocation support. Never use client data,
+    a DATA-project session, service_role in public code, or synthetic callbacks
+    in hosted composition. This checker is still dormant and issues no session
+    credential or tenant/registration authority.
     """
 
-    def __init__(self, publishable_key: str):
+    def __init__(
+        self,
+        publishable_key: str,
+        *,
+        confirm_session_record: Callable[[str, str], bool] | None = None,
+    ):
         if (
             not isinstance(publishable_key, str)
             or not publishable_key.startswith("sb_publishable_")
@@ -176,7 +189,12 @@ class DevelopmentAuthUserSessionCheck:
             or not re.fullmatch(r"[a-zA-Z0-9_]+", publishable_key)
         ):
             raise ValueError("DEVELOPMENT AUTH publishable key required")
+        if confirm_session_record is not None and not callable(confirm_session_record):
+            raise ValueError("independent DEVELOPMENT AUTH session record checker required")
         self._publishable_key = publishable_key
+        # Missing authoritative session proof is deliberately NOT accepted.
+        # Do not silently replace this with a /user lookup or a JWT claim.
+        self._confirm_session_record = confirm_session_record
         # Ignore process-controlled HTTP proxies, and disallow HTTPS redirects.
         # No request is issued until the callable is invoked by the MFA gate.
         self._opener = url_request.build_opener(
@@ -217,7 +235,14 @@ class DevelopmentAuthUserSessionCheck:
                 if len(body) > _MAX_AUTH_RESPONSE_BYTES:
                     return False
             user = json.loads(body.decode("utf-8"))
-            return type(user) is dict and user.get("id") == subject
+            if type(user) is not dict or user.get("id") != subject:
+                return False
+            # getUser can succeed without validating this JWT's signed
+            # session_id against a current non-revoked AUTH session record.
+            # The protected, authoritative record proof is a separate gate.
+            if self._confirm_session_record is None:
+                return False
+            return self._confirm_session_record(subject, session_id) is True
         except Exception:
             # No network diagnostics, provider payload or bearer leaks.
             return False

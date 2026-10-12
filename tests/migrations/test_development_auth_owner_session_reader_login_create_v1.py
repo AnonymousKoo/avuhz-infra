@@ -147,7 +147,7 @@ class AuthReaderLoginPostgres17Tests(unittest.TestCase):
         )
         # Disposable test only. Hosted AUTH owner authorization is distinct.
         self.query(f"GRANT SELECT (oid,rolpassword) ON pg_catalog.pg_authid TO {EXECUTOR};")
-        
+
     def tearDown(self):
         self.docker("dropdb", "--if-exists", "-U", "postgres", DB)
         self.docker(

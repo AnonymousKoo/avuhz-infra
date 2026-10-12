@@ -186,13 +186,22 @@ class AcquisitionRuntimeSetGrantPostgresTests(unittest.TestCase):
             "GRANT INSERT (contact_email) "
             f"ON public.avuhz_acquisition_intake_requests TO {ACQUISITION};"
         )
+        # Seed using the disposable superuser: FORCE RLS must deny the
+        # unproven owner session and cannot be bypassed for test setup.
         self.query(
             f"INSERT INTO public.avuhz_tenant_organizations (tenant_id) "
-            f"VALUES ('{TENANT_A}'),('{TENANT_B}');"
+            f"VALUES ('{TENANT_A}'),('{TENANT_B}');",
+            user="postgres",
         )
 
     def tearDown(self):
         self.docker("dropdb", "--if-exists", "-U", "postgres", DB)
+        # pg_authid catalog column grants are cluster-global and must not
+        # leave dependency edges behind after the disposable test.
+        self.docker("psql", "-X", "-q", "-U", "postgres", "-d", "postgres",
+                    "-c", f"REVOKE SELECT (oid,rolpassword) "
+                          f"ON pg_catalog.pg_authid FROM {EXECUTOR};",
+                    check=False)
         for role in (LOGIN, ACQUISITION, COMMAND, MIGRATION, EXECUTOR):
             self.docker("psql", "-X", "-q", "-U", "postgres", "-d", "postgres",
                         "-c", f"DROP ROLE IF EXISTS {role};", check=False)

@@ -94,7 +94,8 @@ class AcquisitionIntakeOwnerWrapperStaticTests(unittest.TestCase):
                         sql.index("AVUHZ_INTAKE_OWNER_MEMBERSHIP_NOT_RESEALED_STOP"))
         self.assertNotRegex(sql, r"(?im)^\s*(?:INSERT|UPDATE|DELETE|CREATE\s+ROLE|ALTER\s+ROLE)\s")
         self.assertNotRegex(sql, r"(?im)^\s*GRANT\s+(?:SELECT|INSERT|UPDATE|USAGE)\s")
-        self.assertEqual(sql.count("ALTER TABLE public.avuhz_lifecycle_events"), 2)
+        # Two constraints are each dropped and then re-added in the canonical SQL.
+        self.assertEqual(sql.count("ALTER TABLE public.avuhz_lifecycle_events"), 4)
         self.assertIn("AVUHZ_INTAKE_OWNER_SEALED_MEMBERSHIP_DRIFT_STOP", sql)
         self.assertIn("AVUHZ_INTAKE_OWNER_MEMBERSHIP_NOT_RESEALED_STOP", sql)
         self.assertFalse(any(

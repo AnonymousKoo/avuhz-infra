@@ -185,4 +185,3 @@ def create_hosted_development_acquisition_store(
         if connection_factory is None else connection_factory
     )
     return PostgresStore(HostedDevelopmentAcquisitionConnectionFactory(raw))
-

@@ -81,9 +81,10 @@ def sample(company="Fictional Alpha Services", email="alpha@example.invalid"):
 
 
 class Cursor:
-    def __init__(self, row=None, rows=()):
+    def __init__(self, row=None, rows=(), rowcount=1):
         self.row = row
         self.rows = list(rows)
+        self.rowcount = rowcount
 
     def fetchone(self):
         return self.row
@@ -141,6 +142,10 @@ class WriterConnection:
             return Cursor({"authorized": 1} if self.authorized else None)
         if "insert into public.avuhz_acquisition_intake_requests" in sql:
             return Cursor({"intake_id": "a4730000-0000-4000-8000-000000000031"})
+        if "insert into public.avuhz_lifecycle_events" in sql:
+            return Cursor()
+        if "insert into public.avuhz_outbox_deliveries" in sql:
+            return Cursor(rowcount=1)
         raise AssertionError("unexpected writer statement")
 
     def rollback(self):
@@ -213,6 +218,13 @@ class SharedAuthenticatedAcquisitionIngressTests(unittest.TestCase):
                 self.assertEqual(write.calls[0][1], (tenant,))
                 self.assertEqual(write.calls[1][1], (tenant, org))
                 self.assertEqual(write.calls[2][1][1:3], (tenant, org))
+                self.assertEqual(len(write.calls), 5)
+                self.assertIn("insert into public.avuhz_lifecycle_events", write.calls[3][0])
+                self.assertEqual(write.calls[3][1][1], tenant)
+                self.assertEqual(write.calls[3][1][3], "acquisition.intake.received")
+                self.assertNotIn(email, str(write.calls[3][1]))
+                self.assertIn("insert into public.avuhz_outbox_deliveries", write.calls[4][0])
+                self.assertEqual(write.calls[4][1][1], "PENDING")
                 self.assertEqual(write.commits, 1)
                 self.assertTrue(write.closed)
                 self.assertNotIn("tenant_id", sample())

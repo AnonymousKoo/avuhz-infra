@@ -123,6 +123,7 @@ cat > "$provider_auth_expected" <<'EOF'
 supabase/provider-artifacts/development-auth/current/development_auth_custom_access_token_hook_v2.sql
 supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_seal_v2.sql
 supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_v3.sql
+supabase/provider-artifacts/development-auth/current/development_auth_owner_session_reader_login_create_v1.sql
 supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql
 supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql
 supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql
@@ -184,6 +185,7 @@ while IFS= read -r sql_path; do
     supabase/provider-artifacts/development-auth/current/development_auth_custom_access_token_hook_v2.sql|\
     supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_seal_v2.sql|\
     supabase/provider-artifacts/development-auth/current/development_auth_migration_identity_v3.sql|\
+    supabase/provider-artifacts/development-auth/current/development_auth_owner_session_reader_login_create_v1.sql|\
     supabase/provider-artifacts/development-auth/history/v1/20260908132000_development_auth_migration_identity_v1.sql|\
     supabase/provider-artifacts/development-auth/history/v1/20260908133000_development_auth_custom_access_token_hook_v1.sql|\
     supabase/provider-artifacts/development-auth/history/v1/20260908134000_development_auth_migration_identity_seal_v1.sql|\

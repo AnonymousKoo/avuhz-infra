@@ -114,7 +114,7 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
             ACQUISITION_RUNTIME_LOGIN,
             ACQUISITION_DATABASE_ROLE,
             ACQUISITION_DATABASE_ROLE,
-            DEVELOPMENT_MIGRATION_IDENTITY,
+            "postgres",
             "avuhz_command_service",
             DEVELOPMENT_MIGRATION_IDENTITY,
         ))

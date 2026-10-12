@@ -81,7 +81,7 @@ class AuthOwnerSessionScopePg17Tests(unittest.TestCase):
             "not_after timestamptz,factor_id uuid);"
             "CREATE TABLE auth.mfa_factors ("
             "id uuid PRIMARY KEY,user_id uuid NOT NULL,"
-            "status text NOT NULL,factor_type text NOT NULL);"
+            "status text NOT NULL,factor_type text NOT NULL,secret text);"
             "ALTER TABLE auth.sessions ENABLE ROW LEVEL SECURITY;"
             "ALTER TABLE auth.mfa_factors ENABLE ROW LEVEL SECURITY;"
             f"GRANT USAGE ON SCHEMA auth TO {READER};"

@@ -177,6 +177,9 @@ class IsolatedAcquisitionRolePostgresTests(unittest.TestCase):
     def test_real_owner_updates_are_denied_even_with_lock_privilege(self):
         self.seed()
         self.apply(SQL.read_text())
+        # An actual intake row must exist, otherwise UPDATE touches zero rows
+        # and cannot prove that RLS WITH CHECK false rejects its mutation.
+        self.sql(self.intake_insert())
         for table, where in (
             ("avuhz_tenant_organizations", f"tenant_id='{TENANT_A}'"),
             ("avuhz_tenant_owner_memberships", f"tenant_id='{TENANT_A}'"),

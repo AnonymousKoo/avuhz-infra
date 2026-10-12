@@ -17,7 +17,9 @@ from avuhz_service.development_auth_owner_session_record import (
     AUTH_DATABASE_PORT, AUTH_DIRECT_DATABASE_HOST, AUTH_OWNER_SESSION_READER_ROLE,
     AUTH_REQUIRED_SSLMODE, DEVELOPMENT_AUTH_PROJECT_REF,
     DEVELOPMENT_DATA_PROJECT_REF, DevelopmentAuthSessionRecordCheck,
-    _ROLE_PREFLIGHT_SQL, _SESSION_PROOF_SQL,
+    _BIND_OWNER_SUBJECT_SQL, _APPROVED_OWNER_SUBJECT_POLICY_NAME,
+    _APPROVED_OWNER_SUBJECT_POLICY_QUAL, _ROLE_PREFLIGHT_SQL,
+    _SESSION_PROOF_SQL,
 )
 
 SUBJECT = "a4730000-0000-4000-8000-000000000101"
@@ -47,11 +49,12 @@ class FakeCursor:
 
 class FakeConnection:
     def __init__(self, *, authorized=True, session_found=True, info=None,
-                 autocommit=False, failure=None):
+                 autocommit=False, failure=None, scoped_subject=SUBJECT):
         self.autocommit = autocommit
         self.info = FakeInfo() if info is None else info
         self.authorized = authorized
         self.session_found = session_found
+        self.scoped_subject = scoped_subject
         self.failure = failure
         self.commands = []
         self.closed = 0
@@ -63,6 +66,8 @@ class FakeConnection:
             raise self.failure
         if statement == _ROLE_PREFLIGHT_SQL:
             return FakeCursor({"approved_reader": self.authorized})
+        if statement == _BIND_OWNER_SUBJECT_SQL:
+            return FakeCursor({"owner_subject": self.scoped_subject})
         if statement == _SESSION_PROOF_SQL:
             return FakeCursor({"current_verified_session": self.session_found})
         if statement.startswith("SET TRANSACTION READ ONLY"):
@@ -106,8 +111,15 @@ class AuthSessionRecordVerificationTests(unittest.TestCase):
         self.assertEqual(conn.commands[1],
                          ("SET LOCAL statement_timeout = '3000ms'", ()))
         self.assertEqual(conn.commands[2],
-                         (_ROLE_PREFLIGHT_SQL, (AUTH_OWNER_SESSION_READER_ROLE,) * 2))
+                         (_ROLE_PREFLIGHT_SQL, (
+                             AUTH_OWNER_SESSION_READER_ROLE,
+                             AUTH_OWNER_SESSION_READER_ROLE,
+                             _APPROVED_OWNER_SUBJECT_POLICY_NAME,
+                             _APPROVED_OWNER_SUBJECT_POLICY_QUAL,
+                         )))
         self.assertEqual(conn.commands[3],
+                         (_BIND_OWNER_SUBJECT_SQL, (SUBJECT,)))
+        self.assertEqual(conn.commands[4],
                          (_SESSION_PROOF_SQL, (SESSION, SUBJECT)))
         self.assertIn("session.id=%s::uuid", _SESSION_PROOF_SQL)
         self.assertIn("session.user_id=%s::uuid", _SESSION_PROOF_SQL)
@@ -131,6 +143,38 @@ class AuthSessionRecordVerificationTests(unittest.TestCase):
         ):
             self.assertFalse(checker(sub, session))
         self.assertEqual(calls, [])
+
+    def test_subject_binding_must_match_exact_verified_auth_subject(self):
+        for scoped in (None, False, 1, "false", SESSION,
+                       "a4730000-0000-4000-8000-000000000999"):
+            with self.subTest(scoped=repr(scoped)):
+                conn = FakeConnection(scoped_subject=scoped)
+                checker, _ = self.probe(conn)
+                self.assertFalse(checker(SUBJECT, SESSION))
+                self.assertEqual(conn.commands[-1],
+                                 (_BIND_OWNER_SUBJECT_SQL, (SUBJECT,)))
+                self.assertNotIn(_SESSION_PROOF_SQL,
+                                 [item[0] for item in conn.commands])
+                self.assertEqual(conn.rolled_back, 1)
+                self.assertEqual(conn.closed, 1)
+
+    def test_exact_policy_shape_checked_before_scope_binding(self):
+        self.assertEqual(_APPROVED_OWNER_SUBJECT_POLICY_NAME,
+                         "avuhz_owner_session_reader_dev_scope")
+        self.assertEqual(_APPROVED_OWNER_SUBJECT_POLICY_QUAL,
+                         "(user_id = (NULLIF(current_setting("
+                         "'avuhz.owner_subject'::text, true), ''::text))::uuid)")
+        self.assertIn("p.policyname=%s", _ROLE_PREFLIGHT_SQL)
+        self.assertIn("p.qual=%s", _ROLE_PREFLIGHT_SQL)
+        self.assertIn("p.roles=ARRAY['avuhz_owner_session_reader_dev']::name[]",
+                      _ROLE_PREFLIGHT_SQL)
+        self.assertIn("p.permissive='PERMISSIVE'", _ROLE_PREFLIGHT_SQL)
+        self.assertIn("p.with_check IS NULL", _ROLE_PREFLIGHT_SQL)
+        self.assertIn("AND p.tablename IN ('sessions','mfa_factors'))=2",
+                      _ROLE_PREFLIGHT_SQL)
+        self.assertIn("c.relrowsecurity)=2", _ROLE_PREFLIGHT_SQL)
+        self.assertIn("set_config('avuhz.owner_subject', %s, true)",
+                      _BIND_OWNER_SUBJECT_SQL)
 
     def test_missing_revoked_wrong_subject_or_nonboolean_session_denied(self):
         for state in (False, 1, "true", None):
@@ -204,6 +248,8 @@ class AuthSessionRecordVerificationTests(unittest.TestCase):
         sql, params = conn.commands[-1]
         self.assertIs(sql, _SESSION_PROOF_SQL)
         self.assertEqual(params, (SESSION, SUBJECT))
+        self.assertEqual(conn.commands[-2],
+                         (_BIND_OWNER_SUBJECT_SQL, (SUBJECT,)))
         self.assertNotIn(SUBJECT, sql)
         self.assertNotIn(SESSION, sql)
 

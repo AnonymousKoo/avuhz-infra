@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from avuhz_runtime.postgres import PostgresStore, PostgresUnitOfWork, connection_factory_from_environment
+from avuhz_runtime.postgres import PostgresStore, connection_factory_from_environment
 from .development_data import (
     DEVELOPMENT_DATA_ALLOWED_ENDPOINT_HOSTS,
     DEVELOPMENT_DATA_ENDPOINT_PORT,
@@ -183,16 +183,3 @@ def create_hosted_development_acquisition_store(
     )
     return PostgresStore(HostedDevelopmentAcquisitionConnectionFactory(raw))
 
-
-def acquisition_unit_of_work(store: PostgresStore, trusted_context: object) -> PostgresUnitOfWork:
-    """Preserve shared verified tenant binding; no client tenant parameters."""
-    if type(store) is not PostgresStore:
-        raise ValueError("dedicated acquisition store required")
-    if (
-        getattr(trusted_context, "environment", None) != "DEVELOPMENT"
-        or getattr(trusted_context, "audience", None) != "avuhz-command-api"
-        or getattr(trusted_context, "caller_type", None) != "INTERNAL_SERVICE"
-        or getattr(trusted_context, "capabilities", None) != frozenset({"acquisition_intake:receive"})
-    ):
-        raise ValueError("verified DEVELOPMENT acquisition context required")
-    return PostgresUnitOfWork(store, trusted_context=trusted_context)

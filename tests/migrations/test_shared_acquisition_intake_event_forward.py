@@ -84,7 +84,9 @@ class AcquisitionIntakeEventForwardMigrationTests(unittest.TestCase):
             "conname='avuhz_lifecycle_events_authoritative_subject_type_check';"
         )
         lines = result.stdout.decode().splitlines()
-        self.assertEqual(lines[:2], ["1:1", "1"])
+        # The canonical initial migration enables tenant RLS without FORCE.
+        # This forward migration must preserve that existing mode and policy.
+        self.assertEqual(lines[:2], ["1:0", "1"])
         self.assertIn("acquisition.intake.received", lines[2])
         self.assertIn("implementation_handoff.accepted", lines[2])
         self.assertIn("engagement.opened", lines[2])

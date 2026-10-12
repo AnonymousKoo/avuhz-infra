@@ -14,9 +14,17 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_class
     WHERE oid='public.avuhz_lifecycle_events'::regclass
-      AND relrowsecurity AND relforcerowsecurity
+      AND relrowsecurity
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public'
+      AND tablename='avuhz_lifecycle_events'
+      AND policyname='avuhz_command_service_tenant_isolation'
+      AND roles @> ARRAY['avuhz_command_service']::name[]
+      AND qual LIKE '%avuhz.tenant_id%'
+      AND with_check LIKE '%avuhz.tenant_id%'
   ) THEN
-    RAISE EXCEPTION 'ACQUISITION_INTAKE_EVENT_RLS_NOT_FORCED_STOP';
+    RAISE EXCEPTION 'ACQUISITION_INTAKE_EVENT_RLS_NOT_SCOPED_STOP';
   END IF;
   IF (
     SELECT count(*) FROM pg_constraint

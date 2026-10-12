@@ -207,7 +207,8 @@ class IntakeWriterCandidateTests(unittest.TestCase):
         self.assertTrue(receipt.duplicate)
         self.assertEqual(receipt.intake_id, existing_row()["intake_id"])
         self.assertEqual(connection.commits, 1)
-        self.assertIn("for update", connection.calls[-1][0].lower())
+        self.assertIn("for share", connection.calls[-1][0].lower())
+        self.assertNotIn("for update", connection.calls[-1][0].lower())
         self.assertEqual(connection.calls[-1][1], (TENANT, ORG, REQUEST))
         self.assertFalse(any(
             "insert into public.avuhz_lifecycle_events" in sql

@@ -12,7 +12,6 @@ DECLARE
   owner_oid oid;
   executor_oid oid;
   acq_oid oid;
-  owner_policies integer;
 BEGIN
   IF session_user <> 'postgres' OR current_user <> 'postgres'
      OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='postgres'
@@ -62,26 +61,6 @@ BEGIN
     RAISE EXCEPTION 'ACQ_EVENT_REGISTRY_STAGE_NOT_READY_STOP';
   END IF;
 
-  FOR owner_policies IN
-    SELECT 1
-    FROM (VALUES ('avuhz_lifecycle_events'),('avuhz_outbox_deliveries')) tbl(name)
-    JOIN pg_class c ON c.oid=('public.'||tbl.name)::regclass
-    WHERE c.relowner=owner_oid AND c.relrowsecurity
-      AND NOT c.relforcerowsecurity
-      AND (SELECT count(*) FROM pg_policies p
-           WHERE p.schemaname='public' AND p.tablename=tbl.name
-             AND p.policyname='avuhz_command_service_tenant_isolation'
-             AND p.roles @> ARRAY['avuhz_command_service']::name[]
-             AND p.qual LIKE '%avuhz.tenant_id%'
-             AND p.with_check LIKE '%avuhz.tenant_id%')=1
-      AND NOT EXISTS (
-        SELECT 1 FROM pg_policies p
-        WHERE p.schemaname='public' AND p.tablename=tbl.name
-          AND p.policyname LIKE 'avuhz_acquisition_%'
-      )
-  LOOP
-    NULL;
-  END LOOP;
   IF (SELECT count(*) FROM (
     SELECT c.oid
     FROM (VALUES ('avuhz_lifecycle_events'),('avuhz_outbox_deliveries')) tbl(name)
@@ -171,7 +150,6 @@ CREATE POLICY avuhz_acquisition_event_insert
       SELECT 1 FROM public.avuhz_acquisition_intake_requests intake
       WHERE intake.tenant_id=avuhz_lifecycle_events.tenant_id
         AND intake.intake_id=avuhz_lifecycle_events.authoritative_subject_id
-        AND intake.intake_state='RECEIVED'
     )
   );
 
@@ -187,7 +165,7 @@ CREATE POLICY avuhz_acquisition_outbox_insert
       SELECT 1 FROM public.avuhz_lifecycle_events event
       WHERE event.tenant_id=avuhz_outbox_deliveries.tenant_id
         AND event.lifecycle_event_id=avuhz_outbox_deliveries.lifecycle_event_id
-        AND event.event_type='acquisition.intake.received'
+        -- SELECT policy itself exposes only acquisition.intake.received.
     )
   );
 

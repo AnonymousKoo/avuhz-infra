@@ -17,7 +17,8 @@ sys.path.insert(0, str(ROOT / "src"))
 from avuhz_worker.n8n_event_sink import N8nOutboxSink
 from avuhz_worker.outbox import DeliveryRejected
 from tests.worker.test_outbox_worker import (
-    TENANT, OTHER_TENANT, MutableClock, event, make_worker, store_for,
+    TENANT, OTHER_TENANT, SUBJECT_ID, MutableClock, event as _base_event,
+    make_worker, store_for,
 )
 
 _ENDPOINT = "https://n8n.example.invalid/webhook/avuhz-events"
@@ -27,6 +28,14 @@ _FIELDS = frozenset({
     "authoritative_subject_reference", "authoritative_subject_version",
     "delivery_idempotency_key",
 })
+
+
+def valid_engagement_event(*, tenant=TENANT, event_id=None):
+    """Complete the shared outbox fixture to satisfy the lifecycle schema."""
+    value = (_base_event(tenant=tenant, event_id=event_id)
+             if event_id is not None else _base_event(tenant=tenant))
+    value["engagement_id"] = SUBJECT_ID
+    return value
 
 
 class FakeAuthenticatedN8nReceiver:
@@ -90,7 +99,7 @@ def sink(receiver, *, token=_TEST_TOKEN, tenant=TENANT):
 
 class AuthenticatedN8nRoundTripTests(unittest.TestCase):
     def test_committed_outbox_delivers_only_minimal_event_and_marks_published(self):
-        store = store_for()
+        store = store_for(valid_engagement_event())
         original_domain_event = copy.deepcopy(store.events)
         receiver = FakeAuthenticatedN8nReceiver()
         result = make_worker(store, sink(receiver), MutableClock()).run_once()
@@ -112,7 +121,7 @@ class AuthenticatedN8nRoundTripTests(unittest.TestCase):
         self.assertEqual(receiver.accepted_attempts, 1)
 
     def test_lost_ack_retries_without_duplicate_receipt(self):
-        store = store_for()
+        store = store_for(valid_engagement_event())
         clock = MutableClock()
         receiver = FakeAuthenticatedN8nReceiver(lose_first_ack=True)
         worker = make_worker(store, sink(receiver), clock, max_attempts=3)
@@ -129,7 +138,7 @@ class AuthenticatedN8nRoundTripTests(unittest.TestCase):
         self.assertEqual(len(receiver.receipts), 1)
 
     def test_wrong_credential_blocks_before_receipt_and_dead_letters(self):
-        store = store_for()
+        store = store_for(valid_engagement_event())
         receiver = FakeAuthenticatedN8nReceiver()
         result = make_worker(
             store, sink(receiver, token="different-synthetic-credential"),
@@ -142,7 +151,7 @@ class AuthenticatedN8nRoundTripTests(unittest.TestCase):
 
     def test_cross_tenant_delivery_is_rejected_both_directions(self):
         receiver = FakeAuthenticatedN8nReceiver()
-        foreign_event = event(tenant=OTHER_TENANT)
+        foreign_event = valid_engagement_event(tenant=OTHER_TENANT)
         with self.assertRaises(DeliveryRejected):
             sink(receiver).deliver(
                 "synthetic-delivery-foreign", foreign_event, "2030-01-15T15:01:00Z"
@@ -156,12 +165,12 @@ class AuthenticatedN8nRoundTripTests(unittest.TestCase):
     def test_delivery_key_collision_is_not_accepted(self):
         receiver = FakeAuthenticatedN8nReceiver()
         local_sink = sink(receiver)
-        original = event()
+        original = valid_engagement_event()
         self.assertEqual(
             local_sink.deliver("synthetic-delivery-key01", original, "2030-01-15T15:01:00Z")["result"],
             "PUBLISHED",
         )
-        changed = event(event_id="f2000000-0000-4000-8000-000000000009")
+        changed = valid_engagement_event(event_id="f2000000-0000-4000-8000-000000000009")
         with self.assertRaises(DeliveryRejected):
             local_sink.deliver("synthetic-delivery-key01", changed, "2030-01-15T15:01:00Z")
         self.assertEqual(len(receiver.receipts), 1)

@@ -136,7 +136,7 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
         self.assertIn("avuhz_acquisition_event_insert", effective)
         self.assertIn("avuhz_acquisition_outbox_insert", effective)
         self.assertIn("p.roles=ARRAY[%s]::name[])=4", effective)
-        self.assertIn("'avuhz_engagements','SELECT'", effective)
+        self.assertIn("'public.avuhz_engagements','SELECT'", effective)
         self.assertIn("'principal_subject_digest','SELECT'", effective)
         self.assertIn("'intake_state','SELECT'", effective)
         self.assertIn("'avuhz_outbox_deliveries','UPDATE'", effective)

@@ -8,8 +8,9 @@ DevelopmentAuthUserSessionCheck. It is NOT composed into hosted routes.
 This module grants no database privileges, enrolls no user/MFA factor, reads
 no production resource, and creates no credential. A future, separate AUTH
 approval must provide an isolated LOGIN role with exact column-only SELECT,
-row-scoped RLS policies, and a protected TLS-verifying connection. Until those
-resources actually exist, the check returns False and no owner can enroll.
+the two exact subject-scoped AUTH SELECT RLS policies, and a protected
+TLS-verifying connection. Until those resources actually exist, the check
+returns False and no owner can enroll.
 Do not replace this with provider postgres, service_role, AUTH admin, or a
 synthetic True callback in a hosted runtime.
 
@@ -34,6 +35,20 @@ AUTH_OWNER_SESSION_READER_ROLE = "avuhz_owner_session_reader_dev"
 # its server-managed TOTP factor is still verified, but not a live MFA
 # ceremony. The caller must separately verify the signed recent TOTP AMR,
 # user endpoint, and current subject before invoking this checker.
+# Policy shape observed in PostgreSQL 17 after creating a
+# user_id = nullif(current_setting(...), '')::uuid tenant-scope predicate.
+# The existing DATA counter policy renders the same expression form.
+# Any extra AUTH policy, broadened policy, or altered predicate stops the
+# shared owner session checker before it can SELECT sensitive AUTH rows.
+_APPROVED_OWNER_SUBJECT_POLICY_NAME = "avuhz_owner_session_reader_dev_scope"
+_APPROVED_OWNER_SUBJECT_POLICY_QUAL = (
+    "(user_id = (NULLIF(current_setting('avuhz.owner_subject'::text, true), "
+    "''::text))::uuid)"
+)
+_BIND_OWNER_SUBJECT_SQL = (
+    "SELECT set_config('avuhz.owner_subject', %s, true) AS owner_subject"
+)
+
 _SESSION_PROOF_SQL = (
     "SELECT EXISTS ("
     "SELECT 1 FROM auth.sessions AS session "
@@ -80,6 +95,16 @@ _ROLE_PREFLIGHT_SQL = (
     "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
     "WHERE n.nspname='auth' AND c.relname IN ('sessions','mfa_factors') "
     "AND c.relrowsecurity)=2 "
+    "AND (SELECT count(*) FROM pg_catalog.pg_policies p "
+    "WHERE p.schemaname='auth' "
+    "AND p.tablename IN ('sessions','mfa_factors') "
+    "AND p.policyname=%s "
+    "AND p.roles=ARRAY['avuhz_owner_session_reader_dev']::name[] "
+    "AND p.cmd='SELECT' AND p.permissive='PERMISSIVE' "
+    "AND p.qual=%s AND p.with_check IS NULL)=2 "
+    "AND (SELECT count(*) FROM pg_catalog.pg_policies p "
+    "WHERE p.schemaname='auth' "
+    "AND p.tablename IN ('sessions','mfa_factors'))=2 "
     "AS approved_reader"
 )
 
@@ -99,8 +124,11 @@ class DevelopmentAuthSessionRecordCheck:
     The injected callable must open a dedicated, exact-project PostgreSQL
     connection configured server-side. The class verifies the project's
     direct database host, port, TLS verify-full setting, effective role,
-    absence of elevated role membership, column-only ACLs, and table RLS
-    before issuing a bounded boolean SELECT with two UUID parameters.
+    absence of elevated role membership, column-only ACLs, and exactly two
+    subject-scoped AUTH SELECT RLS policies before querying. The subject is
+    already independently verified upstream; its value is bound in a
+    transaction-local GUC, not accepted from raw browser headers. The RLS
+    setting alone is not proof of authentication or ownership.
 
     No DSN is stored here and no generic DATA/command connection is reused.
     Local/mock connections are permitted only for tests, not hosted proof.
@@ -137,9 +165,24 @@ class DevelopmentAuthSessionRecordCheck:
             connection.execute("SET LOCAL statement_timeout = '3000ms'")
             preflight = connection.execute(
                 _ROLE_PREFLIGHT_SQL,
-                (AUTH_OWNER_SESSION_READER_ROLE, AUTH_OWNER_SESSION_READER_ROLE),
+                (
+                    AUTH_OWNER_SESSION_READER_ROLE,
+                    AUTH_OWNER_SESSION_READER_ROLE,
+                    _APPROVED_OWNER_SUBJECT_POLICY_NAME,
+                    _APPROVED_OWNER_SUBJECT_POLICY_QUAL,
+                ),
             ).fetchone()
             if type(preflight) is not dict or preflight.get("approved_reader") is not True:
+                return False
+
+            # PostgreSQL's current_setting is not an authentication source:
+            # upstream signed DEVELOPMENT AUTH JWT + current user verification
+            # have already derived the canonical UUID. Scope only this
+            # transaction; rollback/close always clears it.
+            scope = connection.execute(
+                _BIND_OWNER_SUBJECT_SQL, (subject,),
+            ).fetchone()
+            if type(scope) is not dict or scope.get("owner_subject") != subject:
                 return False
 
             proof = connection.execute(

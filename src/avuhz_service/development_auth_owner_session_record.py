@@ -133,7 +133,7 @@ class DevelopmentAuthSessionRecordCheck:
                 return False
 
             # No write / state-changing SQL is permitted in the transaction.
-            connection.execute("BEGIN READ ONLY")
+            connection.execute("SET TRANSACTION READ ONLY")
             connection.execute("SET LOCAL statement_timeout = '3000ms'")
             preflight = connection.execute(
                 _ROLE_PREFLIGHT_SQL,

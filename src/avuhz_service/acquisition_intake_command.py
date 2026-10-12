@@ -230,7 +230,7 @@ class ReceiveAcquisitionIntakeCandidate:
                     "contact_requested,diagnostic_summary "
                     "from public.avuhz_acquisition_intake_requests "
                     "where tenant_id=%s and organization_id=%s "
-                    "and external_request_id=%s for update",
+                    "and external_request_id=%s for share",
                     (
                         authority.tenant_id, authority.organization_id,
                         request.external_request_id,

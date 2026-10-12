@@ -27,6 +27,7 @@
     "event_type": {
       "type": "string",
       "enum": [
+        "acquisition.intake.received",
         "engagement.handoff.accepted",
         "implementation_handoff.accepted",
         "implementation_handoff.revoked",
@@ -113,6 +114,22 @@
     }
   },
   "$defs": {
+    "acquisitionIntakeMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intake_id",
+        "intake_state"
+      ],
+      "properties": {
+        "intake_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+        },
+        "intake_state": {
+          "const": "RECEIVED"
+        }
+      }
+    },
     "handoffMetadata": {
       "type": "object",
       "additionalProperties": false,
@@ -258,6 +275,43 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "acquisition.intake.received"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "ACQUISITION_INTAKE"
+              }
+            }
+          },
+          "authoritative_subject_version": {
+            "const": 1
+          },
+          "visibility": {
+            "const": "INTEGRATION_INTERNAL"
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/acquisitionIntakeMetadata"
+          }
+        },
+        "not": {
+          "required": [
+            "engagement_id"
+          ]
+        }
+      }
+    },
     {
       "if": {
         "properties": {

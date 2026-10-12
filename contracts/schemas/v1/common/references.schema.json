@@ -11,6 +11,7 @@
       "enum": [
         "ENGAGEMENT",
         "ACQUISITION_HANDOFF",
+        "ACQUISITION_INTAKE",
         "HUMAN_APPROVAL",
         "COMMAND",
         "LIFECYCLE_EVENT",

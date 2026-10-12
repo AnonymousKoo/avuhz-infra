@@ -168,8 +168,24 @@ class AcquisitionIntakeCandidateStaticTests(unittest.TestCase):
         self.assertNotRegex(sql, r"(?im)^\s*GRANT\b")
         self.assertNotIn("CREATE ROLE", sql)
         self.assertNotIn("sekinfra", sql.lower())
-        self.assertFalse(any("acquisition_intake" in file.name
-                             for file in (ROOT / "supabase/migrations").glob("*.sql")))
+        # Keep the acquisition intake TABLE outside the canonical migration
+        # chain. A separately reviewed event-vocabulary-only migration is
+        # permitted, but it cannot create an intake table, roles or grants.
+        migration_root = ROOT / "supabase/migrations"
+        allowed_name = "20261012140000_enable_shared_acquisition_intake_received_event.sql"
+        for file in migration_root.glob("*.sql"):
+            if "acquisition_intake" not in file.name:
+                continue
+            self.assertEqual(file.name, allowed_name)
+            migration = file.read_text().lower()
+            self.assertIn("alter table public.avuhz_lifecycle_events", migration)
+            self.assertIn("relrowsecurity", migration)
+            self.assertIn("avuhz_command_service_tenant_isolation", migration)
+            self.assertIn("qual like", migration)
+            self.assertIn("with_check like", migration)
+            self.assertNotRegex(migration, r"(?im)^\s*create\s+table\b")
+            self.assertNotRegex(migration, r"(?im)^\s*grant\b")
+            self.assertNotRegex(migration, r"(?im)^\s*(?:insert|update|delete)\b")
 
 
 @unittest.skipUnless(CONTAINER, "requires disposable PostgreSQL 17 CI container")

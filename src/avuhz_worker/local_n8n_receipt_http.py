@@ -9,6 +9,7 @@ separately approved network and credential boundary.
 from __future__ import annotations
 
 import hmac
+import ipaddress
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Callable
@@ -35,12 +36,35 @@ class LocalN8nReceiptHTTPServer(ThreadingHTTPServer):
     def __init__(
         self, *, receipt_store: LocalN8nReceiptStore,
         token_provider: Callable[[], str],
+        bind_host: str = "127.0.0.1",
+        trusted_client_ip: str | None = None,
+        bridge_cidr: str | None = None,
     ):
         if not isinstance(receipt_store, LocalN8nReceiptStore) or not callable(token_provider):
             raise ValueError("approved LOCAL receipt storage and secret source required")
         self.receipt_store = receipt_store
         self.token_provider = token_provider
-        super().__init__(("127.0.0.1", 0), _Handler)
+        # A Docker bridge endpoint is opt-in: bind only a trusted private
+        # gateway, and admit only the explicit n8n container source address.
+        if bind_host == "127.0.0.1" and trusted_client_ip is None and bridge_cidr is None:
+            self.trusted_client_ip = "127.0.0.1"
+        else:
+            try:
+                gateway = ipaddress.IPv4Address(bind_host)
+                client = ipaddress.IPv4Address(trusted_client_ip)
+                network = ipaddress.IPv4Network(bridge_cidr, strict=False)
+            except (TypeError, ValueError, ipaddress.AddressValueError, ipaddress.NetmaskValueError):
+                raise ValueError("trusted Docker bridge boundary required") from None
+            if (
+                gateway.is_loopback or not gateway.is_private
+                or client.is_loopback or not client.is_private
+                or network.is_global or network.prefixlen < 16
+                or gateway not in network or client not in network
+                or gateway == client or str(network.network_address) == "0.0.0.0"
+            ):
+                raise ValueError("trusted Docker bridge boundary required")
+            self.trusted_client_ip = str(client)
+        super().__init__((bind_host, 0), _Handler)
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -63,6 +87,9 @@ class _Handler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def do_POST(self):
+        if self.client_address[0] != self.server.trusted_client_ip:
+            self._respond(403, {"error": "not_authorized"})
+            return
         if self.path != PATH:
             self._respond(404, {"error": "not_found"})
             return

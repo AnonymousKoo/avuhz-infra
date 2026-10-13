@@ -34,9 +34,32 @@ Do not treat an MFA-factor count or a signed JWT as independent owner verificati
 - Counter policy/ACL tests: 6 passed with disposable PostgreSQL 17.6 using the dedicated least-privilege login; checked 10 requests and 11th denial, cross-tenant access, improper UPDATE/DELETE, replay, rollback and ACL drift.
 - Local proof container removed. Tests did not use hosted AUTH/DATA, Render or real client records.
 
+## Selected first business — Sekinfra
+
+The operator explicitly selected **Sekinfra** as the first Avuhz DEVELOPMENT
+receiving business. This is a business-priority decision, **not** verified
+ownership or an authorization to create records. The existing
+`OWNER_OPERATED_PILOT` onboarding intent accepts an unincorporated founder-
+operated business; do not require LLC formation as a platform prerequisite,
+invent a registered company, or copy private identity details into this file.
+
+Reuse the already established
+`docs/sekinfra-development-receiving-organization-preflight-20261011.md`,
+`docs/development-founder-operated-pilot-certification-v1.md` and the
+independent verification feasibility review in PR #652. None of them
+constitutes live business-owner proof, a verified directory provider, or an
+enrolled tenant. Before G0/G1, confirm the operating country and state/province,
+applicable trade-name/business obligations, and a genuinely independent
+human-to-Sekinfra operating-authority evidence source. Avoid prematurely
+selecting a paid KYB provider whose sole-proprietor eligibility is not verified.
+
+**Stop gate:** no claimed tenant ID, invented verified owner, automatic
+PENDING/ACTIVE enrollment, business registration status, payment/access grant,
+public intake or hosted role changes from the operator's selection alone.
+
 ## Fastest safe critical path — source batching, hosted changes separately
 
-1. **G0/G1 verified owner and company:** identify the first genuine business and consenting owner. Fresh AUTH owner MFA plus independently signed business-owner-directory evidence is required. Then separately authorize one PENDING enrollment and a distinct ACTIVE transition with tenant-scoped DATA writes. Never insert fake owner or tenant rows.
+1. **G0/G1 verified owner and company:** use Sekinfra as the first receiving business and verify its consenting human owner. Fresh AUTH owner MFA plus independently signed business-owner-directory evidence is required. Then separately authorize one PENDING enrollment and a distinct ACTIVE transition with tenant-scoped DATA writes. Never insert fake owner or tenant rows.
 2. **G2 AUTH acquisition workload:** enroll one distinct server-owned acquisition service identity and exact single capability; do not reuse the human owner or provider-adapter subject.
 3. **G3 private DATA credential:** complete the existing dedicated acquisition runtime login and private secret lifecycle (no source, logs, workflow JSON or service_role fallback).
 4. **G4 shared rate limiter:** DATA migration and permissions already installed. Still verify retention/pruning and public per-visitor abuse limits before opening the front door.

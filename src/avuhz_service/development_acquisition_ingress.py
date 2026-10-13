@@ -2,9 +2,11 @@
 
 This is NOT an HTTP route, live ingress, credential issuer, hosted identity
 registration, grant, or business activation. The current DEVELOPMENT AUTH
-allowlist issues no acquisition_intake:receive capability; DATA grants are
-also absent. It must remain unreachable until separately approved hosting,
-identity enrollment, real active owner verification and DATA permissions.
+allowlist issues no acquisition_intake:receive capability. Restricted DATA
+registry and rate-counter grants already exist, but do NOT create a live
+connection, server workload or verified business owner. Keep this unmounted
+until separately approved AUTH enrollment, private DATA credential, real
+active verified owner, shared rate limiter and hosted composition.
 
 A client request carries only untrusted acquisition content and an untrusted
 authentication token. The existing pinned DEVELOPMENT identity resolver must

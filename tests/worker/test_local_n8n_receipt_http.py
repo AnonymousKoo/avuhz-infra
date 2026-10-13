@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import secrets
 import sqlite3
+import subprocess
+import shutil
 import sys
 import tempfile
 import threading
@@ -147,6 +149,100 @@ class LoopbackReceiptHTTPTests(unittest.TestCase):
         self.assertEqual(worker.run_once()["published"], 1)
         self.assertEqual(self.rows(), 1)
         self.assertEqual(outbox.outbox[0]["status"], "PUBLISHED")
+
+    def test_docker_bridge_requires_explicit_private_gateway_and_container_source(self):
+        rejected = [
+            {"bind_host": "0.0.0.0", "trusted_client_ip": "172.17.0.3", "bridge_cidr": "172.17.0.0/16"},
+            {"bind_host": "8.8.8.8", "trusted_client_ip": "172.17.0.3", "bridge_cidr": "0.0.0.0/0"},
+            {"bind_host": "172.17.0.1", "trusted_client_ip": None, "bridge_cidr": "172.17.0.0/16"},
+            {"bind_host": "172.17.0.1", "trusted_client_ip": "172.18.0.3", "bridge_cidr": "172.17.0.0/16"},
+            {"bind_host": "172.17.0.1", "trusted_client_ip": "172.17.0.1", "bridge_cidr": "172.17.0.0/16"},
+        ]
+        for config in rejected:
+            with self.subTest(config=config), self.assertRaises(ValueError):
+                LocalN8nReceiptHTTPServer(
+                    receipt_store=self.store, token_provider=lambda: self.token, **config
+                )
+
+    def test_real_docker_container_reaches_private_gateway_with_source_pinning(self):
+        if not shutil.which("docker"):
+            self.skipTest("LOCAL Docker not available")
+        try:
+            container = json.loads(subprocess.check_output(
+                ["docker", "inspect", "n8n"], timeout=5, stderr=subprocess.DEVNULL
+            ))[0]
+            bridge = json.loads(subprocess.check_output(
+                ["docker", "network", "inspect", "bridge"],
+                timeout=5, stderr=subprocess.DEVNULL,
+            ))[0]
+        except (OSError, ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            self.skipTest("LOCAL n8n Docker bridge unavailable")
+        if not container["State"]["Running"] or container["HostConfig"]["NetworkMode"] != "bridge":
+            self.skipTest("LOCAL n8n is not on the default Docker bridge")
+        network = container["NetworkSettings"]["Networks"]["bridge"]
+        gateway = network["Gateway"]
+        source = network["IPAddress"]
+        cidr = bridge["IPAM"]["Config"][0]["Subnet"]
+        server = LocalN8nReceiptHTTPServer(
+            receipt_store=self.store, token_provider=lambda: self.token,
+            bind_host=gateway, trusted_client_ip=source, bridge_cidr=cidr,
+        )
+        thread = threading.Thread(target=server.serve_forever,
+                                  kwargs={"poll_interval": 0.03}, daemon=True)
+        thread.start()
+        try:
+            # Host itself is not the approved Docker n8n source, even with token.
+            unauthorized = urllib.request.Request(
+                f"http://{gateway}:{server.server_port}{PATH}",
+                data=json.dumps(envelope()).encode(),
+                headers={
+                    "Content-Type": "application/json",
+                    AUTH_HEADER: self.token,
+                    DELIVERY_HEADER: KEY,
+                },
+                method="POST",
+            )
+            with self.assertRaises(urllib.error.HTTPError) as denied:
+                urllib.request.urlopen(unauthorized, timeout=3)
+            self.assertEqual(denied.exception.code, 403)
+            self.assertEqual(self.rows(), 0)
+
+            # This executes inside the actual LOCAL n8n Docker container, not
+            # in the host test process; still not an active n8n workflow node.
+            node = r"""
+const http=require('http');
+const [url, token, key, body]=process.argv.slice(1);
+const payload=Buffer.from(body,'utf8');
+const req=http.request(url,{method:'POST',timeout:3000,headers:{
+  'Content-Type':'application/json',
+  'Content-Length':payload.length,
+  'X-Avuhz-Receipt-Bridge-Token':token,
+  'X-Avuhz-Delivery-Key':key}},res=>{
+    process.stdout.write(String(res.statusCode));
+    res.resume();
+});
+req.on('error',()=>{process.stdout.write('REQUEST_FAILED');process.exitCode=2});
+req.on('timeout',()=>req.destroy());
+req.end(payload);
+"""
+            url = f"http://{gateway}:{server.server_port}{PATH}"
+            body = json.dumps(envelope(), separators=(",", ":"))
+            def request_from_n8n():
+                return subprocess.run(
+                    ["docker", "exec", "n8n", "node", "-e", node,
+                     url, self.token, KEY, body],
+                    capture_output=True, text=True, timeout=9,
+                    check=False,
+                )
+            first = request_from_n8n()
+            self.assertEqual((first.returncode, first.stdout), (0, "202"), first.stderr)
+            second = request_from_n8n()
+            self.assertEqual((second.returncode, second.stdout), (0, "202"), second.stderr)
+            self.assertEqual(self.rows(), 1)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=3)
 
 
 if __name__ == "__main__":

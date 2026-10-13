@@ -58,6 +58,8 @@ Treat any unauthenticated policy, `USING (true)`, `WITH CHECK (true)`, broad aut
 
 The preserved legacy inventory `supabase/inventory/current_public_schema.sql` contains broad `authenticated_full_access` policies and anon demo-read policies on non-Avuhz legacy tables. Those policies are legacy security debt. Do not copy them into new Avuhz tables, and do not describe them as the Avuhz tenant-isolation pattern.
 
+For the later DEVELOPMENT DATA acquisition registry and counter, compare actual provider RLS, FORCE RLS, precise role/policy predicates, column ACLs and cross-tenant negative tests against `docs/development-first-client-readiness-20261013.md` before any changes. The rate-counter acquisition access migration `development_data_acquisition_counter_role_access_v1` is **already applied**. Never rerun it on the assumption that older readiness documents describe current state. The four installed Sekinfra OIA persistence tables have FORCE RLS but **no application runtime policies**; preserve the fail-closed condition rather than inventing permissive access or describing OIA as live.
+
 ## 6. Minimize PII in logs and events
 
 Persist only operationally necessary information. Prefer opaque references, IDs, bounded status fields, sanitized metadata, and safe error codes over raw customer/provider payloads.
@@ -70,7 +72,7 @@ Current code establishes these conventions:
 
 If a phone number or similar PII is operationally necessary in a future log, retain only the minimum useful representation (for example, last four digits) rather than the full value. This is a minimization rule, not a claim that a current canonical demo-line implementation already uses a last-four convention; no such current implementation was found in this repository.
 
-Do not place full email addresses, phone numbers, names, provider response bodies, auth-user payloads, raw submission JSON, or credential material into operational logs unless a separately reviewed requirement proves the data is necessary and protected.
+Do not place full email addresses, phone numbers, names, provider response bodies, auth-user payloads, raw submission JSON, or credential material into operational logs unless a separately reviewed requirement proves the data is necessary and protected. Check `src/avuhz_worker/n8n_event_sink.py` and `src/avuhz_runtime/outbox_delivery.py` for the current minimal metadata/error-code convention before adding a new message path. Do not persist credentials, full payloads or unhashed visitor identifiers in rate-limit, diagnostic or receipt logs.
 
 ## 7. Stop on credential exposure, RLS gaps, or PII leaks
 
@@ -81,6 +83,8 @@ If a proposed or existing change would expose credential material, persist a sec
 Repository state is not provider authority. Before any remote mutation, require the exact bounded authorization, active time window if applicable, fresh preflight, exact target match, expected credential class, and explicit verification/evidence step.
 
 Never reuse consumed, expired, stopped, superseded, or narrower authority. In current AUTH history, v28 is completed and consumed; it grants no further provider authority. v27 remains historical/unconsumed after the dashboard-bundle mismatch and must not be repurposed for a different action. Read `docs/current-build-state.md` and the latest exact execution/progress evidence before acting; version summaries in this file are not authority.
+
+For first-client acquisition, explicitly verify a real owner's fresh DEVELOPMENT AUTH MFA and **independent, freshly signed** human-to-business operating authority before authorizing any DEVELOPMENT DATA organization/owner row. The dormant directory-verifier code, test signatures, existing AUTH account count, website/domain possession, and owner declaration do not constitute that evidence. Do not create a synthetic or self-approved tenant. Separately approve PENDING registration, ACTIVE transition, distinct AUTH acquisition workload, restricted DATA credential, hosted ingress, n8n receipt, and real-data intake. The G0-G7 status and the already-applied G4 boundary are documented in `docs/development-first-client-readiness-20261013.md`.
 
 Synthetic-token issuance, hosted AUTH wiring, hosted DATA wiring, Render changes, n8n integration, communications providers, billing providers, staging, and production are distinct resource boundaries.
 

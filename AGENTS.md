@@ -8,6 +8,8 @@ Always evaluate work through four lanes: **Security, Infrastructure, Automation,
 
 Do not let infrastructure or automation work silently substitute for business-critical work. If asked to prioritize, name the tradeoff explicitly. For example, spending a day on platform hardening may reduce immediate time available to land, serve, or retain a paying client; conversely, rushing client delivery must not bypass security or authority boundaries.
 
+A supervised, consented first-client OIA/discovery meeting is legitimate Business-lane progress while acquisition automation is gated. It does **not** authorize hosted intake, application access to OIA tables, automatic invoice/payment or an Avuhz tenant. Keep client notes and evidence in an approved private collection boundary, not Git, fixtures, console logs, or the inactive public form.
+
 ## Verify before apply
 
 Before changing anything, explicitly confirm:
@@ -75,11 +77,11 @@ This map is derived from the current repository tree:
 - root architecture context: `ARCHITECTURE.md`
 - security/change rules: `SECURITY.md`
 - agent rules: `AGENTS.md`
-- current build/readiness truth: `docs/current-build-state.md`
-- ordered roadmap: `docs/roadmap.md`
+- current build/readiness truth: `docs/current-build-state.md`; latest first-client DEVELOPMENT readback: `docs/development-first-client-readiness-20261013.md`
+- ordered roadmap: `docs/roadmap.md`; OIA methodology/inspection/finding policy: `docs/oia/`
 - Codex parallel-agent operating model: `docs/codex-operating-model.md`
 - repo-scoped Codex skills: `.agents/skills/`
-- runtime/service/worker code: `src/avuhz_runtime/`, `src/avuhz_service/`, `src/avuhz_worker/`
+- runtime/service/worker code: `src/avuhz_runtime/`, `src/avuhz_service/`, `src/avuhz_worker/`; shared first-client owner and acquisition candidates live in `src/avuhz_service/development_*owner*.py`, `development_acquisition_*.py`, `acquisition_intake_command.py`
 - contract schemas: `contracts/schemas/v1/`
 - bounded authorization plans/evidence: `contracts/plans/v1/`
 - Supabase migrations: `supabase/migrations/`
@@ -88,9 +90,9 @@ This map is derived from the current repository tree:
 - local Supabase config: `supabase/config.toml`
 - repository tests/gates: `tests/`, `scripts/check-baseline.sh`, `.semgrep.yml`, `security/forbidden-path-patterns.txt`
 - CI workflow definitions: `.github/workflows/`
-- n8n workflow exports: **none currently present**; no canonical workflow-export path exists yet, and current forbidden-path rules reject `n8n-workflows/` and `.n8n/`
+- n8n workflow exports: **none currently present**; no canonical workflow-export path exists, and current forbidden-path rules reject `n8n-workflows/` and `.n8n/`. LOCAL/TEST-only event/receipt adapters exist at `src/avuhz_worker/n8n_event_sink.py`, `local_n8n_receipt_http.py`, `local_n8n_receipt_store.py`
 - Supabase Edge Function source: **none currently present**; local `edge_runtime` configuration does not mean an Edge Function is implemented
-- dashboard/frontend application code: **none currently present**
+- dashboard/frontend application code: **none in this repository**; the public Sekinfra frontend is maintained separately in `AnonymousKoo/sekinfra` and its public diagnostic intake currently fails closed
 
 Do not guess missing paths. If a future task introduces one of these absent resources, inspect the actual resulting tree and update this map in the same bounded change.
 
@@ -98,7 +100,7 @@ Do not guess missing paths. If a future task introduces one of these absent reso
 
 Do not hardcode a current AUTH/DATA version into agent instructions. That state changes more frequently than this operating file should.
 
-Before work that depends on current DEVELOPMENT status, read `docs/current-build-state.md` and the latest bounded execution/progress evidence for that exact resource. Use `docs/roadmap.md` only for sequence, not as proof that a provider action occurred.
+Before work that depends on current DEVELOPMENT status, read `docs/current-build-state.md`, `docs/development-first-client-readiness-20261013.md` and the latest bounded execution/progress evidence for that exact resource. Use `docs/roadmap.md` only for sequence, not as proof that a provider action occurred. The October 13 DATA rate-counter migration is already applied; never rerun G4. Remaining first-client gates include independent owner proof, real pending/active registration, distinct AUTH acquisition workload, a private restricted DATA credential, authenticated hosted ingress, hosted n8n receipt and synthetic proof before real traffic.
 
 DEVELOPMENT AUTH and DATA remain separate projects and responsibilities. Never reuse an expired, consumed, stopped, superseded, or narrower historical authorization for a later action.
 

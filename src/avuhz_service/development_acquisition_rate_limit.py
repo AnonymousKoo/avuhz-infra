@@ -5,12 +5,13 @@ the existing ReceiveAcquisitionIntakeCandidate rate_limit_admit callback.
 Only that caller's previously authenticated tenant/principal is valid input.
 
 This is NOT a migration, RLS policy, role grant, hosted service binding,
-provider operation, or public endpoint. The dedicated
-public.avuhz_acquisition_rate_limit_counters table DOES NOT yet exist.
-Do not enable until its separately approved DEVELOPMENT DATA migration has
-FORCED tenant RLS, restricted column-level INSERT/UPDATE/SELECT, proven
-cross-tenant denial, and an approved retention/pruning job. There must be
-no use of service_role, DDL or BYPASSRLS in an application runtime.
+provider operation, or public endpoint. DEVELOPMENT DATA already contains
+public.avuhz_acquisition_rate_limit_counters with forced tenant RLS and
+approved restricted column grants for avuhz_acquisition_service_dev.
+These grants do not authorize a hosted caller. Before live use require an
+independently verified owner/tenant, AUTH workload, protected dedicated DATA
+credential, rate-counter retention/pruning and approved hosted composition.
+Never use service_role, DDL or BYPASSRLS in application runtime.
 
 A single atomic PostgreSQL UPSERT serializes admission for the same
 tenant/service-principal across hosts/workers. It uses the DATABASE clock and

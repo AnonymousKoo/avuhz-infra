@@ -142,6 +142,9 @@ class AcquisitionCounterAccessPostgresTests(unittest.TestCase):
         return (f"BEGIN;SET LOCAL ROLE {ROLE};"
                 f"SET LOCAL avuhz.tenant_id='{bound}';" + sql + ";COMMIT;")
 
+    # The SQL under test deliberately grants SET only to LOGIN, not to the
+    # migration/admin role. Exercise transactions as the dedicated LOCAL test
+    # login, never by granting postgres an elevated SET edge or BYPASSRLS.
     def test_exact_acl_and_ten_admissions_but_no_eleventh(self):
         self.apply("BEGIN;\n" + SOURCE.read_text() + "\nCOMMIT;\n")
         state = self.sql(
@@ -160,20 +163,21 @@ class AcquisitionCounterAccessPostgresTests(unittest.TestCase):
         ).stdout.decode().splitlines()
         self.assertEqual(state, ["2", "1", "0", "0", "0", "0", "1"])
         for i in range(1, 11):
-            self.assertEqual(self.sql(self.admit()).stdout.decode().strip(), str(i))
-        self.assertEqual(self.sql(self.admit()).stdout.decode().strip(), "")
+            self.assertEqual(self.sql(self.admit(), user=LOGIN).stdout.decode().strip(), str(i))
+        self.assertEqual(self.sql(self.admit(), user=LOGIN).stdout.decode().strip(), "")
         self.assertEqual(self.sql(
             "SELECT request_count FROM public.avuhz_acquisition_rate_limit_counters;"
         ).stdout.decode().strip(), "10")
 
     def test_missing_scope_cross_tenant_delete_and_broad_role_denied(self):
         self.apply("BEGIN;\n" + SOURCE.read_text() + "\nCOMMIT;\n")
-        self.assertEqual(self.sql(self.admit()).stdout.decode().strip(), "1")
+        self.assertEqual(self.sql(self.admit(), user=LOGIN).stdout.decode().strip(), "1")
         self.assertEqual(self.sql(
-            f"BEGIN;SET ROLE {ROLE};SELECT count(*) "
-            "FROM public.avuhz_acquisition_rate_limit_counters;ROLLBACK;"
+            f"BEGIN;SET LOCAL ROLE {ROLE};SELECT count(*) "
+            "FROM public.avuhz_acquisition_rate_limit_counters;ROLLBACK;",
+            user=LOGIN,
         ).stdout.decode().strip(), "0")
-        wrong = self.sql(self.admit(B, A), check=False)
+        wrong = self.sql(self.admit(B, A), user=LOGIN, check=False)
         self.assertNotEqual(wrong.returncode, 0)
         for statement in (
             "DELETE FROM public.avuhz_acquisition_rate_limit_counters;",
@@ -182,7 +186,7 @@ class AcquisitionCounterAccessPostgresTests(unittest.TestCase):
             "SELECT * FROM public.avuhz_engagements;",
         ):
             failed = self.sql(f"BEGIN;SET LOCAL ROLE {ROLE};"
-                f"SET LOCAL avuhz.tenant_id='{A}';" + statement, check=False)
+                f"SET LOCAL avuhz.tenant_id='{A}';" + statement, user=LOGIN, check=False)
             self.assertNotEqual(failed.returncode, 0)
         self.assertEqual(self.sql(
             "SELECT count(*) FROM public.avuhz_acquisition_rate_limit_counters"

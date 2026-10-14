@@ -83,6 +83,7 @@ BEGIN
             AND EXISTS (
               SELECT 1 FROM pg_roles provider
               WHERE provider.oid=m.grantor AND provider.rolsuper
+                AND provider.rolname='supabase_admin'
                 AND provider.oid<>postgres_oid
             )
           )
@@ -342,6 +343,7 @@ BEGIN
             AND EXISTS (
               SELECT 1 FROM pg_roles provider
               WHERE provider.oid=m.grantor AND provider.rolsuper
+                AND provider.rolname='supabase_admin'
                 AND provider.oid<>postgres_oid
             )
           )

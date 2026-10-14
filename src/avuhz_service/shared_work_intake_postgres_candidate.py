@@ -66,13 +66,15 @@ def _fingerprint(context: TrustedExecutionContext, command: WorkIntakeCommand) -
         "source": command.source, "classification": command.classification,
         "recipient": command.recipient,
     }
+    if command.next_action_due_at is not None:
+        payload["next_action_due_at"] = command.next_action_due_at
     digest = hashlib.sha256(
         json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("ascii")
     ).hexdigest()
     return "fpv1:" + digest
 
 
-def _now_utc(clock) -> str:
+def _trusted_now(clock) -> datetime:
     value = clock()
     if (
         type(value) is not datetime
@@ -80,7 +82,7 @@ def _now_utc(clock) -> str:
         or value.utcoffset() != timedelta(0)
     ):
         raise ValueError("work intake clock unavailable")
-    return value.isoformat(timespec="seconds").replace("+00:00", "Z")
+    return value
 
 
 class SharedWorkIntakePostgresCandidate:
@@ -158,6 +160,13 @@ class SharedWorkIntakePostgresCandidate:
                 "and (select count(*) from pg_class c where "
                 "c.oid='public.avuhz_work_items'::regclass "
                 "and c.relforcerowsecurity)=1 "
+                "and (select count(*) from pg_attribute a "
+                "where a.attrelid='public.avuhz_work_items'::regclass "
+                "and a.attname='next_action_due_at' and not a.attisdropped "
+                "and a.atttypid='pg_catalog.timestamptz'::regtype "
+                "and not a.attnotnull and not a.atthasdef)=1 "
+                "and has_column_privilege(current_user,"
+                "'public.avuhz_work_items','next_action_due_at','INSERT') "
                 "and (select count(*) from pg_policies p "
                 "where p.schemaname='public' and p.tablename in "
                 "('avuhz_work_items','avuhz_idempotency_records',"
@@ -231,6 +240,19 @@ class SharedWorkIntakePostgresCandidate:
                 uow.rollback()  # no event/outbox change on replay
                 return DurableWorkReceipt(command.work_item_id, accepted_version, True, None)
 
+            # The initial next-action deadline is part of the first OPEN
+            # transaction, NEVER a browser-triggered scheduling side effect.
+            # Enforce server-clock bounds only for a *new* command; a replay
+            # must not fail just because real time passed after the commit.
+            now = _trusted_now(self._clock)
+            timestamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+            if command.kind == "OPEN" and command.next_action_due_at is not None:
+                due = datetime.strptime(
+                    command.next_action_due_at, "%Y-%m-%dT%H:%M:%SZ"
+                ).replace(tzinfo=timezone.utc)
+                if not timedelta(minutes=1) <= due - now <= timedelta(days=30):
+                    raise WorkIntakeDenied("work intake deadline unavailable")
+
             # Shared reducer enforces optimistic versions, owner authority,
             # handoff target validity, state machine and no reopened resolution.
             updated = evolve_work_item(
@@ -284,12 +306,13 @@ class SharedWorkIntakePostgresCandidate:
                 con.execute(
                     "insert into public.avuhz_work_items "
                     "(tenant_id,work_item_id,owner_reference,pending_recipient_reference,"
-                    "source,classification,state,record_version) "
-                    "values (%s,%s,%s,%s,%s,%s,%s,%s)",
+                    "source,classification,state,record_version,next_action_due_at) "
+                    "values (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     (
                         context.tenant_id, updated.work_item_id, updated.owner_reference,
                         updated.pending_recipient, updated.source, updated.classification,
                         updated.state, updated.record_version,
+                        updated.next_action_due_at,
                     ),
                 )
             else:
@@ -308,7 +331,6 @@ class SharedWorkIntakePostgresCandidate:
                 if cur.rowcount != 1:
                     raise WorkIntakeConflict("work intake record version stale")
 
-            timestamp = _now_utc(self._clock)
             event_id = str(uuid.uuid4())
             uow.lifecycle_events.append({
                 "event_id": event_id,

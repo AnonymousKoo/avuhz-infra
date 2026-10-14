@@ -44,6 +44,7 @@ MIGRATION_NAMES = (
     "20261014031000_enable_shared_work_intake_lifecycle_events.sql",
     "20261014034000_create_shared_work_items.sql",
     "20261014041000_enable_shared_work_item_command_idempotency.sql",
+    "20261014180000_add_shared_work_item_next_action_due_at.sql",
 )
 if DRIVER:
     import psycopg
@@ -181,6 +182,134 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
             ("receiver", self.command("RESOLVE", 5, key="resolved001")),
         ]
         return [self.writer.execute(actor, cmd) for actor, cmd in transitions]
+
+    def test_legacy_fingerprints_replay_for_open_and_nonopen(self):
+        import hashlib
+        # The predecessor hash omitted the optional deadline field entirely.
+        # Simulate legacy rows by seeding that exact hash before replay.
+        cases=(
+            ("OPEN",None,"legacyop01"),
+            ("BLOCK",1,"legacybl01"),
+        )
+        self.writer.execute("sender",self.command("OPEN",key="opened001"))
+        for kind,version,key in cases:
+            cmd=self.command(kind,version,key=key)
+            if kind=="OPEN":
+                # OPEN replay uses the original persisted OPEN receipt.
+                cmd=self.command("OPEN",key="opened001")
+            else:
+                self.writer.execute("sender",cmd)
+            prior_payload={
+                "tenant":TENANT_A,"principal":"worker.sender",
+                "kind":cmd.kind,"item":cmd.work_item_id,
+                "expected":cmd.expected_record_version,
+                "source":cmd.source,"classification":cmd.classification,
+                "recipient":cmd.recipient,
+            }
+            digest="fpv1:"+hashlib.sha256(
+                json.dumps(prior_payload,separators=(",",":"),sort_keys=True).encode("ascii")
+            ).hexdigest()
+            # The ledger correctly FORBIDS rewriting completed receipts.
+            # Byte-for-byte equality to the independently computed pre-change
+            # fingerprint proves persisted legacy receipts will replay.
+            with self.owner() as con:
+                row=con.execute(
+                    "SELECT semantic_request_fingerprint FROM "
+                    "public.avuhz_idempotency_records WHERE tenant_id=%s "
+                    "AND idempotency_key=%s",
+                    (TENANT_A,cmd.idempotency_key),
+                ).fetchone()
+                self.assertIsNotNone(row)
+                self.assertEqual(row["semantic_request_fingerprint"],digest)
+            replay=self.writer.execute("sender",cmd)
+            self.assertTrue(replay.replayed)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),2)
+        self.assertEqual(len(self.table("avuhz_outbox_deliveries")),2)
+        self.assertEqual(len(self.table("avuhz_idempotency_records")),2)
+
+    def test_deadline_exact_sixty_seconds_and_thirty_days_allowed(self):
+        from datetime import datetime, timezone
+        self.writer._clock=lambda:datetime(2030,1,15,16,0,0,tzinfo=timezone.utc)
+        for i,due in enumerate(("2030-01-15T16:01:00Z", "2030-02-14T16:00:00Z")):
+            item=f"a4730000-0000-4000-8000-{i+51:012d}"
+            cmd=dataclasses.replace(self.command("OPEN",key=f"exact{i:04d}",item=item),
+                                    next_action_due_at=due)
+            receipt=self.writer.execute("sender",cmd)
+            self.assertEqual((receipt.accepted_version,receipt.replayed),(1,False))
+        self.assertEqual(len(self.table("avuhz_work_items")),2)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),2)
+
+    def test_deadline_subsecond_boundary_uses_full_trusted_clock(self):
+        from datetime import datetime,timezone
+        cases=(
+            ("2030-01-15T16:01:00Z",False),
+            ("2030-01-15T16:01:01Z",True),
+            ("2030-02-14T16:00:00Z",True),
+            ("2030-02-14T16:00:01Z",False),
+        )
+        self.writer._clock=lambda:datetime(2030,1,15,16,0,0,500000,tzinfo=timezone.utc)
+        for i,(due,valid) in enumerate(cases):
+            item=f"a4730000-0000-4000-8000-{i+41:012d}"
+            cmd=dataclasses.replace(
+                self.command("OPEN",key=f"fraction{i:02d}",item=item),
+                next_action_due_at=due,
+            )
+            if valid:
+                receipt=self.writer.execute("sender",cmd)
+                self.assertEqual(receipt.accepted_version,1)
+            else:
+                with self.assertRaises(WorkIntakeDenied):
+                    self.writer.execute("sender",cmd)
+        self.assertEqual(len(self.table("avuhz_work_items")),2)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),2)
+        self.assertEqual(len(self.table("avuhz_outbox_deliveries")),2)
+
+    def test_deadline_open_is_atomic_and_replay_safe_in_existing_uow(self):
+        from datetime import datetime, timezone
+        # Fixed trusted server time. No real tenant or hosted DATA.
+        fixed=datetime(2030,1,15,16,0,0,tzinfo=timezone.utc)
+        self.writer._clock=lambda:fixed
+        original=dataclasses.replace(
+            self.command("OPEN",key="dueopen001"),
+            next_action_due_at="2030-01-15T17:00:00Z",
+        )
+        first=self.writer.execute("sender",original)
+        self.assertEqual((first.accepted_version,first.replayed),(1,False))
+        rows=self.table("avuhz_work_items")
+        self.assertEqual(len(rows),1)
+        self.assertEqual(
+            rows[0]["next_action_due_at"].isoformat(),"2030-01-15T17:00:00+00:00",
+        )
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),1)
+        self.assertEqual(len(self.table("avuhz_idempotency_records")),1)
+        self.assertEqual(len(self.table("avuhz_outbox_deliveries")),1)
+        self.writer._clock=lambda:datetime(2031,1,15,16,0,0,tzinfo=timezone.utc)
+        replay=self.writer.execute("sender",original)
+        self.assertTrue(replay.replayed)
+        self.assertIsNone(replay.event_id)
+        with self.assertRaises(WorkIntakeConflict):
+            self.writer.execute("sender",dataclasses.replace(
+                original,next_action_due_at="2030-01-15T18:00:00Z",
+            ))
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),1)
+        self.assertEqual(len(self.table("avuhz_idempotency_records")),1)
+        self.assertEqual(len(self.table("avuhz_outbox_deliveries")),1)
+
+    def test_deadline_bounds_denied_without_any_receipt_or_event(self):
+        from datetime import datetime,timezone
+        self.writer._clock=lambda:datetime(2030,1,15,16,0,0,tzinfo=timezone.utc)
+        for i, due in enumerate((
+            "2030-01-15T16:00:59Z",
+            "2030-02-15T16:00:01Z",
+            "2030-01-15T15:59:00Z",
+        )):
+            with self.subTest(i=i),self.assertRaises(WorkIntakeDenied):
+                self.writer.execute("sender",dataclasses.replace(
+                    self.command("OPEN",key=f"limit{i:04d}"),next_action_due_at=due,
+                ))
+        for table in ("avuhz_work_items","avuhz_lifecycle_events",
+                      "avuhz_idempotency_records","avuhz_outbox_deliveries"):
+            self.assertEqual(len(self.table(table)),0)
 
     def test_complete_six_transition_database_event_outbox_and_idempotency_journey(self):
         receipts = self.full_journey()
@@ -342,7 +471,7 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
             ))
         replay = self.docker(
             "psql", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", DATABASE,
-            source=(MIGRATION_DIR / MIGRATION_NAMES[-1]).read_text(), check=False,
+            source=(MIGRATION_DIR / "20261014041000_enable_shared_work_item_command_idempotency.sql").read_text(), check=False,
         )
         self.assertNotEqual(replay.returncode, 0)
         self.assertIn("AVUHZ_WORK_ITEM_COMMAND_PREFLIGHT_STOP", replay.stderr.decode())

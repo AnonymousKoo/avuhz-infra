@@ -54,6 +54,10 @@ class WorkItemOwnerInstallStaticTests(unittest.TestCase):
         self.assertEqual(sql.count("ON runtime.oid=m.roleid OR runtime.oid=m.member"), 2)
         self.assertEqual(sql.count(
             "WHERE runtime.rolname='avuhz_data_runtime_service_dev'"), 2)
+        self.assertEqual(sql.count(
+            "m.roleid=runtime.oid AND m.member=postgres_oid"), 2)
+        self.assertEqual(sql.count(
+            "provider.oid=m.grantor AND provider.rolsuper"), 2)
 
     def test_temporary_privilege_grants_are_sealed_before_commit(self):
         sql = WRAPPER.read_text()
@@ -278,6 +282,64 @@ class WorkItemOwnerInstallPostgresTests(unittest.TestCase):
             self.assertEqual(self.status(), ["t","f","f","0"])
         finally:
             self.query("DROP VIEW public.pg_roles;")
+
+    def test_existing_provider_admin_only_runtime_edge_preserved(self):
+        # Mirrors hosted Supabase's superuser-granted, SET-disabled
+        # postgres-to-runtime edge. The fixture uses a non-super hosted executor
+        # and a distinct local postgres superuser as the provider grantor.
+        runtime = "avuhz_data_runtime_service_dev"
+        executor = "avuhz_hosted_data_postgres_sim_v1"
+        existed = self.query(
+            "SELECT count(*) FROM pg_roles "
+            f"WHERE rolname='{runtime}';"
+        ) == "1"
+        if not existed:
+            self.query(f"CREATE ROLE {runtime} LOGIN NOINHERIT NOBYPASSRLS;")
+        try:
+            self.query(
+                f"GRANT {runtime} TO {executor} "
+                "WITH ADMIN TRUE, INHERIT FALSE, SET FALSE;"
+            )
+            self.assertEqual(self.status(), ["f", "f", "f", "0"])
+            self.apply_candidate()
+            self.assertEqual(self.status(), ["t", "f", "f", "0"])
+            self.assertEqual(self.query(
+                "SELECT count(*) FROM pg_auth_members m "
+                f"WHERE m.member='{executor}'::regrole "
+                f"AND m.roleid='{runtime}'::regrole "
+                "AND m.admin_option AND NOT m.inherit_option "
+                "AND NOT m.set_option "
+                "AND m.grantor='postgres'::regrole;"
+            ), "1")
+        finally:
+            self.query(f"REVOKE {runtime} FROM {executor};")
+            if not existed:
+                self.query(f"DROP ROLE {runtime};")
+
+    def test_provider_runtime_edge_with_set_true_denied(self):
+        runtime = "avuhz_data_runtime_service_dev"
+        executor = "avuhz_hosted_data_postgres_sim_v1"
+        existed = self.query(
+            "SELECT count(*) FROM pg_roles "
+            f"WHERE rolname='{runtime}';"
+        ) == "1"
+        if not existed:
+            self.query(f"CREATE ROLE {runtime} LOGIN NOINHERIT NOBYPASSRLS;")
+        try:
+            self.query(
+                f"GRANT {runtime} TO {executor} "
+                "WITH ADMIN TRUE, INHERIT FALSE, SET TRUE;"
+            )
+            before = self.status()
+            denied = self.apply_candidate(check=False)
+            self.assertNotEqual(denied.returncode, 0)
+            self.assertIn("AVUHZ_WORK_ITEM_INSTALL_OWNER_MEMBERSHIP_DRIFT_STOP",
+                          denied.stderr.decode())
+            self.assertEqual(self.status(), before)
+        finally:
+            self.query(f"REVOKE {runtime} FROM {executor};")
+            if not existed:
+                self.query(f"DROP ROLE {runtime};")
 
     def test_unexpected_member_of_runtime_role_stops_before_create(self):
         runtime = "avuhz_data_runtime_service_dev"

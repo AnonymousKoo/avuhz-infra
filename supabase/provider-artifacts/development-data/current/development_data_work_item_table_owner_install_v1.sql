@@ -71,9 +71,22 @@ BEGIN
         ON runtime.oid=m.roleid OR runtime.oid=m.member
       WHERE runtime.rolname='avuhz_data_runtime_service_dev'
         AND NOT (
-          m.roleid=command_oid AND m.member=runtime.oid
-          AND m.grantor=migration_oid AND NOT m.admin_option
-          AND NOT m.inherit_option AND m.set_option
+          (
+            m.roleid=command_oid AND m.member=runtime.oid
+            AND m.grantor=migration_oid AND NOT m.admin_option
+            AND NOT m.inherit_option AND m.set_option
+          )
+          OR (
+            -- Provider-authorized ADMIN-only membership; never SET or inherit.
+            m.roleid=runtime.oid AND m.member=postgres_oid
+            AND m.admin_option AND NOT m.inherit_option AND NOT m.set_option
+            AND EXISTS (
+              SELECT 1 FROM pg_roles provider
+              WHERE provider.oid=m.grantor AND provider.rolsuper
+                AND provider.rolname='supabase_admin'
+                AND provider.oid<>postgres_oid
+            )
+          )
         )
     )
     OR NOT pg_has_role('postgres','avuhz_data_migration_service_dev','MEMBER')
@@ -318,9 +331,22 @@ BEGIN
         ON runtime.oid=m.roleid OR runtime.oid=m.member
       WHERE runtime.rolname='avuhz_data_runtime_service_dev'
         AND NOT (
-          m.roleid=command_oid AND m.member=runtime.oid
-          AND m.grantor=migration_oid AND NOT m.admin_option
-          AND NOT m.inherit_option AND m.set_option
+          (
+            m.roleid=command_oid AND m.member=runtime.oid
+            AND m.grantor=migration_oid AND NOT m.admin_option
+            AND NOT m.inherit_option AND m.set_option
+          )
+          OR (
+            -- Provider-authorized ADMIN-only membership; never SET or inherit.
+            m.roleid=runtime.oid AND m.member=postgres_oid
+            AND m.admin_option AND NOT m.inherit_option AND NOT m.set_option
+            AND EXISTS (
+              SELECT 1 FROM pg_roles provider
+              WHERE provider.oid=m.grantor AND provider.rolsuper
+                AND provider.rolname='supabase_admin'
+                AND provider.oid<>postgres_oid
+            )
+          )
         )
     )
     OR pg_has_role('avuhz_data_migration_service_dev','avuhz_command_service','SET')

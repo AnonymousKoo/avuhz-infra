@@ -33,6 +33,10 @@ _SHA = re.compile(r"^sha256:[0-9a-f]{64}$")
 _PRINCIPAL = re.compile(r"^service\.[a-z][a-z0-9._:-]{2,120}$")
 _SERVICE_CLASS = "acquisition_intake"
 _CAPABILITIES = frozenset({"acquisition_intake:receive"})
+# Bound future acquisition workload credentials to one typical Supabase
+# access-token window. This is a verifier cap, not a provider-side issuer
+# configuration change or approval to enroll/issue a workload credential.
+MAX_ACQUISITION_TOKEN_LIFETIME_SECONDS = 60 * 60
 _DENIED = "acquisition_service_identity_invalid"
 
 
@@ -136,7 +140,10 @@ class DevelopmentAcquisitionServiceIdentityCandidate:
             expires = claims.get("exp")
             issued_at = _utc_timestamp(issued)
             expires_at = _utc_timestamp(expires)
-            if expires <= issued:
+            if (
+                expires <= issued
+                or expires - issued > MAX_ACQUISITION_TOKEN_LIFETIME_SECONDS
+            ):
                 raise ValueError
         except Exception:
             # No credential, subject, private provider payload, PII, or

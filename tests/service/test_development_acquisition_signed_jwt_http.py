@@ -140,6 +140,22 @@ class SignedAcquisitionHttpTests(unittest.TestCase):
         self.assertNotIn("alpha@example.invalid", json.dumps(result))
         self.assertNotIn(token, json.dumps(result))
 
+    def test_valid_es256_signature_with_excess_workload_lifetime_is_denied(self):
+        for lifetime in (3601, 24 * 60 * 60):
+            with self.subTest(lifetime=lifetime):
+                issued = int((self.now - timedelta(seconds=25)).timestamp())
+                token = self.sign(self.payload(
+                    iat=issued,
+                    exp=issued + lifetime,
+                ))
+                status, body, _ = self.send(token)
+                self.assertEqual(
+                    (status, body),
+                    (403, {"error": "acquisition_intake_not_authorized"}),
+                )
+                self.assertEqual(self.store.connections, [])
+                self.assertEqual(self.admissions, [])
+
     def test_signature_forgery_and_algorithm_confusion_denied_before_data(self):
         bad_private = ec.generate_private_key(ec.SECP256R1())
         forged = self.sign(key=bad_private)

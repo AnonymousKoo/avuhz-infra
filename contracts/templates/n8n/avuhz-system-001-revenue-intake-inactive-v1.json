@@ -1,0 +1,53 @@
+{
+  "name": "Avuhz System #001 Revenue Intake \u2014 INACTIVE Child Candidate v1",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "69100000-0000-4000-8000-000000000001",
+      "name": "From Shared Receiver Not Wired",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// LOCAL/TEST Avuhz #001: non-authoritative candidate. No side effects.\nconst items = $input.all();\nconst fields = ['event_id','event_type','tenant_id','correlation_id','occurred_at','authoritative_subject_reference','authoritative_subject_version','delivery_idempotency_key'];\nconst uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;\nconst key = /^[A-Za-z0-9._:-]{8,128}$/;\nconst timestamp = /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$/;\nfunction utcTimestamp(value) {\n  if (typeof value !== 'string' || !timestamp.test(value)) return false;\n  const date = new Date(value);\n  if (Number.isNaN(date.getTime())) return false;\n  return date.getUTCFullYear() === Number(value.slice(0,4))\n    && date.getUTCMonth() + 1 === Number(value.slice(5,7))\n    && date.getUTCDate() === Number(value.slice(8,10))\n    && date.getUTCHours() === Number(value.slice(11,13))\n    && date.getUTCMinutes() === Number(value.slice(14,16))\n    && date.getUTCSeconds() === Number(value.slice(17,19));\n}\nconst record = v => v !== null && typeof v === 'object' && !Array.isArray(v);\nconst event = items.length === 1 && record(items[0]) ? items[0].json : null;\nconst ref = record(event) ? event.authoritative_subject_reference : null;\nconst valid = record(event)\n  && Object.keys(event).length === fields.length\n  && fields.every(k => Object.prototype.hasOwnProperty.call(event,k))\n  && event.event_type === 'acquisition.intake.received'\n  && typeof event.event_id === 'string' && uuid.test(event.event_id)\n  && typeof event.tenant_id === 'string' && uuid.test(event.tenant_id)\n  && typeof event.correlation_id === 'string' && uuid.test(event.correlation_id)\n  && typeof event.delivery_idempotency_key === 'string' && key.test(event.delivery_idempotency_key)\n  && utcTimestamp(event.occurred_at)\n  && event.authoritative_subject_version === 1\n  && record(ref) && Object.keys(ref).length === 2\n  && ref.reference_type === 'ACQUISITION_INTAKE'\n  && typeof ref.reference_id === 'string' && uuid.test(ref.reference_id);\nif (!valid) return [{json:{code:'REVENUE_EVENT_REJECTED',requires_authoritative_lookup:false}}];\n// This only identifies a governed lookup candidate. No tenant/owner authority,\n// no durable replay receipt, no Work Item, no notifications.\nreturn [{json:{\n  code:'OWNER_LOOKUP_REQUIRED',\n  event_id:event.event_id,\n  correlation_id:event.correlation_id,\n  reference_type:'ACQUISITION_INTAKE',\n  reference_id:ref.reference_id,\n  requires_authoritative_lookup:true\n}}];"
+      },
+      "id": "69100000-0000-4000-8000-000000000002",
+      "name": "Prepare Governed Owner Lookup Candidate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "From Shared Receiver Not Wired": {
+      "main": [
+        [
+          {
+            "node": "Prepare Governed Owner Lookup Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  },
+  "active": false,
+  "tags": []
+}

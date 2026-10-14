@@ -142,6 +142,7 @@ cat > "$provider_data_expected" <<'EOF'
 supabase/provider-artifacts/development-data/current/development_data_migration_identity_seal_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_acquisition_intake_event_owner_wrapper_v1.sql
+supabase/provider-artifacts/development-data/current/development_data_work_intake_event_owner_wrapper_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_shared_acquisition_registry_role_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_acquisition_runtime_login_create_v1.sql
 supabase/provider-artifacts/development-data/current/development_data_acquisition_runtime_set_grant_v1.sql
@@ -194,6 +195,7 @@ while IFS= read -r sql_path; do
     supabase/provider-artifacts/development-auth/history/v2/20260912155200_development_auth_migration_identity_seal_v2.sql|\
     supabase/provider-artifacts/development-data/current/development_data_migration_identity_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_acquisition_intake_event_owner_wrapper_v1.sql|\
+    supabase/provider-artifacts/development-data/current/development_data_work_intake_event_owner_wrapper_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_shared_acquisition_registry_role_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_acquisition_runtime_login_create_v1.sql|\
     supabase/provider-artifacts/development-data/current/development_data_acquisition_runtime_set_grant_v1.sql|\

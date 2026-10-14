@@ -60,6 +60,7 @@ _EVENT_TYPE = {
 }
 _REF = re.compile(r"^[a-z][a-z0-9._:-]{1,95}$", re.ASCII)
 _KEY = re.compile(r"^[A-Za-z0-9_-]{8,96}$", re.ASCII)
+_DUE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", re.ASCII)
 
 
 class WorkIntakeDenied(PermissionError):
@@ -81,6 +82,17 @@ def _canonical_uuid(value: object) -> bool:
 
 def _opaque(value: object) -> bool:
     return type(value) is str and _REF.fullmatch(value) is not None
+
+
+def _canonical_due(value: object) -> bool:
+    """Exact, seconds-resolution UTC only; no timezone offsets or free text."""
+    if type(value) is not str or _DUE.fullmatch(value) is None:
+        return False
+    try:
+        instant = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+        return instant.strftime("%Y-%m-%dT%H:%M:%SZ") == value
+    except (ValueError, OverflowError):
+        return False
 
 
 def _fresh(context: TrustedExecutionContext) -> bool:
@@ -115,6 +127,7 @@ class WorkIntakeCommand:
     source: str | None = None
     classification: str | None = None
     recipient: str | None = None
+    next_action_due_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -127,6 +140,7 @@ class WorkItem:
     source: str
     classification: str
     pending_recipient: str | None = None
+    next_action_due_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -167,6 +181,7 @@ def evolve_work_item(current: WorkItem | None, command: WorkIntakeCommand,
             record_version=1,
             source=command.source,
             classification=command.classification,
+            next_action_due_at=command.next_action_due_at,
         )
     else:
         if current is None:
@@ -298,6 +313,8 @@ class SharedWorkIntakeCandidate:
                 and type(command.classification) is str
                 and command.classification in _CLASSIFICATION
                 and command.recipient is None
+                and (command.next_action_due_at is None
+                     or _canonical_due(command.next_action_due_at))
             )
         else:
             valid = (
@@ -305,6 +322,7 @@ class SharedWorkIntakeCandidate:
                 and 1 <= command.expected_record_version <= 2**31 - 1
                 and command.source is None
                 and command.classification is None
+                and command.next_action_due_at is None
                 and (
                     _opaque(command.recipient)
                     if command.kind == _OFFER
@@ -329,6 +347,8 @@ class SharedWorkIntakeCandidate:
             "recipient": command.recipient,
             "principal": context.principal_id,
         }
+        if command.next_action_due_at is not None:
+            payload["next_action_due_at"] = command.next_action_due_at
         digest = hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("ascii")
         ).hexdigest()

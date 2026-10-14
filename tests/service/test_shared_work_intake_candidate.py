@@ -58,11 +58,12 @@ class FakeOfflineResolver:
 
 
 def command(kind, version=None, *, key="idempotency01", item=ITEM, source=None,
-            classification=None, recipient=None):
+            classification=None, recipient=None, due=None):
     return WorkIntakeCommand(
         kind=kind, work_item_id=item, idempotency_key=key,
         expected_record_version=version, source=source,
         classification=classification, recipient=recipient,
+        next_action_due_at=due,
     )
 
 
@@ -88,6 +89,41 @@ class WorkIntakeSystemTests(unittest.TestCase):
             "OPEN", key=key, item=item, source="web",
             classification="service_request",
         ))
+
+    def test_open_accepts_canonical_due_and_preserves_it_across_transition(self):
+        opened = self.store.apply(
+            "sender", command("OPEN", key="duetime001", source="web",
+            classification="service_request", due="2030-01-15T16:00:00Z"),
+        )
+        self.assertEqual(opened.item.next_action_due_at, "2030-01-15T16:00:00Z")
+        blocked = self.store.apply(
+            "sender", command("BLOCK", 1, key="dueblock01"),
+        )
+        self.assertEqual(blocked.item.next_action_due_at, opened.item.next_action_due_at)
+
+    def test_invalid_due_format_and_nonopen_injection_are_denied(self):
+        bad = (
+            "2030-02-30T16:00:00Z", "2030-01-15T16:00:00.1Z",
+            "2030-01-15T16:00:00+00:00", "2030-01-15T16:00:00Z" + "A" * 2000,
+            "phone:+15555555555", True, [],
+        )
+        for i,value in enumerate(bad):
+            with self.subTest(i=i),self.assertRaises(WorkIntakeDenied):
+                self.store.apply(
+                    "sender",command("OPEN",key=f"baddue{i:04d}",source="web",
+                    classification="service_request",due=value)
+                )
+        with self.assertRaises(WorkIntakeDenied):
+            self.store.apply("sender",command("BLOCK",1,key="badblock01",due="2030-01-15T16:00:00Z"))
+
+    def test_same_key_different_deadline_conflicts_without_second_effect(self):
+        original=command("OPEN",key="sametime01",source="web",
+                         classification="service_request",due="2030-01-15T16:00:00Z")
+        self.store.apply("sender",original)
+        with self.assertRaises(WorkIntakeConflict):
+            self.store.apply("sender",dataclasses.replace(
+                original,next_action_due_at="2030-01-15T16:05:00Z"))
+        self.assertTrue(self.store.apply("sender",original).replayed)
 
     def test_complete_multi_step_workflow_and_sanitized_transition_intents(self):
         results = [self.open()]

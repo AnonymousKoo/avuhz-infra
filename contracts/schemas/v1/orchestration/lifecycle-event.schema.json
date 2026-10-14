@@ -28,6 +28,13 @@
       "type": "string",
       "enum": [
         "acquisition.intake.received",
+        "work_intake.opened",
+        "work_intake.handoff_offered",
+        "work_intake.handoff_accepted",
+        "work_intake.handoff_cancelled",
+        "work_intake.blocked",
+        "work_intake.resumed",
+        "work_intake.resolved",
         "engagement.handoff.accepted",
         "implementation_handoff.accepted",
         "implementation_handoff.revoked",
@@ -114,6 +121,27 @@
     }
   },
   "$defs": {
+    "workIntakeMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "state"
+      ],
+      "properties": {
+        "work_item_id": {
+          "$ref": "urn:avuhz:schema:contracts:common:identifiers:v1#/$defs/canonicalUuid"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "BLOCKED",
+            "RESOLVED"
+          ]
+        }
+      }
+    },
     "acquisitionIntakeMetadata": {
       "type": "object",
       "additionalProperties": false,
@@ -275,6 +303,123 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "work_intake.opened",
+              "work_intake.handoff_offered",
+              "work_intake.handoff_accepted",
+              "work_intake.handoff_cancelled",
+              "work_intake.blocked",
+              "work_intake.resumed",
+              "work_intake.resolved"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authoritative_subject_reference": {
+            "properties": {
+              "reference_type": {
+                "const": "WORK_ITEM"
+              }
+            }
+          },
+          "visibility": {
+            "const": "TENANT_OPERATIONAL"
+          },
+          "sanitized_metadata": {
+            "$ref": "#/$defs/workIntakeMetadata"
+          }
+        },
+        "not": {
+          "required": [
+            "engagement_id"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": [
+              "work_intake.opened",
+              "work_intake.handoff_offered",
+              "work_intake.handoff_accepted",
+              "work_intake.handoff_cancelled",
+              "work_intake.resumed"
+            ]
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "sanitized_metadata": {
+            "properties": {
+              "state": {
+                "const": "OPEN"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "work_intake.blocked"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "sanitized_metadata": {
+            "properties": {
+              "state": {
+                "const": "BLOCKED"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "work_intake.resolved"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "sanitized_metadata": {
+            "properties": {
+              "state": {
+                "const": "RESOLVED"
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {

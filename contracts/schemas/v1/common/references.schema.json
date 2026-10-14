@@ -12,6 +12,7 @@
         "ENGAGEMENT",
         "ACQUISITION_HANDOFF",
         "ACQUISITION_INTAKE",
+        "WORK_ITEM",
         "HUMAN_APPROVAL",
         "COMMAND",
         "LIFECYCLE_EVENT",

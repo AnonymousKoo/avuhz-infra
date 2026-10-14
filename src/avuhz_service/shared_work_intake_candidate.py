@@ -84,11 +84,24 @@ def _opaque(value: object) -> bool:
 
 
 def _fresh(context: TrustedExecutionContext) -> bool:
-    if not isinstance(context.expires_at, str):
+    if (
+        type(context.authenticated_at) is not str
+        or type(context.expires_at) is not str
+        or not context.authenticated_at.endswith("Z")
+        or not context.expires_at.endswith("Z")
+        or context.authentication_strength != "STRONG"
+        or type(context.step_up_satisfied) is not bool
+    ):
         return False
     try:
-        expiry = datetime.fromisoformat(context.expires_at.replace("Z", "+00:00"))
-        return expiry.tzinfo is not None and expiry.astimezone(timezone.utc) > datetime.now(timezone.utc)
+        issued = datetime.fromisoformat(context.authenticated_at[:-1] + "+00:00")
+        expiry = datetime.fromisoformat(context.expires_at[:-1] + "+00:00")
+        now = datetime.now(timezone.utc)
+        return (
+            issued.utcoffset() == timezone.utc.utcoffset(issued)
+            and expiry.utcoffset() == timezone.utc.utcoffset(expiry)
+            and issued <= now < expiry
+        )
     except (TypeError, ValueError, OverflowError):
         return False
 
@@ -133,6 +146,88 @@ class WorkIntakeResult:
     intent: WorkTransitionIntent | None
     replayed: bool = False
 
+
+
+def evolve_work_item(current: WorkItem | None, command: WorkIntakeCommand,
+                     context: TrustedExecutionContext,
+                     resolve_member: Callable[[str, str], str | None]) -> WorkItem:
+    """One shared, side-effect-free domain transition reducer.
+
+    Caller must validate the command and trusted context first and serialize
+    authoritative work-item access. This is NOT an authorization endpoint.
+    """
+    if command.kind == _OPEN:
+        if current is not None:
+            raise WorkIntakeConflict("work intake item already exists")
+        updated = WorkItem(
+            tenant_id=context.tenant_id,
+            work_item_id=command.work_item_id,
+            owner_reference=context.principal_id,
+            state=OPEN,
+            record_version=1,
+            source=command.source,
+            classification=command.classification,
+        )
+    else:
+        if current is None:
+            raise WorkIntakeDenied("work intake item unavailable")
+        actor = context.principal_id
+        kind = command.kind
+        # Check per-item ownership BEFORE version or state. Otherwise
+        # unrelated same-tenant principals can probe record versions.
+        if ((kind == _ACCEPT and current.pending_recipient != actor)
+            or (kind != _ACCEPT and current.owner_reference != actor)):
+            raise WorkIntakeDenied("work intake item unavailable")
+        if current.record_version != command.expected_record_version:
+            raise WorkIntakeConflict("work intake record version stale")
+        if kind == _ACCEPT:
+            if current.state != OPEN:
+                raise WorkIntakeConflict("work intake handoff unavailable")
+            updated = replace(
+                current, owner_reference=actor, pending_recipient=None,
+                record_version=current.record_version + 1,
+            )
+        else:
+            if kind == _OFFER:
+                if (
+                    current.state != OPEN
+                    or current.pending_recipient is not None
+                    or command.recipient == actor
+                ):
+                    raise WorkIntakeConflict("work intake handoff unavailable")
+                try:
+                    approved = resolve_member(context.tenant_id, command.recipient)
+                    if approved != command.recipient or not _opaque(approved):
+                        raise PermissionError
+                except Exception:
+                    raise WorkIntakeDenied("work intake recipient unavailable") from None
+                updated = replace(
+                    current, pending_recipient=approved,
+                    record_version=current.record_version + 1,
+                )
+            elif kind == _CANCEL:
+                if current.state != OPEN or current.pending_recipient is None:
+                    raise WorkIntakeConflict("work intake handoff unavailable")
+                updated = replace(
+                    current, pending_recipient=None,
+                    record_version=current.record_version + 1,
+                )
+            elif kind == _BLOCK:
+                if current.state != OPEN or current.pending_recipient is not None:
+                    raise WorkIntakeConflict("work intake block unavailable")
+                updated = replace(current, state=BLOCKED, record_version=current.record_version + 1)
+            elif kind == _RESUME:
+                if current.state != BLOCKED or current.pending_recipient is not None:
+                    raise WorkIntakeConflict("work intake resume unavailable")
+                updated = replace(current, state=OPEN, record_version=current.record_version + 1)
+            elif kind == _RESOLVE:
+                if current.state != OPEN or current.pending_recipient is not None:
+                    raise WorkIntakeConflict("work intake resolve unavailable")
+                updated = replace(current, state=RESOLVED, record_version=current.record_version + 1)
+            else:
+                raise WorkIntakeDenied("work intake request invalid")
+
+    return updated
 
 class SharedWorkIntakeCandidate:
     """In-memory local prototype; never mount directly as a hosted write API.
@@ -257,76 +352,7 @@ class SharedWorkIntakeCandidate:
                 # No second lifecycle event is generated on retry.
                 return replace(prior[1], intent=None, replayed=True)
 
-            if command.kind == _OPEN:
-                if current is not None:
-                    raise WorkIntakeConflict("work intake item already exists")
-                updated = WorkItem(
-                    tenant_id=context.tenant_id,
-                    work_item_id=command.work_item_id,
-                    owner_reference=context.principal_id,
-                    state=OPEN,
-                    record_version=1,
-                    source=command.source,
-                    classification=command.classification,
-                )
-            else:
-                if current is None:
-                    raise WorkIntakeDenied("work intake item unavailable")
-                actor = context.principal_id
-                kind = command.kind
-                # Check per-item ownership BEFORE version or state. Otherwise
-                # unrelated same-tenant principals can probe record versions.
-                if ((kind == _ACCEPT and current.pending_recipient != actor)
-                    or (kind != _ACCEPT and current.owner_reference != actor)):
-                    raise WorkIntakeDenied("work intake item unavailable")
-                if current.record_version != command.expected_record_version:
-                    raise WorkIntakeConflict("work intake record version stale")
-                if kind == _ACCEPT:
-                    if current.state != OPEN:
-                        raise WorkIntakeConflict("work intake handoff unavailable")
-                    updated = replace(
-                        current, owner_reference=actor, pending_recipient=None,
-                        record_version=current.record_version + 1,
-                    )
-                else:
-                    if kind == _OFFER:
-                        if (
-                            current.state != OPEN
-                            or current.pending_recipient is not None
-                            or command.recipient == actor
-                        ):
-                            raise WorkIntakeConflict("work intake handoff unavailable")
-                        try:
-                            approved = self._resolve_member(context.tenant_id, command.recipient)
-                            if approved != command.recipient or not _opaque(approved):
-                                raise PermissionError
-                        except Exception:
-                            raise WorkIntakeDenied("work intake recipient unavailable") from None
-                        updated = replace(
-                            current, pending_recipient=approved,
-                            record_version=current.record_version + 1,
-                        )
-                    elif kind == _CANCEL:
-                        if current.state != OPEN or current.pending_recipient is None:
-                            raise WorkIntakeConflict("work intake handoff unavailable")
-                        updated = replace(
-                            current, pending_recipient=None,
-                            record_version=current.record_version + 1,
-                        )
-                    elif kind == _BLOCK:
-                        if current.state != OPEN or current.pending_recipient is not None:
-                            raise WorkIntakeConflict("work intake block unavailable")
-                        updated = replace(current, state=BLOCKED, record_version=current.record_version + 1)
-                    elif kind == _RESUME:
-                        if current.state != BLOCKED or current.pending_recipient is not None:
-                            raise WorkIntakeConflict("work intake resume unavailable")
-                        updated = replace(current, state=OPEN, record_version=current.record_version + 1)
-                    elif kind == _RESOLVE:
-                        if current.state != OPEN or current.pending_recipient is not None:
-                            raise WorkIntakeConflict("work intake resolve unavailable")
-                        updated = replace(current, state=RESOLVED, record_version=current.record_version + 1)
-                    else:
-                        raise WorkIntakeDenied("work intake request invalid")
+            updated = evolve_work_item(current, command, context, self._resolve_member)
 
             result = WorkIntakeResult(
                 item=updated,

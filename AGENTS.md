@@ -55,7 +55,7 @@ Do not:
 - conflate DEVELOPMENT AUTH and DEVELOPMENT DATA; or
 - touch production resources without stated environment and resource confirmation plus exact authorization.
 
-Shared primitives that are required but not yet implemented here—n8n orchestration, communications adapters, and Stripe billing/usage metering—must be added centrally. Do not hide those gaps by building a vertical-specific substitute.
+System #001 follow-up review is a pure LOCAL/TEST candidate in src/avuhz_service/shared_revenue_followup_review.py. It requires authorized Work Item and persisted deadline inputs; its output is never a permitted send, persisted obligation, or tenant authority. Shared primitives that are required but not yet implemented here—n8n orchestration, communications adapters, and Stripe billing/usage metering—must be added centrally. Do not hide those gaps by building a vertical-specific substitute.
 
 ## Source-of-truth order
 

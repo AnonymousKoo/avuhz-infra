@@ -11,6 +11,8 @@
 -- avuhz_data_migration_service_dev; revoke BOTH grants before COMMIT.
 -- No permanent CREATE privilege, SET membership, extra app grants or roles.
 BEGIN;
+-- Resolve privileged SQL only through trusted PostgreSQL catalog objects.
+SET LOCAL search_path = pg_catalog, pg_temp;
 
 DO $work_item_owner_install_preflight$
 DECLARE
@@ -59,6 +61,17 @@ BEGIN
           AND runtime.rolcanlogin AND NOT runtime.rolsuper AND NOT runtime.rolinherit
           AND NOT runtime.rolcreaterole AND NOT runtime.rolcreatedb
           AND NOT runtime.rolreplication AND NOT runtime.rolbypassrls
+          AND m.grantor=migration_oid AND NOT m.admin_option
+          AND NOT m.inherit_option AND m.set_option
+        )
+    )
+    OR EXISTS (
+      SELECT 1 FROM pg_auth_members m
+      JOIN pg_roles runtime
+        ON runtime.oid=m.roleid OR runtime.oid=m.member
+      WHERE runtime.rolname='avuhz_data_runtime_service_dev'
+        AND NOT (
+          m.roleid=command_oid AND m.member=runtime.oid
           AND m.grantor=migration_oid AND NOT m.admin_option
           AND NOT m.inherit_option AND m.set_option
         )
@@ -137,7 +150,7 @@ BEGIN
         AND encode(sha256(convert_to(coalesce(qual,'<NULL>'),'UTF8')),'hex')
           ='8ab60881072b62721284dd0081f2a14de0bbf755fa88c55ddd64a319bb23a734'
         AND encode(sha256(convert_to(coalesce(with_check,'<NULL>'),'UTF8')),'hex')
-          ='a9c17452f8bf556508980269ac37db8b44e2f3beeb3b17c7e680a1edc273aaf1'
+          ='63e10ab9c7b31d52d9fd1d525af0d5233509632c32b330173952e7a057e0e323'
     )
     OR NOT EXISTS (
       SELECT 1 FROM pg_policies
@@ -299,6 +312,17 @@ BEGIN
         WHERE m.roleid=command_oid AND m.member=migration_oid
           AND m.admin_option AND NOT m.inherit_option AND NOT m.set_option
           AND grantor_role.rolsuper AND grantor_role.oid<>migration_oid)<>1
+    OR EXISTS (
+      SELECT 1 FROM pg_auth_members m
+      JOIN pg_roles runtime
+        ON runtime.oid=m.roleid OR runtime.oid=m.member
+      WHERE runtime.rolname='avuhz_data_runtime_service_dev'
+        AND NOT (
+          m.roleid=command_oid AND m.member=runtime.oid
+          AND m.grantor=migration_oid AND NOT m.admin_option
+          AND NOT m.inherit_option AND m.set_option
+        )
+    )
     OR pg_has_role('avuhz_data_migration_service_dev','avuhz_command_service','SET')
     OR pg_has_role('postgres','avuhz_data_migration_service_dev','SET')
     OR pg_has_role('postgres','avuhz_data_migration_service_dev','USAGE')

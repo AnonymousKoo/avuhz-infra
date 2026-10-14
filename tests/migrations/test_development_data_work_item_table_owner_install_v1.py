@@ -46,6 +46,15 @@ class WorkItemOwnerInstallStaticTests(unittest.TestCase):
         self.assertIn("DEVELOPMENT DATA gnuqaefotwgkwurjpyik", wrapped)
         self.assertIn("DEVELOPMENT AUTH pwlhruwutoitnieactol", wrapped)
 
+    def test_catalog_first_path_and_full_runtime_role_envelope_are_sealed(self):
+        sql = WRAPPER.read_text()
+        self.assertIn("SET LOCAL search_path = pg_catalog, pg_temp;", sql)
+        self.assertLess(sql.index("SET LOCAL search_path"), sql.index(
+            "DO $work_item_owner_install_preflight$"))
+        self.assertEqual(sql.count("ON runtime.oid=m.roleid OR runtime.oid=m.member"), 2)
+        self.assertEqual(sql.count(
+            "WHERE runtime.rolname='avuhz_data_runtime_service_dev'"), 2)
+
     def test_temporary_privilege_grants_are_sealed_before_commit(self):
         sql = WRAPPER.read_text()
         grants = {
@@ -255,6 +264,46 @@ class WorkItemOwnerInstallPostgresTests(unittest.TestCase):
             self.assertEqual(before,self.status())
         finally:
             self.query(f"REVOKE {role} FROM avuhz_command_service; DROP ROLE {role};")
+
+    def test_hostile_search_path_shadow_cannot_change_catalog_resolution(self):
+        # A public-schema shadow would intercept pg_roles if public preceded
+        # pg_catalog; the installer must override the session-level path.
+        self.query(
+            "CREATE VIEW public.pg_roles AS SELECT "
+            "NULL::oid AS oid, 'untrusted'::name AS rolname WHERE false;"
+        )
+        try:
+            self.assertEqual(self.status(), ["f","f","f","0"])
+            self.apply("SET search_path = public, pg_catalog;\n" + self.source())
+            self.assertEqual(self.status(), ["t","f","f","0"])
+        finally:
+            self.query("DROP VIEW public.pg_roles;")
+
+    def test_unexpected_member_of_runtime_role_stops_before_create(self):
+        runtime = "avuhz_data_runtime_service_dev"
+        rogue = "avuhz_unreviewed_runtime_member"
+        existed = self.query(
+            "SELECT count(*) FROM pg_roles "
+            f"WHERE rolname='{runtime}';"
+        ) == "1"
+        if not existed:
+            self.query(f"CREATE ROLE {runtime} LOGIN NOINHERIT;")
+        self.query(f"CREATE ROLE {rogue} NOLOGIN;")
+        try:
+            self.query(
+                f"GRANT {runtime} TO {rogue} "
+                "WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;"
+            )
+            before = self.status()
+            failed = self.apply_candidate(check=False)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertIn("AVUHZ_WORK_ITEM_INSTALL_OWNER_MEMBERSHIP_DRIFT_STOP",
+                          failed.stderr.decode())
+            self.assertEqual(self.status(), before)
+        finally:
+            self.query(f"REVOKE {runtime} FROM {rogue}; DROP ROLE {rogue};")
+            if not existed:
+                self.query(f"DROP ROLE {runtime};")
 
     def test_unexpected_postgres_default_table_grantee_stops_before_create(self):
         role="avuhz_unreviewed_default_recipient"

@@ -21,8 +21,21 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 DRIVER = importlib.util.find_spec("psycopg") is not None
 CONTAINER = os.environ.get("AVUHZ_LOCAL_POSTGRES_CONTAINER")
-DSN = os.environ.get("AVUHZ_WORK_ITEM_TEST_LOCAL_DSN")
 DATABASE = "avuhz_system001_durable_writer_test"
+DSN = os.environ.get("AVUHZ_WORK_ITEM_TEST_LOCAL_DSN")
+# Reuse the existing CI disposable Postgres connection rather than relying
+# on a separate secret/DSN or skipping the strict PG integration gate.
+# The test creates its own synthetic DB inside that exact disposable container.
+if DRIVER and not DSN and CONTAINER and os.environ.get("AVUHZ_POSTGRES_DSN"):
+    from psycopg.conninfo import conninfo_to_dict, make_conninfo
+    source = conninfo_to_dict(os.environ["AVUHZ_POSTGRES_DSN"])
+    if (
+        source.get("host") == "127.0.0.1"
+        and source.get("user") == "postgres"
+        and "password" not in source
+        and str(source.get("port", "")).isdigit()
+    ):
+        DSN = make_conninfo(os.environ["AVUHZ_POSTGRES_DSN"], dbname=DATABASE)
 MIGRATION_DIR = ROOT / "supabase" / "migrations"
 MIGRATION_NAMES = (
     "20260831120000_rebaseline_provider_neutral_avuhz.sql",
@@ -73,11 +86,17 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
         super().setUpClass()
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", CONTAINER):
             raise RuntimeError("not an allowed disposable container label")
-        if not DSN.startswith("postgresql://postgres@127.0.0.1:"):
-            raise RuntimeError("DSN must use local-only disposable Postgres")
-        # Never connect to a hostname supplied by a provider.
-        if "/avuhz_system001_durable_writer_test" not in DSN:
-            raise RuntimeError("unexpected synthetic database")
+        # Never connect to a hostname or database supplied by a provider.
+        from psycopg.conninfo import conninfo_to_dict
+        params = conninfo_to_dict(DSN)
+        if (
+            params.get("host") != "127.0.0.1"
+            or params.get("user") != "postgres"
+            or params.get("dbname") != DATABASE
+            or "password" in params
+            or not str(params.get("port", "")).isdigit()
+        ):
+            raise RuntimeError("disposable LOCAL-only PostgreSQL boundary required")
 
     def setUp(self):
         self.docker("dropdb", "--if-exists", "-U", "postgres", DATABASE)

@@ -201,7 +201,7 @@ def run_demo() -> dict:
         "local_outbox": {
             "events_projected": len(events),
             "stub_deliveries": len(outbound),
-            "duplicate_deliveries": duplicate_delivery["published"],
+            "second_run_published": duplicate_delivery["published"],
         },
         "limitations": "In-memory only; no hosted transactional work-item/event/outbox persistence or real n8n receipt.",
     }
@@ -225,7 +225,8 @@ def main() -> None:
         )
     print("SAFETY | cross-tenant read DENIED | previous owner read DENIED")
     print("REPLAY | duplicate command generated no new event")
-    print("SHARED OUTBOX | 6/6 published to LOCAL stub; repeat 0")
+    print("SHARED OUTBOX | 6/6 published to LOCAL stub; idle second run published 0")
+    print("NOT PROVEN | Consumer-side deduplication or delivery exactly-once")
     print("LIMITATION | No hosted work-item persistence or actual n8n webhook")
 
 

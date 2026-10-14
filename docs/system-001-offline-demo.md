@@ -17,7 +17,10 @@ This shows a synthetic service request moving from OPEN through offered and
 accepted ownership handoff, BLOCKED, RESUMED and RESOLVED. It checks denial of
 cross-tenant and former-owner reads and suppression of a repeated command's
 event. Six schema-valid local events are staged in an in-memory test outbox;
-the existing worker publishes six to a stub and zero on replay.
+the existing worker publishes six to a stub, then publishes zero more on
+a second **idle** invocation because the rows were already marked PUBLISHED.
+This does not establish exactly-once delivery or consumer deduplication:
+at-least-once workers may redeliver after a crash before the published mark.
 
 ## Safe way to present
 

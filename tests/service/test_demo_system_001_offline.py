@@ -30,11 +30,29 @@ class OfflineSystem001DemoTests(unittest.TestCase):
         self.assertEqual(result["history"][-1]["state"], "RESOLVED")
         self.assertTrue(all(result["security"].values()))
         self.assertEqual(result["local_outbox"], {
-            "events_projected": 6, "stub_deliveries": 6, "duplicate_deliveries": 0,
+            "events_projected": 6, "stub_deliveries": 6, "second_run_published": 0,
         })
         self.assertFalse(result["customer_data_used"])
         self.assertFalse(result["hosted_database_used"])
         self.assertFalse(result["live_n8n_used"])
+
+    def test_default_cli_is_safe_and_disclaims_delivery_guarantees(self):
+        run = subprocess.run(
+            [sys.executable, str(SCRIPT)], cwd=ROOT,
+            text=True, capture_output=True, check=True,
+        )
+        output = run.stdout
+        self.assertIn("OFFLINE SYNTHETIC WALKTHROUGH", output)
+        self.assertIn("6/6 published to LOCAL stub", output)
+        self.assertIn("idle second run published 0", output)
+        self.assertIn("NOT PROVEN | Consumer-side deduplication", output)
+        self.assertIn("No hosted work-item persistence", output)
+        for disallowed in (
+            "worker.sender", "worker.receiver", self.demo.TENANT,
+            self.demo.OTHER_TENANT, "X-Avuhz-Webhook-Token",
+            "Live customer", "PRODUCTION READY", "exactly-once delivery verified",
+        ):
+            self.assertNotIn(disallowed, output)
 
     def test_cli_json_is_safe_and_explicit_about_limitations(self):
         run = subprocess.run(

@@ -589,5 +589,84 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
         self.assertEqual(self.table("avuhz_work_items")[0]["record_version"],2)
 
 
+    def test_due_reader_uses_actual_tenant_rls_and_owner_membership(self):
+        from datetime import datetime,timezone
+        from avuhz_service.shared_due_work_reader_candidate import SharedDueWorkReadCandidate
+        from avuhz_service.shared_revenue_followup_review import FollowupReviewPolicy
+        fixed=datetime(2030,1,15,16,0,0,tzinfo=timezone.utc)
+        self.writer._clock=lambda: fixed
+        due="2030-01-15T16:05:00Z"
+        for actor in ("sender","outside"):
+            self.writer.execute(actor,dataclasses.replace(
+                self.command("OPEN",key="shared001",item=ITEM),
+                next_action_due_at=due,
+            ))
+        reader=SharedDueWorkReadCandidate(
+            self.store,resolve_identity=self.resolve_identity,
+            resolve_tenant_member=self.resolve_tenant_member,
+        )
+        result=reader.review_owned_due(
+            "sender", policy=FollowupReviewPolicy(escalation_after_minutes=15),
+            now=datetime(2030,1,15,16,30,0,tzinfo=timezone.utc),
+        )
+        self.assertEqual(len(result),1)
+        self.assertEqual(result[0].work_item_id,ITEM)
+        self.assertEqual(result[0].owner_reference,"worker.sender")
+        self.assertEqual(result[0].kind,"FOLLOWUP_ESCALATION_REVIEW_REQUIRED")
+        other=reader.review_owned_due(
+            "outside",policy=FollowupReviewPolicy(escalation_after_minutes=15),
+            now=datetime(2030,1,15,16,30,0,tzinfo=timezone.utc),
+        )
+        self.assertEqual(len(other),1)
+        self.assertEqual(other[0].owner_reference,"worker.outside")
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),2)
+        self.assertEqual(len(self.table("avuhz_outbox_deliveries")),2)
+
+    def test_due_reader_revoked_member_and_former_owner_denied(self):
+        from datetime import datetime, timezone
+        from avuhz_service.shared_due_work_reader_candidate import SharedDueWorkReadCandidate
+        from avuhz_service.shared_revenue_followup_review import FollowupReviewPolicy
+        from avuhz_service.shared_work_intake_candidate import WorkIntakeDenied
+        self.writer._clock=lambda:datetime(2030,1,15,16,0,0,tzinfo=timezone.utc)
+        self.writer.execute("sender",dataclasses.replace(
+            self.command("OPEN",key="dueread01"),
+            next_action_due_at="2030-01-15T16:05:00Z",
+        ))
+        self.writer.execute("sender",self.command(
+            "OFFER_HANDOFF",1,key="dueoffer1",recipient="worker.receiver",
+        ))
+        self.writer.execute("receiver",self.command("ACCEPT_HANDOFF",2,key="dueaccept"))
+        reader=SharedDueWorkReadCandidate(
+            self.store,resolve_identity=self.resolve_identity,
+            resolve_tenant_member=self.resolve_tenant_member,
+        )
+        policy=FollowupReviewPolicy(escalation_after_minutes=15)
+        now=datetime(2030,1,15,16,30,0,tzinfo=timezone.utc)
+        self.assertEqual(reader.review_owned_due("sender",policy=policy,now=now),())
+        self.assertEqual(len(reader.review_owned_due("receiver",policy=policy,now=now)),1)
+        self.members[TENANT_A].remove("worker.receiver")
+        with self.assertRaises(WorkIntakeDenied):
+            reader.review_owned_due("receiver",policy=policy,now=now)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),3)
+
+    def test_due_reader_rejects_database_rls_drift(self):
+        from datetime import datetime, timezone
+        from avuhz_service.shared_due_work_reader_candidate import (
+            SharedDueWorkReadCandidate,SharedFollowupReadUnavailable,
+        )
+        from avuhz_service.shared_revenue_followup_review import FollowupReviewPolicy
+        reader=SharedDueWorkReadCandidate(
+            self.store,resolve_identity=self.resolve_identity,
+            resolve_tenant_member=self.resolve_tenant_member,
+        )
+        with self.owner() as con:
+            con.execute("ALTER TABLE public.avuhz_work_items DISABLE ROW LEVEL SECURITY")
+        with self.assertRaises(SharedFollowupReadUnavailable):
+            reader.review_owned_due(
+                "sender",policy=FollowupReviewPolicy(escalation_after_minutes=15),
+                now=datetime(2030,1,15,16,30,0,tzinfo=timezone.utc),
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

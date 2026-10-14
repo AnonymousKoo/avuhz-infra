@@ -1,0 +1,133 @@
+{
+  "name": "Avuhz Shared Receipt Bridge \u2014 INACTIVE LOCAL Source Child v1",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "69200000-0000-4000-8000-000000000001",
+      "name": "From Approved Receiver Not Wired",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Source-only local receipt child. Never called by the public webhook.\nconst inputs=$input.all();\nconst record=v => v!==null && typeof v==='object' && !Array.isArray(v);\nconst fields=['event_id','event_type','tenant_id','correlation_id','occurred_at','authoritative_subject_reference','authoritative_subject_version','delivery_idempotency_key'];\nconst uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;\nconst key=/^[A-Za-z0-9._:-]{8,128}$/;\nconst timestamp=/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$/;\nfunction utc(value) {\n if(typeof value!=='string'||value.length<20||value.length>27||!timestamp.test(value)) return false;\n const d=new Date(value);\n if(Number.isNaN(d.getTime())) return false;\n return d.getUTCFullYear()===Number(value.slice(0,4))\n  && d.getUTCMonth()+1===Number(value.slice(5,7))\n  && d.getUTCDate()===Number(value.slice(8,10))\n  && d.getUTCHours()===Number(value.slice(11,13))\n  && d.getUTCMinutes()===Number(value.slice(14,16))\n  && d.getUTCSeconds()===Number(value.slice(17,19));\n}\nconst v=inputs.length===1&&record(inputs[0])?inputs[0].json:null;\nconst ref=record(v)?v.authoritative_subject_reference:null;\nconst valid=record(v)&&Object.keys(v).length===8\n && fields.every(k=>Object.prototype.hasOwnProperty.call(v,k))\n && typeof v.event_id==='string'&&uuid.test(v.event_id)\n && typeof v.correlation_id==='string'&&uuid.test(v.correlation_id)\n && typeof v.tenant_id==='string'&&uuid.test(v.tenant_id)\n && v.event_type==='acquisition.intake.received'\n && v.authoritative_subject_version===1 && utc(v.occurred_at)\n && typeof v.delivery_idempotency_key==='string'&&key.test(v.delivery_idempotency_key)\n && record(ref)&&Object.keys(ref).length===2\n && ref.reference_type==='ACQUISITION_INTAKE'\n && typeof ref.reference_id==='string'&&uuid.test(ref.reference_id);\nif(!valid) throw new Error('RECEIPT_ENVELOPE_DENIED');\n// This validates SHAPE ONLY. The separately configured server-owned\n// LocalN8nReceiptStore must bind the trusted tenant and commit the dedup\n// receipt. No inbound tenant claim is an authorization to act.\nreturn [{json:{\n event_id:v.event_id,event_type:v.event_type,tenant_id:v.tenant_id,\n correlation_id:v.correlation_id,occurred_at:v.occurred_at,\n authoritative_subject_reference:{\n  reference_type:'ACQUISITION_INTAKE',reference_id:ref.reference_id\n },\n authoritative_subject_version:1,\n delivery_idempotency_key:v.delivery_idempotency_key\n}}];"
+      },
+      "id": "69200000-0000-4000-8000-000000000002",
+      "name": "Reject Untrusted Event Shape",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:1/v1/avuhz/local-n8n-receipts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Avuhz-Delivery-Key",
+              "value": "={{$json.delivery_idempotency_key}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json)}}",
+        "options": {
+          "timeout": 1000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "69200000-0000-4000-8000-000000000003",
+      "name": "Receipt Backend UNCONFIGURED Fails Closed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        770,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Requires exact durable bridge receipt. This is NOT Avuhz business authority.\nconst items=$input.all();\nconst record=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);\nconst reply=items.length===1&&record(items[0])?items[0].json:null;\nconst body=record(reply)?reply.body:null;\nconst valid=record(reply)&&reply.statusCode===202\n && record(body)&&Object.keys(body).length===2\n && body.accepted===true&&typeof body.duplicate==='boolean'\n && Object.prototype.hasOwnProperty.call(body,'accepted')\n && Object.prototype.hasOwnProperty.call(body,'duplicate');\nif(!valid) throw new Error('DURABLE_RECEIPT_NOT_CONFIRMED');\n// No raw backend body, headers, status text, IDs, PII, or credentials leaked.\nreturn [{json:{\n code:body.duplicate?'DUPLICATE_RECEIPT_NO_EFFECT':'NEW_DURABLE_RECEIPT',\n durable:true,\n first_delivery:!body.duplicate\n}}];"
+      },
+      "id": "69200000-0000-4000-8000-000000000004",
+      "name": "Confirm Exact 202 Durable Receipt Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1030,
+        280
+      ]
+    }
+  ],
+  "connections": {
+    "From Approved Receiver Not Wired": {
+      "main": [
+        [
+          {
+            "node": "Reject Untrusted Event Shape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject Untrusted Event Shape": {
+      "main": [
+        [
+          {
+            "node": "Receipt Backend UNCONFIGURED Fails Closed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receipt Backend UNCONFIGURED Fails Closed": {
+      "main": [
+        [
+          {
+            "node": "Confirm Exact 202 Durable Receipt Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "active": false,
+  "tags": []
+}

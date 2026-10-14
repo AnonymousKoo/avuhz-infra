@@ -82,41 +82,83 @@ class WorkItemCommandIdempotencyOwnerPostgresTests(unittest.TestCase):
 
     def setUp(self):
         BASE.setUp(self)
+        # unittest runs addCleanup even if setUp fails, in reverse order.
+        # Register the parent database cleanup first, and then each local
+        # mutation's undo immediately after success. A failed revoke must
+        # not suppress independent remaining cleanup actions.
+        self.addCleanup(BASE.tearDown, self)
         self.apply(BASE.source())
-        # Host Supabase has a distinct restricted runtime LOGIN role with
-        # exactly two provider-approved membership edges. Recreate those
-        # edges only in the disposable PostgreSQL fixture.
-        self.query(
-            "CREATE ROLE avuhz_data_runtime_service_dev LOGIN "
-            "NOINHERIT NOBYPASSRLS;"
+        runtime = "avuhz_data_runtime_service_dev"
+        role = self.query(
+            "SELECT count(*) FROM pg_roles "
+            f"WHERE rolname='{runtime}' AND rolcanlogin "
+            "AND NOT rolsuper AND NOT rolinherit AND NOT rolbypassrls "
+            "AND NOT rolcreaterole AND NOT rolcreatedb AND NOT rolreplication;"
         )
-        self.query(
-            "GRANT avuhz_command_service TO avuhz_data_runtime_service_dev "
-            "WITH ADMIN FALSE, INHERIT FALSE, SET TRUE "
-            "GRANTED BY avuhz_data_migration_service_dev;"
+        exists = self.query(
+            f"SELECT count(*) FROM pg_roles WHERE rolname='{runtime}';"
         )
-        self.query(
-            "GRANT avuhz_data_runtime_service_dev "
-            "TO avuhz_hosted_data_postgres_sim_v1 "
-            "WITH ADMIN TRUE, INHERIT FALSE, SET FALSE "
-            "GRANTED BY postgres;"
-        )
+        if exists == "0":
+            self.query(f"CREATE ROLE {runtime} LOGIN NOINHERIT NOBYPASSRLS;")
+            self.addCleanup(self.query, f"DROP ROLE {runtime};")
+        elif exists != "1" or role != "1":
+            self.fail("disposable runtime role has unexpected attributes")
 
-    def tearDown(self):
-        try:
-            self.query(
-                "REVOKE avuhz_command_service FROM "
-                "avuhz_data_runtime_service_dev "
-                "GRANTED BY avuhz_data_migration_service_dev;"
+        edges = (
+            ("avuhz_command_service", runtime,
+             "avuhz_data_migration_service_dev", False, False, True),
+            (runtime, "avuhz_hosted_data_postgres_sim_v1",
+             "postgres", True, False, False),
+        )
+        # Reject unrecognized incoming/outgoing membership before adding
+        # anything; otherwise reused roles could mask a privilege widening.
+        total = self.query(
+            "SELECT count(*) FROM pg_auth_members "
+            f"WHERE roleid='{runtime}'::regrole OR member='{runtime}'::regrole;"
+        )
+        known = 0
+        for parent, member, grantor, admin, inherit, set_option in edges:
+            count = self.query(
+                "SELECT count(*) FROM pg_auth_members "
+                f"WHERE roleid='{parent}'::regrole "
+                f"AND member='{member}'::regrole;"
             )
-            self.query(
-                "REVOKE avuhz_data_runtime_service_dev "
-                "FROM avuhz_hosted_data_postgres_sim_v1 "
-                "GRANTED BY postgres;"
+            if count == "1":
+                verified = self.query(
+                    "SELECT count(*) FROM pg_auth_members "
+                    f"WHERE roleid='{parent}'::regrole "
+                    f"AND member='{member}'::regrole "
+                    f"AND grantor='{grantor}'::regrole "
+                    f"AND admin_option={str(admin).lower()} "
+                    f"AND inherit_option={str(inherit).lower()} "
+                    f"AND set_option={str(set_option).lower()};"
+                )
+                if verified != "1":
+                    self.fail("disposable runtime membership drift")
+                known += 1
+            elif count != "0":
+                self.fail("unexpected duplicate runtime membership")
+        if int(total) != known:
+            self.fail("unrecognized disposable runtime membership")
+
+        for parent, member, grantor, admin, inherit, set_option in edges:
+            count = self.query(
+                "SELECT count(*) FROM pg_auth_members "
+                f"WHERE roleid='{parent}'::regrole "
+                f"AND member='{member}'::regrole;"
             )
-            self.query("DROP ROLE avuhz_data_runtime_service_dev;")
-        finally:
-            BASE.tearDown(self)
+            if count == "0":
+                self.query(
+                    f"GRANT {parent} TO {member} "
+                    f"WITH ADMIN {str(admin).upper()}, "
+                    f"INHERIT {str(inherit).upper()}, "
+                    f"SET {str(set_option).upper()} "
+                    f"GRANTED BY {grantor};"
+                )
+                self.addCleanup(
+                    self.query,
+                    f"REVOKE {parent} FROM {member} GRANTED BY {grantor};",
+                )
 
     @staticmethod
     def source():

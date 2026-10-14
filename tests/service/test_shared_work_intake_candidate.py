@@ -4,6 +4,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 import unittest
 from pathlib import Path
 
@@ -65,9 +66,22 @@ def command(kind, version=None, *, key="idempotency01", item=ITEM, source=None,
     )
 
 
+class FakeTenantMembershipDirectory:
+    """Server-authoritative, synthetic, exact tenant membership fixture."""
+    members = {
+        A: frozenset({"worker.sender", "worker.receiver", "worker.other"}),
+        B: frozenset({"worker.outsider"}),
+    }
+
+    def __call__(self, tenant_id, recipient):
+        return recipient if recipient in self.members.get(tenant_id, ()) else None
+
+
 class WorkIntakeSystemTests(unittest.TestCase):
     def setUp(self):
-        self.store = SharedWorkIntakeCandidate(FakeOfflineResolver())
+        self.store = SharedWorkIntakeCandidate(
+            FakeOfflineResolver(), resolve_tenant_member=FakeTenantMembershipDirectory(),
+        )
 
     def open(self, *, actor="sender", key="opened0001", item=ITEM):
         return self.store.apply(actor, command(
@@ -192,7 +206,7 @@ class WorkIntakeSystemTests(unittest.TestCase):
                 source="web", classification="work_order", item=ITEM2))
         self.assertEqual(self.store.get("sender", ITEM).record_version, 1)
 
-    def test_retry_after_owner_transfer_does_not_authorize_new_transition(self):
+    def test_retry_after_owner_transfer_denies_former_owner_receipt_access(self):
         self.open()
         original_offer = command(
             "OFFER_HANDOFF", 1, key="offered001", recipient="worker.receiver",
@@ -201,11 +215,88 @@ class WorkIntakeSystemTests(unittest.TestCase):
         self.store.apply("receiver", command(
             "ACCEPT_HANDOFF", 2, key="accepted001",
         ))
-        duplicate = self.store.apply("sender", original_offer)
-        self.assertTrue(duplicate.replayed)
-        self.assertIsNone(duplicate.intent)
-        self.assertEqual(duplicate.item.record_version, 2)
+        with self.assertRaisesRegex(WorkIntakeDenied, "unavailable"):
+            self.store.apply("sender", original_offer)
+        with self.assertRaisesRegex(WorkIntakeDenied, "unavailable"):
+            self.store.apply("sender", command(
+                "OPEN", key="opened0001", source="web",
+                classification="service_request",
+            ))
         self.assertEqual(self.store.get("receiver", ITEM).record_version, 3)
+
+    def test_unrelated_colleague_cannot_probe_item_version_or_existence(self):
+        self.open()
+        for version in (1, 2, 999):
+            with self.subTest(version=version):
+                with self.assertRaisesRegex(WorkIntakeDenied, "unavailable"):
+                    self.store.apply("other", command(
+                        "BLOCK", version, key=f"probe{version:05d}",
+                    ))
+        with self.assertRaisesRegex(WorkIntakeDenied, "unavailable"):
+            self.store.apply("other", command(
+                "BLOCK", 1, key="probeabsent1", item=ITEM2,
+            ))
+        self.assertEqual(self.store.get("sender", ITEM).record_version, 1)
+
+    def test_idempotency_is_scoped_to_tenant_and_authenticated_actor(self):
+        first = self.open(key="samekey001")
+        other = self.store.apply("other", command(
+            "OPEN", key="samekey001", item=ITEM2, source="web",
+            classification="service_request",
+        ))
+        self.assertFalse(first.replayed)
+        self.assertFalse(other.replayed)
+        self.assertEqual(self.store.get("sender", ITEM).record_version, 1)
+        self.assertEqual(self.store.get("other", ITEM2).record_version, 1)
+
+    def test_trusted_tenant_directory_required_before_handoff(self):
+        with self.assertRaises(ValueError):
+            SharedWorkIntakeCandidate(FakeOfflineResolver(), resolve_tenant_member=None)
+        self.open()
+        for recipient in ("phone:15555555555", "customer.jane.smith",
+                          "worker.outsider", "worker.nonexistent"):
+            with self.subTest(recipient=recipient):
+                with self.assertRaisesRegex(WorkIntakeDenied, "recipient unavailable"):
+                    self.store.apply("sender", command(
+                        "OFFER_HANDOFF", 1, key="member0001", recipient=recipient,
+                    ))
+                self.assertEqual(self.store.get("sender", ITEM).record_version, 1)
+
+    def test_blocked_work_cannot_start_handoff(self):
+        self.open()
+        self.store.apply("sender", command("BLOCK", 1, key="blocked001"))
+        with self.assertRaises(WorkIntakeConflict):
+            self.store.apply("sender", command(
+                "OFFER_HANDOFF", 2, key="handoff001",
+                recipient="worker.receiver",
+            ))
+        self.assertEqual(self.store.get("sender", ITEM).state, BLOCKED)
+
+    def test_simultaneous_conflicts_and_identical_retries_remain_atomic(self):
+        self.open()
+        competing = (
+            command("BLOCK", 1, key="atomic0001"),
+            command("RESOLVE", 1, key="atomic0002"),
+        )
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(self.store.apply, "sender", c) for c in competing]
+            outcomes = []
+            for future in futures:
+                try:
+                    outcomes.append(future.result())
+                except WorkIntakeConflict:
+                    outcomes.append("CONFLICT")
+        self.assertEqual(sum(result != "CONFLICT" for result in outcomes), 1)
+        self.assertEqual(sum(result == "CONFLICT" for result in outcomes), 1)
+        self.assertEqual(self.store.get("sender", ITEM).record_version, 2)
+
+        another = self.open(key="opened0002", item=ITEM2)
+        action = command("BLOCK", 1, key="atomic0003", item=ITEM2)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(lambda _: self.store.apply("sender", action), range(2)))
+        self.assertEqual(sum(result.intent is not None for result in results), 1)
+        self.assertEqual(sum(result.replayed for result in results), 1)
+        self.assertEqual(self.store.get("sender", ITEM2).record_version, 2)
 
     def test_optimistic_version_and_idempotency_collisions_fail_closed(self):
         self.open()

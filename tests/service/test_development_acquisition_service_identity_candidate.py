@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from avuhz_service.development import DEVELOPMENT_AUTH_ISSUER, DEVELOPMENT_SERVICE_AUDIENCE
 from avuhz_service.development_acquisition_service_identity_candidate import (
+    MAX_ACQUISITION_TOKEN_LIFETIME_SECONDS,
     DevelopmentAcquisitionServiceIdentityCandidate, DevelopmentAcquisitionServicePolicy,
 )
 from avuhz_service.development_identity import DevelopmentTrustedIdentityResolver
@@ -121,6 +122,32 @@ class AcquisitionServiceIdentityCandidateTests(unittest.TestCase):
                 )
                 with self.assertRaisesRegex(PermissionError, "^acquisition_service_identity_invalid$"):
                     verifier.verify(TOKEN)
+
+    def test_signed_claims_must_have_bounded_workload_lifetime(self):
+        self.assertEqual(MAX_ACQUISITION_TOKEN_LIFETIME_SECONDS, 3600)
+        accepted = DevelopmentAcquisitionServiceIdentityCandidate(
+            FakeSignedJwtVerifier(
+                claims(exp=ISSUED + MAX_ACQUISITION_TOKEN_LIFETIME_SECONDS),
+            ), policy(),
+        )
+        result = DevelopmentTrustedIdentityResolver(
+            accepted, clock=lambda: NOW,
+        ).resolve(TOKEN)
+        self.assertEqual(result.capabilities, frozenset({"acquisition_intake:receive"}))
+        self.assertEqual(result.caller_type, "INTERNAL_SERVICE")
+        for expiry in (
+            ISSUED + MAX_ACQUISITION_TOKEN_LIFETIME_SECONDS + 1,
+            ISSUED + 24 * 60 * 60,
+            ISSUED + 30 * 24 * 60 * 60,
+        ):
+            with self.subTest(lifetime_seconds=expiry - ISSUED):
+                candidate = DevelopmentAcquisitionServiceIdentityCandidate(
+                    FakeSignedJwtVerifier(claims(exp=expiry)), policy(),
+                )
+                with self.assertRaisesRegex(
+                    PermissionError, "^acquisition_service_identity_invalid$",
+                ):
+                    candidate.verify(TOKEN)
 
     def test_subject_credential_and_policy_confusion_fail_closed(self):
         verifier = DevelopmentAcquisitionServiceIdentityCandidate(

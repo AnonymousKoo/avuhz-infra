@@ -100,6 +100,7 @@ class SharedDueWorkReaderTests(unittest.TestCase):
         self.assertEqual(self.con.rollbacks, 1)
         statements = [str(x[0]) for x in self.con.calls]
         self.assertTrue(any("tenant_id=%s and owner_reference=%s" in s for s in statements))
+        self.assertTrue(any("1742b76d0dd8d99c26eafc15fe3c8f705a6fa58341b43a7c6fab669091df9e88" in s for s in statements))
         self.assertTrue(any("next_action_due_at <= %s" in s for s in statements))
         args = self.con.calls[-1][1]
         self.assertEqual(args, (TENANT, "worker.owner", NOW, 100))

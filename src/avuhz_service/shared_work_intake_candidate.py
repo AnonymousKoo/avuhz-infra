@@ -143,13 +143,22 @@ class SharedWorkIntakeCandidate:
     No hosted identity currently grants these new capability strings.
     """
 
-    def __init__(self, resolve_identity: Callable[[object], TrustedExecutionContext]):
-        if not callable(resolve_identity):
-            raise ValueError("shared trusted identity resolver required")
+    def __init__(
+        self,
+        resolve_identity: Callable[[object], TrustedExecutionContext],
+        *,
+        resolve_tenant_member: Callable[[str, str], str | None],
+    ):
+        if not callable(resolve_identity) or not callable(resolve_tenant_member):
+            raise ValueError("trusted identity and tenant-member resolvers required")
         self._resolve = resolve_identity
+        # A trusted tenant-scoped member directory MUST establish eligibility
+        # independently of a client-supplied recipient reference. Missing or
+        # unavailable membership evidence fails closed before any mutation.
+        self._resolve_member = resolve_tenant_member
         self._lock = threading.RLock()
         self._items: dict[tuple[str, str], WorkItem] = {}
-        self._receipts: dict[tuple[str, str], tuple[str, WorkIntakeResult]] = {}
+        self._receipts: dict[tuple[str, str, str], tuple[str, WorkIntakeResult]] = {}
 
     def _trusted(self, bearer: object, capability: str) -> TrustedExecutionContext:
         try:
@@ -230,17 +239,24 @@ class SharedWorkIntakeCandidate:
         ).hexdigest()
 
         item_key = (context.tenant_id, command.work_item_id)
-        receipt_key = (context.tenant_id, command.idempotency_key)
+        # Caller-specific receipt space prevents another authorized tenant
+        # member from reserving the same idempotency key.
+        receipt_key = (context.tenant_id, context.principal_id, command.idempotency_key)
         with self._lock:
+            current = self._items.get(item_key)
             prior = self._receipts.get(receipt_key)
             if prior is not None:
                 if prior[0] != digest:
                     raise WorkIntakeConflict("work intake idempotency conflict")
-                # A replay is not another lifecycle transition. Never
-                # return an event intent that could be published twice.
+                # A former owner may not replay an old receipt to recover
+                # information after their current item access is revoked.
+                if current is None or context.principal_id not in {
+                    current.owner_reference, current.pending_recipient,
+                }:
+                    raise WorkIntakeDenied("work intake item unavailable")
+                # No second lifecycle event is generated on retry.
                 return replace(prior[1], intent=None, replayed=True)
 
-            current = self._items.get(item_key)
             if command.kind == _OPEN:
                 if current is not None:
                     raise WorkIntakeConflict("work intake item already exists")
@@ -256,36 +272,42 @@ class SharedWorkIntakeCandidate:
             else:
                 if current is None:
                     raise WorkIntakeDenied("work intake item unavailable")
-                if current.record_version != command.expected_record_version:
-                    raise WorkIntakeConflict("work intake record version stale")
                 actor = context.principal_id
                 kind = command.kind
+                # Check per-item ownership BEFORE version or state. Otherwise
+                # unrelated same-tenant principals can probe record versions.
+                if ((kind == _ACCEPT and current.pending_recipient != actor)
+                    or (kind != _ACCEPT and current.owner_reference != actor)):
+                    raise WorkIntakeDenied("work intake item unavailable")
+                if current.record_version != command.expected_record_version:
+                    raise WorkIntakeConflict("work intake record version stale")
                 if kind == _ACCEPT:
-                    if (
-                        current.state == RESOLVED
-                        or current.pending_recipient != actor
-                    ):
-                        raise WorkIntakeDenied("work intake handoff authority denied")
+                    if current.state != OPEN:
+                        raise WorkIntakeConflict("work intake handoff unavailable")
                     updated = replace(
                         current, owner_reference=actor, pending_recipient=None,
                         record_version=current.record_version + 1,
                     )
                 else:
-                    if current.owner_reference != actor:
-                        raise WorkIntakeDenied("work intake owner authority denied")
                     if kind == _OFFER:
                         if (
-                            current.state == RESOLVED
+                            current.state != OPEN
                             or current.pending_recipient is not None
                             or command.recipient == actor
                         ):
                             raise WorkIntakeConflict("work intake handoff unavailable")
+                        try:
+                            approved = self._resolve_member(context.tenant_id, command.recipient)
+                            if approved != command.recipient or not _opaque(approved):
+                                raise PermissionError
+                        except Exception:
+                            raise WorkIntakeDenied("work intake recipient unavailable") from None
                         updated = replace(
-                            current, pending_recipient=command.recipient,
+                            current, pending_recipient=approved,
                             record_version=current.record_version + 1,
                         )
                     elif kind == _CANCEL:
-                        if current.state == RESOLVED or current.pending_recipient is None:
+                        if current.state != OPEN or current.pending_recipient is None:
                             raise WorkIntakeConflict("work intake handoff unavailable")
                         updated = replace(
                             current, pending_recipient=None,

@@ -20,6 +20,88 @@ from avuhz_service.development_acquisition_data import _ACQUISITION_COUNTER_READ
 
 CURRENT = ROOT / "supabase/provider-artifacts/development-data/current"
 SOURCE = CURRENT / "development_data_acquisition_counter_role_access_v1.sql"
+RETENTION_SQL = r"""-- LOCAL TEST ONLY. NOT AUTHORIZED FOR HOSTED PROVIDER EXECUTION.
+-- One future DEVELOPMENT DATA gnuqaefotwgkwurjpyik maintenance transaction.
+-- NEVER DEVELOPMENT AUTH pwlhruwutoitnieactol or production.
+-- Test fixture only; never a provider artifact, migration, cron, app, n8n or Render job.
+-- Separate exact DATA owner/maintenance authorization required before use.
+-- Shared Avuhz counter only. It stores tenant UUID + opaque service digest,
+-- NOT any IP, request body, client identifier, JWT or contact PII.
+-- Retain 48h (576 5-minute windows), delete at most 100 stale rows per call.
+-- Do not grant DELETE or BYPASSRLS to the acquisition runtime to make this work.
+-- Expected operator: exact table owner postgres in a separately authorized
+-- administration session, not a general application or service credential.
+-- Return one non-sensitive row count only; never log individual row identifiers.
+BEGIN;
+
+DO $avuhz_counter_retention_preflight$
+BEGIN
+  IF session_user <> 'postgres' OR current_user <> 'postgres'
+    OR to_regclass('public.avuhz_acquisition_rate_limit_counters') IS NULL
+    OR NOT EXISTS (
+      SELECT 1 FROM pg_catalog.pg_class c
+      WHERE c.oid=to_regclass('public.avuhz_acquisition_rate_limit_counters')
+        AND c.relkind='r'
+        AND pg_get_userbyid(c.relowner)='postgres'
+        AND c.relrowsecurity AND c.relforcerowsecurity
+    )
+    OR (
+      SELECT count(*) FROM pg_catalog.pg_policies p
+      WHERE p.schemaname='public'
+        AND p.tablename='avuhz_acquisition_rate_limit_counters'
+    )<>2
+    OR (
+      SELECT count(*) FROM pg_catalog.pg_policies p
+      WHERE p.schemaname='public'
+        AND p.tablename='avuhz_acquisition_rate_limit_counters'
+        AND p.policyname='avuhz_acquisition_rate_counter_tenant_isolation'
+        AND p.roles=ARRAY['avuhz_acquisition_service_dev']::name[]
+        AND p.cmd='ALL'
+        AND strpos(p.qual,'avuhz.tenant_id')>0
+        AND strpos(p.with_check,'avuhz.tenant_id')>0
+    )<>1
+    OR (
+      SELECT count(*) FROM pg_catalog.pg_policies p
+      WHERE p.schemaname='public'
+        AND p.tablename='avuhz_acquisition_rate_limit_counters'
+        AND p.policyname='avuhz_command_service_tenant_isolation'
+        AND p.roles=ARRAY['avuhz_command_service']::name[]
+        AND p.cmd='ALL'
+        AND strpos(p.qual,'avuhz.tenant_id')>0
+        AND strpos(p.with_check,'avuhz.tenant_id')>0
+    )<>1
+    OR has_table_privilege(
+      'avuhz_acquisition_service_dev',
+      'public.avuhz_acquisition_rate_limit_counters','DELETE'
+    )
+    OR has_table_privilege(
+      'avuhz_command_service',
+      'public.avuhz_acquisition_rate_limit_counters','DELETE'
+    )
+  THEN
+    RAISE EXCEPTION 'ACQUISITION_COUNTER_RETENTION_PREFLIGHT_STOP';
+  END IF;
+END
+$avuhz_counter_retention_preflight$;
+
+WITH stale AS MATERIALIZED (
+  SELECT c.ctid
+  FROM public.avuhz_acquisition_rate_limit_counters AS c
+  WHERE c.window_started_at < statement_timestamp() - interval '48 hours'
+  ORDER BY c.window_started_at, c.ctid
+  LIMIT 100
+  FOR UPDATE SKIP LOCKED
+),
+pruned AS (
+  DELETE FROM public.avuhz_acquisition_rate_limit_counters AS c
+  USING stale
+  WHERE c.ctid=stale.ctid
+  RETURNING 1
+)
+SELECT count(*)::integer AS removed_count FROM pruned;
+
+COMMIT;
+"""
 REGISTRY = CURRENT / "development_data_shared_acquisition_registry_role_v1.sql"
 BASE = ROOT / "supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql"
 COUNTER = ROOT / "tests/integration/test_development_data_acquisition_rate_counter_candidate.py"
@@ -65,6 +147,31 @@ class AcquisitionCounterAccessStaticTests(unittest.TestCase):
         ))
         self.assertEqual((ROOT / "scripts/check-baseline.sh").read_text().count(
             "development_data_acquisition_counter_role_access_v1.sql"), 2)
+
+    def test_retention_candidate_is_admin_only_bounded_and_never_auto_migrated(self):
+        sql = RETENTION_SQL
+        self.assertIn("LOCAL TEST ONLY. NOT AUTHORIZED FOR HOSTED PROVIDER EXECUTION", sql)
+        self.assertIn("DEVELOPMENT DATA gnuqaefotwgkwurjpyik", sql)
+        self.assertIn("NEVER DEVELOPMENT AUTH pwlhruwutoitnieactol", sql)
+        self.assertIn("session_user <> 'postgres' OR current_user <> 'postgres'", sql)
+        self.assertIn("ACQUISITION_COUNTER_RETENTION_PREFLIGHT_STOP", sql)
+        self.assertIn("c.relrowsecurity AND c.relforcerowsecurity", sql)
+        self.assertIn("interval '48 hours'", sql)
+        self.assertIn("LIMIT 100", sql)
+        self.assertIn("FOR UPDATE SKIP LOCKED", sql)
+        self.assertIn("RETURNING 1", sql)
+        self.assertIn("AS removed_count", sql)
+        self.assertIn("BEGIN;", sql)
+        self.assertIn("COMMIT;", sql)
+        self.assertNotRegex(sql, r"(?im)^\s*(CREATE|ALTER|GRANT|REVOKE|TRUNCATE|DROP)\b")
+        self.assertNotIn("SET ROLE", sql)
+        self.assertNotIn("service_role", sql)
+        self.assertNotIn("BYPASSRLS", sql.split("BEGIN;", 1)[1])
+        self.assertNotIn("password", sql.split("BEGIN;", 1)[1].lower())
+        self.assertFalse(any(
+            "acquisition_counter_retention" in name.name
+            for name in (ROOT / "supabase/migrations").glob("*.sql")
+        ))
 
     def test_shared_limiter_still_uses_same_counter_not_new_billing_auth_path(self):
         source = (ROOT / "src/avuhz_service/development_acquisition_rate_limit.py").read_text()
@@ -153,6 +260,73 @@ class AcquisitionCounterAccessPostgresTests(unittest.TestCase):
             + ";ROLLBACK;"
         )
         return self.sql(query, user=LOGIN).stdout.decode().strip()
+
+    def _install_counter_acl(self):
+        self.apply("BEGIN;\n" + SOURCE.read_text() + "\nCOMMIT;\n")
+
+    def _seed_retention_rows(self):
+        # 107 opaque test-only keys + 3 current-window rows. No customer PII.
+        self.sql(
+            "INSERT INTO public.avuhz_acquisition_rate_limit_counters "
+            "(tenant_id,principal_digest,window_started_at,request_count) "
+            f"SELECT '{A}'::uuid, lpad(to_hex(i),64,'0'),"
+            "clock_timestamp()-interval '72 hours',1 "
+            "FROM generate_series(1,107) AS s(i);"
+            "INSERT INTO public.avuhz_acquisition_rate_limit_counters "
+            "(tenant_id,principal_digest,window_started_at,request_count) "
+            f"SELECT '{B}'::uuid, lpad(to_hex(i),64,'0'),"
+            "clock_timestamp()-interval '47 hours',1 "
+            "FROM generate_series(1,3) AS s(i);"
+        )
+
+    def test_admin_retention_prunes_only_expired_in_bounded_batches(self):
+        self._install_counter_acl()
+        self._seed_retention_rows()
+        self.assertEqual(self.sql(
+            "SELECT count(*) FROM public.avuhz_acquisition_rate_limit_counters"
+        ).stdout.decode().strip(), "110")
+        self.assertEqual(self.apply(RETENTION_SQL).stdout.decode().strip(), "100")
+        self.assertEqual(self.apply(RETENTION_SQL).stdout.decode().strip(), "7")
+        self.assertEqual(self.apply(RETENTION_SQL).stdout.decode().strip(), "0")
+        current = self.sql(
+            "SELECT count(*) FROM public.avuhz_acquisition_rate_limit_counters "
+            "WHERE window_started_at>clock_timestamp()-interval '48 hours';"
+        ).stdout.decode().strip()
+        self.assertEqual(current, "3")
+        self.assertEqual(self.sql(
+            "SELECT count(*) FROM public.avuhz_acquisition_rate_limit_counters;"
+        ).stdout.decode().strip(), "3")
+        self.assertEqual(self.counter_ready(), "t")
+
+    def test_retention_rejects_login_or_rls_drift_before_deletion(self):
+        self._install_counter_acl()
+        self._seed_retention_rows()
+        attempted = self.sql(RETENTION_SQL, user=LOGIN, check=False)
+        self.assertNotEqual(attempted.returncode, 0)
+        self.assertEqual(self.sql(
+            "SELECT count(*) FROM public.avuhz_acquisition_rate_limit_counters;"
+        ).stdout.decode().strip(), "110")
+        self.sql("ALTER TABLE public.avuhz_acquisition_rate_limit_counters "
+                 "NO FORCE ROW LEVEL SECURITY;")
+        drift = self.apply(RETENTION_SQL, check=False)
+        self.assertNotEqual(drift.returncode, 0)
+        self.assertIn("ACQUISITION_COUNTER_RETENTION_PREFLIGHT_STOP",
+                      drift.stderr.decode())
+        self.assertEqual(self.sql(
+            "SELECT count(*) FROM public.avuhz_acquisition_rate_limit_counters;"
+        ).stdout.decode().strip(), "110")
+
+    def test_retention_denies_runtime_delete_grant_drift(self):
+        self._install_counter_acl()
+        self._seed_retention_rows()
+        self.sql(f"GRANT DELETE ON public.avuhz_acquisition_rate_limit_counters TO {ROLE};")
+        drift = self.apply(RETENTION_SQL, check=False)
+        self.assertNotEqual(drift.returncode, 0)
+        self.assertIn("ACQUISITION_COUNTER_RETENTION_PREFLIGHT_STOP",
+                      drift.stderr.decode())
+        self.assertEqual(self.sql(
+            "SELECT count(*) FROM public.avuhz_acquisition_rate_limit_counters;"
+        ).stdout.decode().strip(), "110")
 
     def test_connection_counter_preflight_denies_acl_and_rls_drift(self):
         # A real PostgreSQL 17 catalog read under the least-privileged

@@ -28,6 +28,53 @@ _COMMAND_DATABASE_ROLE = "avuhz_command_service"
 # has no CREATEROLE/admin authority over that distinct acquisition role.
 _ACQUISITION_ROLE_GRANTOR = "postgres"
 
+# Read-only catalog/ACL preflight. The already-applied DEVELOPMENT DATA G4
+# migration installed this exact two-policy, FORCE-RLS, column-grant shape.
+# The service may never compensate for drift using service_role or new grants.
+# No tenant/customer rows are read and no session tenant GUC is set.
+_ACQUISITION_COUNTER_READINESS_SQL = """
+select
+  (select count(*) from pg_catalog.pg_class c
+    join pg_catalog.pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public'
+      and c.relname='avuhz_acquisition_rate_limit_counters'
+      and c.relkind='r' and c.relrowsecurity and c.relforcerowsecurity)=1
+  and (select count(*) from pg_catalog.pg_policies p
+    where p.schemaname='public'
+      and p.tablename='avuhz_acquisition_rate_limit_counters')=2
+  and (select count(*) from pg_catalog.pg_policies p
+    where p.schemaname='public'
+      and p.tablename='avuhz_acquisition_rate_limit_counters'
+      and p.policyname='avuhz_acquisition_rate_counter_tenant_isolation'
+      and p.roles=ARRAY[current_user]::name[]
+      and p.cmd='ALL'
+      and strpos(p.qual, 'avuhz.tenant_id')>0
+      and strpos(p.with_check, 'avuhz.tenant_id')>0)=1
+  and (select count(*) from (values
+      ('tenant_id'), ('principal_digest'),
+      ('window_started_at'), ('request_count')
+    ) as allowed(col)
+    where has_column_privilege(current_user,
+      'public.avuhz_acquisition_rate_limit_counters',allowed.col,'SELECT')
+      and has_column_privilege(current_user,
+      'public.avuhz_acquisition_rate_limit_counters',allowed.col,'INSERT'))=4
+  and has_column_privilege(current_user,
+    'public.avuhz_acquisition_rate_limit_counters','window_started_at','UPDATE')
+  and has_column_privilege(current_user,
+    'public.avuhz_acquisition_rate_limit_counters','request_count','UPDATE')
+  and not has_column_privilege(current_user,
+    'public.avuhz_acquisition_rate_limit_counters','tenant_id','UPDATE')
+  and not has_column_privilege(current_user,
+    'public.avuhz_acquisition_rate_limit_counters','principal_digest','UPDATE')
+  and not has_table_privilege(current_user,
+    'public.avuhz_acquisition_rate_limit_counters','DELETE')
+  and not has_table_privilege(current_user,
+    'public.avuhz_acquisition_rate_limit_counters','TRUNCATE')
+  and not has_table_privilege(current_user,
+    'public.avuhz_acquisition_rate_limit_counters','REFERENCES')
+  as ready
+"""
+
 
 class HostedDevelopmentAcquisitionConnectionFactory:
     """Reject every session except the isolated acquisition-role connection.
@@ -161,6 +208,14 @@ class HostedDevelopmentAcquisitionConnectionFactory:
                 (ACQUISITION_DATABASE_ROLE, ACQUISITION_RUNTIME_LOGIN, ACQUISITION_DATABASE_ROLE),
             ).fetchone()
             if not effective or effective.get("ready") is not True:
+                raise RuntimeError
+            # The shared atomic limiter must not be exposed to a credential
+            # whose counter RLS, predicate, or column ACLs drifted. Reject at
+            # connection admission, before opening any intake transaction.
+            counter = connection.execute(
+                _ACQUISITION_COUNTER_READINESS_SQL,
+            ).fetchone()
+            if not counter or counter.get("ready") is not True:
                 raise RuntimeError
             return connection
         except Exception:

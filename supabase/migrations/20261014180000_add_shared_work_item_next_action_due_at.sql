@@ -1,9 +1,9 @@
 -- System #001 shared Revenue Engine: one optional persisted Work Item deadline.
--- Repository-only candidate. NOT approved for any hosted Supabase execution.
+-- Repository-only candidate. Remote execution is unauthorized by default.
 -- Target when later authorized: DEVELOPMENT DATA gnuqaefotwgkwurjpyik ONLY.
 -- NEVER use for AUTH pwlhruwutoitnieactol, production, or another tenant DB.
--- Requires the existing owning migration role or an independently approved
--- separately approved owner-role session; this SQL does not grant owner access.
+-- Requires the verified table owner session; owner-role authorization and
+-- temporary SET grants require separate exact approval. This SQL grants no owner access.
 -- No tenant, role, user, owner, customer, credential, workflow or invoice creation.
 BEGIN;
 

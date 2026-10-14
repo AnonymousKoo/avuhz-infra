@@ -16,7 +16,7 @@ EXPECTED_TABLES = {
     "avuhz_implementation_authorizations", "avuhz_codex_build_packages",
     "avuhz_build_execution_results", "avuhz_qa_results", "avuhz_client_acceptances",
     "avuhz_deployment_authorizations", "avuhz_deployment_executions",
-    "avuhz_deployment_verifications",
+    "avuhz_deployment_verifications", "avuhz_work_items",
 }
 FORBIDDEN = (
     "sekinfra", "oia_", "oia.", "diagnostic_", "assessment_", "finding_",

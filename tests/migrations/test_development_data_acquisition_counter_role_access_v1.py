@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from avuhz_service.development_acquisition_rate_limit import _ATOMIC_ADMISSION_SQL
+from avuhz_service.development_acquisition_data import _ACQUISITION_COUNTER_READINESS_SQL
 
 CURRENT = ROOT / "supabase/provider-artifacts/development-data/current"
 SOURCE = CURRENT / "development_data_acquisition_counter_role_access_v1.sql"
@@ -145,6 +146,62 @@ class AcquisitionCounterAccessPostgresTests(unittest.TestCase):
     # The SQL under test deliberately grants SET only to LOGIN, not to the
     # migration/admin role. Exercise transactions as the dedicated LOCAL test
     # login, never by granting postgres an elevated SET edge or BYPASSRLS.
+    def counter_ready(self):
+        query = (
+            f"BEGIN;SET LOCAL ROLE {ROLE};"
+            + _ACQUISITION_COUNTER_READINESS_SQL
+            + ";ROLLBACK;"
+        )
+        return self.sql(query, user=LOGIN).stdout.decode().strip()
+
+    def test_connection_counter_preflight_denies_acl_and_rls_drift(self):
+        # A real PostgreSQL 17 catalog read under the least-privileged
+        # non-admin login; no fake readiness bit and no hosted provider.
+        self.apply("BEGIN;\n" + SOURCE.read_text() + "\nCOMMIT;\n")
+        self.assertEqual(self.counter_ready(), "t")
+        changes = (
+            (
+                f"REVOKE UPDATE (request_count) ON "
+                f"public.avuhz_acquisition_rate_limit_counters FROM {ROLE};",
+                f"GRANT UPDATE (request_count) ON "
+                f"public.avuhz_acquisition_rate_limit_counters TO {ROLE};",
+            ),
+            (
+                "ALTER TABLE public.avuhz_acquisition_rate_limit_counters "
+                "NO FORCE ROW LEVEL SECURITY;",
+                "ALTER TABLE public.avuhz_acquisition_rate_limit_counters "
+                "FORCE ROW LEVEL SECURITY;",
+            ),
+            (
+                "ALTER POLICY avuhz_acquisition_rate_counter_tenant_isolation "
+                "ON public.avuhz_acquisition_rate_limit_counters "
+                "USING (true) WITH CHECK (true);",
+                "ALTER POLICY avuhz_acquisition_rate_counter_tenant_isolation "
+                "ON public.avuhz_acquisition_rate_limit_counters "
+                "USING (tenant_id = NULLIF(current_setting("
+                "'avuhz.tenant_id',true),'')::uuid) "
+                "WITH CHECK (tenant_id = NULLIF(current_setting("
+                "'avuhz.tenant_id',true),'')::uuid);",
+            ),
+            (
+                f"GRANT DELETE ON public.avuhz_acquisition_rate_limit_counters TO {ROLE};",
+                f"REVOKE DELETE ON public.avuhz_acquisition_rate_limit_counters FROM {ROLE};",
+            ),
+            (
+                "CREATE POLICY acquisition_unexpected_policy ON "
+                "public.avuhz_acquisition_rate_limit_counters "
+                "FOR SELECT TO avuhz_acquisition_service_dev USING (true);",
+                "DROP POLICY acquisition_unexpected_policy "
+                "ON public.avuhz_acquisition_rate_limit_counters;",
+            ),
+        )
+        for change, restore in changes:
+            with self.subTest(drift=change.split()[0:3]):
+                self.sql(change)
+                self.assertEqual(self.counter_ready(), "f")
+                self.sql(restore)
+                self.assertEqual(self.counter_ready(), "t")
+
     def test_exact_acl_and_ten_admissions_but_no_eleventh(self):
         self.apply("BEGIN;\n" + SOURCE.read_text() + "\nCOMMIT;\n")
         state = self.sql(

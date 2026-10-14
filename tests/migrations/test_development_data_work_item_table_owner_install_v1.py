@@ -239,6 +239,23 @@ class WorkItemOwnerInstallPostgresTests(unittest.TestCase):
         finally:
             self.query(f"REVOKE avuhz_command_service FROM {role}; DROP ROLE {role};")
 
+    def test_unexpected_parent_role_granted_to_command_role_is_denied(self):
+        role="avuhz_unreviewed_parent_role"
+        self.query(f"CREATE ROLE {role} NOLOGIN;")
+        try:
+            self.query(
+                f"GRANT {role} TO avuhz_command_service "
+                "WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;"
+            )
+            before=self.status()
+            denied=self.apply_candidate(check=False)
+            self.assertNotEqual(denied.returncode,0)
+            self.assertIn("AVUHZ_WORK_ITEM_INSTALL_OWNER_MEMBERSHIP_DRIFT_STOP",
+                          denied.stderr.decode())
+            self.assertEqual(before,self.status())
+        finally:
+            self.query(f"REVOKE {role} FROM avuhz_command_service; DROP ROLE {role};")
+
     def test_unexpected_postgres_default_table_grantee_stops_before_create(self):
         role="avuhz_unreviewed_default_recipient"
         executor="avuhz_hosted_data_postgres_sim_v1"

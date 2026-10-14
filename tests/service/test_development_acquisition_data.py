@@ -17,6 +17,7 @@ from avuhz_service.development_acquisition_data import (
     ACQUISITION_DATABASE_ROLE,
     ACQUISITION_POSTGRES_DSN_ENV,
     ACQUISITION_RUNTIME_LOGIN,
+    _ACQUISITION_COUNTER_READINESS_SQL,
     HostedDevelopmentAcquisitionConnectionFactory,
     create_hosted_development_acquisition_store,
 )
@@ -49,10 +50,12 @@ class ConnectionInfo:
 
 class Connection:
     def __init__(self, *, host=DEVELOPMENT_DATA_ENDPOINT_HOST, port=5432,
-                 sslmode="require", preflight=True, effective=True, autocommit=True):
+                 sslmode="require", preflight=True, effective=True,
+                 counter_ready=True, autocommit=True):
         self.info = ConnectionInfo(host, port, sslmode)
         self.preflight = preflight
         self.effective = effective
+        self.counter_ready = counter_ready
         self.autocommit = autocommit
         self.calls = []
         self.rollback_count = 0
@@ -66,6 +69,8 @@ class Connection:
             return Cursor()
         if statement.startswith("select current_user"):
             return Cursor({"ready": self.effective})
+        if statement == _ACQUISITION_COUNTER_READINESS_SQL:
+            return Cursor({"ready": self.counter_ready})
         raise AssertionError("unexpected database query")
 
     def rollback(self):
@@ -107,7 +112,7 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
         self.assertIs(conn, raw.connections[0])
         self.assertFalse(conn.autocommit)
         self.assertEqual(conn.close_count, 0)
-        self.assertEqual(len(conn.calls), 3)
+        self.assertEqual(len(conn.calls), 4)
         preflight, params = conn.calls[0]
         self.assertTrue(preflight.startswith("select session_user"))
         self.assertEqual(params, (
@@ -141,6 +146,28 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
         self.assertIn("'intake_state','SELECT'", effective)
         self.assertIn("'public.avuhz_outbox_deliveries','UPDATE'", effective)
         self.assertNotIn("set_config('avuhz.tenant_id'", effective)
+        counter_sql, counter_params = conn.calls[3]
+        self.assertEqual(counter_sql, _ACQUISITION_COUNTER_READINESS_SQL)
+        self.assertEqual(counter_params, ())
+        self.assertIn("c.relforcerowsecurity", counter_sql)
+        self.assertIn("avuhz_acquisition_rate_counter_tenant_isolation", counter_sql)
+        self.assertIn("p.roles=ARRAY[current_user]::name[]", counter_sql)
+        self.assertIn("p.cmd='ALL'", counter_sql)
+        self.assertIn("strpos(p.qual, 'avuhz.tenant_id')>0", counter_sql)
+        self.assertIn("strpos(p.with_check, 'avuhz.tenant_id')>0", counter_sql)
+        self.assertIn("allowed.col,'SELECT'", counter_sql)
+        self.assertIn("allowed.col,'INSERT'", counter_sql)
+        for column in ("window_started_at", "request_count"):
+            self.assertIn(f"'{column}','UPDATE'", counter_sql)
+        for column in ("tenant_id", "principal_digest"):
+            self.assertIn(f"'{column}','UPDATE'", counter_sql)
+        for operation in ("DELETE", "TRUNCATE", "REFERENCES"):
+            self.assertIn(f"'{operation}'", counter_sql)
+        self.assertNotIn("service_role", counter_sql)
+        self.assertNotIn("set_config", counter_sql)
+        self.assertNotIn("%", counter_sql)  # Psycopg placeholder-safety invariant
+        self.assertNotIn("GRANT ", counter_sql)
+        self.assertNotIn("ALTER ", counter_sql)
         conn.rollback()
         conn.close()
 
@@ -165,6 +192,7 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
             {"sslmode": "prefer"},
             {"preflight": False},   # missing login, SET role or extra membership
             {"effective": False},   # missing Stage 1/2 grants, policies or RLS
+            {"counter_ready": False},  # missing G4 RLS/counter ACL/policy
         ):
             with self.subTest(options=options):
                 raw = ConnectionFactory(**options)
@@ -176,6 +204,19 @@ class AcquisitionDevelopmentConnectionTests(unittest.TestCase):
                 self.assertEqual((conn.rollback_count, conn.close_count), (1, 1))
                 self.assertFalse(any("avuhz_command_service" in sql and sql.startswith("set role")
                                      for sql, _ in conn.calls))
+
+    def test_counter_preflight_failure_rolls_back_and_closes_without_leaks(self):
+        for invalid in (False, None, 1, {}, "true"):
+            with self.subTest(invalid_type=type(invalid).__name__):
+                raw = ConnectionFactory(counter_ready=invalid)
+                with self.assertRaisesRegex(
+                    RuntimeError, "^DEVELOPMENT acquisition DATA connection is invalid$"
+                ):
+                    HostedDevelopmentAcquisitionConnectionFactory(raw)()
+                conn = raw.connections[0]
+                self.assertEqual(len(conn.calls), 4)
+                self.assertEqual(conn.calls[1][0], "set role avuhz_acquisition_service_dev")
+                self.assertEqual((conn.rollback_count, conn.close_count), (1, 1))
 
     def test_factory_is_not_a_fallback_to_command_role_or_credentials(self):
         with self.assertRaises(ValueError):

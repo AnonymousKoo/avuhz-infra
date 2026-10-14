@@ -48,6 +48,7 @@ BEGIN
   SELECT count(*) INTO owner_edges FROM pg_auth_members m
     WHERE m.roleid=migration_oid OR m.member=migration_oid;
   IF provider_edges<>1 OR transient_edges<>0 OR command_edges<>1 OR owner_edges<>2
+    OR EXISTS (SELECT 1 FROM pg_auth_members WHERE member=command_oid)
     OR (SELECT count(*) FROM pg_auth_members m WHERE m.roleid=command_oid) NOT IN (1,2)
     OR EXISTS (
       SELECT 1 FROM pg_auth_members m
@@ -287,6 +288,18 @@ BEGIN
   SELECT oid INTO STRICT migration_oid FROM pg_roles WHERE rolname='avuhz_data_migration_service_dev';
   SELECT oid INTO STRICT command_oid FROM pg_roles WHERE rolname='avuhz_command_service';
   IF current_user<>'postgres' OR session_user<>'postgres'
+    OR EXISTS (SELECT 1 FROM pg_auth_members WHERE member=command_oid)
+    OR (SELECT count(*) FROM pg_auth_members m
+        JOIN pg_roles grantor_role ON grantor_role.oid=m.grantor
+        WHERE m.roleid=migration_oid AND m.member=postgres_oid
+          AND m.admin_option AND NOT m.inherit_option AND NOT m.set_option
+          AND grantor_role.rolsuper AND grantor_role.oid<>postgres_oid)<>1
+    OR (SELECT count(*) FROM pg_auth_members m
+        JOIN pg_roles grantor_role ON grantor_role.oid=m.grantor
+        WHERE m.roleid=command_oid AND m.member=migration_oid
+          AND m.admin_option AND NOT m.inherit_option AND NOT m.set_option
+          AND grantor_role.rolsuper AND grantor_role.oid<>migration_oid)<>1
+    OR pg_has_role('avuhz_data_migration_service_dev','avuhz_command_service','SET')
     OR pg_has_role('postgres','avuhz_data_migration_service_dev','SET')
     OR pg_has_role('postgres','avuhz_data_migration_service_dev','USAGE')
     OR has_schema_privilege('avuhz_data_migration_service_dev','public','CREATE')

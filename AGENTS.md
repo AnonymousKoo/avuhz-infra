@@ -90,7 +90,7 @@ This map is derived from the current repository tree:
 - local Supabase config: `supabase/config.toml`
 - repository tests/gates: `tests/`, `scripts/check-baseline.sh`, `.semgrep.yml`, `security/forbidden-path-patterns.txt`
 - CI workflow definitions: `.github/workflows/`
-- n8n workflow exports: **none currently present**; no canonical workflow-export path exists, and current forbidden-path rules reject `n8n-workflows/` and `.n8n/`. LOCAL/TEST-only event/receipt adapters exist at `src/avuhz_worker/n8n_event_sink.py`, `local_n8n_receipt_http.py`, `local_n8n_receipt_store.py`
+- n8n workflow exports: **no active canonical export**. One **inactive, unconfigured LOCAL/TEST source template** exists at `contracts/templates/n8n/avuhz-shared-event-receiver-inactive-v1.json`. It is not an approved general import path or proof of hosted n8n. Forbidden-path rules still reject `n8n-workflows/` and `.n8n/`. LOCAL/TEST event/receipt adapters remain in `src/avuhz_worker/n8n_event_sink.py`, `local_n8n_receipt_http.py`, `local_n8n_receipt_store.py`
 - Supabase Edge Function source: **none currently present**; local `edge_runtime` configuration does not mean an Edge Function is implemented
 - dashboard/frontend application code: **none in this repository**; the public Sekinfra frontend is maintained separately in `AnonymousKoo/sekinfra` and its public diagnostic intake currently fails closed
 

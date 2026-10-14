@@ -1,0 +1,86 @@
+{
+  "name": "Avuhz Shared Event Receiver — INACTIVE Source Template v1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "avuhz-events",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "69000000-0000-4000-8000-000000000001",
+      "name": "Authenticated Avuhz Event Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        340
+      ],
+      "webhookId": "69000000-0000-4000-8000-000000000004"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Intentional LOCAL/TEST-only fail-closed shape gate.\n // n8n Header Auth must be separately configured in encrypted credentials.\n // Validation does NOT grant tenant authority or persist a durable receipt.\n const item = $input.first()?.json;\n const body = item && typeof item === 'object' ? item.body : null;\n const fields = [\n   'event_id', 'event_type', 'tenant_id', 'correlation_id', 'occurred_at',\n   'authoritative_subject_reference', 'authoritative_subject_version',\n   'delivery_idempotency_key'\n ];\n const keys = body && typeof body === 'object' && !Array.isArray(body)\n   ? Object.keys(body).sort() : [];\n const shapeOk = keys.length === fields.length &&\n   fields.every(k => keys.includes(k));\n const allowedType = shapeOk &&\n   ['acquisition.intake.received','engagement.opened'].includes(body.event_type);\n // No runtime decisions, customer PII, payloads, credentials or raw headers\n // are returned to downstream nodes. Always reply 503 until a separately\n // approved hosted durable receipt and tenant binding are installed.\n return [{json:{code:'RECEIVER_NOT_READY',shape_valid:!!allowedType}}];"
+      },
+      "id": "69000000-0000-4000-8000-000000000002",
+      "name": "Validate Non-Authoritative Shape Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"code\":\"RECEIVER_NOT_READY\"}",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "id": "69000000-0000-4000-8000-000000000003",
+      "name": "Reject Until Durable Receipt Approved",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        790,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "Authenticated Avuhz Event Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Non-Authoritative Shape Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Non-Authoritative Shape Only": {
+      "main": [
+        [
+          {
+            "node": "Reject Until Durable Receipt Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "active": false,
+  "tags": []
+}

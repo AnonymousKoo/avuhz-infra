@@ -93,6 +93,15 @@ Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jso
 - AUTH recovery/token cleanup and DATA v15 runtime-login creation are completed historical evidence, not reusable authority. Connected DATA validation, any Render secret/deploy/readiness change, n8n, communications, billing, staging, and production are distinct boundaries requiring their own authorization.
 - Current platform production readiness is `NOT_READY`; `READY_FOR_PHASE6` is `NO`.
 
+## Infrastructure Authority V1 source candidate
+
+A side-effect-free DEVELOPMENT desired-versus-observed-state candidate exists
+in src/avuhz_runtime/infrastructure_state_review.py, reusing Phase 5D
+target/resource digest conventions. It does not discover provider resources,
+attest observation sources, persist an inventory, authorize execution or
+verify deployments. There is no certified live Infrastructure Authority V1
+operational loop.
+
 ## Repository resource map
 
 - Root architecture context: `ARCHITECTURE.md`

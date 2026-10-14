@@ -231,6 +231,45 @@ class HostedDevelopmentAcquisitionConnectionFactory:
             raise RuntimeError("DEVELOPMENT acquisition DATA connection is invalid") from None
 
 
+def probe_development_acquisition_data_readiness(
+    connection_factory: Callable[[], object],
+) -> None:
+    """Read-only, single-session G3 preflight; no tenant or customer writes.
+
+    Requires the explicit private acquisition DATA connection factory. The
+    existing admission guard verifies the exact login, SET-only role, grants,
+    RLS and acquisition rate-counter policy. The probe rolls back SET ROLE
+    and closes the connection before returning; nothing stays authenticated,
+    no token/DSN is returned, and success does not activate hosted intake.
+    A future exact-environment operator may run this *only after* a
+    separately approved private credential binding and provider permission.
+    """
+    if not callable(connection_factory):
+        raise ValueError("dedicated DEVELOPMENT acquisition factory required")
+    try:
+        connection = HostedDevelopmentAcquisitionConnectionFactory(
+            connection_factory,
+        )()
+    except Exception:
+        # The admission guard already attempts rollback and close on failure.
+        # Never expose a raw driver or provider diagnostic.
+        raise RuntimeError("DEVELOPMENT acquisition DATA readiness invalid") from None
+
+    # Both cleanup actions must be attempted even if one fails. A failed
+    # rollback or close is not a successful certification of the session.
+    cleaned = True
+    try:
+        connection.rollback()
+    except Exception:
+        cleaned = False
+    try:
+        connection.close()
+    except Exception:
+        cleaned = False
+    if not cleaned:
+        raise RuntimeError("DEVELOPMENT acquisition DATA readiness invalid") from None
+
+
 def create_hosted_development_acquisition_store(
     connection_factory: Callable[[], object] | None = None,
 ) -> PostgresStore:

@@ -46,8 +46,10 @@ CAPS = frozenset({
 def human(name):
     return TrustedExecutionContext(
         True, name, "HUMAN", TENANT, None, CAPS, frozenset(),
-        "DEVELOPMENT", "avuhz-command-api", "STRONG", False, STAMP,
-        "2099-01-01T00:00:00Z",
+        # Authentication is independently issued in the past; the separate
+        # synthetic EVENT clock is in 2030 and must not mint future identity.
+        "DEVELOPMENT", "avuhz-command-api", "STRONG", False,
+        "2026-01-01T00:00:00Z", "2099-01-01T00:00:00Z",
     )
 
 

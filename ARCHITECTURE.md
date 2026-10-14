@@ -29,7 +29,7 @@ Current hosted code state: `src/avuhz_service/development.py` injects the certif
 
 ## 2. Event-driven workflow / orchestration engine
 
-n8n is the required shared orchestration engine. One **inactive, unconfigured LOCAL/TEST receiver source template** exists at `contracts/templates/n8n/avuhz-shared-event-receiver-inactive-v1.json`; it is not a hosted receiver, secret, installed workflow, or approved general export path. `security/forbidden-path-patterns.txt` continues to reject `n8n-workflows/` and `.n8n/` paths.
+n8n is the required shared orchestrator. contracts/templates/n8n/ contains three inactive LOCAL/TEST source templates: a fail-closed shared receiver, a System #001 revenue-intake child, and an unconnected receipt-bridge child whose HTTP destination is intentionally unreachable and credential not bound. The separately installed local Avuhz receiver and Revenue Intake child on localhost:5678 are INACTIVE, along with an unrelated inactive AI Auto Marketing Check. None is a verified hosted integration or production workflow; security/forbidden-path-patterns.txt continues to reject n8n-workflows/ and .n8n/.
 
 The implemented event foundation beneath future orchestration is Avuhz-owned:
 
@@ -108,7 +108,7 @@ Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jso
 - Local Supabase configuration: `supabase/config.toml`
 - Tests and security gates: `tests/`, `scripts/check-baseline.sh`, `.semgrep.yml`, `security/forbidden-path-patterns.txt`
 - CI workflow definitions: `.github/workflows/`
-- n8n: one **inactive LOCAL/TEST receiver source template** under `contracts/templates/n8n/`, **no installed canonical workflow or hosted integration proven**; LOCAL/TEST event and receipt adapters are in `src/avuhz_worker/`
+- n8n: three inactive source templates under contracts/templates/n8n/, with one new uninstalled receipt child; LOCAL/TEST event/receipt adapters in src/avuhz_worker/. No hosted receiver or production automation integration is proven.
 - Supabase Edge Functions: **none present**; `edge_runtime` is enabled in local config, but no function source directory exists
 - Dashboard/frontend application code: **none in this repository**; public Sekinfra website code belongs to the separate `AnonymousKoo/sekinfra` repository
 
@@ -119,7 +119,7 @@ Python dependencies include `psycopg`, `PyJWT[crypto]`, `cryptography`, and `jso
 - Synthetic-token validation v3, repaired recovery cleanup, and the dedicated temporary-credential retirement are complete; their consumed authority grants no further provider action.
 - The historical DEVELOPMENT Render v11 command-service deploy/readiness passed for its bound commit, but the later first-client acquisition/OIA work has not been deployed or authorized. Do not label the shared acquisition HTTP ingress, n8n receipt, or Sekinfra public intake live on the strength of command-service readiness.
 - The original 16-table DATA schema has no user/organization directory. Later DEVELOPMENT tenant/owner/acquisition registries exist, but no verified active business-owner binding, independently approved live owner-directory provider, or active acquisition workload exists.
-- Synthetic n8n event-sink and local receipt-bridge code exist, plus one unconfigured, fail-closed inactive receiver source template. No certified hosted receiver or production orchestration integration is present.
+- Synthetic n8n event sink and local durable receipt-bridge code exist, with three inactive source templates. The new child lacks a credential, reachable private endpoint, and a receiver connection. No certified hosted receiver or production orchestration integration is present.
 - No shared communications provider adapter or SPF/DKIM/DMARC deployment configuration is implemented here.
 - No shared Stripe billing/usage-metering engine is implemented here.
 - No dashboard application code or Supabase Edge Function source is present **in this repo**. The separate Sekinfra website returns HTTP 503 for diagnostic intake; the four installed OIA tables have FORCE RLS but no application runtime policies.

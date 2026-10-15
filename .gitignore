@@ -19,6 +19,7 @@ supabase/.temp/
 !supabase/migrations/
 !supabase/migrations/*.sql
 !supabase/provider-artifacts/development-data/current/development_data_work_item_command_idempotency_owner_wrapper_v1.sql
+!supabase/provider-artifacts/development-data/current/development_data_work_item_deadline_owner_wrapper_v1.sql
 !supabase/inventory/
 !supabase/inventory/current_public_schema.sql
 

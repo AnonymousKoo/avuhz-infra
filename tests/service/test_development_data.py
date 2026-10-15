@@ -302,12 +302,13 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertIn("format('%%I.%%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertNotIn("format('%I.%I',table_info.schemaname,table_info.tablename)", readiness_sql)
         self.assertEqual(readiness_sql.count("like 'avuhz_%%'"), 5)
-        # 20 canonical DEVELOPMENT tables; the original 16 alone retain
-        # table-wide SELECT. All four registries must be FORCE RLS; only
-        # the rate counter has narrowly scoped column-level access.
-        self.assertIn("where schemaname='public' and tablename like 'avuhz_%%') = 20", readiness_sql)
-        self.assertIn("and relation.relkind in ('r','p') and relation.relrowsecurity) = 20", readiness_sql)
-        self.assertIn("and policy.polname='avuhz_command_service_tenant_isolation') = 20", readiness_sql)
+        # 21 canonical DEVELOPMENT tables: 16 baseline core + one shared
+        # System #001 Work Item + four restricted acquisition registries.
+        # Only 17 core tables retain table-wide SELECT; registry access
+        # stays scoped and the Work Item requires forced tenant RLS.
+        self.assertIn("where schemaname='public' and tablename like 'avuhz_%%') = 21", readiness_sql)
+        self.assertIn("and relation.relkind in ('r','p') and relation.relrowsecurity) = 21", readiness_sql)
+        self.assertIn("and policy.polname='avuhz_command_service_tenant_isolation') = 21", readiness_sql)
         self.assertIn("relation.relforcerowsecurity) = 4", readiness_sql)
         self.assertIn("'SELECT,INSERT,UPDATE,DELETE')) = 0", readiness_sql)
         self.assertIn("'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')", readiness_sql)
@@ -317,7 +318,15 @@ class DevelopmentDataCompositionTests(unittest.TestCase):
         self.assertIn("'request_count','UPDATE')", readiness_sql)
         self.assertIn("'tenant_id','UPDATE')", readiness_sql)
         self.assertIn("'principal_digest','UPDATE')", readiness_sql)
-        self.assertIn("'SELECT')) = 16", readiness_sql)
+        self.assertIn("'SELECT')) = 17", readiness_sql)
+        self.assertIn("relation.oid=to_regclass('public.avuhz_work_items')", readiness_sql)
+        self.assertIn("and relation.relforcerowsecurity)", readiness_sql)
+        self.assertIn("policy.tablename='avuhz_work_items'", readiness_sql)
+        self.assertIn("policy.roles=ARRAY['avuhz_command_service']::name[]", readiness_sql)
+        self.assertIn("strpos(policy.qual,'avuhz.tenant_id')>0", readiness_sql)
+        self.assertIn("strpos(policy.with_check,'avuhz.tenant_id')>0", readiness_sql)
+        self.assertIn("'next_action_due_at','INSERT')", readiness_sql)
+        self.assertIn("'tenant_id','UPDATE')", readiness_sql)
         self.assertEqual(readiness_sql.count("and relation.relname in (%s,%s,%s,%s)"), 1)
         self.assertEqual(readiness_sql.count("and table_info.tablename in (%s,%s,%s)"), 1)
         self.assertNotIn("like 'avuhz_%'", readiness_sql.replace("like 'avuhz_%%'", ""))

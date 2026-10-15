@@ -4,11 +4,13 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "supabase/migrations/20261015193000_grant_shared_acquisition_handoff_metadata_read.sql"
 CONTAINER = os.getenv("AVUHZ_LOCAL_POSTGRES_CONTAINER")
+IMAGE = os.getenv("AVUHZ_POSTGRES_IMAGE")
 DATABASE = "avuhz_system001_metadata_forward_v1"
 TENANT_A = "a4730000-0000-4000-8000-000000000001"
 TENANT_B = "a4730000-0000-4000-8000-000000000002"
@@ -76,13 +78,65 @@ class StaticContract(unittest.TestCase):
 class DisposablePostgres(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # Roles are cluster-global: the CI migration suite already creates
+        # avuhz_command_service in its shared disposable database container.
+        # Our destructive role/privilege negatives must run in a separate,
+        # isolated, digest-pinned PostgreSQL cluster, never against that peer.
         if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}", CONTAINER or ""):
             raise ValueError("disposable PostgreSQL container identifier unavailable")
+        if not re.fullmatch(r"[^\s]+@sha256:[0-9a-f]{64}", IMAGE or ""):
+            raise ValueError("digest-pinned PostgreSQL fixture image is required")
+        cls.fixture_name = CONTAINER + "-acquisition-metadata"
+        if len(cls.fixture_name) > 128:
+            raise ValueError("disposable fixture name too long")
+        if subprocess.run(
+            ["docker", "container", "inspect", cls.fixture_name],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode == 0:
+            raise RuntimeError("dedicated PostgreSQL fixture name already exists")
+        run = subprocess.run(
+            ["docker", "run", "--detach", "--rm", "--network", "none",
+             "--name", cls.fixture_name, "--env", "POSTGRES_HOST_AUTH_METHOD=trust",
+             IMAGE], capture_output=True, text=True, check=False,
+        )
+        if run.returncode or not re.fullmatch(r"[0-9a-f]{64}", run.stdout.strip()):
+            raise RuntimeError("could not start isolated PostgreSQL fixture")
+        cls.fixture_id = run.stdout.strip()
+        try:
+            for _ in range(30):
+                ready = subprocess.run(
+                    ["docker", "exec", cls.fixture_id, "pg_isready", "-U", "postgres"],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+                if ready.returncode == 0:
+                    version = subprocess.run(
+                        ["docker", "exec", cls.fixture_id, "psql", "-X", "-At",
+                         "-U", "postgres", "-d", "postgres", "-c", "show server_version_num;"],
+                        capture_output=True, text=True, check=False,
+                    )
+                    if version.returncode or not version.stdout.strip().startswith("17"):
+                        raise RuntimeError("fixture must be PostgreSQL 17")
+                    return
+                time.sleep(1)
+            raise RuntimeError("isolated PostgreSQL fixture not ready")
+        except BaseException:
+            cls.tearDownClass()
+            raise
+
+    @classmethod
+    def tearDownClass(cls):
+        fixture_id = getattr(cls, "fixture_id", None)
+        if fixture_id:
+            subprocess.run(["docker", "rm", "--force", fixture_id],
+                           capture_output=True, check=False)
+            cls.fixture_id = None
 
     @classmethod
     def command(cls, sql: str, *, check: bool = True):
         p = subprocess.run([
-            "docker","exec","-i",CONTAINER,"psql","-X",
+            "docker","exec","-i",cls.fixture_id,"psql","-X",
             "-v","ON_ERROR_STOP=1","-At","-U","postgres","-d",DATABASE
         ],input=sql.encode(),capture_output=True,check=False)
         if check and p.returncode:
@@ -91,7 +145,7 @@ class DisposablePostgres(unittest.TestCase):
 
     @classmethod
     def docker(cls,*args):
-        return subprocess.run(["docker","exec",CONTAINER,*args],
+        return subprocess.run(["docker","exec",cls.fixture_id,*args],
                               check=True,capture_output=True)
 
     def setUp(self):
@@ -111,7 +165,7 @@ class DisposablePostgres(unittest.TestCase):
     @classmethod
     def command_global(cls,sql):
         p=subprocess.run(
-            ["docker","exec",CONTAINER,"psql","-X","-v","ON_ERROR_STOP=1",
+            ["docker","exec",cls.fixture_id,"psql","-X","-v","ON_ERROR_STOP=1",
              "-U","postgres","-d","postgres","-c",sql],
              capture_output=True,check=False
         )

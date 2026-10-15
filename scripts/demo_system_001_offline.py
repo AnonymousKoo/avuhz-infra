@@ -25,6 +25,9 @@ from avuhz_service.shared_work_intake_candidate import (
 from avuhz_service.shared_work_intake_lifecycle_projection import (
     project_test_work_intake_lifecycle_event,
 )
+from avuhz_service.shared_revenue_followup_review import (
+    FollowupObservation, FollowupReviewPolicy, review_followup_due,
+)
 from avuhz_worker.n8n_event_sink import N8nOutboxSink
 from avuhz_worker.outbox import MemoryOutboxUnitOfWork, OutboxWorker, WorkerSettings
 
@@ -34,6 +37,7 @@ ITEM = "a4730000-0000-4000-8000-000000000031"
 CORRELATION = "a4730000-0000-4000-8000-000000000044"
 EVENT_PREFIX = "f8000000-0000-4000-8000-0000000000"
 EVENT_TIME = "2030-01-15T15:00:00Z"
+DUE_TIME = "2030-01-15T16:05:00Z"
 CLOCK = datetime(2030, 1, 15, 15, 0, tzinfo=timezone.utc)
 CAPABILITIES = frozenset((
     "work_intake:create", "work_intake:manage", "work_intake:accept",
@@ -67,6 +71,7 @@ def _command(kind: str, version: int | None, key: str, *,
         source="web" if kind == "OPEN" else None,
         classification="service_request" if kind == "OPEN" else None,
         recipient=recipient,
+        next_action_due_at=DUE_TIME if kind == "OPEN" else None,
     )
 
 
@@ -94,6 +99,7 @@ def run_demo() -> dict:
     )
     history = []
     events = []
+    opened_item = None
     replay_denied_duplicate_event = False
     outsider_denied = False
     previous_owner_denied = False
@@ -102,6 +108,7 @@ def run_demo() -> dict:
         issued = _command(kind, version, key, recipient=recipient)
         result = engine.apply(actor, issued)
         if number == 1:
+            opened_item = result.item
             replay = engine.apply(actor, issued)
             replay_denied_duplicate_event = replay.replayed and replay.intent is None
             if not replay_denied_duplicate_event:
@@ -135,6 +142,32 @@ def run_demo() -> dict:
 
     if not (outsider_denied and previous_owner_denied):
         raise RuntimeError("OFFLINE DEMO STOP: unauthorized read succeeded")
+
+    # A deadline is a persisted Work Item field in the real shared writer, but
+    # this walkthrough is deliberately in-memory. Review only trusted Work
+    # Item snapshots; never instruct n8n or a notification provider to send.
+    if opened_item is None or result.item.next_action_due_at != DUE_TIME:
+        raise RuntimeError("OFFLINE DEMO STOP: deadline not preserved")
+    policy = FollowupReviewPolicy(escalation_after_minutes=15)
+    def due_review(item, hour, minute):
+        return review_followup_due(
+            (FollowupObservation(item, DUE_TIME),),
+            trusted_tenant_id=TENANT,
+            policy=policy,
+            now=datetime(2030, 1, 15, hour, minute, tzinfo=timezone.utc),
+        )
+    before_due = due_review(opened_item, 16, 4)
+    at_due = due_review(opened_item, 16, 5)
+    escalated = due_review(opened_item, 16, 21)
+    after_resolution = due_review(result.item, 17, 0)
+    if not (
+        before_due == () and len(at_due) == 1
+        and at_due[0].kind == "FOLLOWUP_DUE"
+        and len(escalated) == 1
+        and escalated[0].kind == "FOLLOWUP_ESCALATION_REVIEW_REQUIRED"
+        and after_resolution == ()
+    ):
+        raise RuntimeError("OFFLINE DEMO STOP: follow-up review mismatch")
 
     # This is a synthetic stand-in for an already committed shared outbox.
     # No durable work item, event, or outbox transaction is claimed.
@@ -193,6 +226,14 @@ def run_demo() -> dict:
         "hosted_database_used": False,
         "live_n8n_used": False,
         "history": history,
+        "followup_review": {
+            "due_at": DUE_TIME,
+            "before_due_count": len(before_due),
+            "at_due_kind": at_due[0].kind,
+            "after_escalation_kind": escalated[0].kind,
+            "after_resolution_count": len(after_resolution),
+            "notification_sent": False,
+        },
         "security": {
             "cross_tenant_read_denied": outsider_denied,
             "former_owner_read_denied": previous_owner_denied,
@@ -223,6 +264,9 @@ def main() -> None:
             f"state={row['state']:<8} owner={row['owner']:<9} "
             f"version={row['version']} event={row['event_type']}"
         )
+    followup = evidence["followup_review"]
+    print(f"FOLLOWUP | due={followup['at_due_kind']} | escalation={followup['after_escalation_kind']}")
+    print("FOLLOWUP | resolved items no longer due | no notification sent")
     print("SAFETY | cross-tenant read DENIED | previous owner read DENIED")
     print("REPLAY | duplicate command generated no new event")
     print("SHARED OUTBOX | 6/6 published to LOCAL stub; idle second run published 0")

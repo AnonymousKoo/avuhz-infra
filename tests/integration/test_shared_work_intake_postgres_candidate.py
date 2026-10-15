@@ -867,5 +867,161 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
             ), ())
 
 
+    def test_fictional_qa_http_to_durable_work_item_full_local_composition(self):
+        """HTTP intake -> outbox -> loopback receipt -> real PostgreSQL Work Item.
+
+        n8n is SIMULATED, acquisition DATA+AUTH are test doubles, while
+        the local receipt HTTP/SQLite and shared Work Item PostgreSQL/RLS
+        are genuine. This MUST NOT be used as hosted or actual n8n proof.
+        """
+        import json
+        import secrets
+        import tempfile
+        import threading
+        from datetime import datetime, timezone
+        from pathlib import Path
+        from avuhz_service.shared_due_work_reader_candidate import SharedDueWorkReadCandidate
+        from avuhz_service.shared_revenue_followup_review import FollowupReviewPolicy
+        from avuhz_worker.local_n8n_receipt_http import LocalN8nReceiptHTTPServer
+        from avuhz_worker.local_n8n_receipt_store import LocalN8nReceiptStore
+        from avuhz_worker.local_system001_governed_handoff import (
+            AuthorizedAcquisitionSnapshot, LocalSystem001GovernedHandoff,
+            LocalSystem001HandoffDenied,
+        )
+        from tests.integration.test_system_001_fictional_qa_local_acceptance import (
+            fixture, SyntheticLocalRelay,
+        )
+        from tests.integration.test_acquisition_http_to_n8n_synthetic_journey import (
+            application, request, event_and_outbox_from_committed_intake,
+            worker_for,
+        )
+
+        qa = fixture()
+        self.assertEqual(qa["tenant_id"], TENANT_A)
+        self.assertEqual(qa["work_item_id"], ITEM_B)
+        self.writer._clock = lambda: datetime(2030,1,15,16,0,tzinfo=timezone.utc)
+
+        class CapturedSyntheticRelay(SyntheticLocalRelay):
+            def __init__(self, port, secret):
+                super().__init__(port, secret, lose_ack=True)
+                self.envelopes = []
+            def post(self, endpoint, headers, body):
+                # Capture only the preexisting bounded 8-field n8n envelope
+                # emitted by the real Avuhz N8nOutboxSink.
+                message = json.loads(body)
+                self.envelopes.append(message)
+                return super().post(endpoint, headers, body)
+
+        with tempfile.TemporaryDirectory(prefix="avuhz-system001-local-complete-") as tmp:
+            token = secrets.token_urlsafe(40)
+            store = LocalN8nReceiptStore(
+                Path(tmp) / "receipts.sqlite", trusted_tenant_id=TENANT_A,
+                allowed_event_types=frozenset({"acquisition.intake.received"}),
+            )
+            server = LocalN8nReceiptHTTPServer(
+                receipt_store=store, token_provider=lambda: token,
+            )
+            thread = threading.Thread(
+                target=server.serve_forever,
+                kwargs={"poll_interval":0.02}, daemon=True,
+            )
+            thread.start()
+            try:
+                app, intake_test_store = application()
+                status, response, headers = request(app, obj=qa["request"])
+                self.assertEqual(status, 202)
+                self.assertEqual(response["duplicate"], False)
+                self.assertEqual(headers["Cache-Control"], "no-store")
+                self.assertNotIn(qa["request"]["contact_email"], json.dumps(response))
+                intake_uuid = response["intake_id"]
+                self.assertNotEqual(intake_uuid, qa["work_item_id"])
+                outbox = event_and_outbox_from_committed_intake(intake_test_store)
+                self.assertEqual(outbox.events[0]["tenant_id"], TENANT_A)
+                self.assertEqual(outbox.events[0]["authoritative_subject_reference"]["reference_id"], intake_uuid)
+                relay = CapturedSyntheticRelay(server.server_port, token)
+                worker, clock = worker_for(outbox, relay)
+                self.assertEqual(worker.run_once()["retry_scheduled"], 1)
+                self.assertEqual(len(relay.envelopes), 1)
+                first = relay.envelopes[0]
+                key = first["delivery_idempotency_key"]
+                self.assertEqual(first["event_type"], "acquisition.intake.received")
+                self.assertEqual(first["authoritative_subject_reference"]["reference_id"], intake_uuid)
+                self.assertTrue(store.committed(first, delivery_header=key))
+                self.assertEqual(len(self.table("avuhz_work_items")), 0)
+                clock.advance(5)
+                self.assertEqual(worker.run_once()["published"], 1)
+                self.assertEqual(len(relay.envelopes), 2)
+                self.assertEqual(relay.envelopes[0], relay.envelopes[1])
+                self.assertEqual(outbox.outbox[0]["status"], "PUBLISHED")
+                self.assertEqual(worker.run_once()["claimed"], 0)
+
+                # This independent acquisition lookup is a LOCAL synthetic
+                # stand-in; never claim an actual DEVELOPMENT DATA owner.
+                owner_evidence = "outside"
+                acquisition_queries = []
+                def read_source(opaque_intake):
+                    acquisition_queries.append(opaque_intake)
+                    if opaque_intake != intake_uuid:
+                        return None
+                    return AuthorizedAcquisitionSnapshot(
+                        tenant_id=TENANT_A,
+                        intake_id=intake_uuid,
+                        work_item_id=qa["work_item_id"],
+                        state="RECEIVED",
+                        source="web",
+                        classification="service_request",
+                        next_action_due_at=qa["next_action_due_at"],
+                        owner_identity_evidence=owner_evidence,
+                    )
+                handoff = LocalSystem001GovernedHandoff(
+                    receipt_store=store, resolve_acquisition=read_source,
+                    resolve_owner_identity=self.resolve_identity,
+                    work_writer=self.writer,
+                )
+                # A valid but unrelated tenant's HUMAN identity cannot
+                # manufacture a Work Item in its own tenant.
+                with self.assertRaises(LocalSystem001HandoffDenied):
+                    handoff.open_receipted_intake(first, delivery_header=key)
+                self.assertEqual(self.table("avuhz_work_items"), [])
+                owner_evidence = "sender"
+                created = handoff.open_receipted_intake(first, delivery_header=key)
+                replay = handoff.open_receipted_intake(first, delivery_header=key)
+                self.assertEqual((created.accepted_version, created.replayed), (1, False))
+                self.assertEqual((replay.accepted_version, replay.replayed), (1, True))
+                self.assertEqual(acquisition_queries, [intake_uuid]*3)
+                for table in (
+                    "avuhz_work_items","avuhz_idempotency_records",
+                    "avuhz_lifecycle_events","avuhz_outbox_deliveries",
+                ):
+                    self.assertEqual(len(self.table(table)), 1, table)
+                saved = self.table("avuhz_work_items")[0]
+                self.assertEqual(str(saved["tenant_id"]), TENANT_A)
+                self.assertEqual(saved["owner_reference"], qa["work_owner_reference"])
+                self.assertEqual(saved["next_action_due_at"].strftime("%Y-%m-%dT%H:%M:%SZ"), qa["next_action_due_at"])
+                self.assertNotIn(qa["request"]["contact_email"], json.dumps(relay.envelopes))
+                self.assertNotIn(qa["request"]["contact_name"], json.dumps(relay.envelopes))
+                self.assertNotIn(token, json.dumps(relay.envelopes))
+
+                reader = SharedDueWorkReadCandidate(
+                    self.store, resolve_identity=self.resolve_identity,
+                    resolve_tenant_member=self.resolve_tenant_member,
+                )
+                due = reader.review_owned_due(
+                    "sender", policy=FollowupReviewPolicy(escalation_after_minutes=15),
+                    now=datetime(2030,1,15,16,5,tzinfo=timezone.utc),
+                )
+                self.assertEqual(len(due), 1)
+                self.assertEqual(due[0].kind, "FOLLOWUP_DUE")
+                self.assertEqual(reader.review_owned_due(
+                    "outside", policy=FollowupReviewPolicy(escalation_after_minutes=15),
+                    now=datetime(2030,1,15,16,5,tzinfo=timezone.utc),
+                ), ())
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=3)
+
+
+
 if __name__ == "__main__":
     unittest.main()

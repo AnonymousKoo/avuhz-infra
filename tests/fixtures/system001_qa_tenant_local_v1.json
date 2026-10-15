@@ -18,7 +18,7 @@
     "contact_requested": true,
     "diagnostic_summary": "Fictional System 001 work intake acceptance test."
   },
-  "work_item_id": "a4730000-0000-4000-8000-000000000031",
+  "work_item_id": "a4730000-0000-4000-8000-000000000032",
   "work_owner_reference": "worker.sender",
   "next_action_due_at": "2030-01-15T16:05:00Z"
 }

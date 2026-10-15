@@ -1,0 +1,24 @@
+{
+  "fixture_type": "LOCAL_TEST_ONLY_FICTIONAL_CLIENT",
+  "fixture_name": "Avuhz QA Tenant 001",
+  "tenant_id": "a4730000-0000-4000-8000-000000000001",
+  "organization_id": "a4730000-0000-4000-8000-000000000011",
+  "owner_is_real_or_verified": false,
+  "hosted_data_insert_authorized": false,
+  "production_allowed": false,
+  "request": {
+    "external_request_id": "a4730000-0000-4000-8000-000000000021",
+    "source_system": "avuhz.qa",
+    "route_reference": "local.system001",
+    "business_name": "Avuhz QA Tenant 001",
+    "contact_name": "Fictional QA Operator",
+    "contact_email": "qa-operator@example.invalid",
+    "contact_phone": null,
+    "preferred_contact_method": "EMAIL",
+    "contact_requested": true,
+    "diagnostic_summary": "Fictional System 001 work intake acceptance test."
+  },
+  "work_item_id": "a4730000-0000-4000-8000-000000000031",
+  "work_owner_reference": "worker.sender",
+  "next_action_due_at": "2030-01-15T16:05:00Z"
+}

@@ -767,5 +767,105 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
             self.assertEqual(len(self.table(table)), expected, table)
 
 
+    def test_local_committed_n8n_receipt_requires_independent_owner_for_real_work_writer(self):
+        """REAL LOCAL PG/RLS: receipt -> independent lookup -> shared guarded OPEN.
+
+        The event and owner are synthetic. This invokes no installed n8n
+        workflow, no external tenant service, and no hosted Supabase project.
+        """
+        import tempfile
+        from pathlib import Path
+        from datetime import datetime, timezone
+        from avuhz_service.shared_due_work_reader_candidate import SharedDueWorkReadCandidate
+        from avuhz_service.shared_revenue_followup_review import FollowupReviewPolicy
+        from avuhz_worker.local_n8n_receipt_store import LocalN8nReceiptStore
+        from avuhz_worker.local_system001_governed_handoff import (
+            AuthorizedAcquisitionSnapshot, LocalSystem001GovernedHandoff,
+            LocalSystem001HandoffDenied,
+        )
+        from tests.worker.test_local_n8n_receipt_store import envelope, KEY
+
+        now = datetime(2030, 1, 15, 16, 0, 0, tzinfo=timezone.utc)
+        self.writer._clock = lambda: now
+        message = envelope(tenant_id=TENANT_A)
+        intake = message["authoritative_subject_reference"]["reference_id"]
+
+        with tempfile.TemporaryDirectory(prefix="avuhz-local-receipt-to-pg-") as temp:
+            store = LocalN8nReceiptStore(
+                Path(temp) / "receipt.sqlite",
+                trusted_tenant_id=TENANT_A,
+                allowed_event_types=frozenset({"acquisition.intake.received"}),
+            )
+            # Resolver represents an independent TEST authoritative DATA read;
+            # not a caller-controlled HTTP/n8n tenant or owner value.
+            subject = AuthorizedAcquisitionSnapshot(
+                tenant_id=TENANT_A, intake_id=intake, work_item_id=ITEM,
+                state="RECEIVED", source="web", classification="service_request",
+                next_action_due_at="2030-01-15T16:05:00Z",
+                owner_identity_evidence="sender",
+            )
+            looked_up = []
+            def read_authoritative_intake(intake_id):
+                looked_up.append(intake_id)
+                return subject if intake_id == intake else None
+
+            handoff = LocalSystem001GovernedHandoff(
+                receipt_store=store, resolve_acquisition=read_authoritative_intake,
+                resolve_owner_identity=self.resolve_identity,
+                work_writer=self.writer,
+            )
+            with self.assertRaises(LocalSystem001HandoffDenied):
+                handoff.open_receipted_intake(message, delivery_header=KEY)
+            self.assertEqual(looked_up, [])
+            self.assertEqual(self.table("avuhz_work_items"), [])
+
+            self.assertFalse(store.receive(message, delivery_header=KEY).duplicate)
+            self.assertTrue(store.committed(message, delivery_header=KEY))
+            # A wrong-tenant envelope never authenticates or resolves owner.
+            with self.assertRaises(LocalSystem001HandoffDenied):
+                handoff.open_receipted_intake(
+                    envelope(tenant_id=TENANT_B), delivery_header=KEY)
+            self.assertEqual(looked_up, [])
+
+            # Source-level ownership alone does NOT grant permission:
+            # the shared real PG writer MUST authenticate and check membership.
+            subject = dataclasses.replace(subject, owner_identity_evidence="outside")
+            with self.assertRaises(LocalSystem001HandoffDenied):
+                handoff.open_receipted_intake(message, delivery_header=KEY)
+            self.assertEqual(self.table("avuhz_work_items"), [])
+
+            subject = dataclasses.replace(subject, owner_identity_evidence="sender")
+            receipt = handoff.open_receipted_intake(message, delivery_header=KEY)
+            self.assertEqual((receipt.accepted_version, receipt.replayed), (1, False))
+            self.assertIsNotNone(receipt.event_id)
+            replay = handoff.open_receipted_intake(message, delivery_header=KEY)
+            self.assertEqual((replay.accepted_version, replay.replayed), (1, True))
+            self.assertIsNone(replay.event_id)
+            for table in (
+                "avuhz_work_items", "avuhz_idempotency_records",
+                "avuhz_lifecycle_events", "avuhz_outbox_deliveries",
+            ):
+                self.assertEqual(len(self.table(table)), 1, table)
+            item = self.table("avuhz_work_items")[0]
+            self.assertEqual(str(item["tenant_id"]), TENANT_A)
+            self.assertEqual(item["owner_reference"], "worker.sender")
+            self.assertEqual(item["state"], "OPEN")
+            self.assertEqual(item["next_action_due_at"].isoformat(), "2030-01-15T16:05:00+00:00")
+            reader = SharedDueWorkReadCandidate(
+                self.store, resolve_identity=self.resolve_identity,
+                resolve_tenant_member=self.resolve_tenant_member,
+            )
+            due = reader.review_owned_due(
+                "sender", policy=FollowupReviewPolicy(escalation_after_minutes=15),
+                now=datetime(2030,1,15,16,5,tzinfo=timezone.utc),
+            )
+            self.assertEqual(len(due), 1)
+            self.assertEqual(due[0].kind, "FOLLOWUP_DUE")
+            self.assertEqual(reader.review_owned_due(
+                "outside", policy=FollowupReviewPolicy(escalation_after_minutes=15),
+                now=datetime(2030,1,15,16,5,tzinfo=timezone.utc),
+            ), ())
+
+
 if __name__ == "__main__":
     unittest.main()

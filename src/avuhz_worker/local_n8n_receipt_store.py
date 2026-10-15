@@ -119,8 +119,8 @@ class LocalN8nReceiptStore:
         except sqlite3.Error:
             raise ReceiptStoreUnavailable("receipt_store_unavailable") from None
 
-    def receive(self, envelope: Mapping[str, object],
-                *, delivery_header: object) -> Receipt:
+    def _validated_digest(self, envelope: Mapping[str, object], *, delivery_header: object) -> str:
+        """Strict common shape + SHA-256 validation, without any storage write."""
         if type(envelope) is not dict or set(envelope) != _FIELDS:
             raise InvalidReceipt("invalid_event_envelope")
         if envelope["tenant_id"] != self._tenant_id:
@@ -149,7 +149,32 @@ class LocalN8nReceiptStore:
             raise InvalidReceipt("invalid_event_envelope") from None
         if len(raw) > 4096:
             raise InvalidReceipt("event_envelope_too_large")
-        digest = hashlib.sha256(raw).hexdigest()
+        return hashlib.sha256(raw).hexdigest()
+
+
+    def committed(self, envelope: Mapping[str, object], *, delivery_header: object) -> bool:
+        """Check that this EXACT authenticated-transport receipt already committed.
+
+        This check is read-only, never reserves a missing receipt, and is not
+        owner or tenant business authorization. It is paired with a separate
+        server-owned acquisition lookup and shared Work Item identity guard.
+        """
+        digest = self._validated_digest(envelope, delivery_header=delivery_header)
+        try:
+            with sqlite3.connect(f"file:{self._path}?mode=ro", uri=True, timeout=5) as db:
+                row = db.execute(
+                    "SELECT envelope_digest FROM local_n8n_receipts "
+                    "WHERE trusted_tenant_id=? AND delivery_key=?",
+                    (self._tenant_id, envelope["delivery_idempotency_key"]),
+                ).fetchone()
+                return row is not None and row[0] == digest
+        except sqlite3.Error:
+            raise ReceiptStoreUnavailable("receipt_store_unavailable") from None
+
+    def receive(self, envelope: Mapping[str, object],
+                *, delivery_header: object) -> Receipt:
+        digest = self._validated_digest(envelope, delivery_header=delivery_header)
+        key = envelope["delivery_idempotency_key"]
         try:
             with sqlite3.connect(self._path, timeout=5, isolation_level=None) as db:
                 db.execute("PRAGMA synchronous=FULL")

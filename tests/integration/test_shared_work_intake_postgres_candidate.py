@@ -668,5 +668,104 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
             )
 
 
+    def test_synthetic_authenticated_open_deadline_due_review_with_handoff(self):
+        """One bounded proof of the shared writer/read path; LOCAL PG only.
+
+        A server-injected synthetic strong HUMAN context is NOT hosted auth.
+        The four shared stores must remain atomic and reads must cause no
+        new lifecycle events, receipts, outbox deliveries or messages.
+        """
+        from datetime import datetime, timezone, timedelta
+        from avuhz_service.shared_due_work_reader_candidate import SharedDueWorkReadCandidate
+        from avuhz_service.shared_revenue_followup_review import FollowupReviewPolicy
+        from avuhz_service.shared_work_intake_candidate import WorkIntakeDenied
+
+        start = datetime(2030, 1, 15, 16, 0, 0, tzinfo=timezone.utc)
+        self.writer._clock = lambda: start
+        policy = FollowupReviewPolicy(escalation_after_minutes=15)
+        reader = SharedDueWorkReadCandidate(
+            self.store,
+            resolve_identity=self.resolve_identity,
+            resolve_tenant_member=self.resolve_tenant_member,
+        )
+
+        # A forged/unauthenticated context cannot create a work item.
+        genuine_context = self.evidence["sender"]
+        self.evidence["sender"] = dataclasses.replace(genuine_context, authenticated=False)
+        initial = dataclasses.replace(
+            self.command("OPEN", key="proof_due_open_01"),
+            next_action_due_at="2030-01-15T16:05:00Z",
+        )
+        try:
+            with self.assertRaises(WorkIntakeDenied):
+                self.writer.execute("sender", initial)
+        finally:
+            self.evidence["sender"] = genuine_context
+        self.assertEqual(len(self.table("avuhz_work_items")), 0)
+
+        # The trusted test-only resolver grants the existing shared capability.
+        created = self.writer.execute("sender", initial)
+        self.assertEqual((created.accepted_version, created.replayed), (1, False))
+        self.assertIsNotNone(created.event_id)
+        persisted = self.table("avuhz_work_items")
+        self.assertEqual(len(persisted), 1)
+        self.assertEqual(str(persisted[0]["tenant_id"]), TENANT_A)
+        self.assertEqual(persisted[0]["owner_reference"], "worker.sender")
+        self.assertEqual(persisted[0]["state"], "OPEN")
+        self.assertEqual(persisted[0]["next_action_due_at"], start + timedelta(minutes=5))
+
+        # Idempotency does not create duplicate events/receipts/outbox rows.
+        replay = self.writer.execute("sender", initial)
+        self.assertTrue(replay.replayed)
+        self.assertIsNone(replay.event_id)
+        for table in ("avuhz_work_items", "avuhz_idempotency_records",
+                      "avuhz_lifecycle_events", "avuhz_outbox_deliveries"):
+            self.assertEqual(len(self.table(table)), 1, table)
+
+        self.assertEqual(reader.review_owned_due(
+            "sender", policy=policy, now=start + timedelta(minutes=4, seconds=59)), ())
+        due = reader.review_owned_due(
+            "sender", policy=policy, now=start + timedelta(minutes=5))
+        self.assertEqual(len(due), 1)
+        self.assertEqual((due[0].kind, due[0].record_version,
+                          due[0].owner_reference),
+                         ("FOLLOWUP_DUE", 1, "worker.sender"))
+        escalated = reader.review_owned_due(
+            "sender", policy=policy, now=start + timedelta(minutes=20))
+        self.assertEqual(len(escalated), 1)
+        self.assertEqual(escalated[0].kind, "FOLLOWUP_ESCALATION_REVIEW_REQUIRED")
+        # Both a different owner in the same tenant and a different tenant
+        # must see no due candidate, even with the same synthetic item ID.
+        for actor in ("other", "outside"):
+            self.assertEqual(reader.review_owned_due(
+                actor, policy=policy, now=start + timedelta(minutes=20)), ())
+
+        # Existing shared handoff transfers due-work visibility exactly once.
+        self.writer.execute("sender", self.command(
+            "OFFER_HANDOFF", 1, key="proof_due_offer_01",
+            recipient="worker.receiver"))
+        self.writer.execute("receiver", self.command(
+            "ACCEPT_HANDOFF", 2, key="proof_due_accept_01"))
+        self.assertEqual(reader.review_owned_due(
+            "sender", policy=policy, now=start + timedelta(minutes=20)), ())
+        receiver = reader.review_owned_due(
+            "receiver", policy=policy, now=start + timedelta(minutes=20))
+        self.assertEqual(len(receiver), 1)
+        self.assertEqual((receiver[0].owner_reference,
+                          receiver[0].record_version, receiver[0].kind),
+                         ("worker.receiver", 3, "FOLLOWUP_ESCALATION_REVIEW_REQUIRED"))
+
+        # Revocation is honored; no informational row escapes.
+        self.members[TENANT_A].remove("worker.receiver")
+        with self.assertRaises(WorkIntakeDenied):
+            reader.review_owned_due(
+                "receiver", policy=policy, now=start + timedelta(minutes=20))
+        for table, expected in (("avuhz_work_items", 1),
+                                ("avuhz_idempotency_records", 3),
+                                ("avuhz_lifecycle_events", 3),
+                                ("avuhz_outbox_deliveries", 3)):
+            self.assertEqual(len(self.table(table)), expected, table)
+
+
 if __name__ == "__main__":
     unittest.main()

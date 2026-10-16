@@ -21,6 +21,8 @@ New importable pure projection: `src/avuhz_service/shared_client_onboarding_read
 
 When no customer is selected, Business reports `CONTINUE_PROSPECT_DISCOVERY`. That does **not** block Platform progress.
 
+**Operating brands are not the legal operator.** An actual customer may have one independently verified operator/business reference and several trading brands (for example, an existing food business and its separate public-facing brand). `ClientOnboardingObservation.operating_brand_references` holds up to eight *opaque, unverified candidate labels* alongside the single canonical `business_reference`. It does **not** verify a DBA filing, the operator-to-brand relationship, rights to a trademark, the owner, tenant scope, or acquisition/communication authority. The registered operator reference—not an operating brand name—must be checked independently by the existing owner-verification boundary. An independently authorized future shared-core brand association will be needed before any brand is routed to a hosted tenant or linked to live customer data. No vertical-specific registration or auth path is added.
+
 ### Business journey once the first customer says yes
 
 1. **Discovery/OIA:** obtain business consent and understand work intake, people/handoffs, information, visibility, recovery, approvals, and capacity. Store customer facts in an approved private boundary, never Git or test fixtures. No hosted tenant or credentials required for a conversation.

@@ -23,6 +23,8 @@ from .shared_work_intake_candidate import (
     SharedWorkIntakeCandidate, WorkItem, WorkIntakeCommand, WorkIntakeConflict,
     WorkIntakeDenied, _CAPABILITY, _opaque, evolve_work_item,
 )
+from .shared_acquisition_metadata_lookup import VerifiedAcquisitionMetadata
+from .shared_acquisition_commit_admission import require_transaction_acquisition_admission
 
 _COMMAND_TYPE = "TransitionWorkItem"
 _SUBJECT_TYPE = "WORK_ITEM"
@@ -124,8 +126,22 @@ class SharedWorkIntakePostgresCandidate:
             resolve_tenant_member=lambda _tenant, _member: None,
         )
 
-    def execute(self, identity_evidence: object, raw_command: object) -> DurableWorkReceipt:
+    def execute(
+        self, identity_evidence: object, raw_command: object, *,
+        acquisition_admission: VerifiedAcquisitionMetadata | None = None,
+    ) -> DurableWorkReceipt:
+        """Optional LOCAL/TEST acquisition guard; not a hosted endpoint.
+
+        A snapshot is NOT trusted authorization. Check it again in this exact
+        writer UnitOfWork before and after the authoritative work mutation.
+        """
         command = self._guard._validate(raw_command)
+        if acquisition_admission is not None and (
+            type(acquisition_admission) is not VerifiedAcquisitionMetadata
+            or command.kind != "OPEN"
+            or command.work_item_id != acquisition_admission.intake_id
+        ):
+            raise WorkIntakeDenied("work intake authority denied")
         context = self._guard._trusted(identity_evidence, _CAPABILITY[command.kind])
         fingerprint = _fingerprint(context, command)
         key = (
@@ -204,6 +220,10 @@ class SharedWorkIntakePostgresCandidate:
                 "select pg_advisory_xact_lock(hashtextextended(%s,0))",
                 (context.tenant_id + ":" + command.work_item_id,),
             )
+            if acquisition_admission is not None:
+                require_transaction_acquisition_admission(
+                    con, context, command, acquisition_admission,
+                )
             row = con.execute(
                 "select tenant_id,work_item_id,owner_reference,"
                 "pending_recipient_reference,source,classification,state,record_version "
@@ -364,6 +384,12 @@ class SharedWorkIntakePostgresCandidate:
             uow.idempotency.save_result(
                 key, {"command_id": command.work_item_id + ":" + str(updated.record_version)}
             )
+            if acquisition_admission is not None:
+                # No extra transaction: catch last-moment committed intake
+                # revision/state drift before committing WORK_ITEM/outbox.
+                require_transaction_acquisition_admission(
+                    con, context, command, acquisition_admission,
+                )
             uow.commit()
             committed = True
             return DurableWorkReceipt(command.work_item_id, updated.record_version, False, event_id)

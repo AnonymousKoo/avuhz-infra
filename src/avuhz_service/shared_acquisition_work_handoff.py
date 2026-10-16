@@ -9,8 +9,10 @@ server-owned planner must supply a bounded OPEN plan separately. The
 Work Item writer independently re-authenticates the same human evidence,
 checks the current tenant membership and writes its authoritative transaction.
 
-LOCAL/TEST ONLY. This read-then-write sequence spans two transactions,
-so it CANNOT certify atomic intake-state transition or hosted acceptance.
+LOCAL/TEST ONLY. The initial reader and final writer remain separate transactions.
+The writer now rechecks admission inside its own Work Item transaction,
+but this does NOT serialize future privileged acquisition mutations.
+Never claim hosted acceptance from this source-only adapter.
 Do not mount it in hosted services or n8n without a separately reviewed
 same-transaction acquisition admission guard and real identity binding.
 """
@@ -126,7 +128,12 @@ class SharedAcquisitionWorkHandoff:
                 classification=plan.classification,
                 next_action_due_at=plan.next_action_due_at,
             )
-            result = self._writer.execute(identity_evidence, cmd)
+            # The prior acquisition reader is NOT the commit authority.
+            # The existing writer re-reads this exact snapshot under tenant
+            # RLS in its own Work Item/outbox transaction, twice.
+            result = self._writer.execute(
+                identity_evidence, cmd, acquisition_admission=metadata,
+            )
             if (type(result) is not DurableWorkReceipt
                     or result.work_item_id != metadata.intake_id
                     or type(result.accepted_version) is not int

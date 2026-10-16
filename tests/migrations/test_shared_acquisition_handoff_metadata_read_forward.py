@@ -104,13 +104,27 @@ class DisposablePostgres(unittest.TestCase):
             raise RuntimeError("could not start isolated PostgreSQL fixture")
         cls.fixture_id = run.stdout.strip()
         try:
-            for _ in range(30):
+            # During first initialization the postgres image starts a
+            # temporary postmaster, stops it, then starts the final server.
+            # pg_isready can succeed against that *temporary* server. Require
+            # a stable, queryable postmaster before running the migration
+            # tests; otherwise the first dropdb/createdb calls race restart.
+            previous_start = None
+            stable_probes = 0
+            for _ in range(120):
                 ready = subprocess.run(
-                    ["docker", "exec", cls.fixture_id, "pg_isready", "-U", "postgres"],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                    check=False,
+                    ["docker", "exec", cls.fixture_id, "psql", "-X", "-At",
+                     "-U", "postgres", "-d", "postgres",
+                     "-c", "select pg_postmaster_start_time();"],
+                    capture_output=True, text=True, check=False,
                 )
-                if ready.returncode == 0:
+                started = ready.stdout.strip() if ready.returncode == 0 else None
+                stable_probes = (
+                    stable_probes + 1 if started and started == previous_start
+                    else (1 if started else 0)
+                )
+                previous_start = started
+                if stable_probes >= 10:
                     version = subprocess.run(
                         ["docker", "exec", cls.fixture_id, "psql", "-X", "-At",
                          "-U", "postgres", "-d", "postgres", "-c", "show server_version_num;"],
@@ -119,8 +133,8 @@ class DisposablePostgres(unittest.TestCase):
                     if version.returncode or not version.stdout.strip().startswith("17"):
                         raise RuntimeError("fixture must be PostgreSQL 17")
                     return
-                time.sleep(1)
-            raise RuntimeError("isolated PostgreSQL fixture not ready")
+                time.sleep(.25)
+            raise RuntimeError("isolated PostgreSQL fixture not stable")
         except BaseException:
             cls.tearDownClass()
             raise

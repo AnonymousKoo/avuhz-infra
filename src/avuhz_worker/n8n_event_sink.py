@@ -24,7 +24,9 @@ _WEBHOOK_PATH = re.compile(r"/webhook/[a-z0-9][a-z0-9-]{0,63}\Z")
 _DELIVERY_KEY = re.compile(r"[A-Za-z0-9._:-]{8,128}\Z")
 _SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1"
 _SCHEMA_ROOT = Path(__file__).resolve().parents[2] / "contracts/schemas/v1"
-_ALLOWED_RESPONSES = frozenset({200, 201, 202, 204})
+# Receiver v2 emits 202 only after an independently committed durable receipt.
+# Generic 2xx responses do NOT prove durable acceptance of a work event.
+_DURABLE_ACK_STATUS = 202
 
 
 def _canonical_uuid(value: object) -> bool:
@@ -145,8 +147,14 @@ class N8nOutboxSink:
             raise DeliveryUnavailable("n8n transport unavailable") from None
         if type(status) is not int:
             raise DeliveryUnavailable("n8n response unavailable")
-        if status in _ALLOWED_RESPONSES:
+        if status == _DURABLE_ACK_STATUS:
             return {"result": "PUBLISHED", "event_id": event["event_id"]}
+        if 200 <= status < 300:
+            # An upstream 200/201/204 can be a default webhook response,
+            # proxy acknowledgment or an error page with 2xx status. It
+            # cannot promote the shared outbox to PUBLISHED without v2's
+            # exact durable-commit gate; keep the existing retry ledger.
+            raise DeliveryUnavailable("n8n durable acknowledgment not confirmed")
         if status == 429 or status >= 500:
             raise DeliveryUnavailable("n8n temporarily unavailable")
         raise DeliveryRejected("n8n delivery was rejected")

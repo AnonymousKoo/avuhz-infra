@@ -52,8 +52,8 @@ class GovernedHandoffTests(unittest.TestCase):
                 raise RuntimeError(self.read_error)
             return self.metadata
 
-        def execute(_obj, evidence, cmd):
-            self.writer_calls.append((evidence, cmd))
+        def execute(_obj, evidence, cmd, *, acquisition_admission=None):
+            self.writer_calls.append((evidence, cmd, acquisition_admission))
             if self.write_error is not None:
                 raise RuntimeError(self.write_error)
             return self.receipt
@@ -88,7 +88,8 @@ class GovernedHandoffTests(unittest.TestCase):
         self.assertEqual(self.lookup_calls, [(self.identity, INTAKE)])
         self.assertEqual(self.plan_calls, [self.metadata])
         self.assertEqual(len(self.writer_calls), 1)
-        evidence, cmd = self.writer_calls[0]
+        evidence, cmd, admission = self.writer_calls[0]
+        self.assertEqual(admission, self.metadata)
         self.assertEqual(evidence, self.identity)
         self.assertIs(type(cmd), WorkIntakeCommand)
         self.assertEqual(cmd.kind, "OPEN")

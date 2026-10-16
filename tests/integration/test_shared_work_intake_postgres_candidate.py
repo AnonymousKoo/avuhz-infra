@@ -183,6 +183,144 @@ class SharedDurableWorkIntakePostgresTests(unittest.TestCase):
         ]
         return [self.writer.execute(actor, cmd) for actor, cmd in transitions]
 
+    def test_acquisition_admission_uses_real_rls_and_same_writer_transaction(self):
+        # Strict LOCAL PG: create a minimal acquisition row without customer PII,
+        # using the existing tenant RLS and exactly five column SELECT grants.
+        # This is not an approved hosted company/owner/acquisition insertion.
+        from avuhz_service.shared_acquisition_metadata_lookup import VerifiedAcquisitionMetadata
+        from avuhz_service.shared_work_intake_candidate import WorkIntakeDenied
+        from datetime import datetime, timezone
+        org = "a4730000-0000-4000-8000-000000000011"
+        intake = "a4730000-0000-4000-8000-000000000021"
+        source = """
+DO $roles$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='avuhz_acquisition_service_dev')
+  THEN CREATE ROLE avuhz_acquisition_service_dev NOLOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon')
+  THEN CREATE ROLE anon NOLOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated')
+  THEN CREATE ROLE authenticated NOLOGIN; END IF;
+END $roles$;
+CREATE TABLE public.avuhz_acquisition_intake_requests (
+  intake_id uuid PRIMARY KEY, tenant_id uuid NOT NULL,
+  organization_id uuid NOT NULL, intake_state text NOT NULL,
+  record_version integer NOT NULL
+);
+ALTER TABLE public.avuhz_acquisition_intake_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.avuhz_acquisition_intake_requests FORCE ROW LEVEL SECURITY;
+CREATE POLICY avuhz_command_service_tenant_isolation
+ ON public.avuhz_acquisition_intake_requests FOR ALL TO avuhz_command_service
+ USING (tenant_id = nullif(current_setting('avuhz.tenant_id'::text,true),''::text)::uuid)
+ WITH CHECK (tenant_id = nullif(current_setting('avuhz.tenant_id'::text,true),''::text)::uuid);
+GRANT SELECT (intake_id,tenant_id,organization_id,intake_state,record_version)
+ ON public.avuhz_acquisition_intake_requests TO avuhz_command_service;
+INSERT INTO public.avuhz_acquisition_intake_requests
+ (intake_id,tenant_id,organization_id,intake_state,record_version)
+ VALUES ('a4730000-0000-4000-8000-000000000021',
+ 'a4730000-0000-4000-8000-000000000001',
+ 'a4730000-0000-4000-8000-000000000011','RECEIVED',1);
+"""
+        self.docker(
+            "psql", "-X", "-v", "ON_ERROR_STOP=1", "-U", "postgres",
+            "-d", DATABASE, source=source,
+        )
+        self.evidence["sender"] = dataclasses.replace(
+            self.evidence["sender"], organization_id=org,
+        )
+        admission = VerifiedAcquisitionMetadata(
+            TENANT_A,intake,org,"RECEIVED",1,
+        )
+        cmd = self.command("OPEN",key="acqadmit01",item=intake)
+        first = self.writer.execute("sender",cmd,acquisition_admission=admission)
+        self.assertEqual((first.accepted_version,first.replayed),(1,False))
+        self.assertEqual(len(self.table("avuhz_work_items")),1)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),1)
+        self.assertEqual(len(self.table("avuhz_outbox_deliveries")),1)
+        self.assertEqual(len(self.table("avuhz_idempotency_records")),1)
+        repeat = self.writer.execute("sender",cmd,acquisition_admission=admission)
+        self.assertTrue(repeat.replayed)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),1)
+
+        # The role can read only the approved five fields and cannot mutate
+        # intake_state or DELETE. A new revision cancels this admission.
+        with self.owner() as con:
+            con.execute(
+                "UPDATE public.avuhz_acquisition_intake_requests "
+                "SET record_version=2 WHERE intake_id=%s", (intake,),
+            )
+        with self.assertRaises(WorkIntakeDenied):
+            self.writer.execute("sender",cmd,acquisition_admission=admission)
+        self.assertEqual(len(self.table("avuhz_work_items")),1)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),1)
+
+        # An independently committed acquisition revision between the two
+        # same-transaction reads MUST abort the entire proposed WORK_ITEM,
+        # event, idempotency record and outbox (not merely deny at request time).
+        from unittest.mock import patch
+        from avuhz_service.shared_acquisition_commit_admission import (
+            require_transaction_acquisition_admission as actual_admit,
+        )
+        changed_intake = "a4730000-0000-4000-8000-000000000022"
+        with self.owner() as con:
+            con.execute(
+                "INSERT INTO public.avuhz_acquisition_intake_requests "
+                "(intake_id,tenant_id,organization_id,intake_state,record_version) "
+                "VALUES (%s,%s,%s,'RECEIVED',1)",
+                (changed_intake,TENANT_A,org),
+            )
+        changed_admission = dataclasses.replace(
+            admission,intake_id=changed_intake,
+        )
+        changed_cmd = dataclasses.replace(
+            cmd,work_item_id=changed_intake,idempotency_key="acqrev001"
+        )
+        count = [0]
+        def mutate_after_first_admission(connection,context,command,snapshot):
+            # Count attempted admissions, including a second check that
+            # correctly rejects the concurrent revision before returning.
+            count[0] += 1
+            actual_admit(connection,context,command,snapshot)
+            if count[0] == 1:
+                with self.owner() as con:
+                    con.execute(
+                        "UPDATE public.avuhz_acquisition_intake_requests "
+                        "SET record_version=2 WHERE intake_id=%s",
+                        (changed_intake,),
+                    )
+        with patch(
+            "avuhz_service.shared_work_intake_postgres_candidate."
+            "require_transaction_acquisition_admission",
+            side_effect=mutate_after_first_admission,
+        ):
+            with self.assertRaises(WorkIntakeDenied) as denial:
+                self.writer.execute(
+                    "sender",changed_cmd,acquisition_admission=changed_admission,
+                )
+        self.assertEqual(str(denial.exception), "work intake authority denied")
+        self.assertEqual(count[0],2)
+        self.assertEqual(len(self.table("avuhz_work_items")),1)
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),1)
+        self.assertEqual(len(self.table("avuhz_idempotency_records")),1)
+        self.assertEqual(len(self.table("avuhz_outbox_deliveries")),1)
+
+        with self.owner() as con:
+            con.execute(
+                "GRANT UPDATE(intake_state) ON "
+                "public.avuhz_acquisition_intake_requests "
+                "TO avuhz_acquisition_service_dev"
+            )
+        with self.assertRaises(WorkIntakeDenied):
+            self.writer.execute(
+                "sender", dataclasses.replace(
+                    cmd,work_item_id=ITEM,idempotency_key="acqdeny001"
+                ),
+                acquisition_admission=dataclasses.replace(
+                    admission, intake_id=ITEM
+                ),
+            )
+        self.assertEqual(len(self.table("avuhz_lifecycle_events")),1)
+
     def test_legacy_fingerprints_replay_for_open_and_nonopen(self):
         import hashlib
         # The predecessor hash omitted the optional deadline field entirely.

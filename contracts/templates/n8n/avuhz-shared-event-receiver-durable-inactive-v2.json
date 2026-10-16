@@ -1,0 +1,166 @@
+{
+  "name": "Avuhz Shared Event Receiver — DURABLE RECEIPT GATE (LOCAL TEST / INACTIVE v2)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "avuhz-events",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "69600000-0000-4000-8000-000000000001",
+      "name": "Native Auth Shared Event Webhook (UNBOUND)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ],
+      "webhookId": "69600000-0000-4000-8000-000000000007"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// LOCAL/TEST shared receiver; native n8n Header Auth is required. Does not grant owner authority.\n// Receive only one acquisition envelope. Reject everything else before private receipt transport.\nconst inputs=$input.all();\nconst isRecord=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);\nconst item=inputs.length===1&&isRecord(inputs[0])?inputs[0].json:null;\nconst body=isRecord(item)?item.body:null;\nconst headers=isRecord(item)?item.headers:null;\nconst fields=['event_id','event_type','tenant_id','correlation_id','occurred_at','authoritative_subject_reference','authoritative_subject_version','delivery_idempotency_key'];\nconst uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;\nconst key=/^[A-Za-z0-9._:-]{8,128}$/;\nconst timestamp=/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$/;\nfunction utc(value) {\n if(typeof value!=='string'||value.length<20||value.length>27||!timestamp.test(value)) return false;\n const d=new Date(value);\n if(Number.isNaN(d.getTime())) return false;\n return d.getUTCFullYear()===Number(value.slice(0,4))\n  && d.getUTCMonth()+1===Number(value.slice(5,7))\n  && d.getUTCDate()===Number(value.slice(8,10))\n  && d.getUTCHours()===Number(value.slice(11,13))\n  && d.getUTCMinutes()===Number(value.slice(14,16))\n  && d.getUTCSeconds()===Number(value.slice(17,19));\n}\nconst v=body;\nconst ref=isRecord(v)?v.authoritative_subject_reference:null;\nconst valid=isRecord(v)&&Object.keys(v).length===8\n && fields.every(k=>Object.prototype.hasOwnProperty.call(v,k))\n && typeof v.event_id==='string'&&uuid.test(v.event_id)\n && typeof v.correlation_id==='string'&&uuid.test(v.correlation_id)\n && typeof v.tenant_id==='string'&&uuid.test(v.tenant_id)\n && v.event_type==='acquisition.intake.received'\n && v.authoritative_subject_version===1 && utc(v.occurred_at)\n && typeof v.delivery_idempotency_key==='string'&&key.test(v.delivery_idempotency_key)\n && isRecord(ref)&&Object.keys(ref).length===2\n && ref.reference_type==='ACQUISITION_INTAKE'\n && typeof ref.reference_id==='string'&&uuid.test(ref.reference_id);\nif(!valid) throw new Error('RECEIPT_ENVELOPE_DENIED');\nif(!isRecord(headers) ||\n typeof headers['x-avuhz-delivery-key']!=='string' ||\n headers['x-avuhz-delivery-key']!==v.delivery_idempotency_key) {\n throw new Error('RECEIVER_DELIVERY_KEY_DENIED');\n}\n// This is shape validation only; no tenant/owner authority is derived here.\n// Forward only eight vetted fields; no raw request headers, contacts or metadata.\nreturn [{json:{\n event_id:v.event_id,event_type:v.event_type,tenant_id:v.tenant_id,\n correlation_id:v.correlation_id,occurred_at:v.occurred_at,\n authoritative_subject_reference:{\n  reference_type:'ACQUISITION_INTAKE',reference_id:ref.reference_id\n },\n authoritative_subject_version:1,\n delivery_idempotency_key:v.delivery_idempotency_key\n}}];\n"
+      },
+      "id": "69600000-0000-4000-8000-000000000002",
+      "name": "Validate and Drop Untrusted Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        470,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:1/v1/avuhz/local-n8n-receipts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Avuhz-Delivery-Key",
+              "value": "={{$json.delivery_idempotency_key}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json)}}",
+        "options": {
+          "timeout": 1000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json",
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "69600000-0000-4000-8000-000000000003",
+      "name": "Private Durable Receipt UNBOUND",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        710,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Requires exact durable bridge receipt. This is NOT Avuhz business authority.\nconst items=$input.all();\nconst record=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);\nconst reply=items.length===1&&record(items[0])?items[0].json:null;\nconst body=record(reply)?reply.body:null;\nconst valid=record(reply)&&reply.statusCode===202\n && record(body)&&Object.keys(body).length===2\n && body.accepted===true&&typeof body.duplicate==='boolean'\n && Object.prototype.hasOwnProperty.call(body,'accepted')\n && Object.prototype.hasOwnProperty.call(body,'duplicate');\nif(!valid) throw new Error('DURABLE_RECEIPT_NOT_CONFIRMED');\n// No raw backend body, headers, status text, IDs, PII, or credentials leaked.\nreturn [{json:{\n code:body.duplicate?'DUPLICATE_RECEIPT_NO_EFFECT':'NEW_DURABLE_RECEIPT',\n durable:true,\n first_delivery:!body.duplicate\n}}];"
+      },
+      "id": "69600000-0000-4000-8000-000000000004",
+      "name": "Require Durable Receipt 202",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        945,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"accepted\":true}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "69600000-0000-4000-8000-000000000005",
+      "name": "Acknowledge After Commit ONLY",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1180,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Native Auth Shared Event Webhook (UNBOUND)": {
+      "main": [
+        [
+          {
+            "node": "Validate and Drop Untrusted Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate and Drop Untrusted Fields": {
+      "main": [
+        [
+          {
+            "node": "Private Durable Receipt UNBOUND",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Private Durable Receipt UNBOUND": {
+      "main": [
+        [
+          {
+            "node": "Require Durable Receipt 202",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Require Durable Receipt 202": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge After Commit ONLY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "active": false,
+  "tags": []
+}

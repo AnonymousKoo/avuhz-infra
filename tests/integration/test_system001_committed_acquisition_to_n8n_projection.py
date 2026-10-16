@@ -8,13 +8,19 @@ imports/activates n8n workflows, provisions credentials or writes hosted DATA.
 from __future__ import annotations
 
 import json
+import os
+import tempfile
+import unittest
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
 from scripts.certify_system001_live_local_n8n_to_work import (
     ROOT, build_committed_local_acquisition_envelope,
+    verify_local_real_n8n_to_postgres,
 )
+from avuhz_worker.local_n8n_receipt_store import LocalN8nReceiptStore
+from tests.integration import test_shared_work_intake_postgres_candidate as pg_fixture
 
 QA = ROOT / "tests" / "fixtures" / "system001_qa_tenant_local_v1.json"
 
@@ -116,6 +122,50 @@ class LocalCommittedAcquisitionToN8nProjectionTests(TestCase):
                    side_effect=wrong_tenant):
             with self.assertRaisesRegex(RuntimeError,"^fictional_acquisition_event_invalid$"):
                 build_committed_local_acquisition_envelope(qa)
+
+
+@unittest.skipUnless(
+    pg_fixture.DRIVER and pg_fixture.DSN and pg_fixture.CONTAINER,
+    "exact disposable PG17 with a local-only DSN required",
+)
+class ContiguousLocalAcquisitionToRealPostgresTests(TestCase):
+    """One composed HTTP→outbox→synthetic receipt→real PG owner journey.
+
+    The receipt is deliberately simulated, not produced by installed n8n.
+    The real-n8n certification remains a separate guarded local CLI run.
+    """
+
+    def test_committed_intake_id_survives_receipt_pg_replay_due_and_handoff(self):
+        qa=fixture()
+        envelope,committed_id=build_committed_local_acquisition_envelope(qa)
+        self.assertNotEqual(committed_id,qa["request"]["external_request_id"])
+        with tempfile.TemporaryDirectory(prefix="avuhz-connected-local-pg-") as name:
+            root=Path(name)
+            os.chmod(root,0o700)
+            store=LocalN8nReceiptStore(
+                root/"synthetic-receipt.sqlite",
+                trusted_tenant_id=qa["tenant_id"],
+                allowed_event_types=frozenset({"acquisition.intake.received"}),
+            )
+            header=envelope["delivery_idempotency_key"]
+            first=store.receive(envelope,delivery_header=header)
+            second=store.receive(envelope,delivery_header=header)
+            self.assertEqual((first.status,first.duplicate),(202,False))
+            self.assertEqual((second.status,second.duplicate),(202,True))
+            self.assertTrue(store.committed(envelope,delivery_header=header))
+            # Even the presence of a durable receipt cannot promote the
+            # external request ID into authoritative source identity.
+            with self.assertRaisesRegex(RuntimeError,"^pg_source_tenant_mismatch$"):
+                verify_local_real_n8n_to_postgres(
+                    qa,envelope,store,root,
+                    committed_acquisition_id=qa["request"]["external_request_id"],
+                )
+            # This exercises the real restricted Postgres writer + four
+            # canonical tables, tenant isolation, due/overdue, replay,
+            # accepted handoff, resolution and former-owner denial.
+            verify_local_real_n8n_to_postgres(
+                qa,envelope,store,root,committed_acquisition_id=committed_id,
+            )
 
 
 if __name__ == "__main__":

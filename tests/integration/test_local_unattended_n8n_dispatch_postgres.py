@@ -37,7 +37,38 @@ class RealLocalPostgresUnattendedOutboxTests(unittest.TestCase):
         self.fixtures=fixture.PostgresOutboxWorkerTests(
             methodName="test_publish_round_trip_restart_state_and_rls"
         )
-        self.fixtures.setUp()
+        # The old outbox persistence fixture emits engagement.opened without
+        # its required engagement_id. That historical fixture is legal SQL
+        # but is intentionally rejected by the strict N8nOutboxSink schema.
+        # Use a correctly shaped shared engagement.handoff.accepted event:
+        # it needs no parent engagement row, and preserves same tenant RLS.
+        with self.fixtures.owner() as db:
+            db.execute(
+                "truncate public.avuhz_outbox_deliveries,"
+                "public.avuhz_lifecycle_events cascade"
+            )
+            db.execute(
+                "insert into public.avuhz_lifecycle_events "
+                "(lifecycle_event_id,tenant_id,event_type,event_schema_version,"
+                "authoritative_subject_type,authoritative_subject_id,"
+                "authoritative_subject_version,occurred_at,producer_reference,"
+                "correlation_id,idempotency_key,visibility,sanitized_metadata) "
+                "values (%s,%s,'engagement.handoff.accepted',1,"
+                "'ACQUISITION_HANDOFF',%s,1,%s,'command.service-01',%s,"
+                "'postgres-worker-idempotency-0001','TENANT_OPERATIONAL',%s::jsonb)",
+                (
+                    fixture.EVENT_ID,fixture.TENANT,fixture.SUBJECT_ID,
+                    fixture.NOW,fixture.CORRELATION_ID,
+                    json.dumps({"handoff_id":fixture.SUBJECT_ID}),
+                ),
+            )
+            db.execute(
+                "insert into public.avuhz_outbox_deliveries "
+                "(tenant_id,lifecycle_event_id,destination_reference,status,"
+                "delivery_idempotency_key) "
+                "values (%s,%s,'internal.lifecycle-events','PENDING',%s)",
+                (fixture.TENANT,fixture.EVENT_ID,"outbox-delivery:"+fixture.EVENT_ID),
+            )
 
     def test_unattended_polls_persist_one_receipt_without_leaking_source_metadata(self):
         receipts={}

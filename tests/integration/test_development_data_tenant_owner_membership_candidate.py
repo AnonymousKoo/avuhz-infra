@@ -136,8 +136,29 @@ class OwnerMembershipCandidateStaticTests(unittest.TestCase):
         self.assertEqual(sql.count("current_setting('avuhz.tenant_id', true)"), 2)
         self.assertNotRegex(sql, r"(?im)^\s*GRANT\s")
         self.assertNotRegex(sql, r"(?im)^\s*(INSERT|UPDATE|DELETE)\s+(INTO|FROM|PUBLIC)\b")
-        self.assertFalse(any("owner_membership" in p.name
-                             for p in (ROOT / "supabase/migrations").glob("*.sql")))
+        # This legacy candidate may not install a second owner-membership
+        # table. Allow only the separately reviewed, one-table read ACL
+        # proposal; keep rejecting any membership schema creation in migrations.
+        migrations = sorted((ROOT / "supabase/migrations").glob("*.sql"))
+        self.assertEqual(
+            [p.name for p in migrations if "owner_membership" in p.name],
+            ["20261016001000_grant_shared_owner_membership_metadata_read.sql"],
+        )
+        for migration in migrations:
+            self.assertNotRegex(
+                migration.read_text(encoding="utf-8"),
+                r"(?im)^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"
+                r"(?:public\.)?avuhz_tenant_owner_memberships\b",
+            )
+        membership_grant = (
+            ROOT / "supabase/migrations/"
+            "20261016001000_grant_shared_owner_membership_metadata_read.sql"
+        ).read_text(encoding="utf-8")
+        self.assertNotRegex(
+            membership_grant,
+            r"(?im)^\s*(?:CREATE|ALTER|DROP)\s+"
+            r"(?:TABLE|ROLE|POLICY)\b|^\s*(?:INSERT|UPDATE|DELETE)\b",
+        )
         self.assertNotIn("sekinfra", sql.lower())
         self.assertNotIn("CREATE ROLE", sql)
 

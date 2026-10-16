@@ -140,11 +140,19 @@ class N8nOutboxSinkTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
 
     def test_response_status_failure_classification(self):
-        for status in (200, 201, 202, 204):
-            with self.subTest(status=status):
-                self.assertEqual(self.build_sink(status=status).deliver(
+        self.assertEqual(self.build_sink(status=202).deliver(
+            KEY, fixture_event(), "2030-01-15T15:01:00Z"
+        )["result"], "PUBLISHED")
+        # Other 2xx values can originate from proxy or default n8n webhook
+        # responses without an actual private durable receipt; retry rather
+        # than silently treating them as acknowledged work.
+        for status in (200, 201, 204, 206, 207):
+            with self.subTest(status=status), self.assertRaisesRegex(
+                DeliveryUnavailable, "^n8n durable acknowledgment not confirmed$"
+            ):
+                self.build_sink(status=status).deliver(
                     KEY, fixture_event(), "2030-01-15T15:01:00Z"
-                )["result"], "PUBLISHED")
+                )
         for status in (429, 500, 502, 503):
             with self.subTest(status=status), self.assertRaises(DeliveryUnavailable):
                 self.build_sink(status=status).deliver(
@@ -155,6 +163,56 @@ class N8nOutboxSinkTests(unittest.TestCase):
                 self.build_sink(status=status).deliver(
                     KEY, fixture_event(), "2030-01-15T15:01:00Z"
                 )
+
+    def test_false_success_200_persists_retry_and_only_202_publishes(self):
+        from tests.worker.test_outbox_worker import (
+            MutableClock, make_worker, store_for,
+        )
+        store = store_for(fixture_event())
+        clock = MutableClock()
+        responses = [200, 202]
+        calls = []
+        def post(url, headers, body):
+            calls.append((url, json.loads(body)["event_id"]))
+            return responses.pop(0)
+        worker = make_worker(
+            store, self.build_sink(post=post), clock,
+            max_attempts=2,base_backoff_seconds=5,
+        )
+        first = worker.run_once()
+        self.assertEqual(first, {
+            "claimed": 1, "published": 0, "retry_scheduled": 1,
+            "dead_lettered": 0,
+        })
+        self.assertEqual(store.outbox[0]["status"], "FAILED_RETRYABLE")
+        self.assertEqual(store.outbox[0]["last_safe_error_code"], "DELIVERY_UNAVAILABLE")
+        clock.advance(4)
+        self.assertEqual(worker.run_once()["claimed"], 0)
+        clock.advance(1)
+        self.assertEqual(worker.run_once()["published"], 1)
+        self.assertEqual(store.outbox[0]["status"], "PUBLISHED")
+        self.assertEqual(store.outbox[0]["attempt_count"], 2)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual([item[1] for item in calls], [EVENT_ID, EVENT_ID])
+        self.assertEqual(worker.run_once()["claimed"], 0)
+
+    def test_persistent_false_success_cannot_publish_or_retry_forever(self):
+        from tests.worker.test_outbox_worker import (
+            MutableClock, make_worker, store_for,
+        )
+        store = store_for(fixture_event())
+        clock = MutableClock()
+        worker = make_worker(
+            store,self.build_sink(status=204),clock,
+            max_attempts=2,base_backoff_seconds=5,
+        )
+        self.assertEqual(worker.run_once()["retry_scheduled"], 1)
+        clock.advance(5)
+        self.assertEqual(worker.run_once()["dead_lettered"], 1)
+        self.assertEqual(store.outbox[0]["status"], "FAILED_TERMINAL")
+        self.assertEqual(store.outbox[0]["last_safe_error_code"], "DELIVERY_UNAVAILABLE")
+        self.assertEqual(store.outbox[0]["attempt_count"], 2)
+        self.assertEqual(worker.run_once()["claimed"], 0)
 
     def test_transport_exception_is_sanitized(self):
         def broken_post(url, headers, body):

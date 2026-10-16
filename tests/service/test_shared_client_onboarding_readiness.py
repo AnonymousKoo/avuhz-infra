@@ -61,6 +61,64 @@ class SharedClientOnboardingReadinessTests(unittest.TestCase):
         self.assertNotIn("fictional-alpha", repr(result))
         self.assertNotIn("fictional-beta", repr(result))
 
+    def test_operating_brands_do_not_become_separate_tenants_or_verified_owners(self):
+        # A business can name multiple candidate trading brands, but only
+        # its canonical business_reference remains the ownership-proof target.
+        underlying = ClientOnboardingObservation(
+            business_reference="business.fictional-operator",
+        )
+        brand_1 = replace(underlying, operating_brand_references=("brand.fictional-one",))
+        brand_2 = replace(underlying, operating_brand_references=(
+            "brand.fictional-one", "brand.fictional-two",
+        ))
+        self.assertEqual(self.review(underlying), self.review(brand_1))
+        self.assertEqual(self.review(brand_1), self.review(brand_2))
+        actual = self.review(brand_2)
+        self.assertEqual(actual.business_stage, "OWNER_VERIFICATION_PENDING")
+        self.assertEqual(actual.next_business_action, "VERIFY_INDEPENDENT_BUSINESS_AUTHORITY")
+        self.assertFalse(actual.authorized_to_register)
+        self.assertFalse(actual.authorized_to_open_hosted_intake)
+        self.assertNotIn("brand.fictional", repr(actual))
+        self.assertNotIn("business.fictional", repr(actual))
+
+    def test_brand_only_unselected_business_cannot_create_onboarding_authority(self):
+        for brands in (
+            ("brand.fictional-one",), ("brand.one","brand.two"),
+        ):
+            with self.assertRaises(SharedClientOnboardingReadinessUnavailable):
+                ClientOnboardingObservation(operating_brand_references=brands)
+
+    def test_invalid_brand_names_duplicates_and_secret_shaped_names_denied(self):
+        for brands in (
+            None, True, [], {}, "brand.one",
+            (None,), ("brand.one",True), ("BRAND.ONE",), ("b",),
+            ("brand one",), ("brand@contact.example",),
+            ("brand.one", "brand.one"), ("business.fictional-operator",),
+            ("brand.token.value",), ("brand.secret.value",),
+            ("brand.one",)*9, ("x"*129,),
+        ):
+            with self.subTest(kind=repr(brands)[:90]):
+                with self.assertRaises(SharedClientOnboardingReadinessUnavailable):
+                    ClientOnboardingObservation(
+                        business_reference="business.fictional-operator",
+                        operating_brand_references=brands,
+                    )
+
+    def test_legal_operator_verification_not_derived_from_brand_claims(self):
+        brands = ("brand.fictional-one",)
+        c = ClientOnboardingObservation(
+            business_reference="business.fictional-operator",
+            operating_brand_references=brands,
+            owner_auth_mfa=HOSTED,
+            independent_business_authority=ABSENT,
+            organization_state="NONE", owner_membership_state="NONE",
+        )
+        result = self.review(c)
+        self.assertEqual(result.business_stage, "OWNER_VERIFICATION_PENDING")
+        self.assertEqual(result.next_business_action, "VERIFY_INDEPENDENT_BUSINESS_AUTHORITY")
+        assert not any(getattr(result, f.name) for f in fields(result)
+                       if f.name.startswith("authorized_to_"))
+
     def test_local_mfa_and_independent_owner_proof_not_hosted(self):
         for property_name in ("independent_business_authority", "owner_auth_mfa"):
             with self.subTest(property_name=property_name):

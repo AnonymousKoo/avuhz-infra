@@ -58,6 +58,11 @@ class ClientOnboardingObservation:
     fictional test clients before a real customer has signed an agreement.
     """
     business_reference: str | None = None
+    # Optional opaque labels of brands *asserted* to be operated by this
+    # business. These are informational intake candidates, never a verified
+    # DBA, legal entity, permission, tenant selector or acquisition route.
+    # The authoritative owner directory still checks business_reference.
+    operating_brand_references: tuple[str, ...] = ()
     owner_auth_mfa: str = _UNKNOWN
     independent_business_authority: str = _UNKNOWN
     organization_state: str = "NONE"
@@ -72,6 +77,24 @@ class ClientOnboardingObservation:
             type(business) is not str or not 3 <= len(business) <= 128
             or not _OPAQUE_BUSINESS.fullmatch(business)
         )):
+            raise SharedClientOnboardingReadinessUnavailable("invalid onboarding observation")
+        brands = self.operating_brand_references
+        if (
+            type(brands) is not tuple or len(brands) > 8
+            or (business is None and bool(brands))
+            or len(set(x for x in brands if type(x) is str)) != len(brands)
+            or any(
+                type(brand) is not str
+                or not 3 <= len(brand) <= 128
+                or _OPAQUE_BUSINESS.fullmatch(brand) is None
+                or brand == business
+                or any(
+                    forbidden in brand for forbidden in
+                    ("password", "secret", "token", "bearer", "api_key")
+                )
+                for brand in brands
+            )
+        ):
             raise SharedClientOnboardingReadinessUnavailable("invalid onboarding observation")
         levels = (
             self.owner_auth_mfa,

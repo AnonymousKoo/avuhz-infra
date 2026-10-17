@@ -244,27 +244,82 @@ class OneNativeTestWebhookSendTests(unittest.TestCase):
         self.assertEqual(headers["X-Avuhz-Delivery-Key"],qa.QA_DELIVERY_KEY)
         conn.close.assert_called_once()
 
-    def test_wrong_status_or_response_cannot_prove_commit(self):
-        for code,data in (
-            (404,b'{"accepted":true}'),
-            (401,b'{"accepted":true}'),
-            (202,b'{"accepted":false}'),
-            (202,b'{"accepted":true,"extra":1}'),
-            (202,b'garbage'),
+    def test_http_status_categories_are_strictly_allowlisted_no_body_read(self):
+        for code,category in (
+            (400,"HTTP_400"), (401,"HTTP_401"), (403,"HTTP_403"),
+            (404,"HTTP_404"), (405,"HTTP_405"), (409,"HTTP_409"),
+            (415,"HTTP_415"), (422,"HTTP_422"), (429,"HTTP_429"),
+            (500,"HTTP_500"), (502,"HTTP_502"), (503,"HTTP_503"),
+            (504,"HTTP_504"), (302,"HTTP_OTHER_NON_202"),
+            (599,"HTTP_OTHER_NON_202"),
         ):
             response=Mock(status=code)
-            response.getheader.return_value=None
-            response.read.return_value=data
+            response.read.side_effect=AssertionError("must not read untrusted error bodies")
+            response.getheader.side_effect=AssertionError("must not read untrusted error headers")
             conn=Mock()
             conn.getresponse.return_value=response
             with (
                 self.subTest(code=code),
                 patch.object(sender.http.client,"HTTPConnection",return_value=conn),
             ):
-                self.assertFalse(sender._post_one(
-                    event=self.event,token="one-time-synthetic-token-123456789012345678901"
-                ))
-            conn.request.assert_called_once()
+                with self.assertRaises(sender.TestWebhookHttpOutcome) as outcome:
+                    sender._post_one(
+                        event=self.event,token="one-time-synthetic-token-123456789012345678901"
+                    )
+                self.assertEqual(outcome.exception.category,category)
+                self.assertNotIn(str(code),str(outcome.exception))
+                response.read.assert_not_called()
+                response.getheader.assert_not_called()
+                conn.request.assert_called_once()
+                conn.close.assert_called_once()
+
+    def test_invalid_http_202_response_never_proves_commit(self):
+        for data in (
+            b'{"accepted":false}',
+            b'{"accepted":true,"extra":1}',
+            b'garbage', b'', b'[]',
+        ):
+            response=Mock(status=202)
+            response.getheader.return_value=None
+            response.read.return_value=data
+            conn=Mock()
+            conn.getresponse.return_value=response
+            with (
+                self.subTest(body_size=len(data)),
+                patch.object(sender.http.client,"HTTPConnection",return_value=conn),
+            ):
+                with self.assertRaises(sender.TestWebhookHttpOutcome) as outcome:
+                    sender._post_one(
+                        event=self.event,token="one-time-synthetic-token-123456789012345678901"
+                    )
+                self.assertEqual(outcome.exception.category,"HTTP_202_INVALID_RESPONSE")
+                conn.request.assert_called_once()
+
+    def test_safe_http_diagnostic_emitted_once_without_secret_or_body(self):
+        for category in ("HTTP_401","HTTP_404","HTTP_503","HTTP_202_INVALID_RESPONSE","TRANSPORT_AMBIGUOUS"):
+            token="only-in-memory-test-secret-abcdefghijklmnopqrstuvwxyz"
+            with (
+                self.subTest(category=category),
+                patch.dict(os.environ,LOCAL),
+                patch.object(sender,"_one_readonly_preflight",return_value=self._preflight()),
+                patch.object(sender,"_pinned_source_commit",return_value=COMMIT),
+                patch.object(sender,"_read_inbound_from_fd",return_value=token),
+                patch.object(sender,"_post_one",side_effect=sender.TestWebhookHttpOutcome(category)) as post,
+                patch.object(sender.qa,"preflight") as verify,
+                contextlib.redirect_stdout(io.StringIO()) as out,
+            ):
+                self.assertEqual(sender.run(self.approved),2)
+            post.assert_called_once()
+            verify.assert_not_called()
+            report=out.getvalue()
+            self.assertIn("outcome="+category+"; no retry",report)
+            self.assertNotIn(token,report)
+            self.assertNotIn("error body",report)
+
+    def test_unapproved_http_diagnostic_cannot_be_printed(self):
+        with self.assertRaises(ValueError):
+            sender.TestWebhookHttpOutcome("HTTP_401 token=exfiltration")
+
 
     def test_http_timeout_ambiguous_and_no_second_request(self):
         conn=Mock()

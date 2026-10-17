@@ -39,12 +39,16 @@ class TestWebhookSendDenied(RuntimeError):
 class TestWebhookHttpOutcome(TestWebhookSendDenied):
     """An allowlisted, sanitized HTTP outcome, never response body or headers."""
 
-    _CATEGORIES = frozenset({
-        "HTTP_400", "HTTP_401", "HTTP_403", "HTTP_404", "HTTP_405",
-        "HTTP_409", "HTTP_415", "HTTP_422", "HTTP_429", "HTTP_500",
-        "HTTP_502", "HTTP_503", "HTTP_504", "HTTP_OTHER_NON_202",
-        "HTTP_202_INVALID_RESPONSE", "TRANSPORT_AMBIGUOUS",
-    })
+    # Only bounded, three-digit HTTP statuses may appear in diagnostics.
+    # Non-standard/out-of-range values retain a generic fallback. Never
+    # interpolate a response body, header, token, or exception into output.
+    _CATEGORIES = (
+        frozenset({
+            "HTTP_OTHER_NON_202", "HTTP_202_INVALID_RESPONSE",
+            "TRANSPORT_AMBIGUOUS",
+        })
+        | frozenset(f"HTTP_{code}" for code in range(100, 600) if code != 202)
+    )
 
     def __init__(self, category: str) -> None:
         if category not in self._CATEGORIES:

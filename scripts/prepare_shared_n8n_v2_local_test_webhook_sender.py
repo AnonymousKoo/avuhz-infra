@@ -36,6 +36,23 @@ class TestWebhookSendDenied(RuntimeError):
     """No dynamic subprocess, HTTP, or secret content permitted in errors."""
 
 
+class TestWebhookHttpOutcome(TestWebhookSendDenied):
+    """An allowlisted, sanitized HTTP outcome, never response body or headers."""
+
+    _CATEGORIES = frozenset({
+        "HTTP_400", "HTTP_401", "HTTP_403", "HTTP_404", "HTTP_405",
+        "HTTP_409", "HTTP_415", "HTTP_422", "HTTP_429", "HTTP_500",
+        "HTTP_502", "HTTP_503", "HTTP_504", "HTTP_OTHER_NON_202",
+        "HTTP_202_INVALID_RESPONSE", "TRANSPORT_AMBIGUOUS",
+    })
+
+    def __init__(self, category: str) -> None:
+        if category not in self._CATEGORIES:
+            raise ValueError("invalid_safe_http_category")
+        self.category = category
+        super().__init__("sanitized_local_http_outcome")
+
+
 def _one_readonly_preflight() -> tuple[qa.QaReadback, dict, str]:
     state = qa.preflight(expect_one=False)
     event = qa.fictional_event()
@@ -110,23 +127,30 @@ def _post_one(*, event: dict, token: str) -> bool:
             },
         )
         response = conn.getresponse()
+        # Classify only a fixed safe status code. Never read or print a
+        # rejected response's possibly attacker-controlled body or headers.
         if response.status != 202:
-            return False
+            safe_category = "HTTP_" + str(response.status)
+            if safe_category not in TestWebhookHttpOutcome._CATEGORIES:
+                safe_category = "HTTP_OTHER_NON_202"
+            raise TestWebhookHttpOutcome(safe_category)
         if response.getheader("Content-Length"):
             declared = response.getheader("Content-Length")
             if not declared.isdecimal() or int(declared) > MAX_RESPONSE_BYTES:
-                return False
+                raise TestWebhookHttpOutcome("HTTP_202_INVALID_RESPONSE")
         raw = response.read(MAX_RESPONSE_BYTES + 1)
         if len(raw) > MAX_RESPONSE_BYTES:
-            return False
+            raise TestWebhookHttpOutcome("HTTP_202_INVALID_RESPONSE")
         try:
             obj = json.loads(raw)
         except (ValueError, UnicodeDecodeError):
-            return False
-        return type(obj) is dict and obj == {"accepted": True}
+            raise TestWebhookHttpOutcome("HTTP_202_INVALID_RESPONSE") from None
+        if type(obj) is not dict or obj != {"accepted": True}:
+            raise TestWebhookHttpOutcome("HTTP_202_INVALID_RESPONSE")
+        return True
     except (OSError, http.client.HTTPException, TimeoutError):
-        # Request might already have been committed; NEVER retry automatically.
-        raise TestWebhookSendDenied("one_delivery_ambiguous_no_retry") from None
+        # The POST might already have committed; never retry.
+        raise TestWebhookHttpOutcome("TRANSPORT_AMBIGUOUS") from None
     finally:
         conn.close()
 
@@ -202,6 +226,10 @@ def run(argv: list[str] | None = None) -> int:
             print("NEXT explicit UI test-listener and private sender-token approvals are required")
             return 0
         return _send_once(args)
+    except TestWebhookHttpOutcome as failure:
+        # Fixed allowlist is the ONLY dynamic HTTP diagnostic printed.
+        print("BLOCKED LOCAL test webhook outcome=" + failure.category + "; no retry")
+        return 2
     except (TestWebhookSendDenied, qa.FirstEventQaDenied, OSError, ValueError,
             subprocess.SubprocessError):
         print("BLOCKED one LOCAL test webhook operation; no retry; reconcile read-only")

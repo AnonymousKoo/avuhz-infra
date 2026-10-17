@@ -33,7 +33,7 @@ INBOUND_CREDENTIAL_ID = "6ece28c3-f72d-4021-942d-8d0eb072b711"
 RECEIPT_CREDENTIAL_ID = "154a1ca8-60d2-449e-bb5a-6f7c1bbf04d2"
 RECEIVER_SHA256 = "sha256:fe2b5abf9fb5e8a3fb4fba248fb092ea4395e14f90a1c47fe04a5dc7722fad7f"
 REF_RE = re.compile(r"op://[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/password\Z", re.ASCII)
-EXPECTED_EXECUTIONS = frozenset({14})  # #13 unexpectedly absent at fresh 2026-10-17 readback
+EXPECTED_EXECUTIONS = frozenset()  # #13 and #14 now both absent; cause unknown
 
 
 class RotationDenied(RuntimeError):
@@ -121,14 +121,14 @@ def _read_only_snapshot() -> Snapshot:
                s[0] == RECEIVER_ID and s[1] == project_id) != 1
         or {r[0] for r in executions} != EXPECTED_EXECUTIONS
         or any(r[1] != RECEIVER_ID or r[2] != "manual" for r in executions)
-        # Historical execution #13 disappeared since the documented incident.
-        # Require an explicit, separately approved exception at mutation time;
-        # never silently recreate or delete execution evidence.
+        # Both historical execution #13 and #14 disappeared since the incident.
+        # Require NEW explicit acknowledgement of both absences at mutation;
+        # never infer the cause or silently restore/delete execution evidence.
     ):
         raise RotationDenied("rotation_metadata_drift")
     # The canonical bound receiver gate validates *all* five nodes, their exact
     # two encrypted credential references and project shares, plus current URL.
-    # It intentionally permits the two historical manual execution records.
+    # Both historical executions are absent; any saved execution row blocks.
     source = qa.receiver._source()
     qa._bound_receiver_readback(source, state.endpoint)
     return Snapshot(
@@ -170,7 +170,7 @@ def _check_arguments(args: argparse.Namespace, before: Snapshot) -> None:
         or args.approved_project_id != before.project_id
         or args.approved_receiver_sha256 != RECEIVER_SHA256
         or args.approved_receipt_endpoint != before.endpoint
-        or args.approved_execution_13_absence != "EXACT_13_ABSENT_14_PRESERVED"
+        or args.approved_execution_13_14_absence != "EXACT_13_AND_14_ABSENT"
         or not isinstance(args.approved_source_commit, str)
         or args.approved_source_commit != _git_source_commit()
         or not isinstance(args.approved_secret_reference, str)
@@ -252,7 +252,7 @@ def run(argv: list[str] | None = None) -> int:
     for field in (
         "receiver-id", "credential-id", "receipt-credential-id",
         "project-id", "receiver-sha256", "receipt-endpoint",
-        "source-commit", "secret-reference", "execution-13-absence",
+        "source-commit", "secret-reference", "execution-13-14-absence",
     ):
         parser.add_argument("--approved-" + field)
     args = parser.parse_args(argv)
@@ -270,11 +270,11 @@ def run(argv: list[str] | None = None) -> int:
                 "approved_receipt_credential_id", "approved_project_id",
                 "approved_receiver_sha256", "approved_receipt_endpoint",
                 "approved_source_commit", "approved_secret_reference",
-                "approved_execution_13_absence",
+                "approved_execution_13_14_absence",
             )):
                 raise RotationDenied("rotation_readonly_mode_disallows_approval_flags")
             print("PASS LOCAL inactive shared receiver, existing inbound encrypted credential")
-            print("PASS receipt credential, execution #14 preserved, #13 absent, zero receipts")
+            print("PASS receipt credential, executions #13 and #14 absent, zero receipts")
             print("PASS read-only: no 1Password field read, import, event or workflow change")
             print("REQUIRES new exact Gate B approval to update the existing encrypted ID")
             return 0

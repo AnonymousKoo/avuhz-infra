@@ -41,7 +41,7 @@ class InboundRotationTests(unittest.TestCase):
                 (gate.RECEIPT_CREDENTIAL_ID,"qa-synthetic-only-personal-project","credential:owner"),
             ),
             workflow_shares=((gate.RECEIVER_ID,"qa-synthetic-only-personal-project","workflow:owner"),),
-            execution_rows=((14,gate.RECEIVER_ID,"manual","running",0,None,None),),
+            execution_rows=(),
             total_webhooks=0,receipt_count=0,
         )
         new=list(self.credential);new[6]="2026-10-17 12:00:00.999"
@@ -55,7 +55,7 @@ class InboundRotationTests(unittest.TestCase):
                    "--approved-receipt-endpoint",self.state.endpoint,
                    "--approved-source-commit",HEAD,
                    "--approved-secret-reference",REF,
-                   "--approved-execution-13-absence","EXACT_13_ABSENT_14_PRESERVED"]
+                   "--approved-execution-13-14-absence","EXACT_13_AND_14_ABSENT"]
 
     def test_default_preflight_does_not_read_op_or_import(self):
         with (
@@ -109,7 +109,7 @@ class InboundRotationTests(unittest.TestCase):
             ("--approved-source-commit","a"*40),
             ("--approved-secret-reference","op://other/other/otp"),
             ("--approved-secret-reference","op://other/other/notes"),
-            ("--approved-execution-13-absence","unapproved"),
+            ("--approved-execution-13-14-absence","unapproved"),
         ):
             args=self.args.copy()
             args[args.index(field)+1]=value
@@ -155,6 +155,52 @@ class InboundRotationTests(unittest.TestCase):
             self.assertEqual(gate.run(self.args),2)
         op.assert_not_called()
         importer.assert_not_called()
+
+    def test_both_execution_absences_require_fresh_exact_approval(self):
+        self.assertEqual(gate.EXPECTED_EXECUTIONS, frozenset())
+        args = self.args.copy()
+        args[args.index("--approved-execution-13-14-absence") + 1] = (
+            "EXACT_13_ABSENT_14_PRESERVED"
+        )
+        with (
+            patch.dict(os.environ, LOCAL),
+            patch.object(gate, "_read_only_snapshot", return_value=self.state),
+            patch.object(gate, "_git_source_commit", return_value=HEAD),
+            patch.object(gate, "LocalN8nOnePasswordCredential") as secret,
+            patch.object(gate, "_native_update_once") as update,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(gate.run(args), 2)
+        secret.assert_not_called()
+        update.assert_not_called()
+
+    def test_old_13_only_approval_flag_cannot_reach_secret_read(self):
+        args = self.args.copy()
+        args[args.index("--approved-execution-13-14-absence")] = (
+            "--approved-execution-13-absence"
+        )
+        with (
+            patch.dict(os.environ, LOCAL),
+            patch.object(gate, "_read_only_snapshot") as preflight,
+            patch.object(gate, "LocalN8nOnePasswordCredential") as secret,
+            patch.object(gate, "_native_update_once") as update,
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            with self.assertRaises(SystemExit) as result:
+                gate.run(args)
+        self.assertEqual(result.exception.code, 2)
+        preflight.assert_not_called()
+        secret.assert_not_called()
+        update.assert_not_called()
+
+    def test_reappearing_historical_execution_rejected_after_import(self):
+        for execution_id in (13, 14):
+            execution = (execution_id, gate.RECEIVER_ID, "manual", "running", 0, None, None)
+            with self.subTest(execution_id=execution_id):
+                with self.assertRaises(gate.RotationDenied):
+                    gate._verify_postcondition(
+                        self.state, replace(self.after, execution_rows=(execution,))
+                    )
 
     def test_owner_provider_failure_no_import(self):
         from avuhz_worker.local_n8n_onepassword_credential import LocalN8nSecretUnavailable
@@ -226,7 +272,7 @@ class InboundRotationTests(unittest.TestCase):
                 (*self.outbound[:3],140,*self.outbound[4:]))),
             replace(self.after,receipt_count=1),
             replace(self.after,pid=899),
-            replace(self.after,execution_rows=()),
+            replace(self.after,execution_rows=((15,gate.RECEIVER_ID,"manual","running",0,None,None),)),
             replace(self.after,workflow_shares=()),
             replace(self.after,all_workflows=()),
             replace(self.after,project_id="wrong-personal"),

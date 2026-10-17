@@ -1,0 +1,55 @@
+# DefNet LOCAL shared n8n v2 inbound-token exposure — exact rotation plan
+
+**Incident status: OPEN — credential exposure unresolved.** An operator screenshot of the LOCAL n8n Webhook node's **OUTPUT → headers** displayed the actual inbound `X-Avuhz-Webhook-Token` value. Treat this entire inbound value as compromised and do not reuse it. This document contains **no value, reversible digest, credential payload, image, screenshot or export**. Do not copy, print, read or paste the old value. If practical, limit further distribution/remove the exposed screenshot from any independently controlled sharing location; this is **not a substitute for rotation**.
+
+## Verified scope and current evidence (2026-10-17, read-only)
+
+- **Repository:** `AnonymousKoo/avuhz-infra`; **environment:** DefNet **LOCAL**, native Docker n8n **1.103.2** on `127.0.0.1:5678`; **responsibility:** Avuhz shared automation only; **installed resource:** inactive shared receiver `0068feb4c96bdb5f`, source template SHA-256 `fe2b5abf9fb5e8a3fb4fba248fb092ea4395e14f90a1c47fe04a5dc7722fad7f`.
+- **Affected:** existing n8n-encrypted `httpHeaderAuth` credential **`6ece28c3-f72d-4021-942d-8d0eb072b711`**, name **`Avuhz Shared Receiver v2 LOCAL inbound header`**, header **`X-Avuhz-Webhook-Token`**, owned/shared to the existing one personal n8n project; the originally approved 1Password **`Avuhz Infrastructure`** vault item of the same name, its `password` field, and the owner's stable-ID `op://vault-id/item-id/password` **reference, not the value**.
+- **Not affected by the observed exposure:** distinct outbound n8n encrypted receipt bridge `154a1ca8-60d2-449e-bb5a-6f7c1bbf04d2` uses **`X-Avuhz-Receipt-Bridge-Token`**, stays unchanged; receipt service `172.17.0.1:37891` and owner-only `0600` QA SQLite store remain running with **zero committed receipts**. Both previous n8n manual execution metadata rows **#13 and #14** remain `running` with no finished timestamp; preserve them. Both blocked test attempts and both test-listener approvals are **consumed**; neither grants retry authority.
+- **LOCAL boundary:** the receiver and all workflows are inactive; do not register a new test listener, enable a production webhook, send another QA request, or expose port 5678 publicly during recovery. Even inactive status alone is not revocation of a leaked token. Don't assume a still-visible editor test listener is viable or authorized.
+- **Separate hosted boundaries:** Supabase DEVELOPMENT **AUTH** `pwlhruwutoitnieactol` and **DATA** `gnuqaefotwgkwurjpyik` are different projects; neither has any authorized mutation in this incident. No hosted, customer, Sekinfra or production resource is part of this plan.
+- **Change class of this PR:** a single repository **documentation-only** change. **No credential was read, generated, rotated, decrypted, imported, displayed, or transmitted** while preparing it; no runtime or provider resource was changed.
+
+## Stop and containment checks (read-only)
+
+1. Confirm the exact DefNet user, native n8n container identity/version, local-only network binding, receiver ID and `active=false`, source checksum, one existing encrypted inbound credential with that ID and project owner share, distinct receipt credential, and the unchanged five-node receiver.
+2. Preserve execution #13/#14 metadata and exact receipt count without reading `execution_data.data`, n8n credential `data`, raw HTTP request headers, 1Password field values, or n8n server logs that may contain credentials. If a process or workflow is unexpectedly active, or the n8n listener is publicly reachable, **STOP and request a separate containment authorization**.
+3. Never test the exposed old token, even for a negative request. No replays, listener registrations, service restarts or implicit temporary n8n UI edits are in the current authorization.
+
+## Gate A — owner-only 1Password inbound field rotation (a future, separate exact approval)
+
+**Exact resource:** existing `Avuhz Infrastructure` vault item `Avuhz Shared Receiver v2 LOCAL inbound header`, **password field only**. Owner confirms the stable-ID reference matches this item privately using 1Password **metadata only**; no field-value read is necessary to establish identity.
+
+After an exact approval for **one** owner-side vault-field update, generate a new independent cryptographically random ASCII token **32–512 bytes** (prefer 48–64 printable alphanumeric characters) **inside the password manager** and replace **only** this existing field. Keep its stable vault ID, item ID, field ID/reference and other fields intact. Do **not** show the value, copy it into terminal history, screenshots, Git, chat, files, environment variables or logs. Do **not** replace the unrelated receipt-bridge field. Avoid any unexpected item duplicates or Vault sharing changes.
+
+**Read-only postcondition:** owner confirms the same item/field metadata and a new modified timestamp in 1Password (without exposing value). This step **does not revoke the old value in n8n**; until Gate B, n8n's still-encrypted copy may continue to recognize the exposed token if another temporary listener exists. Keep the inactive/LOCAL-only containment while advancing immediately to Gate B. On ambiguous save, **stop**; no automatic repeat.
+
+## Gate B — update the SAME existing n8n encrypted inbound credential (a second, distinct exact approval)
+
+**Exact resource:** existing n8n encrypted credential `6ece28c3-f72d-4021-942d-8d0eb072b711`, under its existing personal project, **not a newly created credential**. Keep the current receiver's inbound credential reference unchanged. Update only the `httpHeaderAuth` value for `X-Avuhz-Webhook-Token` by privately reading the new **approved stable-ID 1Password field** once from the owner's signed-in DefNet session.
+
+**Do not use** `scripts/prepare_shared_n8n_receiver_v2_header_credential_local.py --import-one` or `scripts/prepare_shared_n8n_v2_op_to_encrypted_credential_local.py --import-one` for this rotation: inspected source generates a **new random credential ID**, checks **zero existing matching credentials**, requires **zero executions**, and is only for first-time unbound registration. It is incompatible with current bound receiver and saved #13/#14; weakening those source checks or retrying that importer is forbidden.
+
+The installed native n8n 1.103.2 `import:credentials` implementation performs a transactional credential **upsert on existing `id`** and accepts `--projectId`; that behavior was verified in its installed `dist/commands/import/credentials.js` **source only, not exercised on this credential**. Before executing Gate B, separately prepare and review a guarded rotation-specific **source-only** adapter that:
+
+- pins the exact LOCAL environment, source commit, receiver ID and canonical receiver digest; requires a distinct Gate B approval for this existing credential ID, project ID and single private 1Password reference; refuses production and CI;
+- checks zero active workflows and no unexpected execution/receipt changes, encrypted metadata, existing ownership/share, node-binding ID and source integrity **before** consuming the secret;
+- obtains **one** new value through the existing `LocalN8nOnePasswordCredential` provider and anonymous in-process/inherited file descriptor; imports **exactly one** credential JSON record via native n8n's encrypted importer, with **the existing ID** and project identity, not a new item or workflow; never prints/exports payload, errors, logs or a plaintext token;
+- runs one independently read-only postcondition of the **unchanged credential count and ID/name/type/owner share**, valid encrypted storage encoding, unchanged workflow contents/activation, preserved #13/#14, untouched receipt-bridge credential and zero receipt writes; classifies uncertain importer outcome as **STOP, NO RETRY**. Credential metadata-only evidence cannot prove the new encrypted value matches the vault; do not claim that it does before a separately authorized later auth/receipt test.
+
+**Do not perform Gate B** under an approval to write this plan, under old #719/#721/#722 first-import authority, or by copying a secret into n8n GUI fields. The signed-in terminal and secret-reference metadata do not themselves authorize an encrypted n8n update. No fallback rotation, service restart or rollback on ambiguity.
+
+## After both rotations — release conditions (all separately approved)
+
+1. Confirm the same existing inbound credential is bound to the inactive receiver, original secret is no longer intentionally referenced by the owner-side sender and no new password leaks occurred. Complete an independent metadata-only postcheck; do **not** claim the old token is revoked merely because 1Password changed. If a future test proves mismatch, stop rather than resurrect the exposed value.
+2. A later **new** LOCAL test-listener approval and **separate** exactly-one fictional event POST approval can validate native inbound authentication with the new secret, safe HTTP diagnostics, the private receipt service response and exact committed idempotent receipt. Never reuse prior event approval or silently replay the existing delivery ID. Avoid screenshotting **INPUT/OUTPUT headers** in n8n (even success and manual-test views can expose full credentials); use sanitized code/category and metadata-only evidence.
+3. Separate negative auth/tenant, duplicate, delivery-failure and authoritative Work Item/owner/RLS tests are still required before LOCAL System #001 V1 certification. No new hosted, vertical-specific billing/auth/automation infrastructure is allowed.
+
+## Findings and hard blockers
+
+- **Confirmed critical security finding:** LOCAL inbound webhook credential value appeared in a chat screenshot. Rotation of the **both** 1Password field and matching n8n encrypted credential is mandatory before further delivery testing. Historical screenshots cannot be retroactively made safe by source changes.
+- **Confirmed implementation gap:** a guarded in-place encrypted n8n credential **rotation adapter does not exist yet**; available scripts only create the initial credential. It must be prepared, reviewed, tested and separately approved before Gate B. Provider n8n transactional upsert is an observed capability, not an executed or approved repair.
+- **Unresolved operational diagnosis:** first and second LOCAL test POSTs returned generic `BLOCKED` then `HTTP_OTHER_NON_202`, with no durable receipts, and executions #13/#14 show `running`. The webhook trigger received one item during the second test, but no receipt/Work Item completion is established. Diagnose later without logging sensitive headers; do not treat a source-only PR or a green CI run as remediation.
+
+**Next action:** merge this documentation-only incident plan after exact-head Main PR Gate. Then request a **fresh, exact approval for Gate A (the existing 1Password inbound field only)**. Separately prepare and review a guarded Gate B in-place rotation adapter, and obtain a **second, new** approval for Gate B. Neither operation is authorized by this plan.

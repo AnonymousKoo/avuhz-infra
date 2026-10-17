@@ -246,12 +246,16 @@ class OneNativeTestWebhookSendTests(unittest.TestCase):
 
     def test_http_status_categories_are_strictly_allowlisted_no_body_read(self):
         for code,category in (
+            (100,"HTTP_100"), (200,"HTTP_200"), (201,"HTTP_201"),
+            (204,"HTTP_204"), (301,"HTTP_301"), (302,"HTTP_302"),
+            (304,"HTTP_304"), (307,"HTTP_307"), (308,"HTTP_308"),
             (400,"HTTP_400"), (401,"HTTP_401"), (403,"HTTP_403"),
             (404,"HTTP_404"), (405,"HTTP_405"), (409,"HTTP_409"),
-            (415,"HTTP_415"), (422,"HTTP_422"), (429,"HTTP_429"),
+            (415,"HTTP_415"), (418,"HTTP_418"), (422,"HTTP_422"),
+            (425,"HTTP_425"), (429,"HTTP_429"), (451,"HTTP_451"),
             (500,"HTTP_500"), (502,"HTTP_502"), (503,"HTTP_503"),
-            (504,"HTTP_504"), (302,"HTTP_OTHER_NON_202"),
-            (599,"HTTP_OTHER_NON_202"),
+            (504,"HTTP_504"), (507,"HTTP_507"), (599,"HTTP_599"),
+            (600,"HTTP_OTHER_NON_202"),
         ):
             response=Mock(status=code)
             response.read.side_effect=AssertionError("must not read untrusted error bodies")
@@ -296,7 +300,11 @@ class OneNativeTestWebhookSendTests(unittest.TestCase):
                 conn.request.assert_called_once()
 
     def test_safe_http_diagnostic_emitted_once_without_secret_or_body(self):
-        for category in ("HTTP_401","HTTP_404","HTTP_503","HTTP_202_INVALID_RESPONSE","TRANSPORT_AMBIGUOUS"):
+        for category in (
+            "HTTP_200", "HTTP_302", "HTTP_418", "HTTP_599",
+            "HTTP_401", "HTTP_404", "HTTP_503",
+            "HTTP_OTHER_NON_202", "HTTP_202_INVALID_RESPONSE", "TRANSPORT_AMBIGUOUS",
+        ):
             token="only-in-memory-test-secret-abcdefghijklmnopqrstuvwxyz"
             with (
                 self.subTest(category=category),
@@ -317,8 +325,14 @@ class OneNativeTestWebhookSendTests(unittest.TestCase):
             self.assertNotIn("error body",report)
 
     def test_unapproved_http_diagnostic_cannot_be_printed(self):
-        with self.assertRaises(ValueError):
-            sender.TestWebhookHttpOutcome("HTTP_401 token=exfiltration")
+        for category in (
+            "HTTP_000", "HTTP_099", "HTTP_202", "HTTP_600",
+            "HTTP_302 token=exfiltration", "HTTP_401\nrequest-body",
+            "HTTP_abc", "HTTP_1", "HTTP_1000", "TOKEN_EXPOSED",
+        ):
+            with self.subTest(category=category):
+                with self.assertRaises(ValueError):
+                    sender.TestWebhookHttpOutcome(category)
 
 
     def test_http_timeout_ambiguous_and_no_second_request(self):

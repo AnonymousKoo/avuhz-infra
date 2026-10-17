@@ -310,5 +310,138 @@ class InboundRotationTests(unittest.TestCase):
         self.assertIn("no retry",output.getvalue())
 
 
+    def test_sanitized_preflight_failure_before_secret_or_import(self):
+        with (
+            patch.dict(os.environ,LOCAL),
+            patch.object(gate,"_read_only_snapshot",
+                         side_effect=gate.RotationDenied("RAW_PREFLIGHT_PROVIDER_ERROR")),
+            patch.object(gate,"LocalN8nOnePasswordCredential") as op,
+            patch.object(gate,"_native_update_once") as importer,
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            self.assertEqual(gate.run(self.args),2)
+        self.assertIn("BLOCKED LOCAL_GATE_B_LOCAL_PREFLIGHT;",out.getvalue())
+        self.assertNotIn("RAW_PREFLIGHT_PROVIDER_ERROR",out.getvalue())
+        op.assert_not_called()
+        importer.assert_not_called()
+
+    def test_sanitized_exact_approval_and_runtime_recheck(self):
+        rejected=self.args.copy()
+        rejected[rejected.index("--approved-project-id")+1]="wrong-project"
+        for argv,states,wanted in (
+            (rejected,[self.state],"AUTHORIZATION"),
+            (self.args,[self.state,replace(self.state,pid=999999)],"RUNTIME_RECHECK"),
+        ):
+            with (
+                self.subTest(stage=wanted),
+                patch.dict(os.environ,LOCAL),
+                patch.object(gate,"_read_only_snapshot",side_effect=states),
+                patch.object(gate,"_git_source_commit",return_value=HEAD),
+                patch.object(gate,"LocalN8nOnePasswordCredential") as op,
+                patch.object(gate,"_native_update_once") as importer,
+                contextlib.redirect_stdout(io.StringIO()) as out,
+            ):
+                self.assertEqual(gate.run(argv),2)
+                self.assertIn("BLOCKED LOCAL_GATE_B_"+wanted+";",out.getvalue())
+                op.assert_not_called()
+                importer.assert_not_called()
+
+    def test_sanitized_secret_provider_error_and_no_import(self):
+        from avuhz_worker.local_n8n_onepassword_credential import LocalN8nSecretUnavailable
+        def deny():
+            raise LocalN8nSecretUnavailable("UNSAFE_REFERENCE_OR_VALUE_EXAMPLE")
+        with (
+            patch.dict(os.environ,LOCAL),
+            patch.object(gate,"_read_only_snapshot",return_value=self.state),
+            patch.object(gate,"_git_source_commit",return_value=HEAD),
+            patch.object(gate,"LocalN8nOnePasswordCredential",return_value=deny) as op,
+            patch.object(gate,"_native_update_once") as importer,
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            self.assertEqual(gate.run(self.args),2)
+        self.assertIn("BLOCKED LOCAL_GATE_B_SECRET_PROVIDER;",out.getvalue())
+        self.assertNotIn("UNSAFE_REFERENCE_OR_VALUE_EXAMPLE",out.getvalue())
+        self.assertNotIn(REF,out.getvalue())
+        op.assert_called_once()
+        importer.assert_not_called()
+
+    def test_sanitized_invalid_replacement_format_before_native_import(self):
+        with (
+            patch.dict(os.environ,LOCAL),
+            patch.object(gate,"_read_only_snapshot",return_value=self.state),
+            patch.object(gate,"_git_source_commit",return_value=HEAD),
+            patch.object(gate,"LocalN8nOnePasswordCredential",return_value=lambda:"A"*47),
+            patch.object(gate.subprocess,"run") as native,
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            self.assertEqual(gate.run(self.args),2)
+        self.assertIn("BLOCKED LOCAL_GATE_B_SECRET_FORMAT;",out.getvalue())
+        native.assert_not_called()
+
+    def test_sanitized_native_import_error_one_attempt_without_retry(self):
+        with (
+            patch.dict(os.environ,LOCAL),
+            patch.object(gate,"_read_only_snapshot",return_value=self.state),
+            patch.object(gate,"_git_source_commit",return_value=HEAD),
+            patch.object(gate,"LocalN8nOnePasswordCredential",return_value=lambda:TOKEN),
+            patch.object(gate,"_native_update_once",
+                         side_effect=gate.RotationDenied("PROVIDER_UNSAFE_DIAGNOSTIC")) as importer,
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            self.assertEqual(gate.run(self.args),2)
+        self.assertIn("BLOCKED LOCAL_GATE_B_NATIVE_IMPORT;",out.getvalue())
+        self.assertNotIn("PROVIDER_UNSAFE_DIAGNOSTIC",out.getvalue())
+        self.assertNotIn(TOKEN,out.getvalue())
+        importer.assert_called_once()
+
+    def test_sanitized_postcheck_failure_after_one_mock_import(self):
+        with (
+            patch.dict(os.environ,LOCAL),
+            patch.object(gate,"_read_only_snapshot",side_effect=[self.state]*3),
+            patch.object(gate,"_git_source_commit",return_value=HEAD),
+            patch.object(gate,"LocalN8nOnePasswordCredential",return_value=lambda:TOKEN) as op,
+            patch.object(gate,"_native_update_once") as importer,
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            self.assertEqual(gate.run(self.args),2)
+        self.assertIn("BLOCKED LOCAL_GATE_B_POSTCHECK;",out.getvalue())
+        op.assert_called_once()
+        importer.assert_called_once()
+
+    def test_unknown_arguments_never_echo_reference_or_value(self):
+        argv=self.args+["--private-unrecognized-token","UNSAFE_SECRET_VALUE_MARKER"]
+        with (
+            patch.dict(os.environ,LOCAL),
+            patch.object(gate,"_read_only_snapshot") as pre,
+            patch.object(gate,"LocalN8nOnePasswordCredential") as op,
+            patch.object(gate,"_native_update_once") as importer,
+            contextlib.redirect_stdout(io.StringIO()) as out,
+            contextlib.redirect_stderr(io.StringIO()) as err,
+        ):
+            with self.assertRaises(SystemExit) as failed:
+                gate.run(argv)
+        self.assertEqual(failed.exception.code,2)
+        self.assertIn("BLOCKED LOCAL_GATE_B_ARGUMENTS;",out.getvalue())
+        self.assertNotIn(REF,out.getvalue()+err.getvalue())
+        self.assertNotIn("UNSAFE_SECRET_VALUE_MARKER",out.getvalue()+err.getvalue())
+        pre.assert_not_called()
+        op.assert_not_called()
+        importer.assert_not_called()
+
+    def test_sanitized_unexpected_error_does_not_echo_or_continue(self):
+        with (
+            patch.dict(os.environ,LOCAL),
+            patch.object(gate,"_read_only_snapshot",
+                         side_effect=RuntimeError("PRIVATE_PROVIDER_DIAGNOSTIC_MARKER")),
+            patch.object(gate,"LocalN8nOnePasswordCredential") as op,
+            patch.object(gate,"_native_update_once") as importer,
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            self.assertEqual(gate.run(self.args),2)
+        self.assertIn("BLOCKED LOCAL_GATE_B_UNEXPECTED;",out.getvalue())
+        self.assertNotIn("PRIVATE_PROVIDER_DIAGNOSTIC_MARKER",out.getvalue())
+        op.assert_not_called()
+        importer.assert_not_called()
+
 if __name__=="__main__":
     unittest.main()

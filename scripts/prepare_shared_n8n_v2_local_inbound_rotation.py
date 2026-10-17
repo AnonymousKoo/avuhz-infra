@@ -40,6 +40,30 @@ class RotationDenied(RuntimeError):
     """Only fixed sanitized error text."""
 
 
+class ReplacementSecretFormatDenied(RotationDenied):
+    """An in-memory replacement failed the allowed format; never echo it."""
+
+
+class SafeArgumentParser(argparse.ArgumentParser):
+    """Never let argparse print a possibly secret-bearing unknown CLI value."""
+
+    def error(self, message: str) -> None:
+        print("BLOCKED LOCAL_GATE_B_ARGUMENTS; no retry; reconcile read-only")
+        self.exit(2)
+
+
+def _blocked(stage: str) -> int:
+    """Report only one allowlisted, secret-independent failure category."""
+    if stage not in {
+        "LOCAL_PREFLIGHT", "AUTHORIZATION", "RUNTIME_RECHECK",
+        "SECRET_PROVIDER", "SECRET_FORMAT", "NATIVE_IMPORT", "POSTCHECK",
+        "UNEXPECTED",
+    }:
+        stage = "UNEXPECTED"
+    print("BLOCKED LOCAL_GATE_B_" + stage + "; no retry; reconcile read-only")
+    return 2
+
+
 @dataclass(frozen=True)
 class Snapshot:
     endpoint: str
@@ -185,7 +209,7 @@ def _native_update_once(project_id: str, new_token: str) -> None:
         type(new_token) is not str or not 48 <= len(new_token) <= 64
         or not re.fullmatch(r"[A-Za-z0-9]{48,64}", new_token, re.ASCII)
     ):
-        raise RotationDenied("replacement_secret_format_denied")
+        raise ReplacementSecretFormatDenied("replacement_secret_format_denied")
     credential = {
         "id": INBOUND_CREDENTIAL_ID,
         "name": inbound.CREDENTIAL_NAME,
@@ -246,7 +270,7 @@ def _verify_postcondition(before: Snapshot, after: Snapshot) -> None:
 
 
 def run(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = SafeArgumentParser(description=__doc__)
     parser.add_argument("--target", required=True)
     parser.add_argument("--rotate-one", action="store_true")
     for field in (
@@ -260,11 +284,13 @@ def run(argv: list[str] | None = None) -> int:
         args.target != TARGET or os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS")
         or os.environ.get("AVUHZ_ENVIRONMENT", "LOCAL") != "LOCAL"
     ):
-        print("BLOCKED wrong LOCAL inbound rotation environment")
+        print("BLOCKED LOCAL_GATE_B_ENVIRONMENT; no retry; reconcile read-only")
         return 2
+    stage = "LOCAL_PREFLIGHT"
     try:
         before = _read_only_snapshot()
         if not args.rotate_one:
+            stage = "AUTHORIZATION"
             if any(getattr(args, key) is not None for key in (
                 "approved_receiver_id", "approved_credential_id",
                 "approved_receipt_credential_id", "approved_project_id",
@@ -278,10 +304,13 @@ def run(argv: list[str] | None = None) -> int:
             print("PASS read-only: no 1Password field read, import, event or workflow change")
             print("REQUIRES new exact Gate B approval to update the existing encrypted ID")
             return 0
+        stage = "AUTHORIZATION"
         _check_arguments(args, before)
         # Revalidate immediately before reading the already-rotated private field.
+        stage = "RUNTIME_RECHECK"
         if _read_only_snapshot() != before:
             raise RotationDenied("rotation_runtime_changed_before_secret_read")
+        stage = "SECRET_PROVIDER"
         provider = LocalN8nOnePasswordCredential(
             environment="LOCAL", approved_secret_reference=args.approved_secret_reference,
         )
@@ -289,22 +318,24 @@ def run(argv: list[str] | None = None) -> int:
         try:
             # After reading the new field, no other resource is changed before
             # the one native encrypted credential upsert.
+            stage = "NATIVE_IMPORT"
             _native_update_once(before.project_id, token)
         finally:
             token = None
+        stage = "POSTCHECK"
         after = _read_only_snapshot()
         _verify_postcondition(before, after)
         print("PASS one authorized encrypted in-place LOCAL inbound credential update")
         print("PASS same existing credential ID/project, receipt credential and workflow unchanged")
         print("NOT PROVEN: old token revoked in running n8n memory; no auth request sent")
         return 0
+    except ReplacementSecretFormatDenied:
+        return _blocked("SECRET_FORMAT")
     except (RotationDenied, qa.FirstEventQaDenied, LocalN8nSecretUnavailable,
             OSError, ValueError, sqlite3.Error, subprocess.SubprocessError):
-        print("BLOCKED LOCAL inbound credential rotation; no retry; reconcile read-only")
-        return 2
+        return _blocked(stage)
     except Exception:
-        print("BLOCKED LOCAL inbound credential rotation unavailable; no retry")
-        return 2
+        return _blocked("UNEXPECTED")
 
 
 if __name__ == "__main__":

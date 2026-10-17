@@ -40,6 +40,27 @@ Under such authority, the tool: (1) checks the exact LOCAL source commit and cle
 
 A Gate B metadata PASS **does not certify** that the exposed old token is revoked in running n8n memory, an active test-webhook listener has ended, a valid new-authenticated event processes through all five nodes, a durable receipt is committed, or any real business owner or Work Item has been authorized. Only after the incident has been reviewed may a **new** temporary LOCAL test listener and a **distinct** one-POST QA execution be approved; avoid n8n INPUT/OUTPUT screenshots with sensitive headers. Current previous test status includes `HTTP_OTHER_NON_202`, no receipts and both #13 and #14 missing for reasons not yet determined. Diagnosing the failed receipt node, replays and tenant isolation is subsequent work. Never send real customer events before explicit tenant/owner and shared-command/RLS gates.
 
+## Failed Gate B attempt and safe stage-specific diagnostics (source-only candidate)
+
+After Gate A, the owner attempted one separately authorized Gate B update using the reviewed PR #733 tool. It printed only `BLOCKED LOCAL inbound credential rotation; no retry; reconcile read-only`. The owner **did not retry**. Independent metadata-only reconciliation found the existing encrypted inbound credential `updatedAt` still equal to `createdAt` on 2026-10-16, unchanged credential IDs/ownership, unchanged receipt credential and inactive receiver, no saved executions, and zero QA receipts. The unchanged timestamp strongly suggests no successful committed credential upsert, but it does **not** prove which stage failed or authorize further use of the old inbound token. The previous exact Gate B execution authority is **consumed**.
+
+This source-only correction changes failure reporting, not the approved resource boundary or any credential value. The only possible failure outputs use the fixed prefix `BLOCKED LOCAL_GATE_B_<STAGE>; no retry; reconcile read-only`, with stage drawn from this strict allowlist:
+
+- `ENVIRONMENT` — unsupported target, CI, or non-LOCAL environment (checked before resource reads).
+- `ARGUMENTS` — malformed/unrecognized command-line options; the parser suppresses the original argument/error text so a mistakenly supplied secret is never echoed.
+- `LOCAL_PREFLIGHT` — receiver, credential/project, private service, receipt or saved-execution metadata did not pass the read-only entry check.
+- `AUTHORIZATION` — supplied resource/project/source commit and approval flags did not match their exact bound values, or unexpected approval flags appeared in read-only mode.
+- `RUNTIME_RECHECK` — two successive non-secret snapshots did not match immediately before the private provider step.
+- `SECRET_PROVIDER` — the approved private 1Password provider could not be constructed, read or validate its field; the precise field reference, secret, subprocess error and any provider diagnostic are suppressed.
+- `SECRET_FORMAT` — the privately supplied replacement is not the explicitly required 48–64 ASCII alphanumeric characters. The format is checked in memory before any native importer invocation; the value/length itself is not printed.
+- `NATIVE_IMPORT` — the single supported n8n importer failed, timed out or returned an ambiguous result. Native stdout, stderr and original exceptions remain suppressed. **Treat the one attempt as consumed, even for an ambiguous result.**
+- `POSTCHECK` — credential identity, timestamp or other read-only invariants failed or could not be verified after the importer. **Do not retry, even if the importer may have committed.**
+- `UNEXPECTED` — any other exception; its message, stack trace and raw payload are suppressed.
+
+All other existing guards remain: exact merged source commit, same encrypted inbound ID and personal n8n project, unchanged receipt-bridge credential and receiver, no active workflow, no saved executions including #13/#14, zero receipts, the owner-approved secret-provider reference and exactly one importer invocation. These categories cannot prove what happened on the **previous** attempt, since it used the older binary that did not emit a stage code; no new secret reads or provider writes are authorized by this PR.
+
+Synthetic tests cover each category, no raw error/value/reference leakage, no import on denied authorization or invalid format, and no automatic retry. Running the script in its default mode still performs only read-only LOCAL metadata checks. **Merging a diagnostics PR does not authorize `--rotate-one` again.**
+
 **Four lanes:** Security closes the specific exposed-secret path; Infrastructure preserves the existing LOCAL private gateway and n8n project; Automation keeps shared receiver and durable receipt boundaries; Business/OIA progress should continue separately and must not be conflated with a credential rotation or a paying client.
 
-**Next action:** review/merge this source-only PR after exact-head CI; then provide a new **specific Gate B authorization acknowledging BOTH #13 and #14 absences and the exact same existing inbound n8n credential update**. No live rotation until then.
+**Next action:** review and merge the stage-specific diagnostic source-only PR only after exact-head CI passes. Then independently decide whether to request a **fresh, exact Gate B credential-update authorization** acknowledging BOTH #13 and #14 absences and the still-exposed old inbound token. The consumed attempt cannot be retried; no live rotation is authorized by this change.

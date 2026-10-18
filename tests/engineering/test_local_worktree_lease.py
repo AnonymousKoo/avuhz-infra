@@ -1,8 +1,11 @@
 """Offline synthetic tests for the LOCAL exclusive worktree lease."""
 from __future__ import annotations
 
+import copy
+import fcntl
 import json
 import os
+import pickle
 import stat
 import sys
 import tempfile
@@ -21,6 +24,7 @@ from avuhz_engineering.local_codex_admission import TrustedRepositoryObservation
 import avuhz_engineering.local_worktree_lease as lease_module
 from avuhz_engineering.local_worktree_lease import (
     LeaseDenied,
+    LocalWorktreeLease,
     _worktree_key,
     acquire_local_worktree_lease,
 )
@@ -76,7 +80,26 @@ class LocalWorktreeLeaseTests(unittest.TestCase):
         return values
 
     def _acquire(self, **overrides):
-        return acquire_local_worktree_lease(**self._arguments(**overrides))
+        lease = acquire_local_worktree_lease(**self._arguments(**overrides))
+        self.addCleanup(self._force_cleanup, lease)
+        return lease
+
+    @staticmethod
+    def _force_cleanup(lease: LocalWorktreeLease) -> None:
+        registration = lease_module._LIVE_LEASES.pop(id(lease), None)
+        if registration is not None:
+            try:
+                os.close(registration.proof_descriptor)
+            except OSError:
+                pass
+        for member in ("_descriptor", "_directory_fd"):
+            descriptor = getattr(lease, member, -1)
+            if isinstance(descriptor, int) and descriptor >= 0:
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+                setattr(lease, member, -1)
 
     def assert_denied(self, code: str, **overrides) -> None:
         with self.assertRaises(LeaseDenied) as raised:
@@ -101,6 +124,7 @@ class LocalWorktreeLeaseTests(unittest.TestCase):
     def test_successful_acquire_release_is_schema_valid_and_does_not_write_repo(self):
         before = self._snapshot_worktree()
         lease = self._acquire()
+        self.assertIsNone(lease.verify_live_owner(owner_id=lease.owner_id))
         self.assertFalse(lease.closed)
         self.assertFalse(lease.execution_authorized)
         self.assertFalse(lease.os_isolation_certified)
@@ -117,6 +141,91 @@ class LocalWorktreeLeaseTests(unittest.TestCase):
         self.assertEqual(before, self._snapshot_worktree())
         self.assertEqual(stat.S_IMODE(self._lock_path().stat().st_mode), 0o600)
         self.assertEqual(stat.S_IMODE(self._state_path().stat().st_mode), 0o600)
+
+    def test_verification_is_non_mutating_and_deadline_is_not_ownership(self):
+        stale = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        lease = self._acquire(deadline_utc=stale)
+        state_before = self._state_path().read_bytes()
+        lock_before = self._lock_path().stat()
+        descriptor_before = os.fstat(lease._descriptor)
+        with mock.patch.object(fcntl, "flock", side_effect=AssertionError("must not flock")):
+            self.assertIsNone(lease.verify_live_owner(owner_id=lease.owner_id))
+        self.assertEqual(self._state_path().read_bytes(), state_before)
+        lock_after = self._lock_path().stat()
+        descriptor_after = os.fstat(lease._descriptor)
+        self.assertEqual(
+            (lock_before.st_dev, lock_before.st_ino, lock_before.st_mode, lock_before.st_size),
+            (lock_after.st_dev, lock_after.st_ino, lock_after.st_mode, lock_after.st_size),
+        )
+        self.assertEqual(
+            (descriptor_before.st_dev, descriptor_before.st_ino),
+            (descriptor_after.st_dev, descriptor_after.st_ino),
+        )
+        lease.release(owner_id=lease.owner_id, released_at=NOW)
+
+    def test_constructor_fabrication_copy_and_deserialization_are_denied(self):
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_CONSTRUCTION_DENIED"):
+            LocalWorktreeLease(descriptor=0, directory_fd=0, state_name="fake", state={})
+        fabricated = object.__new__(LocalWorktreeLease)
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_PROVENANCE_INVALID"):
+            fabricated.verify_live_owner(owner_id="owner.synthetic.one")
+
+        lease = self._acquire()
+        clones = (copy.copy(lease), copy.deepcopy(lease), pickle.loads(pickle.dumps(lease)))
+        for clone in clones:
+            with self.subTest(clone=type(clone).__name__):
+                with self.assertRaisesRegex(LeaseDenied, "LEASE_PROVENANCE_INVALID"):
+                    clone.verify_live_owner(owner_id=lease.owner_id)
+        lease.release(owner_id=lease.owner_id, released_at=DEADLINE)
+
+    def test_wrong_owner_and_changed_clock_state_are_denied(self):
+        class DeceptiveOwner:
+            def __eq__(self, other):
+                return True
+
+            def __ne__(self, other):
+                return False
+
+        lease = self._acquire()
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_OWNER_MISMATCH"):
+            lease.verify_live_owner(owner_id="owner.synthetic.wrong")
+        deceptive = DeceptiveOwner()
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_OWNER_MISMATCH"):
+            lease.verify_live_owner(owner_id=deceptive)  # type: ignore[arg-type]
+        with self.assertRaisesRegex(LeaseDenied, "RELEASE_OWNER_MISMATCH"):
+            lease.release(owner_id=deceptive, released_at=NOW)  # type: ignore[arg-type]
+        original_deadline = lease._state["deadline_utc"]
+        lease._state["deadline_utc"] = "2030-01-01T00:00:00Z"
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_OWNER_NOT_VERIFIED"):
+            lease.verify_live_owner(owner_id=lease.owner_id)
+        lease._state["deadline_utc"] = original_deadline
+        lease.release(owner_id=lease.owner_id, released_at=DEADLINE)
+
+    def test_changed_persisted_state_and_lock_path_are_denied(self):
+        lease = self._acquire()
+        original_state = self._state_path().read_bytes()
+        changed = json.loads(original_state)
+        changed["deadline_utc"] = "2030-01-01T00:00:00Z"
+        self._state_path().write_bytes(
+            json.dumps(changed, sort_keys=True, separators=(",", ":")).encode("ascii")
+        )
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_OWNER_NOT_VERIFIED"):
+            lease.verify_live_owner(owner_id=lease.owner_id)
+        self._state_path().write_bytes(original_state)
+
+        displaced = self.leases / "displaced.lock"
+        self._lock_path().replace(displaced)
+        self._lock_path().touch(mode=0o600)
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_OWNER_NOT_VERIFIED"):
+            lease.verify_live_owner(owner_id=lease.owner_id)
+
+    def test_replaced_private_lease_directory_is_denied(self):
+        lease = self._acquire()
+        displaced = self.base / "displaced-leases"
+        self.leases.replace(displaced)
+        self.leases.mkdir(mode=0o700)
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_OWNER_NOT_VERIFIED"):
+            lease.verify_live_owner(owner_id=lease.owner_id)
 
     def test_live_owner_contends_across_process_and_stale_deadline_cannot_steal(self):
         stale = datetime(2020, 1, 1, tzinfo=timezone.utc)
@@ -212,7 +321,7 @@ class LocalWorktreeLeaseTests(unittest.TestCase):
         if child == 0:
             os.close(read_fd)
             try:
-                lease.release(owner_id=lease.owner_id, released_at=DEADLINE)
+                lease.verify_live_owner(owner_id=lease.owner_id)
             except LeaseDenied as error:
                 os.write(write_fd, error.code.encode("ascii"))
             finally:
@@ -235,6 +344,82 @@ class LocalWorktreeLeaseTests(unittest.TestCase):
         self.assertEqual(os.read(read_fd, 128), b"LEASE_CONTENDED")
         os.close(read_fd)
         os.waitpid(contender, 0)
+        lease.release(owner_id=lease.owner_id, released_at=DEADLINE)
+
+    def test_closed_and_reused_descriptor_is_denied_even_for_same_inode(self):
+        lease = self._acquire()
+        retained = lease._descriptor
+        fcntl.flock(retained, fcntl.LOCK_UN)
+        os.close(retained)
+        reopened = os.open(self._lock_path(), os.O_RDWR)
+        if reopened != retained:
+            os.dup2(reopened, retained)
+            os.close(reopened)
+        fcntl.flock(retained, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        self.assertEqual(os.fstat(retained).st_ino, self._lock_path().stat().st_ino)
+        with self.assertRaisesRegex(LeaseDenied, "LEASE_KERNEL_PROOF_DENIED"):
+            lease.verify_live_owner(owner_id=lease.owner_id)
+
+    def test_unlock_through_duplicate_is_denied_and_verification_does_not_relock(self):
+        lease = self._acquire()
+        duplicate = os.dup(lease._descriptor)
+        fcntl.flock(duplicate, fcntl.LOCK_UN)
+        os.close(duplicate)
+        with mock.patch.object(fcntl, "flock", side_effect=AssertionError("must not relock")):
+            with self.assertRaisesRegex(LeaseDenied, "LEASE_KERNEL_PROOF_DENIED"):
+                lease.verify_live_owner(owner_id=lease.owner_id)
+
+        ready_read, ready_write = os.pipe()
+        stop_read, stop_write = os.pipe()
+        contender_pid = os.fork()
+        if contender_pid == 0:
+            os.close(ready_read)
+            os.close(stop_write)
+            contender = os.open(self._lock_path(), os.O_RDWR)
+            fcntl.flock(contender, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            os.write(ready_write, b"locked")
+            os.read(stop_read, 1)
+            os._exit(0)
+        os.close(ready_write)
+        os.close(stop_read)
+        try:
+            self.assertEqual(os.read(ready_read, 6), b"locked")
+            with self.assertRaisesRegex(LeaseDenied, "LEASE_KERNEL_PROOF_DENIED"):
+                lease.verify_live_owner(owner_id=lease.owner_id)
+        finally:
+            os.write(stop_write, b"x")
+            os.close(stop_write)
+            os.close(ready_read)
+            os.waitpid(contender_pid, 0)
+
+    def test_procfs_unavailable_and_ambiguous_kernel_proof_are_denied(self):
+        with mock.patch.object(lease_module, "_KCMP_SYSCALLS", {}):
+            self.assert_denied("LEASE_KERNEL_PROOF_UNAVAILABLE")
+        lease = self._acquire()
+        missing_proc = self.base / "missing-proc"
+        with mock.patch.object(lease_module, "_PROC_ROOT", missing_proc):
+            with self.assertRaisesRegex(LeaseDenied, "LEASE_KERNEL_PROOF_UNAVAILABLE"):
+                lease.verify_live_owner(owner_id=lease.owner_id)
+        with mock.patch.object(lease_module, "_KCMP_SYSCALLS", {}):
+            with self.assertRaisesRegex(LeaseDenied, "LEASE_KERNEL_PROOF_UNAVAILABLE"):
+                lease.verify_live_owner(owner_id=lease.owner_id)
+
+        actual = lease_module._read_fdinfo(os.getpid(), lease._descriptor)
+        lock_line = next(line for line in actual.splitlines() if line.startswith("lock:"))
+        malformed = (
+            "",
+            lock_line + "\n" + lock_line,
+            lock_line.replace("FLOCK", "POSIX"),
+            lock_line.replace("WRITE", "READ"),
+            lock_line.replace(f"WRITE {os.getpid()} ", "WRITE 999999 "),
+            lock_line.rsplit(":", 1)[0] + ":999999999 0 EOF",
+            lock_line.replace(" 0 EOF", " 1 EOF"),
+        )
+        for proof in malformed:
+            with self.subTest(proof=proof):
+                with mock.patch.object(lease_module, "_read_fdinfo", return_value=proof):
+                    with self.assertRaisesRegex(LeaseDenied, "LEASE_KERNEL_PROOF_DENIED"):
+                        lease.verify_live_owner(owner_id=lease.owner_id)
         lease.release(owner_id=lease.owner_id, released_at=DEADLINE)
 
     def test_non_four_digit_utc_year_is_denied(self):

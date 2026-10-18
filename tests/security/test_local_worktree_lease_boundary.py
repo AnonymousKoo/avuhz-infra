@@ -52,10 +52,35 @@ class LocalWorktreeLeaseBoundaryTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("fcntl.LOCK_EX | fcntl.LOCK_NB", source)
-        self.assertIn("self._descriptor = descriptor", source)
+        self.assertIn("lease._descriptor = descriptor", source)
         self.assertIn('b"AVUHZ_LOCAL_WORKTREE_LEASE_V1\\0"', source)
         self.assertIn("O_NOFOLLOW", source)
         self.assertIn("st_nlink != 1", source)
+
+    def test_live_owner_verification_is_owner_scoped_read_only_and_returns_nothing(self):
+        signature = inspect.signature(LocalWorktreeLease.verify_live_owner)
+        self.assertEqual(str(signature), "(self, *, owner_id: 'str') -> 'None'")
+        source = (ROOT / "src/avuhz_engineering/local_worktree_lease.py").read_text(
+            encoding="utf-8"
+        )
+        tree = ast.parse(source)
+        method = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == "verify_live_owner"
+        )
+        calls = {
+            node.func.attr
+            for node in ast.walk(method)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+        }
+        names = {node.id for node in ast.walk(method) if isinstance(node, ast.Name)}
+        self.assertNotIn("flock", calls)
+        self.assertTrue({"LOCK_EX", "LOCK_UN", "LOCK_NB"}.isdisjoint(names))
+        self.assertIn("_read_fdinfo", names)
+        self.assertIn("_verify_same_open_file_description", names)
+        self.assertIn("_LIVE_LEASES", names)
 
     def test_all_public_result_types_deny_authority_and_isolation(self):
         release_defaults = {field.name: field.default for field in fields(LeaseReleaseResult)}
@@ -109,6 +134,9 @@ class LocalWorktreeLeaseBoundaryTests(unittest.TestCase):
             "no-network",
             "resource",
             "cannot execute a Codex job",
+            "cooperative lock ownership at one instant",
+            "never calls `flock`",
+            "not ownership proof",
         ):
             self.assertIn(required, normalized)
 

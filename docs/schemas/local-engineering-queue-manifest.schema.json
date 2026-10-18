@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.avuhz.local/v1/orchestration/local-engineering-queue-manifest.schema.json",
+  "title": "Local engineering queue manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "environment",
+    "namespace",
+    "repository",
+    "scope",
+    "worktree",
+    "allowed_file_paths",
+    "target_baselines",
+    "tasks",
+    "approval"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "manifest_id": {"$ref": "#/$defs/localReference"},
+    "environment": {"const": "LOCAL"},
+    "namespace": {"const": "AAE/local"},
+    "repository": {"const": "AnonymousKoo/avuhz-infra"},
+    "scope": {"const": "repository-local-engineering"},
+    "worktree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "ownership"],
+      "properties": {
+        "root": {"type": "string", "minLength": 1, "maxLength": 4096},
+        "ownership": {"const": "EXCLUSIVE_LOCAL_WORKTREE"}
+      }
+    },
+    "allowed_file_paths": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/relativePath"}
+    },
+    "target_baselines": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {"$ref": "#/$defs/targetBaseline"}
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {"$ref": "#/$defs/task"}
+    },
+    "approval": {"$ref": "#/$defs/approval"}
+  },
+  "$defs": {
+    "reference": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$",
+      "minLength": 3,
+      "maxLength": 128
+    },
+    "localReference": {
+      "allOf": [
+        {"$ref": "#/$defs/reference"},
+        {
+          "not": {
+            "pattern": "(?:^|[._:-])(?:argv|auth|bash|billing|cmd|command|credential|curl|daemon|deploy|exec|execution|github|http|https|migration|model|n8n|network|powershell|production|provider|remote|scheduler|secret|shell|socket|staging|subprocess|token|wget)(?:[._:-]|$)"
+          }
+        }
+      ]
+    },
+    "relativePath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "targetBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "digest": {
+          "oneOf": [
+            {"const": "ABSENT"},
+            {"$ref": "#/$defs/digest"}
+          ]
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "resource_reference",
+        "allowed_file_paths",
+        "acceptance_criteria",
+        "stop_conditions"
+      ],
+      "properties": {
+        "task_id": {"$ref": "#/$defs/localReference"},
+        "resource_reference": {
+          "allOf": [
+            {"$ref": "#/$defs/localReference"},
+            {"pattern": "^repository\\."}
+          ]
+        },
+        "allowed_file_paths": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/relativePath"}
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/localReference"}
+        },
+        "stop_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/localReference"}
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id",
+        "approved_task_ids",
+        "scope_digest",
+        "approval_digest",
+        "authority_effect",
+        "immutable",
+        "provider_authority"
+      ],
+      "properties": {
+        "approval_id": {"$ref": "#/$defs/localReference"},
+        "approved_task_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/localReference"}
+        },
+        "scope_digest": {"$ref": "#/$defs/digest"},
+        "approval_digest": {"$ref": "#/$defs/digest"},
+        "authority_effect": {"const": "REPOSITORY_LOCAL_ONLY"},
+        "immutable": {"const": true},
+        "provider_authority": {"const": false}
+      }
+    }
+  }
+}

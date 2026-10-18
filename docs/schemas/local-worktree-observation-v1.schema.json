@@ -1,0 +1,34 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://schemas.avuhz.local/v1/orchestration/local-worktree-observation-v1.schema.json",
+  "title":"LOCAL worktree observation v1 result",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["environment","exclusive_lease_required","execution_authorized","namespace","observed_source","os_isolation_certified","provider_authority","repeat_at_execution_required","schema_version","status"],
+  "properties":{
+    "environment":{"const":"LOCAL"},
+    "exclusive_lease_required":{"const":true},
+    "execution_authorized":{"const":false},
+    "namespace":{"const":"AAE/local"},
+    "observed_source":{
+      "type":"object",
+      "additionalProperties":false,
+      "required":["branch","commit","isolation_id","repository","reviewed_digest","tree","worktree_clean","worktree_root"],
+      "properties":{
+        "branch":{"type":"string","pattern":"^refs/heads/(?!.*(?:\\.\\.|//|@\\{))(?!.*(?:/|\\.|\\.lock)$)[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$"},
+        "commit":{"type":"string","pattern":"^[0-9a-f]{40}$"},
+        "isolation_id":{"type":"string","minLength":3,"maxLength":128,"pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+        "repository":{"const":"AnonymousKoo/avuhz-infra"},
+        "reviewed_digest":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},
+        "tree":{"type":"string","pattern":"^[0-9a-f]{40}$"},
+        "worktree_clean":{"const":true},
+        "worktree_root":{"type":"string","minLength":1,"maxLength":4096,"pattern":"^/[ -~]*$"}
+      }
+    },
+    "os_isolation_certified":{"const":false},
+    "provider_authority":{"const":"NONE"},
+    "repeat_at_execution_required":{"const":true},
+    "schema_version":{"const":1},
+    "status":{"const":"SOURCE_OBSERVATION_PASS"}
+  }
+}

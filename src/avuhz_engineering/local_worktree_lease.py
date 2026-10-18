@@ -5,12 +5,14 @@ execution, run commands, inspect Git, or provide an OS isolation boundary.
 """
 from __future__ import annotations
 
+import ctypes
 import fcntl
 import hashlib
 import json
 import os
 import re
 import stat
+import weakref
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -28,6 +30,16 @@ _MAX_STATE_BYTES = 8192
 _OBJECT_ID = re.compile(r"^[0-9a-f]{40}$")
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _REFERENCE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$")
+_FLOCK_FDINFO = re.compile(
+    r"^lock:\s+\d+:\s+FLOCK\s+ADVISORY\s+WRITE\s+"
+    r"([1-9][0-9]*)\s+([0-9a-fA-F]+):([0-9a-fA-F]+):([0-9]+)\s+0\s+EOF$"
+)
+_MAX_FDINFO_BYTES = 65_536
+_PROC_ROOT = Path("/proc")
+_KCMP_FILE = 0
+_KCMP_SYSCALLS = {"aarch64": 272, "x86_64": 312}
+_LIBC = ctypes.CDLL(None, use_errno=True)
+_LIBC.syscall.restype = ctypes.c_long
 _FIXED_LEASE_DIRECTORY = (
     Path("/run/user") / str(os.getuid()) / "avuhz-aae-local-worktree-leases-v1"
 )
@@ -282,6 +294,76 @@ def _write_state(directory_fd: int, name: str, value: dict[str, Any]) -> None:
         _deny("LEASE_STATE_WRITE_FAILED")
 
 
+def _read_fdinfo(owner_pid: int, descriptor: int) -> str:
+    """Read one Linux fdinfo record without changing the descriptor or its lock."""
+    path = _PROC_ROOT / str(owner_pid) / "fdinfo" / str(descriptor)
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        proof_fd = os.open(path, flags)
+        try:
+            chunks: list[bytes] = []
+            total = 0
+            while True:
+                chunk = os.read(proof_fd, 4096)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > _MAX_FDINFO_BYTES:
+                    _deny("LEASE_KERNEL_PROOF_UNAVAILABLE")
+                chunks.append(chunk)
+        finally:
+            os.close(proof_fd)
+        return b"".join(chunks).decode("ascii")
+    except LeaseDenied:
+        raise
+    except (OSError, UnicodeError):
+        _deny("LEASE_KERNEL_PROOF_UNAVAILABLE")
+
+
+def _verify_same_open_file_description(
+    owner_pid: int, descriptor: int, proof_descriptor: int
+) -> None:
+    """Use Linux kcmp without changing either open file description."""
+    syscall_number = _KCMP_SYSCALLS.get(os.uname().machine)
+    if syscall_number is None:
+        _deny("LEASE_KERNEL_PROOF_UNAVAILABLE")
+    ctypes.set_errno(0)
+    result = _LIBC.syscall(
+        ctypes.c_long(syscall_number),
+        ctypes.c_long(owner_pid),
+        ctypes.c_long(owner_pid),
+        ctypes.c_long(_KCMP_FILE),
+        ctypes.c_long(descriptor),
+        ctypes.c_long(proof_descriptor),
+    )
+    if result < 0:
+        _deny("LEASE_KERNEL_PROOF_UNAVAILABLE")
+    if result != 0:
+        _deny("LEASE_KERNEL_PROOF_DENIED")
+
+
+@dataclass(frozen=True)
+class _LeaseProvenance:
+    lease_ref: weakref.ReferenceType[Any]
+    token: object
+    creator_pid: int
+    descriptor: int
+    proof_descriptor: int
+    directory_fd: int
+    lease_root: Path
+    directory_device: int
+    directory_inode: int
+    lock_name: str
+    lock_device: int
+    lock_inode: int
+    state_name: str
+    owner_id: str
+    state_bytes: bytes
+
+
+_LIVE_LEASES: dict[int, _LeaseProvenance] = {}
+
+
 @dataclass(frozen=True)
 class LeaseReleaseResult:
     status: str = field(init=False, default="LEASE_RELEASED")
@@ -307,6 +389,17 @@ class LeaseReleaseResult:
 class LocalWorktreeLease:
     """An acquired lease whose open descriptor is the ownership capability."""
 
+    __slots__ = (
+        "_descriptor",
+        "_directory_fd",
+        "_state_name",
+        "_state",
+        "_release_result",
+        "_creator_pid",
+        "_provenance_token",
+        "__weakref__",
+    )
+
     def __init__(
         self,
         *,
@@ -315,12 +408,8 @@ class LocalWorktreeLease:
         state_name: str,
         state: dict[str, Any],
     ) -> None:
-        self._descriptor = descriptor
-        self._directory_fd = directory_fd
-        self._state_name = state_name
-        self._state = state
-        self._release_result: LeaseReleaseResult | None = None
-        self._creator_pid = os.getpid()
+        del descriptor, directory_fd, state_name, state
+        _deny("LEASE_CONSTRUCTION_DENIED")
 
     @property
     def status(self) -> str:
@@ -370,6 +459,128 @@ class LocalWorktreeLease:
     def closed(self) -> bool:
         return self._descriptor < 0
 
+    def verify_live_owner(self, *, owner_id: str) -> None:
+        """Fail closed unless this exact factory lease still owns its Linux flock."""
+        registration = _LIVE_LEASES.get(id(self))
+        if (
+            registration is None
+            or type(self) is not LocalWorktreeLease
+            or registration.lease_ref() is not self
+            or registration.token is not self._provenance_token
+            or self._creator_pid != registration.creator_pid
+            or self._descriptor != registration.descriptor
+            or self._directory_fd != registration.directory_fd
+            or self._state_name != registration.state_name
+            or self._release_result is not None
+        ):
+            _deny("LEASE_PROVENANCE_INVALID")
+        if os.getpid() != registration.creator_pid:
+            _deny("LEASE_PROCESS_MISMATCH")
+        if type(owner_id) is not str or owner_id != registration.owner_id:
+            _deny("LEASE_OWNER_MISMATCH")
+        if self.closed:
+            _deny("LEASE_HANDLE_CLOSED")
+        try:
+            if (
+                type(self._state) is not dict
+                or _canonical_bytes(self._state) != registration.state_bytes
+            ):
+                _deny("LEASE_OWNER_NOT_VERIFIED")
+            root = Path(self._state["worktree_root"])
+            key = _worktree_key(root)
+            if (
+                self._state.get("status") != "ACQUIRED"
+                or self._state.get("worktree_key") != key
+                or registration.lock_name != "worktree-" + key + ".lock"
+                or registration.state_name != "worktree-" + key + ".state.json"
+            ):
+                _deny("LEASE_OWNER_NOT_VERIFIED")
+            _validate_prior_state(self._state, key, str(root))
+
+            lease_root = _strict_absolute_directory(
+                registration.lease_root, "LEASE_OWNER_NOT_VERIFIED", private=True
+            )
+            directory_info = os.fstat(self._directory_fd)
+            directory_path_info = lease_root.lstat()
+            if (
+                not stat.S_ISDIR(directory_info.st_mode)
+                or directory_info.st_uid != os.getuid()
+                or stat.S_IMODE(directory_info.st_mode) != 0o700
+                or (directory_info.st_dev, directory_info.st_ino)
+                != (registration.directory_device, registration.directory_inode)
+                or (directory_path_info.st_dev, directory_path_info.st_ino)
+                != (registration.directory_device, registration.directory_inode)
+            ):
+                _deny("LEASE_OWNER_NOT_VERIFIED")
+
+            lock_info = os.fstat(self._descriptor)
+            proof_info = os.fstat(registration.proof_descriptor)
+            _validate_private_file(lock_info, "LEASE_OWNER_NOT_VERIFIED", maximum=0)
+            _validate_private_file(proof_info, "LEASE_OWNER_NOT_VERIFIED", maximum=0)
+            lock_path_info = os.stat(
+                registration.lock_name,
+                dir_fd=self._directory_fd,
+                follow_symlinks=False,
+            )
+            if (
+                (lock_info.st_dev, lock_info.st_ino)
+                != (registration.lock_device, registration.lock_inode)
+                or (proof_info.st_dev, proof_info.st_ino)
+                != (registration.lock_device, registration.lock_inode)
+                or (lock_path_info.st_dev, lock_path_info.st_ino)
+                != (registration.lock_device, registration.lock_inode)
+            ):
+                _deny("LEASE_OWNER_NOT_VERIFIED")
+
+            persisted = _read_state(self._directory_fd, self._state_name, required=True)
+            if persisted is None or _canonical_bytes(persisted) != registration.state_bytes:
+                _deny("LEASE_OWNER_NOT_VERIFIED")
+        except LeaseDenied as error:
+            if error.code in {"LEASE_PROCESS_MISMATCH", "LEASE_KERNEL_PROOF_UNAVAILABLE"}:
+                raise
+            _deny("LEASE_OWNER_NOT_VERIFIED")
+        except (KeyError, OSError, TypeError, ValueError):
+            _deny("LEASE_OWNER_NOT_VERIFIED")
+
+        fdinfo = _read_fdinfo(registration.creator_pid, self._descriptor)
+        _verify_same_open_file_description(
+            registration.creator_pid,
+            self._descriptor,
+            registration.proof_descriptor,
+        )
+        lock_lines = [line for line in fdinfo.splitlines() if line.startswith("lock:")]
+        if len(lock_lines) != 1:
+            _deny("LEASE_KERNEL_PROOF_DENIED")
+        match = _FLOCK_FDINFO.fullmatch(lock_lines[0])
+        if match is None:
+            _deny("LEASE_KERNEL_PROOF_DENIED")
+        owner_pid, major, minor, inode = (
+            int(value, base)
+            for value, base in zip(match.groups(), (10, 16, 16, 10), strict=True)
+        )
+        if (
+            owner_pid != registration.creator_pid
+            or major != os.major(registration.lock_device)
+            or minor != os.minor(registration.lock_device)
+            or inode != registration.lock_inode
+        ):
+            _deny("LEASE_KERNEL_PROOF_DENIED")
+        try:
+            final_lock_info = os.fstat(self._descriptor)
+            final_proof_info = os.fstat(registration.proof_descriptor)
+            final_directory_info = os.fstat(self._directory_fd)
+        except OSError:
+            _deny("LEASE_OWNER_NOT_VERIFIED")
+        if (
+            (final_lock_info.st_dev, final_lock_info.st_ino)
+            != (registration.lock_device, registration.lock_inode)
+            or (final_proof_info.st_dev, final_proof_info.st_ino)
+            != (registration.lock_device, registration.lock_inode)
+            or (final_directory_info.st_dev, final_directory_info.st_ino)
+            != (registration.directory_device, registration.directory_inode)
+        ):
+            _deny("LEASE_OWNER_NOT_VERIFIED")
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "acquired_at": self._state["acquired_at"],
@@ -398,12 +609,13 @@ class LocalWorktreeLease:
     def release(self, *, owner_id: str, released_at: datetime) -> LeaseReleaseResult:
         if os.getpid() != self._creator_pid:
             _deny("LEASE_PROCESS_MISMATCH")
-        if owner_id != self.owner_id:
+        if type(owner_id) is not str or owner_id != self.owner_id:
             _deny("RELEASE_OWNER_MISMATCH")
         if self._release_result is not None:
             return self._release_result
         if self.closed:
             _deny("LEASE_HANDLE_CLOSED")
+        self.verify_live_owner(owner_id=owner_id)
         released = dict(self._state)
         released["status"] = "RELEASED"
         released["released_at"] = _utc_second(released_at, "RELEASE_TIME_INVALID")
@@ -413,10 +625,14 @@ class LocalWorktreeLease:
         except OSError:
             _deny("LEASE_RELEASE_FAILED")
         os.close(self._descriptor)
+        registration = _LIVE_LEASES.get(id(self))
+        if registration is not None:
+            os.close(registration.proof_descriptor)
         os.close(self._directory_fd)
         self._descriptor = -1
         self._directory_fd = -1
         self._release_result = LeaseReleaseResult()
+        _LIVE_LEASES.pop(id(self), None)
         return self._release_result
 
     def close(self, *, released_at: datetime) -> LeaseReleaseResult:
@@ -487,6 +703,7 @@ def acquire_local_worktree_lease(
     state_name = "worktree-" + key + ".state.json"
     directory_fd = _open_directory(lease_root)
     descriptor = -1
+    proof_descriptor = -1
     try:
         descriptor, created = _open_lock(directory_fd, lock_name)
         try:
@@ -514,14 +731,55 @@ def acquire_local_worktree_lease(
             "deadline_utc": deadline_text,
         }
         _write_state(directory_fd, state_name, state)
-        lease = LocalWorktreeLease(
-            descriptor=descriptor, directory_fd=directory_fd, state_name=state_name, state=state
+        try:
+            proof_descriptor = os.dup(descriptor)
+            os.set_inheritable(proof_descriptor, False)
+        except OSError:
+            _deny("LEASE_KERNEL_PROOF_UNAVAILABLE")
+        lease = object.__new__(LocalWorktreeLease)
+        lease._descriptor = descriptor
+        lease._directory_fd = directory_fd
+        lease._state_name = state_name
+        lease._state = state
+        lease._release_result = None
+        lease._creator_pid = os.getpid()
+        lease._provenance_token = object()
+        directory_info = os.fstat(directory_fd)
+        lock_info = os.fstat(descriptor)
+        identity = id(lease)
+
+        def forget(reference: weakref.ReferenceType[Any], *, lease_identity: int = identity) -> None:
+            registered = _LIVE_LEASES.get(lease_identity)
+            if registered is not None and registered.lease_ref is reference:
+                _LIVE_LEASES.pop(lease_identity, None)
+
+        lease_reference = weakref.ref(lease, forget)
+        _LIVE_LEASES[identity] = _LeaseProvenance(
+            lease_ref=lease_reference,
+            token=lease._provenance_token,
+            creator_pid=lease._creator_pid,
+            descriptor=descriptor,
+            proof_descriptor=proof_descriptor,
+            directory_fd=directory_fd,
+            lease_root=lease_root,
+            directory_device=directory_info.st_dev,
+            directory_inode=directory_info.st_ino,
+            lock_name=lock_name,
+            lock_device=lock_info.st_dev,
+            lock_inode=lock_info.st_ino,
+            state_name=state_name,
+            owner_id=owner,
+            state_bytes=_canonical_bytes(state),
         )
+        lease.verify_live_owner(owner_id=owner)
         descriptor = -1
+        proof_descriptor = -1
         directory_fd = -1
         return lease
     finally:
         if descriptor >= 0:
             os.close(descriptor)
+        if proof_descriptor >= 0:
+            os.close(proof_descriptor)
         if directory_fd >= 0:
             os.close(directory_fd)

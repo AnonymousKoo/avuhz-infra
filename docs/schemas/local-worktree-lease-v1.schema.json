@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://schemas.avuhz.local/v1/orchestration/local-worktree-lease-v1.schema.json",
+  "title":"LOCAL exclusive worktree lease v1 acquisition result",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["acquired_at","deadline_enforced","deadline_utc","environment","execution_authorized","isolation_id","namespace","os_isolation_certified","owner_id","provider_authority","repeat_observation_required","repository","schema_version","source","status","worktree_key","worktree_root"],
+  "properties":{
+    "acquired_at":{"type":"string","format":"date-time","pattern":"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "deadline_enforced":{"const":false},
+    "deadline_utc":{"type":"string","format":"date-time","pattern":"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "environment":{"const":"LOCAL"},
+    "execution_authorized":{"const":false},
+    "isolation_id":{"type":"string","minLength":3,"maxLength":128,"pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+    "namespace":{"const":"AAE/local"},
+    "os_isolation_certified":{"const":false},
+    "owner_id":{"type":"string","minLength":3,"maxLength":128,"pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$"},
+    "provider_authority":{"const":"NONE"},
+    "repeat_observation_required":{"const":true},
+    "repository":{"const":"AnonymousKoo/avuhz-infra"},
+    "schema_version":{"const":1},
+    "source":{"type":"object","additionalProperties":false,"required":["commit","reviewed_digest","tree"],"properties":{"commit":{"type":"string","pattern":"^[0-9a-f]{40}$"},"reviewed_digest":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},"tree":{"type":"string","pattern":"^[0-9a-f]{40}$"}}},
+    "status":{"const":"LEASE_ACQUIRED"},
+    "worktree_key":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "worktree_root":{"type":"string","minLength":1,"maxLength":4096,"pattern":"^/[ -~]*$"}
+  }
+}

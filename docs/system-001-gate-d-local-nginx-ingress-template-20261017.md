@@ -1,6 +1,6 @@
 # System #001 Gate D — inactive LOCAL nginx ingress template
 
-**Status:** source-only and inactive. This runbook does not authorize host changes, certificate creation or trust, hostname changes, nginx installation/reload, n8n activation, network access, or any provider action.
+**Status:** Gate D Stage 4 source-only TLS 1.3 hardening; inactive. This runbook does not authorize host changes, certificate creation or trust, hostname changes, nginx installation/reload, n8n activation, network access, or any provider action.
 
 ## Exact boundary
 
@@ -20,7 +20,7 @@ Record only sanitized facts; do not read certificate private keys or n8n credent
 2. Inspect IPv4 and IPv6 listener tables. Stop if `:443` is already occupied or the proposed configuration would bind anything except `127.0.0.1:443`. Confirm n8n remains loopback-only at `127.0.0.1:5678`.
 3. Confirm a proposed hosts entry resolves exactly `avuhz-gate-d.test` to `127.0.0.1`, with no IPv6 or non-loopback answer. Do not use public DNS or a tunnel.
 4. Review the proposed certificate separately: SAN exactly covers `avuhz-gate-d.test`, the chain and client trust source are identified, validity is bounded, the private key path is host-private, and file ownership/mode limits it to the nginx runtime identity. Never copy certificate or key contents into source or evidence.
-5. Validate the candidate nginx syntax offline against the intended nginx build. Review the rendered listener, TLS policy, exact route, method denial, body/time bounds, upstream, redirect interception, catch-all denial, and absence of another included server/location that widens exposure.
+5. Validate the candidate nginx syntax offline against the intended nginx build. Require exactly one `ssl_protocols` directive whose sole value is `TLSv1.3`; any TLS 1.2, SSLv3, fallback token, duplicate, or conflicting protocol directive is a stop condition. Review the rendered listener, exact route, method denial, body/time bounds, upstream, redirect interception, catch-all denial, and absence of another included server/location that widens exposure.
 
 Any ambiguous hostname, trust, listener, workflow, route, credential, or include state is a stop condition.
 
@@ -33,7 +33,7 @@ Obtain fresh exact approval for each resource boundary, in order:
 3. installation/include and reload of this exact ingress on `DefNet`; and
 4. only after independent ingress verification, activation of receiver `0068feb4c96bdb5f` with its already-approved encrypted credential bindings and private durable receipt gate.
 
-Do not batch these approvals. Ingress verification must prove TLS 1.2+, chain and hostname validation, only `127.0.0.1:443`, exact POST forwarding, bounded oversized-body rejection, non-POST denial, arbitrary/admin/UI/path denial, redirect denial, and unchanged loopback-only port 5678. Use fictional payloads only under a later exact acceptance authorization. Do not log headers or bodies.
+Do not batch these approvals. Stage 4 requires TLS 1.3 only, with no fallback; the merged Stage 3 PR #743 pins the same TLS 1.3-only policy but grants no host or activation authority. Ingress verification must prove a TLS 1.3 connection succeeds, TLS 1.2 and SSLv3 cannot negotiate, chain and hostname validation, only `127.0.0.1:443`, exact POST forwarding, bounded oversized-body rejection, non-POST denial, arbitrary/admin/UI/path denial, redirect denial, and unchanged loopback-only port 5678. Use fictional payloads only under a later exact acceptance authorization. Do not log headers or bodies.
 
 ## Rollback
 
@@ -47,6 +47,6 @@ From the candidate snapshot, run:
 python -m unittest tests.security.test_system001_gate_d_nginx_template
 ```
 
-The tests are structural and negative only: they open no socket, call no provider, generate no certificate, and do not establish installed ingress readiness.
+The tests are structural and negative only: they require one TLS 1.3-only directive and reject TLS 1.2, SSLv3, fallback, duplicate, and conflicting protocol patterns. They open no socket, call no provider, generate no certificate, and do not establish installed ingress readiness.
 
 **Next action:** review this source patch. A future host preflight or change requires fresh exact authority for its first resource boundary; do not install or activate from this runbook alone.

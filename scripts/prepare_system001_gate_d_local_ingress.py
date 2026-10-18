@@ -6,7 +6,8 @@ connection, sends HTTP, reads credential ciphertext, executes n8n, or changes
 host/provider state.  It reconciles safe installed n8n metadata and local host
 facts.  A positive decision additionally requires independently established
 TLS and exact-route evidence supplied to :func:`evaluate_preflight`; the CLI
-does not manufacture that evidence from a hostname or listening socket.
+does not manufacture that evidence from a hostname, listening socket, or TLS
+handshake.  PASS therefore describes the supplied evidence, not a live probe.
 """
 from __future__ import annotations
 
@@ -334,7 +335,7 @@ def evaluate_preflight(
         blockers.append("port_443_loopback_listener_absent_or_public")
     if not (
         ingress.tls_chain_verified and ingress.tls_hostname_verified
-        and ingress.tls_minimum_version in {"TLSv1.2", "TLSv1.3"}
+        and ingress.tls_minimum_version == "TLSv1.3"
     ):
         blockers.append("verified_tls_absent")
     if ingress.upstream != (N8N_ADDRESS, N8N_PORT):

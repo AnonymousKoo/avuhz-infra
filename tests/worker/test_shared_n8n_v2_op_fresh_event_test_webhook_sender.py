@@ -88,6 +88,26 @@ class FreshEventTests(unittest.TestCase):
         new["authoritative_subject_reference"]["reference_id"] = "mutated"
         self.assertEqual(fresh.qa._digest(fresh.fictional_event()), fresh.EVENT_SHA256)
 
+    def test_post_send_aggregate_requires_exact_historical_and_fresh(self):
+        with patch.object(fresh, "_readonly", self.readonly):
+            with self.assertRaises(fresh.FreshEventDenied):
+                fresh._receipt_readback(Path("/unused"), after=True)
+            self.db.execute("INSERT INTO local_n8n_receipts VALUES (?,?,?,?)", (
+                fresh.qa.TENANT_ID, fresh.EVENT_ID, fresh.DELIVERY_KEY, fresh.EVENT_SHA256))
+            fresh._receipt_readback(Path("/unused"), after=True)
+            for column in ("trusted_tenant_id", "event_id", "delivery_key", "envelope_digest"):
+                with self.subTest(column=column):
+                    self.db.execute("SAVEPOINT postcheck")
+                    self.db.execute("UPDATE local_n8n_receipts SET " + column + "='wrong'")
+                    with self.assertRaises(fresh.FreshEventDenied):
+                        fresh._receipt_readback(Path("/unused"), after=True)
+                    self.db.execute("ROLLBACK TO postcheck")
+                    self.db.execute("RELEASE postcheck")
+            self.db.execute("INSERT INTO local_n8n_receipts VALUES (?,?,?,?)", (
+                "other-tenant", fresh.EVENT_ID, fresh.DELIVERY_KEY, fresh.EVENT_SHA256))
+            with self.assertRaises(fresh.FreshEventDenied):
+                fresh._receipt_readback(Path("/unused"), after=True)
+
     def test_one_exact_historical_receipt(self):
         self.receipt()
         self.assertEqual(len(self.queries), 1)
@@ -309,7 +329,8 @@ class FreshEventTests(unittest.TestCase):
 
     def test_approval_flags_not_accepted_as_authority(self):
         for flag in ("--approved-source-commit", "--approved-event-digest", "--token-fd",
-                     "--approved-secret-reference", "--ui-listener-ready"):
+                     "--approved-secret-reference", "--ui-listener-ready",
+                     "--authorization-artifact", "--owner-identity"):
             with self.subTest(flag=flag), patch("sys.stderr", new_callable=io.StringIO), \
                     patch.object(fresh, "preflight", side_effect=AssertionError) as check:
                 with self.assertRaises(SystemExit) as error:
@@ -335,6 +356,357 @@ class FreshEventTests(unittest.TestCase):
                 patch("sys.stdout", new_callable=io.StringIO) as output:
             self.assertEqual(fresh.run(["--target", fresh.TARGET]), 2)
             self.assertNotIn("sensitive-detail", output.getvalue())
+
+
+class GovernedAttemptTests(unittest.TestCase):
+    """Offline adapter doubles are not an implemented owner trust root."""
+
+    def setUp(self):
+        import hashlib
+        from unittest.mock import MagicMock
+        self.stack = ExitStack()
+        self.addCleanup(self.stack.close)
+        self.stack.enter_context(patch.dict(os.environ, {"AVUHZ_ENVIRONMENT": "LOCAL"}, clear=True))
+        self.stack.enter_context(patch.object(fresh.platform, "node", return_value="DefNet"))
+        self.clock = self.stack.enter_context(patch.object(fresh.time, "time", return_value=1000))
+        self.state = fresh.Evidence(ENDPOINT, 4242, fresh.EVENT_SHA256, gateway="172.17.0.1")
+        self.observed = dict(
+            owner_identity="fictional-owner", issuer_account="fictional-account",
+            issuer_user="fictional-user", issuer_session="fictional-session",
+            issuer_kind="SIGNED_IN_OWNER", inbound_reference="op://fictional/item/inbound",
+            issuer_metadata_sha256="d" * 64, native_listener_id="fictional-listener",
+            listener_registered_at=990, listener_expires_at=1110, observed_at=1000,
+            test_url=fresh.TEST_URL, project_id=fresh.PROJECT_ID,
+            workflow_id=fresh.RECEIVER_ID, inbound_id=fresh.INBOUND_ID,
+        )
+        self.binding = {k: v for k, v in self.observed.items() if k != "observed_at"}
+        self.binding.update(
+            environment="LOCAL", machine="DefNet", target=fresh.TARGET,
+            source_commit="a" * 40,
+            sender_sha256=hashlib.sha256(Path(fresh.__file__).read_bytes()).hexdigest(),
+            receiver_sha256=fresh.SOURCE_SHA256, event_id=fresh.EVENT_ID,
+            correlation_id=fresh.CORRELATION_ID, delivery_key=fresh.DELIVERY_KEY,
+            event_sha256=fresh.EVENT_SHA256, tenant_id=fresh.qa.TENANT_ID,
+            historical_sha256=fresh.HISTORICAL_SHA256, receipt_store=str(fresh.STORE),
+            gateway="172.17.0.1", receipt_endpoint=ENDPOINT, bridge_pid=4242,
+            max_attempts=1, receipt_before=[1, 1, 0, 0], receipt_after=[2, 1, 1, 1],
+        )
+        self.grant = fresh._OwnerAuthorization("b" * 64, "fictional-attempt",
+                                             "fictional-owner", 990, 1100, self.binding)
+        self.preflight = self.stack.enter_context(patch.object(fresh, "preflight", return_value=self.state))
+        self.observe = self.stack.enter_context(patch.object(
+            fresh, "_listener_and_issuer_observation", side_effect=lambda: dict(self.observed)))
+        self.commit = self.stack.enter_context(patch.object(
+            fresh.first, "_pinned_source_commit", return_value="a" * 40))
+        self.authorize = self.stack.enter_context(patch.object(
+            fresh, "_verified_owner_authorization", return_value=self.grant))
+        self.claimed = False
+        self.order = []
+        def consume(grant):
+            self.order.append("consume")
+            self.assertIs(grant, self.grant)
+            if self.claimed:
+                return False
+            self.claimed = True
+            return True
+        self.consume = self.stack.enter_context(patch.object(
+            fresh, "_consume_owner_authorization", side_effect=consume))
+        def field():
+            self.order.append("private-read")
+            return "fictional-" + "x" * 32
+        # Only the private I/O boundary is mocked; reference validation stays real.
+        self.secret = self.stack.enter_context(patch.object(
+            fresh.LocalN8nOnePasswordCredential, "__call__", side_effect=field))
+        self.connection = MagicMock()
+        self.response = self.connection.getresponse.return_value
+        self.response.status = 202
+        self.response.getheader.return_value = None
+        self.response.read.return_value = b'{"accepted":true}'
+        self.connection.request.side_effect = lambda *a, **kw: self.order.append("post")
+        self.http = self.stack.enter_context(patch.object(
+            fresh.http.client, "HTTPConnection", return_value=self.connection))
+
+    def deny(self):
+        with self.assertRaises(fresh.FreshEventDenied):
+            fresh._governed_attempt()
+
+    def test_valid_binding_one_private_field_anonymous_fd_one_post(self):
+        import stat
+        reader = fresh.first._read_inbound_from_fd
+        fds = []
+        def read(fd):
+            fds.append(fd)
+            self.assertTrue(stat.S_ISFIFO(os.fstat(fd).st_mode))
+            self.assertEqual(os.fstat(fd).st_uid, os.getuid())
+            self.assertFalse(os.get_inheritable(fd))
+            return reader(fd)
+        with patch.object(fresh.first, "_read_inbound_from_fd", side_effect=read) as fd_read:
+            fresh._governed_attempt()
+        self.assertEqual(self.order, ["consume", "private-read", "post"])
+        self.secret.assert_called_once_with()
+        fd_read.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(fds[0])
+        self.http.assert_called_once_with("127.0.0.1", 5678, timeout=8)
+        self.connection.request.assert_called_once()
+        call = self.connection.request.call_args
+        self.assertEqual(call.args, ("POST", "/webhook-test/avuhz-events"))
+        self.assertEqual(json.loads(call.kwargs["body"]), fresh.fictional_event())
+        self.assertEqual(call.kwargs["headers"]["X-Avuhz-Delivery-Key"], fresh.DELIVERY_KEY)
+        self.connection.close.assert_called_once()
+        self.assertEqual(self.preflight.call_args_list[-1].kwargs, {"after": True})
+        self.deny()
+        self.secret.assert_called_once()
+        self.connection.request.assert_called_once()
+
+    def test_every_exact_artifact_binding_mismatch_denied_before_secret(self):
+        for key in self.binding:
+            with self.subTest(key=key):
+                original = self.binding[key]
+                self.binding[key] = "mismatch"
+                try:
+                    self.deny()
+                finally:
+                    self.binding[key] = original
+        self.consume.assert_not_called()
+        self.secret.assert_not_called()
+        self.http.assert_not_called()
+
+    def test_boolean_cannot_substitute_for_attempt_count(self):
+        self.binding["max_attempts"] = True
+        self.deny()
+        self.secret.assert_not_called()
+
+    def test_wrong_owner_artifact_window_or_identity(self):
+        from dataclasses import replace
+        for changes in ({"owner_identity": "different"}, {"artifact_sha256": "wrong"},
+                        {"authorization_id": ""}, {"valid_until": 1000},
+                        {"valid_from": 1001}, {"valid_from": 0}, {"valid_from": True}):
+            with self.subTest(changes=changes):
+                self.authorize.return_value = replace(self.grant, **changes)
+                self.deny()
+        self.secret.assert_not_called()
+        self.consume.assert_not_called()
+
+    def test_missing_or_revoked_independent_authority_denied_before_runtime(self):
+        self.authorize.side_effect = fresh.FreshEventDenied("owner_artifact_revoked")
+        self.deny()
+        self.preflight.assert_not_called()
+        self.secret.assert_not_called()
+
+    def test_issuer_listener_observation_mismatch_and_stale_denied(self):
+        cases = {
+            "owner_identity": "different", "issuer_account": "", "issuer_user": "",
+            "issuer_session": "", "issuer_kind": "SERVICE_ACCOUNT", "inbound_reference": "invalid",
+            "issuer_metadata_sha256": "invalid", "native_listener_id": "",
+            "listener_registered_at": 1001, "listener_expires_at": 1000,
+            "observed_at": 994, "test_url": "http://127.0.0.1:5678/webhook/avuhz-events",
+            "project_id": "other", "workflow_id": "other", "inbound_id": fresh.RECEIPT_ID,
+        }
+        for key, value in cases.items():
+            with self.subTest(key=key):
+                old = self.observed[key]
+                self.observed[key] = value
+                try:
+                    self.deny()
+                finally:
+                    self.observed[key] = old
+        self.consume.assert_not_called()
+        self.secret.assert_not_called()
+
+    def test_observation_fields_cannot_be_missing_or_extended(self):
+        for observed in ({}, {**self.observed, "approved": True}):
+            self.observe.side_effect = None
+            self.observe.return_value = observed
+            self.deny()
+        self.secret.assert_not_called()
+
+    def test_commit_or_runtime_drift_before_claim_denies_secret(self):
+        from dataclasses import replace
+        self.commit.return_value = "c" * 40
+        self.deny()
+        self.commit.return_value = "a" * 40
+        self.preflight.side_effect = [self.state, replace(self.state, listener_pid=999)]
+        self.deny()
+        self.consume.assert_not_called()
+        self.secret.assert_not_called()
+
+    def test_atomic_claim_failure_never_reads_secret(self):
+        for result in (False, None, 1):
+            self.consume.side_effect = None
+            self.consume.return_value = result
+            self.deny()
+        self.secret.assert_not_called()
+        self.http.assert_not_called()
+
+    def test_atomic_claim_error_never_reads_secret(self):
+        self.consume.side_effect = OSError("private-detail")
+        with self.assertRaisesRegex(fresh.FreshEventDenied, "^attempt_unverified_no_retry$"):
+            fresh._governed_attempt()
+        self.secret.assert_not_called()
+
+    def test_secret_failure_remains_consumed_no_fallback(self):
+        self.secret.side_effect = OSError("private-detail")
+        self.deny()
+        self.deny()
+        self.assertTrue(self.claimed)
+        self.secret.assert_called_once()
+        self.http.assert_not_called()
+
+    def test_runtime_drift_after_secret_retains_claim_without_post(self):
+        from dataclasses import replace
+        self.preflight.side_effect = [self.state, self.state, replace(self.state, listener_pid=999)]
+        self.deny()
+        self.assertTrue(self.claimed)
+        self.secret.assert_called_once()
+        self.http.assert_not_called()
+
+    def test_listener_expiry_after_secret_retains_claim_without_post(self):
+        self.clock.side_effect = [1000, 1000, 1111]
+        self.deny()
+        self.assertTrue(self.claimed)
+        self.secret.assert_called_once()
+        self.http.assert_not_called()
+
+    def test_timeout_is_ambiguous_consumed_and_no_retry(self):
+        self.connection.getresponse.side_effect = TimeoutError("private-detail")
+        with self.assertRaisesRegex(fresh.FreshEventDenied, "^transport_ambiguous_no_retry$"):
+            fresh._governed_attempt()
+        self.deny()
+        self.assertTrue(self.claimed)
+        self.secret.assert_called_once()
+        self.connection.request.assert_called_once()
+        self.connection.close.assert_called_once()
+        self.assertFalse(any(call.kwargs.get("after") for call in self.preflight.call_args_list))
+
+    def test_redirect_is_not_followed_or_read(self):
+        self.response.status = 302
+        self.deny()
+        self.deny()
+        self.http.assert_called_once()
+        self.connection.request.assert_called_once()
+        self.response.read.assert_not_called()
+
+    def test_malformed_http202_always_fails_once(self):
+        for body in (b'{"accepted":1}', b'{"accepted":false}', b'{"accepted":true,"extra":1}',
+                     b'{"accepted":true,"accepted":true}', b'[]', b'null', b'"accepted"',
+                     b'{"accepted":"true"}', b'not-json', b'\xff', b'x' * 513):
+            with self.subTest(body=body):
+                self.claimed = False  # independent fictional approvals per case
+                self.connection.reset_mock()
+                self.response.read.return_value = body
+                self.deny()
+                self.deny()
+                self.connection.request.assert_called_once()
+                self.connection.close.assert_called_once()
+
+    def test_malformed_or_oversized_length_denied_without_read(self):
+        for length in ("513", "-1", "nonnumeric", ""):
+            self.claimed = False
+            self.response.getheader.return_value = length
+            self.deny()
+        self.response.read.assert_not_called()
+
+    def test_postcheck_failure_never_retries(self):
+        self.preflight.side_effect = [self.state, self.state, self.state,
+                                     fresh.FreshEventDenied("receipt_collision")]
+        self.deny()
+        self.assertTrue(self.claimed)
+        self.connection.request.assert_called_once()
+        self.secret.assert_called_once()
+
+    def test_slow_observation_cannot_use_an_earlier_clock_sample(self):
+        def slow_observation():
+            self.clock.return_value = 1111
+            return dict(self.observed)
+        self.observe.side_effect = slow_observation
+        self.deny()
+        self.secret.assert_not_called()
+        self.consume.assert_not_called()
+
+    def test_private_pipe_write_failure_closes_fds_and_never_posts(self):
+        pipe = os.pipe
+        fds = []
+        def opened():
+            result = pipe()
+            fds.extend(result)
+            return result
+        with patch.object(fresh.os, "pipe", side_effect=opened), \
+                patch.object(fresh.os, "write", side_effect=OSError("private-detail")):
+            self.deny()
+        for fd in fds:
+            with self.assertRaises(OSError):
+                os.fstat(fd)
+        self.assertTrue(self.claimed)
+        self.secret.assert_called_once()
+        self.http.assert_not_called()
+
+    def test_invalid_private_field_stops_before_pipe(self):
+        self.secret.side_effect = None
+        for value in ("short", "x" * 513, "x" * 32 + "\n", "x" * 32 + "é"):
+            self.claimed = False
+            self.secret.return_value = value
+            with patch.object(fresh.os, "pipe") as pipe:
+                self.deny()
+                pipe.assert_not_called()
+        self.http.assert_not_called()
+
+    def test_request_timeout_never_retries_or_reads_response(self):
+        self.connection.request.side_effect = TimeoutError("private-detail")
+        self.deny()
+        self.deny()
+        self.connection.request.assert_called_once()
+        self.connection.getresponse.assert_not_called()
+        self.connection.close.assert_called_once()
+
+    def test_failure_diagnostics_do_not_print_private_value(self):
+        with patch("sys.stdout", new_callable=io.StringIO) as out, \
+                patch("sys.stderr", new_callable=io.StringIO) as err:
+            self.connection.getresponse.side_effect = OSError("fictional-" + "x" * 32)
+            with self.assertRaises(fresh.FreshEventDenied) as failure:
+                fresh._governed_attempt()
+        self.assertNotIn("fictional-", str(failure.exception))
+        self.assertEqual(out.getvalue() + err.getvalue(), "")
+
+    def test_cli_send_remains_disabled_even_with_valid_mock_adapters(self):
+        with patch("sys.stdout", new_callable=io.StringIO):
+            self.assertEqual(fresh.run(["--target", fresh.TARGET, "--send-one"]), 2)
+        self.authorize.assert_not_called()
+        self.preflight.assert_not_called()
+        self.secret.assert_not_called()
+        self.http.assert_not_called()
+
+
+class UnavailableTrustAdapterTests(unittest.TestCase):
+    def test_no_local_artifact_can_self_authorize(self):
+        with self.assertRaisesRegex(fresh.FreshEventDenied, "independent_owner_authorization_unavailable"):
+            fresh._verified_owner_authorization()
+
+    def test_native_listener_and_owner_issuer_verifier_unavailable(self):
+        with self.assertRaisesRegex(fresh.FreshEventDenied, "listener_and_issuer_verifier_unavailable"):
+            fresh._listener_and_issuer_observation()
+
+    def test_durable_consumer_is_not_an_in_memory_claim(self):
+        with self.assertRaisesRegex(fresh.FreshEventDenied, "durable_authorization_consumption_unavailable"):
+            fresh._consume_owner_authorization(None)
+
+    def test_direct_core_call_still_denies_before_any_runtime_or_secret(self):
+        with patch.dict(os.environ, {"AVUHZ_ENVIRONMENT": "LOCAL"}, clear=True), \
+                patch.object(fresh.platform, "node", return_value="DefNet"), \
+                patch.object(fresh, "preflight") as preflight, \
+                patch.object(fresh.LocalN8nOnePasswordCredential, "__call__") as secret:
+            with self.assertRaises(fresh.FreshEventDenied):
+                fresh._governed_attempt()
+        preflight.assert_not_called()
+        secret.assert_not_called()
+
+    def test_old_first_event_guard_is_still_zero_receipts(self):
+        from types import SimpleNamespace
+        with patch.object(fresh.qa, "preflight", return_value=SimpleNamespace(
+                stored_receipts=1, active_workflows=0, visible_workflows=6)) as preflight:
+            with self.assertRaises(fresh.first.TestWebhookSendDenied):
+                fresh.first._one_readonly_preflight()
+        preflight.assert_called_once_with(expect_one=False)
 
 
 if __name__ == "__main__":

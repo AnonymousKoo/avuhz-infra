@@ -18,6 +18,15 @@ class GateDNginxTemplateTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.text = TEMPLATE.read_text(encoding="utf-8")
 
+    @staticmethod
+    def _ssl_protocols(text: str) -> list[tuple[str, ...]]:
+        return [
+            tuple(value.split())
+            for value in re.findall(
+                r"^\s*ssl_protocols\s+([^;]+);\s*$", text, re.MULTILINE
+            )
+        ]
+
     def test_is_explicitly_inactive_and_contains_no_key_material(self):
         self.assertIn("INACTIVE SOURCE TEMPLATE", self.text)
         self.assertNotIn("BEGIN CERTIFICATE", self.text)
@@ -36,8 +45,21 @@ class GateDNginxTemplateTests(unittest.TestCase):
         self.assertEqual(listens, ["127.0.0.1:443 ssl"])
         self.assertNotRegex(self.text, r"listen\s+(?:\[|\*|0\.0\.0\.0|::)")
         self.assertIn("server_name avuhz-gate-d.test;", self.text)
-        self.assertIn("ssl_protocols TLSv1.2 TLSv1.3;", self.text)
-        self.assertNotIn("TLSv1.1", self.text)
+        self.assertEqual(self._ssl_protocols(self.text), [("TLSv1.3",)])
+
+    def test_tls_policy_rejects_fallback_duplicate_and_conflict_patterns(self):
+        invalid_policies = (
+            "ssl_protocols TLSv1.2 TLSv1.3;",
+            "ssl_protocols TLSv1.3 TLSv1.2;",
+            "ssl_protocols SSLv3 TLSv1.3;",
+            "ssl_protocols TLSv1.3;\nssl_protocols TLSv1.3;",
+            "ssl_protocols TLSv1.3;\nssl_protocols TLSv1.2;",
+        )
+        for policy in invalid_policies:
+            with self.subTest(policy=policy):
+                self.assertNotEqual(
+                    self._ssl_protocols(policy), [("TLSv1.3",)]
+                )
 
     def test_only_exact_post_webhook_can_reach_exact_upstream(self):
         self.assertEqual(

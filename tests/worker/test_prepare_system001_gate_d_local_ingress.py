@@ -48,9 +48,25 @@ LOCAL = {"AVUHZ_ENVIRONMENT": "LOCAL", "CI": "", "GITHUB_ACTIONS": ""}
 
 
 class GateDIngressPreflightTests(unittest.TestCase):
-    def test_exact_independent_evidence_can_pass_pure_evaluator(self):
+    def test_tls13_with_every_other_prerequisite_can_pass_pure_evaluator(self):
         result = gate.evaluate_preflight(workflow(), ingress(), environment=LOCAL)
         self.assertEqual(result, gate.PreflightResult("PASS", ()))
+
+    def test_tls12_is_denied_when_it_is_the_only_changed_field(self):
+        result = gate.evaluate_preflight(
+            workflow(), ingress(tls_minimum_version="TLSv1.2"), environment=LOCAL,
+        )
+        self.assertEqual(
+            result, gate.PreflightResult("BLOCKED", ("verified_tls_absent",)),
+        )
+
+    def test_unknown_tls_minimum_version_is_denied(self):
+        result = gate.evaluate_preflight(
+            workflow(), ingress(tls_minimum_version="unknown"), environment=LOCAL,
+        )
+        self.assertEqual(
+            result, gate.PreflightResult("BLOCKED", ("verified_tls_absent",)),
+        )
 
     def test_current_candidate_without_dns_cert_or_443_is_blocked(self):
         observed = gate.IngressObservation(
@@ -121,6 +137,7 @@ class GateDIngressPreflightTests(unittest.TestCase):
             {"tls_chain_verified": False},
             {"tls_hostname_verified": False},
             {"tls_minimum_version": "TLSv1.1"},
+            {"tls_minimum_version": None},
         )
         for change in cases:
             with self.subTest(change=change):

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Local fictional infrastructure contract v1",
+  "description": "Source-only request. No approval, dispatch or verification authority. Independent trusted binding, observation, replay snapshot and clock are mandatory at runtime; schema validation cannot establish provenance or freshness. JSON ingestion must reject duplicate keys.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "identity_id",
+    "tenant_id",
+    "owner_id",
+    "request_id",
+    "challenge",
+    "observation_id",
+    "manifest_digest",
+    "desired_digest",
+    "expected_current_digest",
+    "manifest_version",
+    "desired_version",
+    "expected_current_version",
+    "issued_at",
+    "expires_at",
+    "schema_version",
+    "environment",
+    "namespace",
+    "resource_class",
+    "resource_id",
+    "operation"
+  ],
+  "properties": {
+    "identity_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$(?![\\s\\S])"
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$(?![\\s\\S])"
+    },
+    "owner_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$(?![\\s\\S])"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$(?![\\s\\S])"
+    },
+    "challenge": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$(?![\\s\\S])"
+    },
+    "observation_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$(?![\\s\\S])"
+    },
+    "manifest_digest": {
+      "type": "string",
+      "minLength": 71,
+      "maxLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$(?![\\s\\S])"
+    },
+    "desired_digest": {
+      "type": "string",
+      "minLength": 71,
+      "maxLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$(?![\\s\\S])"
+    },
+    "expected_current_digest": {
+      "type": "string",
+      "minLength": 71,
+      "maxLength": 71,
+      "pattern": "^sha256:[0-9a-f]{64}$(?![\\s\\S])"
+    },
+    "manifest_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "desired_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "expected_current_version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "minLength": 20,
+      "maxLength": 20,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$(?![\\s\\S])"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "minLength": 20,
+      "maxLength": 20,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$(?![\\s\\S])"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "LOCAL",
+        "TEST"
+      ]
+    },
+    "namespace": {
+      "type": "string",
+      "const": "fictional.lab"
+    },
+    "resource_class": {
+      "type": "string",
+      "const": "COMPONENT"
+    },
+    "resource_id": {
+      "type": "string",
+      "const": "fictional.component01"
+    },
+    "operation": {
+      "type": "string",
+      "const": "COMPARE_FICTIONAL_STATE"
+    }
+  },
+  "$id": "urn:avuhz:schema:contracts:orchestration:local-infrastructure-authority:v1"
+}

@@ -33,8 +33,7 @@ _SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1"
 _SCHEMA_ROOT = Path(__file__).resolve().parents[2] / "contracts/schemas/v1"
 _MAX_EVENT_BYTES = 16_384
 _CHANNEL = "INTERNAL_NOTIFICATION"
-_ALLOWED_EVENT = "engagement.opened"
-_ALLOWED_REFERENCE = "ENGAGEMENT"
+_ALLOWED_EVENTS = frozenset({"engagement.opened", "work_intake.opened"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,30 +154,44 @@ class DeterministicLocalCommunicationsFake:
             raise DeliveryRejected("COMMUNICATION_EVENT_REJECTED")
         try:
             encoded = json.dumps(event, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, RecursionError):
             raise DeliveryRejected("COMMUNICATION_EVENT_REJECTED") from None
         if len(encoded) > _MAX_EVENT_BYTES or not self._validator.is_valid(event):
             raise DeliveryRejected("COMMUNICATION_EVENT_REJECTED")
         reference = event.get("authoritative_subject_reference")
         metadata = event.get("sanitized_metadata")
-        valid = (
+        event_type = event.get("event_type")
+        common_valid = (
             event.get("tenant_id") == self._tenant_id
-            and event.get("event_type") == _ALLOWED_EVENT
+            and event_type in _ALLOWED_EVENTS
             and event.get("event_schema_version") == 1
+            and event.get("visibility") == "TENANT_OPERATIONAL"
             and _canonical_uuid(event.get("event_id"))
             and _canonical_uuid(event.get("correlation_id"))
             and idempotency_key == "outbox-delivery:" + event["event_id"]
             and type(reference) is dict
             and set(reference) == {"reference_type", "reference_id"}
-            and reference.get("reference_type") == _ALLOWED_REFERENCE
             and _canonical_uuid(reference.get("reference_id"))
+            and type(metadata) is dict
+        )
+        engagement_valid = (
+            event_type == "engagement.opened"
+            and reference.get("reference_type") == "ENGAGEMENT"
             and event.get("engagement_id") == reference.get("reference_id")
             and event.get("subject_id") == reference.get("reference_id")
-            and type(metadata) is dict
             and set(metadata) == {"engagement_id"}
             and metadata.get("engagement_id") == reference.get("reference_id")
         )
-        if not valid:
+        work_item_valid = (
+            event_type == "work_intake.opened"
+            and reference.get("reference_type") == "WORK_ITEM"
+            and "engagement_id" not in event
+            and "subject_id" not in event
+            and set(metadata) == {"work_item_id", "state"}
+            and metadata.get("work_item_id") == reference.get("reference_id")
+            and metadata.get("state") == "OPEN"
+        )
+        if not common_valid or not (engagement_valid or work_item_valid):
             raise DeliveryRejected("COMMUNICATION_EVENT_REJECTED")
         return hashlib.sha256(encoded).hexdigest(), reference
 
@@ -210,3 +223,16 @@ class DeterministicLocalCommunicationsFake:
             )
             self._receipts[idempotency_key] = receipt
             return CommunicationDeliveryResult("PUBLISHED", receipt)
+
+    def validate(self, idempotency_key: str, event: dict, delivered_at: str) -> None:
+        """Validate a prospective LOCAL delivery without creating an effect."""
+        digest, _reference = self._validated_semantics(idempotency_key, event)
+        if not _utc_timestamp(delivered_at):
+            raise DeliveryRejected("COMMUNICATION_EVENT_REJECTED")
+        with self._lock:
+            prior = self._receipts.get(idempotency_key)
+            if prior is not None and (
+                prior.tenant_id != event["tenant_id"]
+                or prior.event_semantic_digest != digest
+            ):
+                raise DeliveryRejected("COMMUNICATION_IDENTITY_COLLISION")

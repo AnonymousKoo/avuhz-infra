@@ -33,9 +33,10 @@ from .outbox import DeliveryRejected, DeliveryUnavailable, PUBLISH_CAPABILITY
 _SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1"
 _SCHEMA_ROOT = Path(__file__).resolve().parents[2] / "contracts/schemas/v1"
 _MAX_EVENT_BYTES = 16_384
-_ALLOWED_EVENT = "engagement.opened"
-_ALLOWED_REFERENCE = "ENGAGEMENT"
-_METRIC = "engagement_opened"
+_ALLOWED_METRICS = {
+    "engagement.opened": "engagement_opened",
+    "work_intake.opened": "work_item_opened",
+}
 _UNIT = "governed_event"
 
 
@@ -150,7 +151,9 @@ class DeterministicLocalUsageBillingFake:
         with self._lock:
             return tuple(self._records.values())
 
-    def _validated_semantics(self, idempotency_key: object, event: object) -> tuple[str, dict]:
+    def _validated_semantics(
+        self, idempotency_key: object, event: object,
+    ) -> tuple[str, dict, str]:
         if type(event) is not dict or type(idempotency_key) is not str:
             raise DeliveryRejected("USAGE_EVENT_REJECTED")
         try:
@@ -163,9 +166,10 @@ class DeterministicLocalUsageBillingFake:
             raise DeliveryRejected("USAGE_EVENT_REJECTED")
         reference = event.get("authoritative_subject_reference")
         metadata = event.get("sanitized_metadata")
-        valid = (
+        event_type = event.get("event_type")
+        common_valid = (
             event.get("tenant_id") == self._tenant_id
-            and event.get("event_type") == _ALLOWED_EVENT
+            and event_type in _ALLOWED_METRICS
             and event.get("event_schema_version") == 1
             and event.get("visibility") == "TENANT_OPERATIONAL"
             and _canonical_uuid(event.get("event_id"))
@@ -173,22 +177,34 @@ class DeterministicLocalUsageBillingFake:
             and idempotency_key == "outbox-delivery:" + event["event_id"]
             and type(reference) is dict
             and set(reference) == {"reference_type", "reference_id"}
-            and reference.get("reference_type") == _ALLOWED_REFERENCE
             and _canonical_uuid(reference.get("reference_id"))
+            and type(metadata) is dict
+        )
+        engagement_valid = (
+            event_type == "engagement.opened"
+            and reference.get("reference_type") == "ENGAGEMENT"
             and event.get("engagement_id") == reference.get("reference_id")
             and event.get("subject_id") == reference.get("reference_id")
-            and type(metadata) is dict
             and set(metadata) == {"engagement_id"}
             and metadata.get("engagement_id") == reference.get("reference_id")
         )
-        if not valid:
+        work_item_valid = (
+            event_type == "work_intake.opened"
+            and reference.get("reference_type") == "WORK_ITEM"
+            and "engagement_id" not in event
+            and "subject_id" not in event
+            and set(metadata) == {"work_item_id", "state"}
+            and metadata.get("work_item_id") == reference.get("reference_id")
+            and metadata.get("state") == "OPEN"
+        )
+        if not common_valid or not (engagement_valid or work_item_valid):
             raise DeliveryRejected("USAGE_EVENT_REJECTED")
-        return hashlib.sha256(encoded).hexdigest(), reference
+        return hashlib.sha256(encoded).hexdigest(), reference, _ALLOWED_METRICS[event_type]
 
     def deliver(
         self, idempotency_key: str, event: dict, delivered_at: str
     ) -> UsageMeteringResult:
-        digest, reference = self._validated_semantics(idempotency_key, event)
+        digest, reference, metric = self._validated_semantics(idempotency_key, event)
         if not _utc_timestamp(delivered_at):
             raise DeliveryRejected("USAGE_EVENT_REJECTED")
         with self._lock:
@@ -211,7 +227,7 @@ class DeterministicLocalUsageBillingFake:
                 correlation_id=event["correlation_id"],
                 subject_reference_type=reference["reference_type"],
                 subject_reference_id=reference["reference_id"],
-                metric=_METRIC,
+                metric=metric,
                 unit=_UNIT,
                 measured_quantity=1,
                 delivery_idempotency_key=idempotency_key,
@@ -220,3 +236,16 @@ class DeterministicLocalUsageBillingFake:
             )
             self._records[idempotency_key] = record
             return UsageMeteringResult("RECORDED", record)
+
+    def validate(self, idempotency_key: str, event: dict, delivered_at: str) -> None:
+        """Validate a prospective LOCAL measurement without recording it."""
+        digest, _reference, _metric = self._validated_semantics(idempotency_key, event)
+        if not _utc_timestamp(delivered_at):
+            raise DeliveryRejected("USAGE_EVENT_REJECTED")
+        with self._lock:
+            prior = self._records.get(idempotency_key)
+            if prior is not None and (
+                prior.tenant_id != event["tenant_id"]
+                or prior.event_semantic_digest != digest
+            ):
+                raise DeliveryRejected("USAGE_IDENTITY_COLLISION")

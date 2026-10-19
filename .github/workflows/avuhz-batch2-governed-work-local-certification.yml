@@ -16,7 +16,11 @@ on:
       - src/avuhz_worker/local_unattended_n8n_dispatch.py
       - src/avuhz_worker/n8n_event_sink.py
       - src/avuhz_worker/outbox.py
+      - src/avuhz_worker/shared_communications_local.py
+      - src/avuhz_worker/shared_engagement_delivery_local.py
+      - src/avuhz_worker/shared_usage_billing_local.py
       - tests/integration/test_acquisition_http_to_n8n_synthetic_journey.py
+      - tests/integration/test_avuhz_local_v1_unified_acceptance.py
       - tests/integration/test_shared_acquisition_work_handoff_postgres.py
       - tests/integration/test_shared_governed_work_local_proof.py
       - tests/integration/test_shared_work_intake_postgres_candidate.py
@@ -107,7 +111,7 @@ jobs:
           cleanup() {
             status=$?
             trap - EXIT
-            if [[ -n "$created_id" ]]; then
+            if [[ "$status" -ne 0 && -n "$created_id" ]]; then
               current_id="$(docker container ls -a \
                 --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
                 --format '{{.ID}}')"
@@ -199,6 +203,54 @@ jobs:
           print("governed_postgres_tests=5")
           print("governed_tests_skipped=0")
           PY
+
+          echo "AVUHZ_BATCH2_POSTGRES_ID=$created_id" >> "$GITHUB_ENV"
+
+      - name: Certify unified Batch5 acceptance on the same PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cleanup() {
+            status=$?
+            trap - EXIT
+            current_id="$(docker container ls -a \
+              --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+              --format '{{.ID}}')"
+            if [[ -n "$current_id" && "$current_id" == "${AVUHZ_BATCH2_POSTGRES_ID:0:12}" ]]; then
+              docker stop "$AVUHZ_BATCH2_POSTGRES_ID" >/dev/null
+            fi
+            exit "$status"
+          }
+          trap cleanup EXIT
+
+          current_id="$(docker container ls \
+            --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+            --format '{{.ID}}')"
+          test -n "$current_id"
+          test "$current_id" = "${AVUHZ_BATCH2_POSTGRES_ID:0:12}"
+
+          output="$(AVUHZ_RUN_UNIFIED_LOCAL_ACCEPTANCE_PG=1 \
+            AVUHZ_REQUIRE_UNIFIED_LOCAL_ACCEPTANCE=1 \
+            PYTHONPATH=src:. \
+            python3 -m unittest -v \
+            tests.integration.test_avuhz_local_v1_unified_acceptance 2>&1)" || {
+              printf '%s\n' "$output"
+              exit 1
+            }
+          printf '%s\n' "$output"
+
+          tests_run="$(sed -n 's/^Ran \([0-9][0-9]*\) tests\{0,1\}.*$/\1/p' <<< "$output")"
+          if [[ ! "$tests_run" =~ ^[0-9]+$ || "$tests_run" -lt 9 ]]; then
+            echo "::error::Unified Batch5 acceptance ran too few tests."
+            exit 1
+          fi
+          if grep -Eq '(^|[ (])skipped=' <<< "$output"; then
+            echo "::error::Unified Batch5 acceptance skipped required tests."
+            exit 1
+          fi
+          echo "unified_batch5_tests=$tests_run"
+          echo "unified_batch5_tests_skipped=0"
 
       - name: Certify canonical receipts and loopback-only HTTP
         shell: bash

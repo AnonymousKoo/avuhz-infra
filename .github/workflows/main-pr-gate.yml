@@ -282,6 +282,8 @@ jobs:
         run: |
           set -euo pipefail
           output="${RUNNER_TEMP}/avuhz-main-pr-gate-integration-tests.txt"
+          AVUHZ_RUN_UNIFIED_LOCAL_ACCEPTANCE_PG=1 \
+          AVUHZ_REQUIRE_UNIFIED_LOCAL_ACCEPTANCE=1 \
           python3 -m unittest discover \
             -s tests/integration \
             -p 'test_*.py' \

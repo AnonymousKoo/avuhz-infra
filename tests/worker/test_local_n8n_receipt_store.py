@@ -25,6 +25,7 @@ OTHER = "a4770000-0000-4000-8000-000000000012"
 EVENT = "a4770000-0000-4000-8000-000000000021"
 CORRELATION = "a4770000-0000-4000-8000-000000000031"
 INTAKE = "a4770000-0000-4000-8000-000000000041"
+WORK_ITEM = "a4770000-0000-4000-8000-000000000042"
 KEY = "localtest-delivery-key-001"
 
 
@@ -110,6 +111,7 @@ class LocalN8nReceiptStoreTests(unittest.TestCase):
             (envelope(authoritative_subject_reference={
                 "reference_type": "OTHER", "reference_id": INTAKE,
             }), InvalidReceipt),
+            (envelope(authoritative_subject_version=2), InvalidReceipt),
             (envelope(delivery_idempotency_key="bad key"), InvalidReceipt),
         ):
             with self.subTest(reason=err.__name__), self.assertRaises(err):
@@ -118,6 +120,40 @@ class LocalN8nReceiptStoreTests(unittest.TestCase):
             self.assertEqual(db.execute(
                 "SELECT count(*) FROM local_n8n_receipts"
             ).fetchone()[0], 0)
+
+    def test_work_item_contract_is_explicit_and_idempotent(self):
+        store = LocalN8nReceiptStore(
+            self.path,
+            trusted_tenant_id=TENANT,
+            allowed_event_types=frozenset({"work_intake.opened"}),
+        )
+        payload = envelope(
+            event_type="work_intake.opened",
+            authoritative_subject_reference={
+                "reference_type": "WORK_ITEM", "reference_id": WORK_ITEM,
+            },
+        )
+        self.assertFalse(store.receive(payload, delivery_header=KEY).duplicate)
+        self.assertTrue(store.committed(payload, delivery_header=KEY))
+        self.assertTrue(store.receive(payload, delivery_header=KEY).duplicate)
+        for changed in (
+            {"authoritative_subject_reference": {
+                "reference_type": "ACQUISITION_INTAKE", "reference_id": WORK_ITEM,
+            }},
+            {"authoritative_subject_version": 2},
+        ):
+            with self.subTest(changed=changed), self.assertRaises(InvalidReceipt):
+                store.receive(envelope(
+                    event_type="work_intake.opened", **changed
+                ), delivery_header=KEY)
+
+    def test_configuration_rejects_unknown_contract(self):
+        with self.assertRaises(ValueError):
+            LocalN8nReceiptStore(
+                self.path,
+                trusted_tenant_id=TENANT,
+                allowed_event_types=frozenset({"unreviewed.event"}),
+            )
 
     def test_header_mismatch_and_oversize_fail_closed(self):
         with self.assertRaises(InvalidReceipt):

@@ -1,0 +1,262 @@
+name: Avuhz Batch2 Governed Work LOCAL Certification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/avuhz-batch2-governed-work-local-certification.yml
+      - requirements.txt
+      - src/avuhz_runtime/guards.py
+      - src/avuhz_runtime/postgres.py
+      - src/avuhz_service/shared_*.py
+      - src/avuhz_worker/local_n8n_receipt_http.py
+      - src/avuhz_worker/local_n8n_receipt_store.py
+      - src/avuhz_worker/local_unattended_n8n_dispatch.py
+      - src/avuhz_worker/n8n_event_sink.py
+      - src/avuhz_worker/outbox.py
+      - tests/integration/test_acquisition_http_to_n8n_synthetic_journey.py
+      - tests/integration/test_shared_acquisition_work_handoff_postgres.py
+      - tests/integration/test_shared_governed_work_local_proof.py
+      - tests/integration/test_shared_work_intake_postgres_candidate.py
+      - tests/service/test_development_acquisition_http.py
+      - tests/service/test_development_acquisition_ingress.py
+      - tests/worker/test_local_n8n_receipt_http.py
+      - tests/worker/test_local_n8n_receipt_store.py
+      - tests/worker/test_outbox_worker.py
+      - supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql
+      - supabase/migrations/20261002213000_enable_implementation_handoff_command_intake.sql
+      - supabase/migrations/20261012140000_enable_shared_acquisition_intake_received_event.sql
+      - supabase/migrations/20261014031000_enable_shared_work_intake_lifecycle_events.sql
+      - supabase/migrations/20261014034000_create_shared_work_items.sql
+      - supabase/migrations/20261014041000_enable_shared_work_item_command_idempotency.sql
+      - supabase/migrations/20261014180000_add_shared_work_item_next_action_due_at.sql
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avuhz-batch2-local-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  certify-local-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: "src:."
+      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-batch2-local-pg17-ci
+      AVUHZ_POSTGRES_IMAGE: docker.io/library/postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+      AVUHZ_POSTGRES_DSN: "host=127.0.0.1 port=5432 dbname=postgres user=postgres"
+
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify repository-local test boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected_sha="${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+          test "$(git rev-parse HEAD)" = "$expected_sha"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          command -v docker
+          command -v python3
+          echo "environment=LOCAL_TEST"
+          echo "provider_contact_authorized=false"
+          echo "deployment_authorized=false"
+
+      - name: Install and verify pinned PostgreSQL driver
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 -m pip install \
+            --disable-pip-version-check \
+            --no-cache-dir \
+            --no-input \
+            'psycopg[binary]==3.3.4'
+          python3 -m pip check
+          python3 - <<'PY'
+          from importlib.metadata import version
+
+          expected = {
+              "psycopg": "3.3.4",
+              "psycopg-binary": "3.3.4",
+          }
+          for package, required in expected.items():
+              installed = version(package)
+              print(f"{package}=={installed}")
+              if installed != required:
+                  raise SystemExit(f"{package} does not match the pinned version")
+          PY
+
+      - name: Certify governed work on one disposable PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          created_id=""
+          cleanup() {
+            status=$?
+            trap - EXIT
+            if [[ -n "$created_id" ]]; then
+              current_id="$(docker container ls -a \
+                --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+                --format '{{.ID}}')"
+              if [[ -n "$current_id" && "$current_id" == "${created_id:0:12}" ]]; then
+                docker stop "$created_id" >/dev/null
+              fi
+            fi
+            exit "$status"
+          }
+          trap cleanup EXIT
+
+          existing="$(docker container ls -a \
+            --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+            --format '{{.Names}}')"
+          if [[ -n "$existing" ]]; then
+            echo "::error::Refusing to use or remove a preexisting named container."
+            exit 1
+          fi
+
+          created_id="$(docker run --detach --rm \
+            --name "$AVUHZ_LOCAL_POSTGRES_CONTAINER" \
+            --env POSTGRES_HOST_AUTH_METHOD=trust \
+            --publish 127.0.0.1:5432:5432 \
+            --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=512m \
+            "$AVUHZ_POSTGRES_IMAGE")"
+          test -n "$created_id"
+
+          ready=false
+          for _ in $(seq 1 60); do
+            if docker exec "$created_id" \
+              pg_isready -q -U postgres -d postgres; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$ready" != "true" ]]; then
+            echo "::error::Disposable PostgreSQL did not become ready."
+            exit 1
+          fi
+
+          server_version_num="$(docker exec "$created_id" \
+            psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+            -c 'show server_version_num;')"
+          case "$server_version_num" in
+            17*) ;;
+            *) echo "::error::Disposable PostgreSQL major version is not 17."; exit 1 ;;
+          esac
+
+          python3 - <<'PY'
+          import unittest
+
+          from tests.integration import test_shared_governed_work_local_proof as governed
+          from tests.integration import test_shared_work_intake_postgres_candidate as intake
+
+          loader = unittest.TestLoader()
+          intake_suite = loader.loadTestsFromModule(intake)
+          coordinator_suite = loader.loadTestsFromTestCase(
+              governed.SharedGovernedWorkCoordinatorTests
+          )
+          governed_pg_suite = loader.loadTestsFromTestCase(
+              governed.SharedGovernedWorkRealLocalPostgresTests
+          )
+          if loader.errors:
+              raise SystemExit("failed to load governed PostgreSQL certification tests")
+
+          intake_count = intake_suite.countTestCases()
+          coordinator_count = coordinator_suite.countTestCases()
+          governed_pg_count = governed_pg_suite.countTestCases()
+          if intake_count < 1:
+              raise SystemExit("work-intake PostgreSQL suite is empty")
+          if coordinator_count != 4:
+              raise SystemExit(f"expected 4 always-run governed tests, found {coordinator_count}")
+          if governed_pg_count != 5:
+              raise SystemExit(f"expected 5 governed PostgreSQL tests, found {governed_pg_count}")
+
+          suite = unittest.TestSuite((intake_suite, coordinator_suite, governed_pg_suite))
+          expected_count = intake_count + 4 + 5
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if result.testsRun != expected_count:
+              raise SystemExit(
+                  f"expected {expected_count} PostgreSQL/governed tests, ran {result.testsRun}"
+              )
+          if result.skipped:
+              raise SystemExit(f"PostgreSQL/governed tests skipped: {len(result.skipped)}")
+          if not result.wasSuccessful():
+              raise SystemExit("PostgreSQL/governed certification failed")
+          print(f"postgres_governed_tests={result.testsRun}")
+          print("governed_postgres_tests=5")
+          print("governed_tests_skipped=0")
+          PY
+
+      - name: Certify canonical receipts and loopback-only HTTP
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import unittest
+
+          from tests.worker import test_local_n8n_receipt_http as receipt_http
+          from tests.worker import test_local_n8n_receipt_store as receipt_store
+
+          loader = unittest.TestLoader()
+          store_suite = loader.loadTestsFromTestCase(
+              receipt_store.LocalN8nReceiptStoreTests
+          )
+          http_names = set(loader.getTestCaseNames(receipt_http.LoopbackReceiptHTTPTests))
+          excluded = {
+              "test_docker_bridge_requires_explicit_private_gateway_and_container_source",
+              "test_real_docker_container_reaches_private_gateway_with_source_pinning",
+          }
+          if not excluded.issubset(http_names):
+              raise SystemExit("expected Docker bridge tests were not found")
+          selected_names = sorted(http_names - excluded)
+          http_suite = unittest.TestSuite(
+              receipt_http.LoopbackReceiptHTTPTests(name) for name in selected_names
+          )
+          if loader.errors:
+              raise SystemExit("failed to load receipt certification tests")
+          if store_suite.countTestCases() != 11:
+              raise SystemExit(
+                  f"expected 11 canonical receipt-store tests, found "
+                  f"{store_suite.countTestCases()}"
+              )
+          if len(http_names) != 10 or http_suite.countTestCases() != 8:
+              raise SystemExit(
+                  f"expected 8 of 10 loopback HTTP tests, found "
+                  f"{http_suite.countTestCases()} of {len(http_names)}"
+              )
+
+          suite = unittest.TestSuite((store_suite, http_suite))
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if result.testsRun != 19:
+              raise SystemExit(f"expected 19 receipt/HTTP tests, ran {result.testsRun}")
+          if result.skipped:
+              raise SystemExit(f"receipt/HTTP tests skipped: {len(result.skipped)}")
+          if not result.wasSuccessful():
+              raise SystemExit("receipt/HTTP certification failed")
+          print("canonical_receipt_store_tests=11")
+          print("loopback_http_tests=8")
+          print("docker_bridge_tests_run=0")
+          PY
+
+      - name: Verify checkout remains unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          echo "repository_mutation_detected=false"
+          echo "production_certified=false"
+          echo "auth_data_provider_certified=false"

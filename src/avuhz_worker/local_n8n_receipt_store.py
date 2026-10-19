@@ -25,6 +25,10 @@ _FIELDS = frozenset({
     "delivery_idempotency_key",
 })
 _DELIVERY_KEY = re.compile(r"[A-Za-z0-9._:-]{8,128}\Z", re.ASCII)
+_RECEIPT_CONTRACTS = {
+    "acquisition.intake.received": ("ACQUISITION_INTAKE", frozenset({1})),
+    "work_intake.opened": ("WORK_ITEM", frozenset({1})),
+}
 
 
 class InvalidReceipt(ValueError):
@@ -84,7 +88,8 @@ class LocalN8nReceiptStore:
                 or type(allowed_event_types) is not frozenset
                 or not allowed_event_types
                 or any(type(event) is not str or not event
-                       or len(event) > 80 for event in allowed_event_types)):
+                       or event not in _RECEIPT_CONTRACTS
+                       for event in allowed_event_types)):
             raise ValueError("trusted LOCAL/TEST receipt configuration required")
         parent = path.parent
         if (not parent.is_dir()
@@ -129,6 +134,9 @@ class LocalN8nReceiptStore:
                 or envelope["event_type"] not in self._allowed):
             raise UnauthorizedReceipt("event_type_not_allowed")
         key = envelope["delivery_idempotency_key"]
+        expected_reference_type, allowed_versions = _RECEIPT_CONTRACTS[
+            envelope["event_type"]
+        ]
         reference = envelope["authoritative_subject_reference"]
         version = envelope["authoritative_subject_version"]
         if (type(key) is not str or not _DELIVERY_KEY.fullmatch(key)
@@ -138,9 +146,9 @@ class LocalN8nReceiptStore:
                 or not _valid_utc(envelope["occurred_at"])
                 or type(reference) is not dict
                 or set(reference) != {"reference_type", "reference_id"}
-                or reference["reference_type"] != "ACQUISITION_INTAKE"
+                or reference["reference_type"] != expected_reference_type
                 or not _uuid(reference["reference_id"])
-                or type(version) is not int or not 1 <= version < 2147483647):
+                or type(version) is not int or version not in allowed_versions):
             raise InvalidReceipt("invalid_event_envelope")
         try:
             raw = json.dumps(envelope, sort_keys=True, separators=(",", ":"),

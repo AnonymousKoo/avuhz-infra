@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -32,6 +33,7 @@ class SupplyChainTests(unittest.TestCase):
         self.put('pyproject.toml', '[project]\nname="fixture"\nversion="1.0.0"\ndependencies=["Example[crypto]==1.2.3"]\n')
         self.put('package-lock.json', json.dumps({'lockfileVersion': 3, 'packages': {'': {}, 'node_modules/example': {'version': '1.2.3', 'integrity': 'sha512-' + base64.b64encode(bytes(64)).decode()}}}))
         self.put('src/fixture.py', 'VALUE = 1\n')
+        self.put('.github/workflows/main-pr-gate.yml', 'name: fixture\n')
         self.put('contracts/schemas/v1/fixture.json', '{}\n')
         self.commit()
 
@@ -169,7 +171,7 @@ class SupplyChainTests(unittest.TestCase):
         path.unlink()
         path.symlink_to('../requirements.txt')
         self.commit()
-        with self.assertRaises(OSError):
+        with self.assertRaisesRegex(ValueError, 'NONREGULAR'):
             self.build()
 
     def test_unsafe_paths_and_traversal_denied(self):
@@ -220,13 +222,156 @@ class SupplyChainTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build()
         self.assertFalse(marker.exists())
+        self.put('src/fixture.py', 'VALUE = 1\n')
+        self.build()  # replacement refs cannot change the pinned raw tree
+
+    def test_hidden_noninventory_modifications_denied(self):
+        path = '.github/workflows/main-pr-gate.yml'
+        for flag in ('--assume-unchanged', '--skip-worktree'):
+            with self.subTest(flag=flag):
+                self.git('update-index', flag, path)
+                self.put(path, 'name: tampered\n')
+                with self.assertRaisesRegex(ValueError, 'SOURCE_BYTES'):
+                    self.build()
+                self.put(path, 'name: fixture\n')
+                self.git('update-index', '--no-assume-unchanged', '--no-skip-worktree', path)
+
+    def test_hostile_clean_and_process_filters_never_run(self):
+        marker = self.base / 'filter-ran'
+        command = 'touch ' + str(marker)
+        self.git('config', 'filter.hostile.clean', command)
+        self.git('config', 'filter.hostile.process', command)
+        self.git('config', 'filter.hostile.required', 'true')
+        (self.repo / '.git/info/attributes').write_text('* filter=hostile\n')
+        self.build()
+        self.assertFalse(marker.exists())
+        self.put('.github/workflows/main-pr-gate.yml', 'name: changed\n')
+        with self.assertRaises(ValueError):
+            self.build()
+        self.assertFalse(marker.exists())
+
+    def test_executable_mode_and_symlink_substitutions_denied(self):
+        path = self.repo / '.github/workflows/main-pr-gate.yml'
+        path.chmod(0o755)
+        with self.assertRaisesRegex(ValueError, 'MODE'):
+            self.build()
+        path.chmod(0o644)
+        path.unlink()
+        path.symlink_to('../../requirements.txt')
+        with self.assertRaises(ValueError):
+            self.build()
+
+    def test_untracked_ignored_symlinks_and_nested_git_denied(self):
+        self.put('.git/info/exclude', 'ignored\n')
+        path = self.repo / 'ignored'
+        path.symlink_to(self.base, target_is_directory=True)
+        with self.assertRaises(ValueError):
+            self.build()
+        path.unlink()
+        self.put('ignored', 'ignored file')
+        with self.assertRaises(ValueError):
+            self.build()
+        path.unlink()
+        self.put('src/.git/config', 'unexpected')
+        with self.assertRaisesRegex(ValueError, 'NESTED_GIT'):
+            self.build()
+
+    def test_ambiguous_tracked_path_and_submodule_denied(self):
+        self.put('odd name', 'ambiguous')
+        self.commit()
+        with self.assertRaisesRegex(ValueError, 'AMBIGUOUS'):
+            self.build()
+        (self.repo / 'odd name').unlink()
+        self.git('add', '-u')
+        self.git('update-index', '--add', '--cacheinfo', '160000,' + self.sha + ',submodule')
+        self.git('-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'fixture submodule')
+        self.sha = self.git('rev-parse', 'HEAD')
+        with self.assertRaisesRegex(ValueError, 'NONREGULAR'):
+            self.build()
+
+    def test_sha256_git_object_format(self):
+        self.repo = self.base / 'sha256-repo'
+        self.repo.mkdir()
+        self.git('init', '-q', '--object-format=sha256')
+        self.git('config', 'user.email', 'fixture@example.invalid')
+        self.git('config', 'user.name', 'Local Fixture')
+        self.put('file', 'literal bytes')
+        self.commit()
+        self.assertEqual(len(self.sha), 64)
+        self.assertEqual(set(runner.clean(self.repo, self.sha)), {'file'})
+        self.put('file', 'changed')
+        with self.assertRaises(ValueError):
+            runner.clean(self.repo, self.sha)
+
+    def archive_bytes(self, entries, compression=zipfile.ZIP_DEFLATED):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w', compression=compression) as archive:
+            for name, payload in entries:
+                archive.writestr(name, payload)
+        return data.getvalue()
+
+    def test_wheel_header_count_size_and_aggregate_denied_before_loading(self):
+        for data in (
+            self.archive_bytes([(f'f{i}', b'') for i in range(1025)]),
+            self.archive_bytes([('large', b'x')]),
+            self.archive_bytes([('one', b'x'), ('two', b'x'), ('three', b'x')]),
+        ):
+            payload = bytearray(data)
+            cursor = 0
+            # Inflate declared sizes without allocating/decompressing a bomb.
+            if b'large' in payload:
+                cursor = payload.index(b'PK\x01\x02')
+                struct.pack_into('<I', payload, cursor + 24, runner.WHEEL_ENTRY_LIMIT + 1)
+            elif b'three' in payload:
+                while True:
+                    cursor = payload.find(b'PK\x01\x02', cursor)
+                    if cursor < 0:
+                        break
+                    struct.pack_into('<I', payload, cursor + 24, runner.WHEEL_ENTRY_LIMIT)
+                    cursor += 46
+            with self.subTest(length=len(payload)), patch.object(runner.zipfile, 'ZipFile', side_effect=AssertionError('metadata must reject first')):
+                with self.assertRaises(ValueError):
+                    runner.wheel_info(bytes(payload), {})
+
+    def test_wheel_compressed_input_size_denied(self):
+        path = self.base / 'large.whl'
+        with path.open('wb') as stream:
+            stream.truncate(runner.WHEEL_INPUT_LIMIT + 1)
+        with self.assertRaisesRegex(ValueError, 'INPUT_TOO_LARGE'):
+            runner.build(self.repo, self.sha, path)
+        with patch.object(runner, 'WHEEL_INPUT_LIMIT', 2):
+            with self.assertRaisesRegex(ValueError, 'INPUT_TOO_LARGE'):
+                runner.wheel_info(b'123', {})
+
+    def test_real_compressed_aggregate_bomb_denied_before_loading(self):
+        data = self.archive_bytes([(f'f{i}', b'x' * (512 * 1024)) for i in range(3)])
+        self.assertLess(len(data), 4096)
+        with patch.object(runner, 'WHEEL_TOTAL_LIMIT', 1024 * 1024), patch.object(runner.zipfile, 'ZipFile', side_effect=AssertionError('must reject before decompression')):
+            with self.assertRaisesRegex(ValueError, 'SIZE_LIMIT'):
+                runner.wheel_info(data, {})
+
+    def test_wheel_actual_consumption_bounded(self):
+        data = self.wheel().read_bytes()
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            declared = sum(item.file_size for item in archive.infolist())
+        # Headers fit; repeated metadata consumption must still count against budget.
+        with patch.object(runner, 'WHEEL_TOTAL_LIMIT', declared):
+            with self.assertRaisesRegex(ValueError, 'ACTUAL_SIZE_LIMIT'):
+                runner.wheel_info(data, {'name': 'fixture', 'version': '1.0.0'})
+
+    def test_wheel_collisions_traversal_and_compression_denied(self):
+        for names in (('a', 'a'), ('a', 'A'), ('a', 'a/b'), ('../a',), ('/a',), ('a//b',), ('a/./b',), ('a\\b',), ('a:stream',), ('a\x00b',)):
+            with self.subTest(names=names), self.assertRaises(ValueError):
+                runner.wheel_info(self.archive_bytes([(name, b'') for name in names]), {})
+        with self.assertRaisesRegex(ValueError, 'COMPRESSION'):
+            runner.wheel_info(self.archive_bytes([('a', b'')], zipfile.ZIP_BZIP2), {})
 
     def test_no_external_contact_or_non_git_subprocess(self):
         original = runner.subprocess.run
         commands = []
         def local_only(command, **kwargs):
             self.assertEqual(command[:2], ['git', '--no-optional-locks'])
-            self.assertIn(command[9], ('rev-parse', 'status', 'ls-files', 'show'))
+            self.assertIn(command[9], ('rev-parse', 'ls-tree'))
             self.assertEqual(kwargs['env']['GIT_ALLOW_PROTOCOL'], '')
             self.assertEqual(kwargs['env']['GIT_NO_LAZY_FETCH'], '1')
             commands.append(command)

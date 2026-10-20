@@ -247,3 +247,10 @@ Next action: independent review of the exact committed candidate, then separatel
 approved release-evidence work. Future main-push CI/PG17 and retention changes
 require separate approval; this candidate grants no push, PR, merge or provider
 authority.
+
+The LOCAL corrective candidate verifies every tracked regular file and executable
+mode against raw native Git blob hashes without status or worktree filters.
+Wheel inspection bounds compressed input, member count and declared/consumed
+uncompressed bytes before parsing and while streaming. These denial checks
+close source-substitution and unbounded-archive inspection gaps; they do not
+supply any missing release proof. Status remains **NOT CERTIFIED**.

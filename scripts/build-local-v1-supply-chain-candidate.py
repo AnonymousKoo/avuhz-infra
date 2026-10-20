@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import stat
 import subprocess
+import struct
 import tomllib
 import zipfile
 from email.parser import BytesParser
@@ -39,14 +40,25 @@ def safe_parent(path):
         raise
 
 
-def read(path):
+WHEEL_INPUT_LIMIT = 32 * 1024 * 1024
+WHEEL_ENTRY_LIMIT = 64 * 1024 * 1024
+WHEEL_TOTAL_LIMIT = 128 * 1024 * 1024
+WHEEL_COUNT_LIMIT = 1024
+
+
+def read(path, limit=None):
     parent, name = safe_parent(path)
     try:
         fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
         with os.fdopen(fd, 'rb') as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise ValueError('NONREGULAR_INPUT')
-            return stream.read()
+            if limit is not None and os.fstat(stream.fileno()).st_size > limit:
+                raise ValueError('INPUT_TOO_LARGE')
+            data = stream.read() if limit is None else stream.read(limit + 1)
+            if limit is not None and len(data) > limit:
+                raise ValueError('INPUT_TOO_LARGE')
+            return data
     finally:
         os.close(parent)
 
@@ -56,6 +68,10 @@ def digest(data):
 
 
 def git(root, *args):
+    if args not in (('rev-parse', '--show-object-format'),
+                    ('rev-parse', '--show-toplevel'), ('rev-parse', 'HEAD'),
+                    ('ls-tree', '-r', '-z', '-l', 'HEAD')):
+        raise ValueError('UNSAFE_GIT_OPERATION')
     env = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
     env.update(GIT_NO_REPLACE_OBJECTS='1', GIT_NO_LAZY_FETCH='1',
                GIT_TERMINAL_PROMPT='0', GIT_ALLOW_PROTOCOL='',
@@ -67,21 +83,81 @@ def git(root, *args):
 
 
 def clean(root, sha):
-    if not re.fullmatch('[0-9a-f]{40}', sha):
-        raise ValueError('INVALID_SHA')
-    # Validate directory components as well as the repository root itself.
+    # Only raw object operations: never status/diff/index or worktree conversion.
     parent, name = safe_parent(root)
     try:
         fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
         os.close(fd)
     finally:
         os.close(parent)
+    object_format = git(root, 'rev-parse', '--show-object-format').decode().strip()
+    if object_format not in ('sha1', 'sha256'):
+        raise ValueError('UNSUPPORTED_OBJECT_FORMAT')
+    if not re.fullmatch('[0-9a-f]{%d}' % (40 if object_format == 'sha1' else 64), sha):
+        raise ValueError('INVALID_SHA')
     if git(root, 'rev-parse', '--show-toplevel').decode().strip() != str(root):
         raise ValueError('REPOSITORY_ROOT_REQUIRED')
     if git(root, 'rev-parse', 'HEAD').decode().strip() != sha:
         raise ValueError('SOURCE_PIN_MISMATCH')
-    if git(root, 'status', '--porcelain', '--untracked-files=all'):
-        raise ValueError('DIRTY_SOURCE')
+    tracked = {}
+    for row in git(root, 'ls-tree', '-r', '-z', '-l', 'HEAD').split(b'\0')[:-1]:
+        header, raw_path = row.split(b'\t', 1)
+        mode, kind, oid, size = header.split()
+        path = raw_path.decode('ascii')
+        parts = path.split('/')
+        if (not path or any(part in ('', '.', '..', '.git') for part in parts)
+                or not re.fullmatch(r'[A-Za-z0-9._/+-]+', path) or path in tracked):
+            raise ValueError('AMBIGUOUS_SOURCE_PATH')
+        if mode not in (b'100644', b'100755') or kind != b'blob':
+            raise ValueError('NONREGULAR_TRACKED_SOURCE')
+        tracked[path] = (mode, oid.decode(), int(size))
+    observed = set()
+    directories = {path[:i] for path in tracked for i, char in enumerate(path) if char == '/'}
+
+    def walk(directory_fd, prefix=''):
+        with os.scandir(directory_fd) as entries:
+            for entry in entries:
+                path = prefix + entry.name
+                if path == '.git':
+                    if entry.is_symlink():
+                        raise ValueError('UNSAFE_GIT_POINTER')
+                    continue
+                if entry.name == '.git':
+                    raise ValueError('NESTED_GIT')
+                info = entry.stat(follow_symlinks=False)
+                if stat.S_ISDIR(info.st_mode):
+                    if path not in directories:
+                        raise ValueError('DIRTY_UNTRACKED_DIRECTORY')
+                    child = os.open(entry.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory_fd)
+                    try:
+                        walk(child, path + '/')
+                    finally:
+                        os.close(child)
+                elif stat.S_ISREG(info.st_mode) and path in tracked:
+                    mode, oid, size = tracked[path]
+                    if (info.st_mode & 0o111) != (0o111 if mode == b'100755' else 0):
+                        raise ValueError('SOURCE_MODE_MISMATCH')
+                    data = read(root / path)
+                    native = hashlib.new(object_format)
+                    native.update(b'blob ' + str(len(data)).encode() + b'\0')
+                    native.update(data)
+                    if len(data) != size or native.hexdigest() != oid:
+                        raise ValueError('DIRTY_SOURCE_BYTES_MISMATCH')
+                    observed.add(path)
+                else:
+                    raise ValueError('DIRTY_OR_NONREGULAR_SOURCE')
+    parent, name = safe_parent(root)
+    try:
+        root_fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+        try:
+            walk(root_fd)
+        finally:
+            os.close(root_fd)
+    finally:
+        os.close(parent)
+    if observed != set(tracked):
+        raise ValueError('DIRTY_MISSING_SOURCE')
+    return tracked
 
 
 def pins(values):
@@ -137,27 +213,86 @@ def npm(data):
     return {'classification': 'DECLARED_METADATA_ONLY', 'archives_verified': False, 'packages': rows}
 
 
+def wheel_headers(data):
+    """Bound central directory metadata before ZipFile allocates member objects.
+
+    ZIP64, split archives, trailing bytes and unsupported compression fail closed.
+    """
+    if len(data) > WHEEL_INPUT_LIMIT:
+        raise ValueError('WHEEL_INPUT_TOO_LARGE')
+    end = data.rfind(b'PK\x05\x06', max(0, len(data) - 65557))
+    if end < 0 or end + 22 > len(data):
+        raise zipfile.BadZipFile('missing end record')
+    _, disk, start_disk, disk_count, count, length, offset, comment = struct.unpack_from('<4s4H2IH', data, end)
+    if (disk or start_disk or disk_count != count or not 0 < count <= WHEEL_COUNT_LIMIT
+            or end + 22 + comment != len(data) or offset + length != end):
+        raise ValueError('INVALID_WHEEL_DIRECTORY')
+    cursor, total = offset, 0
+    for _ in range(count):
+        if cursor + 46 > end:
+            raise ValueError('INVALID_WHEEL_DIRECTORY')
+        fields = struct.unpack_from('<4s6H3I5H2I', data, cursor)
+        if fields[0] != b'PK\x01\x02' or fields[4] not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED) or fields[3] & 1:
+            raise ValueError('UNSUPPORTED_WHEEL_COMPRESSION')
+        size = fields[9]
+        total += size
+        if size > WHEEL_ENTRY_LIMIT or total > WHEEL_TOTAL_LIMIT:
+            raise ValueError('WHEEL_SIZE_LIMIT')
+        cursor += 46 + sum(fields[10:13])
+        if cursor > end:
+            raise ValueError('INVALID_WHEEL_DIRECTORY')
+    if cursor != end:
+        raise ValueError('INVALID_WHEEL_DIRECTORY')
+
+
 def wheel_info(data, project):
-    """Check internal RECORD consistency only; no claim of origin authenticity."""
+    """Bounded internal RECORD consistency; no claim of origin authenticity."""
+    wheel_headers(data)
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = archive.namelist()
-        if len(set(names)) != len(names) or not names:
+        if len({name.casefold() for name in names}) != len(names) or not names:
             raise ValueError('INVALID_WHEEL')
+        total = 0
         for entry in archive.infolist():
-            if entry.filename.startswith('/') or '..' in entry.filename.split('/') or '\\' in entry.filename or stat.S_ISLNK(entry.external_attr >> 16):
+            parts = entry.filename.split('/')
+            if (any(part in ('', '.', '..') for part in parts)
+                    or not re.fullmatch(r'[A-Za-z0-9._/+-]+', entry.filename)
+                    or entry.orig_filename != entry.filename
+                    or stat.S_ISLNK(entry.external_attr >> 16)):
                 raise ValueError('UNSAFE_WHEEL_MEMBER')
-            if entry.file_size > 64 * 1024 * 1024:
-                raise ValueError('WHEEL_MEMBER_TOO_LARGE')
+            total += entry.file_size
+            if entry.file_size > WHEEL_ENTRY_LIMIT or total > WHEEL_TOTAL_LIMIT:
+                raise ValueError('WHEEL_SIZE_LIMIT')
+        # Also deny a file used as a directory prefix.
+        if any('/'.join(n.split('/')[:i]) in names for n in names for i in range(1, len(n.split('/')))):
+            raise ValueError('WHEEL_PATH_COLLISION')
+        consumed = 0
+
+        def chunks(name, limit=WHEEL_ENTRY_LIMIT):
+            nonlocal consumed
+            actual = 0
+            with archive.open(name) as member:
+                while True:
+                    block = member.read(64 * 1024)
+                    if not block:
+                        break
+                    actual += len(block)
+                    consumed += len(block)
+                    if actual > limit or consumed > WHEEL_TOTAL_LIMIT:
+                        raise ValueError('WHEEL_ACTUAL_SIZE_LIMIT')
+                    yield block
+
         records = [n for n in names if n.endswith('.dist-info/RECORD')]
         if len(records) != 1:
             raise ValueError('WHEEL_RECORD_REQUIRED')
         record = records[0]
         prefix = record.rsplit('/', 1)[0]
-        meta = BytesParser().parsebytes(archive.read(prefix + '/METADATA'))
+        # Parsing metadata/CSV has a smaller allocation budget than payload hashing.
+        meta = BytesParser().parsebytes(b''.join(chunks(prefix + '/METADATA', 1024 * 1024)))
         if meta['Name'] != project['name'] or meta['Version'] != project['version'] or prefix + '/WHEEL' not in names:
             raise ValueError('WHEEL_PROJECT_MISMATCH')
         seen = set()
-        for row in csv.reader(io.StringIO(archive.read(record).decode())):
+        for row in csv.reader(io.StringIO(b''.join(chunks(record, 1024 * 1024)).decode())):
             if len(row) != 3 or row[0] in seen or row[0] not in names:
                 raise ValueError('INVALID_WHEEL_RECORD')
             name, claimed, size = row
@@ -166,9 +301,12 @@ def wheel_info(data, project):
                 if claimed or size:
                     raise ValueError('INVALID_WHEEL_SELF_RECORD')
                 continue
-            payload = archive.read(name)
-            actual = base64.urlsafe_b64encode(hashlib.sha256(payload).digest()).decode().rstrip('=')
-            if claimed != 'sha256=' + actual or size != str(len(payload)):
+            hashed, actual_size = hashlib.sha256(), 0
+            for block in chunks(name):
+                hashed.update(block)
+                actual_size += len(block)
+            actual = base64.urlsafe_b64encode(hashed.digest()).decode().rstrip('=')
+            if claimed != 'sha256=' + actual or size != str(actual_size):
                 raise ValueError('WHEEL_RECORD_MISMATCH')
         if seen != set(names):
             raise ValueError('INCOMPLETE_WHEEL_RECORD')
@@ -177,8 +315,7 @@ def wheel_info(data, project):
 
 def build(root, sha, wheel=None):
     root = Path(root)
-    clean(root, sha)
-    tracked = git(root, 'ls-files', '-z').decode().split('\0')[:-1]
+    tracked = clean(root, sha)
     required = {'requirements.txt', 'pyproject.toml', 'package-lock.json'}
     if not required.issubset(tracked):
         raise ValueError('MISSING_MANIFEST')
@@ -186,15 +323,13 @@ def build(root, sha, wheel=None):
     files = {}
     for path in paths:
         data = read(root / path)
-        if data != git(root, 'show', sha + ':' + path):
-            raise ValueError('SOURCE_BYTES_MISMATCH')
         files[path] = data
     project = tomllib.loads(files['pyproject.toml'].decode())['project']
     requirements = [line.strip() for line in files['requirements.txt'].decode().splitlines() if line.strip() and not line.lstrip().startswith('#')]
     direct = pins(requirements)
     if direct != pins(project['dependencies']):
         raise ValueError('DIRECT_PIN_MISMATCH')
-    archive = wheel_info(read(wheel), project) if wheel else {'classification': 'MISSING'}
+    archive = wheel_info(read(wheel, WHEEL_INPUT_LIMIT), project) if wheel else {'classification': 'MISSING'}
     result = {'schema_version': 'avuhz.local-v1.supply-chain-candidate.v1',
               'status': 'NOT CERTIFIED', 'classification': 'UNSIGNED_INVENTORY_SBOM_CANDIDATE',
               'source_sha': sha, 'python_direct_pins': direct,

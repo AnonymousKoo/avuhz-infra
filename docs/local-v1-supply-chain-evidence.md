@@ -5,26 +5,38 @@ CANDIDATE**, always **NOT CERTIFIED**. It does not complete Gate 10, change runt
 install dependencies, build a wheel, contact a registry or authenticate a release.
 Python 3.12 standard library and local Git are sufficient.
 
-Use a clean checkout under `/tmp` at the exact reviewed 40-character lowercase
-commit. Choose a fresh output file outside that checkout, also under `/tmp`:
+Use a clean checkout under `/tmp` at the exact reviewed lowercase native Git
+commit ID (40 hex characters for SHA1, 64 for SHA256). Choose a fresh output file outside that checkout, also under `/tmp`:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3.12 scripts/build-local-v1-supply-chain-candidate.py \
   --repo /tmp/reviewed-avuhz-checkout \
-  --source-sha <exact-reviewed-40-hex-commit> \
+  --source-sha <exact-reviewed-native-hex-commit> \
   --output /tmp/fresh-supply-chain-candidate.json
 ```
 
 An optional `--wheel /tmp/reviewed-artifact.whl` observes an existing real project
 wheel. No wheel is built or downloaded. Omission records `MISSING`. The tool checks
 ZIP members, project name/version and SHA256 RECORD consistency and hashes the
-actual archive bytes. A self-consistent forged wheel can pass those structural
+actual archive bytes. Compressed input is capped at 32 MiB, member count at 1024,
+each declared/consumed member at 64 MiB and aggregate declared/consumed bytes
+at 128 MiB. Central-directory headers are checked before ZIP member loading;
+payload hashes use bounded streaming reads. Metadata and RECORD parsing each
+have a 1 MiB cap. Repeated metadata reads count toward the consumed-byte cap.
+ZIP64, split archives, unsupported compression, duplicate or ambiguous paths,
+file/directory collisions and symlinks fail closed. A self-consistent forged wheel can pass those structural
 checks: its classification remains `OBSERVED_UNAUTHENTICATED_ARCHIVE`. RECORD
 consistency cannot establish provenance, source correspondence or trusted origin.
 
 The tool rejects wrong SHA, dirty trees, manifest mismatch, non-exact or duplicate
 direct Python pins, malformed npm metadata, tracked-byte substitution and unsafe
-or symlink paths. All filesystem inputs and outputs must be under `/tmp`;
+or symlink paths. Every tracked regular file is compared with the raw `HEAD`
+blob size and native Git object hash, including its executable mode. Untracked
+and ignored files/directories, tracked symlinks and submodules are denied.
+Only `rev-parse` and `ls-tree` are invoked with replacement objects and lazy
+fetch disabled; status, index flags, filters, hooks and smudge conversions cannot
+substitute bytes. A filesystem walk excludes only the root `.git` pointer and
+rejects nested `.git` entries without following symlinks. All filesystem inputs and outputs must be under `/tmp`;
 parent traversal is rejected. Outputs use exclusive creation, private permissions,
 file and parent-directory fsync. Existing outputs are never replaced. Exit 0
 means only that candidate bytes were persisted; exit 2 means rejection and emits

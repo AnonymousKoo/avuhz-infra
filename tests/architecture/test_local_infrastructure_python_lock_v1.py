@@ -60,15 +60,16 @@ class PythonLockTests(unittest.TestCase):
             (self.repo / 'requirements' / ('local-v1-' + scope + '.lock')).write_text(self.row)
 
     def inventory(self):
-        return lock.scope_inventory(self.repo, 'runtime', self.house, ['demo==1.0.0'])
+        return lock.scope_inventory((self.repo / 'requirements/local-v1-runtime.lock').read_bytes(),
+                                    self.house, ['demo==1.0.0'])
 
     def git(self, *args):
         return subprocess.check_output(['git', '-c', 'core.hooksPath=/dev/null', '-C', str(self.repo), *args], stderr=subprocess.DEVNULL).decode().strip()
 
-    def clean_repo(self):
+    def clean_repo(self, object_format="sha1"):
         (self.repo / 'requirements.txt').write_text('demo==1.0.0\n')
         (self.repo / 'pyproject.toml').write_text('[project]\nname="example"\nversion="1.0.0"\ndependencies=["demo==1.0.0"]\n[build-system]\nrequires=["setuptools>=68"]\nbuild-backend="setuptools.build_meta"\n')
-        self.git('init', '-q')
+        self.git('init', '-q', '--object-format=' + object_format)
         self.git('add', '.')
         self.git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@invalid', 'commit', '-qm', 'fixture')
         return self.git('rev-parse', 'HEAD')
@@ -198,6 +199,52 @@ class PythonLockTests(unittest.TestCase):
         self.assertIn({'name': 'avuhz:status', 'value': 'NOT CERTIFIED'}, props)
         self.assertNotIn('"CERTIFIED"', first.decode())
         self.assertNotIn('approved', first.decode().lower())
+
+    def deny_consumption_substitution(self, paths):
+        # Replace only at the consuming read, after clean() has passed. Restore
+        # before the final clean so bookend checks cannot detect this attack.
+        for object_format in ('sha1', 'sha256'):
+            sha = self.clean_repo(object_format)
+            self.assertEqual(self.git('rev-parse', '--show-object-format'), object_format)
+            for relative in paths:
+                with self.subTest(object_format=object_format, source=relative):
+                    target = self.repo / relative
+                    original = target.read_bytes()
+                    read = lock.guards.read
+                    consumed = []
+
+                    def substitute(path, *args, **kwargs):
+                        if path != target:
+                            return read(path, *args, **kwargs)
+                        consumed.append(path)
+                        # Valid comment syntax leaves the old parser behavior
+                        # unchanged while changing the claimed source bytes.
+                        target.write_bytes(original + b'\n# substituted at consumption\n')
+                        try:
+                            return read(path, *args, **kwargs)
+                        finally:
+                            target.write_bytes(original)
+
+                    roots = dict.fromkeys(('build', 'validation'), ['demo==1.0.0'])
+                    with patch.object(lock.guards, 'read', side_effect=substitute), patch.object(lock, 'ROOTS', roots):
+                        with self.assertRaisesRegex(ValueError, 'DIRTY_SOURCE_BYTES_MISMATCH'):
+                            lock.build(self.repo, sha, dict.fromkeys(lock.SCOPES, self.house))
+                    self.assertEqual(consumed, [target])
+                    self.assertEqual(target.read_bytes(), original)
+                    lock.guards.clean(self.repo, sha)
+            # Each native object format needs its own fixture repository.
+            if object_format == 'sha1':
+                self.repo = self.base / 'sha256-repo'
+                self.repo.mkdir()
+                (self.repo / 'requirements').mkdir()
+                self.install_fixture(wheel())
+
+    def test_temporarily_substituted_locks_denied_at_consumption(self):
+        self.deny_consumption_substitution([
+            'requirements/local-v1-' + scope + '.lock' for scope in lock.SCOPES])
+
+    def test_temporarily_substituted_manifests_denied_at_consumption(self):
+        self.deny_consumption_substitution(['pyproject.toml', 'requirements.txt'])
 
     def args(self, output):
         return ['--repo', str(self.repo), '--source-sha', '0' * 40,

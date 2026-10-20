@@ -217,8 +217,8 @@ def closure(rows, archives, roots):
     return sorted(edges)
 
 
-def scope_inventory(root, scope, wheelhouse, roots):
-    rows = lock_rows(guards.read(root / 'requirements' / ('local-v1-' + scope + '.lock'), MAX_METADATA))
+def scope_inventory(lock_data, wheelhouse, roots):
+    rows = lock_rows(lock_data)
     parent, name = guards.safe_parent(wheelhouse)
     try:
         fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
@@ -251,16 +251,23 @@ def scope_inventory(root, scope, wheelhouse, roots):
 
 def build(root, sha, wheelhouses):
     host_target()
-    guards.clean(root, sha)
-    project = tomllib.loads(guards.read(root / 'pyproject.toml', MAX_METADATA).decode())
+    tracked = guards.clean(root, sha)
+    object_format = guards.git(root, 'rev-parse', '--show-object-format').decode().strip()
+
+    def source(path):
+        return guards.read(root / path, MAX_METADATA, expected=tracked[path],
+                           object_format=object_format)
+
+    project = tomllib.loads(source('pyproject.toml').decode())
     direct = project['project']['dependencies']
-    declared = [s for s in guards.read(root / 'requirements.txt', MAX_METADATA).decode().splitlines()
+    declared = [s for s in source('requirements.txt').decode().splitlines()
                 if s and not s.startswith('#')]
     if guards.pins(declared) != guards.pins(direct):
         raise ValueError('DIRECT_PIN_MISMATCH')
     if project['build-system'] != {'requires': ['setuptools>=68'], 'build-backend': 'setuptools.build_meta'}:
         raise ValueError('UNREVIEWED_BUILD_BACKEND')
-    scopes = {s: scope_inventory(root, s, wheelhouses[s], direct if s == 'runtime' else ROOTS[s]) for s in SCOPES}
+    scopes = {s: scope_inventory(source('requirements/local-v1-' + s + '.lock'),
+                                 wheelhouses[s], direct if s == 'runtime' else ROOTS[s]) for s in SCOPES}
     # setuptools 68.1.2 build_meta.get_requires_for_build_wheel requests wheel;
     # this explicit reviewed build root is independent of runtime dependencies.
     components, dependencies = [], []

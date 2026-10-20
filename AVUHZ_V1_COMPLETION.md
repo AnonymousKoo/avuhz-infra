@@ -222,3 +222,28 @@ reclassified as production ready.
 its locally generated evidence, then obtain authenticated same-commit baseline,
 dependency/artifact and applicable CI/PG17 proof plus explicit human Gate 10
 approval. Until that separate boundary is satisfied, LOCAL v1 remains NOT CERTIFIED.
+
+## Gate 10 supply-chain R0 candidate (2026-10-20)
+
+The repository-local four-file candidate based on exact source
+`d508c96ce0025d16a8c59e50bace33b2ebda1bb6` adds an offline Python 3.12
+inventory generator and denial tests. See
+[`docs/local-v1-supply-chain-evidence.md`](docs/local-v1-supply-chain-evidence.md)
+for its clean exact-commit invocation and limitations. This is unsigned
+inventory/SBOM CANDIDATE evidence, always **NOT CERTIFIED**, with observed source
+and schema SHA256 values, matching declared direct Python pins, separate npm
+metadata and an optional internally checked wheel digest. An omitted wheel is
+explicitly MISSING. No dependency or runtime changes are included.
+
+Still unmet: complete Python hash-locked transitive/build dependency graph with
+verified distribution archive hashes, approved SBOM, authenticated exact-merge
+CI/PG17 results, signed provenance, immutable retention proof and explicit human
+Gate10 approval. Structural wheel checks cannot authenticate origin or prove a
+build corresponds to source. No candidate, green local suite or historical CI
+result certifies the exact future merge. LOCAL v1 remains **NOT CERTIFIED**;
+DEVELOPMENT and production remain **NOT_READY**.
+
+Next action: independent review of the exact committed candidate, then separately
+approved release-evidence work. Future main-push CI/PG17 and retention changes
+require separate approval; this candidate grants no push, PR, merge or provider
+authority.

@@ -77,6 +77,132 @@ class SupplyChainTests(unittest.TestCase):
             self.assertEqual(item['sha256'], hashlib.sha256((self.repo / name).read_bytes()).hexdigest())
         self.assertEqual(result['schemas'], 'OBSERVED')
 
+    def test_inventory_reread_substitution_denied_with_clean_endpoints(self):
+        target = self.repo / 'src/fixture.py'
+        identity = target.stat().st_ino
+        original = runner.os.fdopen
+        reads = []
+
+        class SubstituteRead:
+            def __init__(self, stream):
+                self.stream = stream
+
+            def __enter__(self):
+                self.stream.__enter__()
+                return self
+
+            def __exit__(self, *args):
+                return self.stream.__exit__(*args)
+
+            def fileno(self):
+                return self.stream.fileno()
+
+            def read(self, *args):
+                data = self.stream.read(*args)
+                if os.fstat(self.fileno()).st_ino == identity:
+                    reads.append(data)
+                    if len(reads) == 2:
+                        return b'VALUE = 2\n'  # Only the inventory reread is substituted.
+                return data
+
+        runner.clean(self.repo, self.sha)
+        with patch.object(runner.os, 'fdopen', side_effect=lambda *a, **kw: SubstituteRead(original(*a, **kw))):
+            with self.assertRaisesRegex(ValueError, 'SOURCE_BYTES_MISMATCH'):
+                self.build()
+        self.assertEqual(len(reads), 2)
+        runner.clean(self.repo, self.sha)  # Both endpoint checks pass independently.
+
+    def test_tree_enumeration_uses_immutable_pin_during_head_race(self):
+        pinned = self.sha
+        self.put('src/fixture.py', 'VALUE = 2\n')
+        self.commit()
+        alternate = self.sha
+        self.git('update-ref', 'HEAD', pinned)
+        self.sha = pinned
+        self.put('src/fixture.py', 'VALUE = 1\n')
+        marker = self.base / 'filter-ran'
+        self.git('config', 'filter.hostile.clean', 'touch ' + str(marker))
+        self.git('config', 'filter.hostile.process', 'touch ' + str(marker))
+        (self.repo / '.git/info/attributes').write_text('* filter=hostile\n')
+        original = runner.git
+        enumerations = []
+
+        def move_head(root, *args):
+            if args[0] == 'ls-tree':
+                self.assertEqual(args, ('ls-tree', '-r', '-z', '-l', pinned))
+                enumerations.append(args)
+                self.git('update-ref', 'HEAD', alternate)
+                try:
+                    return original(root, *args)
+                finally:
+                    self.git('update-ref', 'HEAD', pinned)
+            return original(root, *args)
+
+        with patch.object(runner, 'git', side_effect=move_head):
+            result = self.build()
+        self.assertEqual(len(enumerations), 2)
+        self.assertEqual(result['files']['src/fixture.py']['sha256'], hashlib.sha256(b'VALUE = 1\n').hexdigest())
+        self.assertFalse(marker.exists())
+        with self.assertRaisesRegex(ValueError, 'UNSAFE_GIT_OPERATION'):
+            original(self.repo, 'ls-tree', '-r', '-z', '-l', 'HEAD')
+
+        def leave_head_changed(root, *args):
+            if args[0] == 'ls-tree':
+                self.git('update-ref', 'HEAD', alternate)
+            return original(root, *args)
+
+        with patch.object(runner, 'git', side_effect=leave_head_changed):
+            with self.assertRaisesRegex(ValueError, 'SOURCE_PIN_MISMATCH'):
+                self.build()
+        self.assertFalse(marker.exists())
+
+    def test_capture_allows_access_time_updates_only(self):
+        path = self.repo / 'src/fixture.py'
+        expected = runner.clean(self.repo, self.sha)['src/fixture.py']
+        original = runner.os.fstat
+        calls = []
+
+        def access_time_changes(fd):
+            info = original(fd)
+            calls.append(fd)
+            class AccessTimeChanged:
+                st_atime = info.st_atime + len(calls)
+                st_atime_ns = info.st_atime_ns + len(calls)
+                def __getattr__(self, name):
+                    return getattr(info, name)
+            return AccessTimeChanged()
+
+        with patch.object(runner.os, 'fstat', side_effect=access_time_changes):
+            self.assertEqual(runner.read(path, expected=expected, object_format='sha1'), b'VALUE = 1\n')
+        self.assertEqual(len(calls), 2)
+
+    def test_capture_detects_same_size_mutation_after_read(self):
+        path = self.repo / 'src/fixture.py'
+        expected = runner.clean(self.repo, self.sha)['src/fixture.py']
+        original = runner.os.fstat
+        calls = []
+
+        def mutated_metadata(fd):
+            info = original(fd)
+            calls.append(fd)
+            class Modified:
+                st_mtime_ns = info.st_mtime_ns + (1 if len(calls) == 2 else 0)
+                def __getattr__(self, name):
+                    return getattr(info, name)
+            return Modified()
+
+        with patch.object(runner.os, 'fstat', side_effect=mutated_metadata):
+            with self.assertRaisesRegex(ValueError, 'SOURCE_IDENTITY_CHANGED'):
+                runner.read(path, expected=expected, object_format='sha1')
+
+    def test_source_and_inventory_memory_bounded(self):
+        with patch.object(runner, 'SOURCE_FILE_LIMIT', 1):
+            with self.assertRaisesRegex(ValueError, 'SOURCE_SIZE_LIMIT'):
+                self.build()
+        with patch.object(runner, 'INVENTORY_TOTAL_LIMIT', 1):
+            with self.assertRaisesRegex(ValueError, 'INVENTORY_SIZE_LIMIT'):
+                self.build()
+
     def test_missing_wheel_and_no_certification_transition(self):
         result = self.build()
         self.assertEqual(result['status'], 'NOT CERTIFIED')

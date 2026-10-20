@@ -46,11 +46,42 @@ WHEEL_TOTAL_LIMIT = 128 * 1024 * 1024
 WHEEL_COUNT_LIMIT = 1024
 
 
-def read(path, limit=None):
+SOURCE_FILE_LIMIT = 32 * 1024 * 1024
+INVENTORY_TOTAL_LIMIT = 128 * 1024 * 1024
+
+
+def capture(stream, expected, object_format):
+    """Validate the exact bounded buffer and descriptor used by the inventory."""
+    mode, oid, size = expected
+    before = os.fstat(stream.fileno())
+    if not stat.S_ISREG(before.st_mode):
+        raise ValueError('NONREGULAR_INPUT')
+    if (before.st_mode & 0o111) != (0o111 if mode == b'100755' else 0):
+        raise ValueError('SOURCE_MODE_MISMATCH')
+    if size < 0 or size > SOURCE_FILE_LIMIT:
+        raise ValueError('SOURCE_SIZE_LIMIT')
+    if before.st_size != size:
+        raise ValueError('DIRTY_SOURCE_BYTES_MISMATCH')
+    data = stream.read(size + 1)
+    after = os.fstat(stream.fileno())
+    identity = ('st_dev', 'st_ino', 'st_mode', 'st_size', 'st_mtime_ns', 'st_ctime_ns')
+    if any(getattr(before, field) != getattr(after, field) for field in identity):
+        raise ValueError('SOURCE_IDENTITY_CHANGED')
+    native = hashlib.new(object_format)
+    native.update(b'blob ' + str(len(data)).encode() + b'\0')
+    native.update(data)
+    if len(data) != size or native.hexdigest() != oid:
+        raise ValueError('DIRTY_SOURCE_BYTES_MISMATCH')
+    return data
+
+
+def read(path, limit=None, *, expected=None, object_format=None):
     parent, name = safe_parent(path)
     try:
         fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
         with os.fdopen(fd, 'rb') as stream:
+            if expected is not None:
+                return capture(stream, expected, object_format)
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise ValueError('NONREGULAR_INPUT')
             if limit is not None and os.fstat(stream.fileno()).st_size > limit:
@@ -69,8 +100,9 @@ def digest(data):
 
 def git(root, *args):
     if args not in (('rev-parse', '--show-object-format'),
-                    ('rev-parse', '--show-toplevel'), ('rev-parse', 'HEAD'),
-                    ('ls-tree', '-r', '-z', '-l', 'HEAD')):
+                    ('rev-parse', '--show-toplevel'), ('rev-parse', 'HEAD')) and not (
+                        len(args) == 5 and args[:4] == ('ls-tree', '-r', '-z', '-l')
+                        and re.fullmatch(r'(?:[0-9a-f]{40}|[0-9a-f]{64})', args[4])):
         raise ValueError('UNSAFE_GIT_OPERATION')
     env = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
     env.update(GIT_NO_REPLACE_OBJECTS='1', GIT_NO_LAZY_FETCH='1',
@@ -100,7 +132,7 @@ def clean(root, sha):
     if git(root, 'rev-parse', 'HEAD').decode().strip() != sha:
         raise ValueError('SOURCE_PIN_MISMATCH')
     tracked = {}
-    for row in git(root, 'ls-tree', '-r', '-z', '-l', 'HEAD').split(b'\0')[:-1]:
+    for row in git(root, 'ls-tree', '-r', '-z', '-l', sha).split(b'\0')[:-1]:
         header, raw_path = row.split(b'\t', 1)
         mode, kind, oid, size = header.split()
         path = raw_path.decode('ascii')
@@ -134,15 +166,13 @@ def clean(root, sha):
                     finally:
                         os.close(child)
                 elif stat.S_ISREG(info.st_mode) and path in tracked:
-                    mode, oid, size = tracked[path]
-                    if (info.st_mode & 0o111) != (0o111 if mode == b'100755' else 0):
-                        raise ValueError('SOURCE_MODE_MISMATCH')
-                    data = read(root / path)
-                    native = hashlib.new(object_format)
-                    native.update(b'blob ' + str(len(data)).encode() + b'\0')
-                    native.update(data)
-                    if len(data) != size or native.hexdigest() != oid:
-                        raise ValueError('DIRTY_SOURCE_BYTES_MISMATCH')
+                    source_fd = os.open(entry.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                                        dir_fd=directory_fd)
+                    with os.fdopen(source_fd, 'rb') as stream:
+                        opened = os.fstat(stream.fileno())
+                        if (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino):
+                            raise ValueError('SOURCE_IDENTITY_CHANGED')
+                        capture(stream, tracked[path], object_format)
                     observed.add(path)
                 else:
                     raise ValueError('DIRTY_OR_NONREGULAR_SOURCE')
@@ -157,6 +187,8 @@ def clean(root, sha):
         os.close(parent)
     if observed != set(tracked):
         raise ValueError('DIRTY_MISSING_SOURCE')
+    if git(root, 'rev-parse', 'HEAD').decode().strip() != sha:
+        raise ValueError('SOURCE_PIN_MISMATCH')
     return tracked
 
 
@@ -320,10 +352,12 @@ def build(root, sha, wheel=None):
     if not required.issubset(tracked):
         raise ValueError('MISSING_MANIFEST')
     paths = sorted(required | {p for p in tracked if p.startswith(('src/', 'contracts/schemas/'))})
+    if sum(tracked[path][2] for path in paths) > INVENTORY_TOTAL_LIMIT:
+        raise ValueError('INVENTORY_SIZE_LIMIT')
     files = {}
     for path in paths:
-        data = read(root / path)
-        files[path] = data
+        files[path] = read(root / path, expected=tracked[path],
+                           object_format='sha1' if len(sha) == 40 else 'sha256')
     project = tomllib.loads(files['pyproject.toml'].decode())['project']
     requirements = [line.strip() for line in files['requirements.txt'].decode().splitlines() if line.strip() and not line.lstrip().startswith('#')]
     direct = pins(requirements)

@@ -96,3 +96,30 @@ Four-lane responsibility is explicit: **Security** owns trust/tenant/approval de
 - Domain onboarding/OIA/System #001, hosted acquisition/n8n, live communications/Stripe, money movement, frontend/Edge Function work, staging/production operations and Phase 6 remain separate work. Removing their journeys from this release gate does not remove their security controls, shared ownership or future acceptance obligations.
 
 **Explicit next action:** prepare the repository-local infrastructure trust/state contract design in Action 1 for independent review. Do not start a provider observation or treat this specification as certification or execution approval.
+
+## Offline component evidence runner (2026-10-20)
+
+Status remains **NOT CERTIFIED**. At corrective-change base
+`431d5db011f393172812ab7e2da318aaa7d46277`, recovery intentionally records only
+HOLD / REVIEW_REQUIRED / NO_RETRY_AUTHORIZED. It supplies no recovery mutation,
+new recovery attempt or independent recovery-mutation verification. This does
+not satisfy literal Gate 9; the acceptance requirements above remain unchanged.
+
+From a clean checkout of the exact reviewed corrective commit, run offline:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/certify-local-infrastructure-v1.py \
+  --check <exact-40-character-HEAD-SHA> --output /tmp/selected-local-v1-evidence.json
+```
+
+Select a new file outside the checkout; existing files are rejected. Use an
+uncredentialed local environment. The runner denies service sockets during the
+seven component suites and supplemental recovery suite, rejects missing/empty,
+failed, errored or skipped suites, and writes sanitized counts and exact source
+identity. Even green suites return nonzero `RECOVERY_MUTATION_GATE_UNMET`.
+Evidence write failures also return nonzero. This is component evidence, not
+release certification or provider authority. Gate 10 still requires independently
+reviewed baseline, pinned dependency and artifact evidence. Run the unchanged
+`bash scripts/check-baseline.sh` offline with `PYTHONDONTWRITEBYTECODE=1`,
+`SEMGREP_ENABLE_VERSION_CHECK=0`, `SEMGREP_SEND_METRICS=off`, and explicit
+`SEMGREP_SETTINGS_FILE` / `SEMGREP_LOG_FILE` paths under `/tmp`.

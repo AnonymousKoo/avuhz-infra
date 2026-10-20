@@ -69,3 +69,11 @@ service, provider, credential, staging, production or customer-data authority.
 Next action: independently review the exact candidate commit and plan the missing
 release-evidence boundary for separate approval. LOCAL v1 remains NOT CERTIFIED;
 DEVELOPMENT and production remain NOT_READY.
+
+The separate [Python wheel-lock candidate](local-v1-python-lock.md) adds
+actual archive-hash runtime, build/bootstrap and verifier locks for one exact
+CPython 3.12.3 Linux x86_64 glibc 2.39 target, plus an offline closure verifier.
+The earlier direct-only inventory and its missing-proof list retain their
+original scope. The new candidate's observed wheel graph does not certify that
+earlier inventory or supply human SBOM approval, signed provenance, retention
+or exact-merge CI/PG17. All release statuses remain **NOT CERTIFIED**.

@@ -6,13 +6,25 @@
 # Historical recipe: git show 047828fe59e743932162df7776fcb37f25647689:.github/workflows/main-pr-gate.yml
 name: Gate10 exact merge CI review candidate
 'on':
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      expected_workflow_sha:
+        description: Reviewed current main commit SHA; evidence binding only, not authorization
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
   exact-merge-evidence:
-    if: github.repository == 'AnonymousKoo/avuhz-infra' && github.event_name == 'workflow_dispatch' && github.run_attempt
-      == 1
+    if: >-
+      github.repository == 'AnonymousKoo/avuhz-infra' &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'AnonymousKoo' && github.actor_id == '168945054' &&
+      github.run_attempt == 1 &&
+      inputs.expected_workflow_sha != '' &&
+      inputs.expected_workflow_sha == github.sha &&
+      inputs.expected_workflow_sha == github.workflow_sha
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -25,6 +37,7 @@ jobs:
       AVUHZ_POSTGRES_DSN: host=127.0.0.1 port=5432 dbname=avuhz_main_pr_gate user=postgres
       SOURCE_SHA: 047828fe59e743932162df7776fcb37f25647689
       WORKFLOW_SHA: ${{ github.workflow_sha }}
+      EXPECTED_WORKFLOW_SHA: ${{ inputs.expected_workflow_sha }}
       SEMGREP_SEND_METRICS: 'off'
       SEMGREP_ENABLE_VERSION_CHECK: '0'
       PIP_NO_INPUT: '1'
@@ -47,6 +60,15 @@ jobs:
         test "$GITHUB_REPOSITORY" = 'AnonymousKoo/avuhz-infra'
         test "$GITHUB_EVENT_NAME" = 'workflow_dispatch'
         test "$GITHUB_RUN_ATTEMPT" = '1'
+        test "$GITHUB_REF" = 'refs/heads/main'
+        test "$GITHUB_ACTOR" = 'AnonymousKoo'
+        test "$GITHUB_ACTOR_ID" = '168945054'
+        # Operator-reviewed current main revision: evidence binding, not authorization.
+        # Pass via env, never interpolate dispatch input into shell source or logs.
+        [[ "$EXPECTED_WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+        [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+        test "$EXPECTED_WORKFLOW_SHA" = "$GITHUB_SHA"
+        test "$EXPECTED_WORKFLOW_SHA" = "$WORKFLOW_SHA"
         test "$SOURCE_SHA" = '047828fe59e743932162df7776fcb37f25647689'
         test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
         [[ "$WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]

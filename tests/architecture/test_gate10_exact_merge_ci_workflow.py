@@ -114,7 +114,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(actions[0]["uses"], "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683")
         self.assertEqual(actions[0]["with"], {
             "repository": "AnonymousKoo/avuhz-infra", "ref": SOURCE,
-            "fetch-depth": 2, "persist-credentials": False,
+            "fetch-depth": 0, "persist-credentials": False,
             "clean": True, "submodules": False, "lfs": False,
         })
         self.assertEqual(self.job["env"]["SOURCE_SHA"], SOURCE)
@@ -122,6 +122,17 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(self.job["env"]["EXPECTED_WORKFLOW_SHA"],
                          "${{ inputs.expected_workflow_sha }}")
         self.assertIn('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"', self.bootstrap)
+
+    def test_historical_checkout_requires_full_history_and_exact_source_pin(self):
+        # Release candidate validation reads an older baseline with git show;
+        # depth 2 omits that object even when every checked-out byte is identical.
+        checkout = self.steps["Checkout immutable historical source"]["with"]
+        self.assertEqual(checkout["fetch-depth"], 0)
+        self.assertEqual(checkout["ref"], SOURCE)
+        self.assertEqual(self.job["env"]["SOURCE_SHA"], SOURCE)
+        self.assertEqual(checkout["fetch-depth"],
+                         historical_job()["steps"][0]["with"]["fetch-depth"])
+        self.assertNotRegex(WORKFLOW.read_text(), r"(?m)^\s*fetch-depth:\s*[1-9][0-9]*\s*$")
 
     def test_historical_environment_and_substantive_steps_have_exact_parity(self):
         historical = historical_job()

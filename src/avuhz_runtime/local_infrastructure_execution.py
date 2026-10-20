@@ -11,8 +11,9 @@ import json
 import sqlite3
 
 from avuhz_runtime.local_infrastructure_authority import (
-    ResourceScope, _digest, _fresh, _id, _scope, _version,
+    LocalInfrastructureDenied, ResourceScope, _digest, _fresh, _id, _scope, _version,
 )
+from avuhz_runtime import local_infrastructure_fencing as fencing
 from avuhz_runtime.local_infrastructure_policy import (
     EXECUTOR, ExplicitApproval, LocalTestInfrastructurePolicyAdapter, _hash, _validate,
 )
@@ -163,6 +164,7 @@ class LocalTestInfrastructureExecution:
                 request_id TEXT UNIQUE NOT NULL, challenge TEXT UNIQUE NOT NULL,
                 scope TEXT NOT NULL, digest TEXT UNIQUE NOT NULL,
                 outcome TEXT NOT NULL CHECK(outcome IN ('ATTEMPTED','UNCERTAIN')))''')
+            fencing.provision(db)
             if new:
                 db.execute('INSERT INTO simulated_resource_state VALUES (?,?,?)',
                            (_scope_key(state.scope), state.digest, state.version))
@@ -174,6 +176,7 @@ class LocalTestInfrastructureExecution:
                            (a.execution_id, a.execution_version, d.approval_id, d.approval_version,
                             d.pins.slot.request_id, d.pins.slot.challenge, scope, digest,
                             int(a.status == 'REVOKED')))
+                fencing.register(db, a.execution_id, scope, digest)
             elif old != (scope, digest):
                 _deny('REGISTRATION_CONFLICT')
             if a.status == 'REVOKED':
@@ -236,12 +239,11 @@ class LocalTestInfrastructureExecution:
             return ExecutionResult('ATTEMPTED')
         outcome = 'UNCERTAIN'
         try:
-            if self._failures.change_before_effect:
-                with closing(self._connect()) as db, db:
-                    db.execute('BEGIN IMMEDIATE')
-                    db.execute('UPDATE simulated_resource_state SET version=version+1 WHERE scope=?', (scope,))
             with closing(self._connect()) as db, db:
                 db.execute('BEGIN IMMEDIATE')
+                fencing.dispatch(db, a.execution_id, scope, digest)
+                if self._failures.change_before_effect:
+                    db.execute('UPDATE simulated_resource_state SET version=version+1 WHERE scope=?', (scope,))
                 # Recheck durable revocation at the effect serialization point.
                 active = db.execute('SELECT revoked FROM execution_registry WHERE execution_id=? '
                                     'AND scope=? AND digest=?', (a.execution_id, scope, digest)).fetchone()
@@ -253,7 +255,7 @@ class LocalTestInfrastructureExecution:
             # Gate 5 acknowledgment only; Gate 6 needs an independent verifier.
             if affected == 1 and not self._failures.lost_ack:
                 outcome = 'ATTEMPTED'
-        except sqlite3.Error:
+        except (sqlite3.Error, LocalInfrastructureDenied):
             outcome = 'UNCERTAIN'
         try:
             with closing(self._connect()) as db, db:

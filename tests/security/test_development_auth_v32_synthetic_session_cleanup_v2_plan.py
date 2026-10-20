@@ -83,7 +83,7 @@ class DevelopmentAuthV32SyntheticSessionCleanupV2PlanTests(unittest.TestCase):
             self.assertEqual(step["verification_state"], "NOT_STARTED")
             self.assertFalse(step["authorization_consumed"])
             self.assertEqual(step["evidence"], [])
-        self.assertEqual(list(BASE.glob(f"{BOUNDARY}*.evidence.json")), [
+        self.assertEqual(sorted(BASE.glob(f"{BOUNDARY}*.evidence.json")), [
             BASE / f"{BOUNDARY}-step1-success.evidence.json",
             BASE / f"{BOUNDARY}-step2-failure.evidence.json",
         ])

@@ -1,6 +1,7 @@
 """Offline review checks: no workflow dispatch, packages, services or provider calls."""
 import os
 import re
+import shlex
 from pathlib import Path
 import subprocess
 import tempfile
@@ -130,7 +131,18 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("ef257d85f76e48da", self.job["env"]["AVUHZ_POSTGRES_IMAGE"])
         for original in historical["steps"][2:-3]:
             with self.subTest(step=original["name"]):
-                self.assertIn(original["run"], self.steps[original["name"]]["run"])
+                if original["name"] == "Run portable repository unit suites":
+                    def commands(script):
+                        return [shlex.split(line.strip()) for line in script.splitlines()
+                                if line.strip().startswith("python3 -m unittest ")]
+                    actual = self.steps[original["name"]]["run"]
+                    self.assertEqual(commands(actual), commands(original["run"]))
+                    # Retain the six literal historical invocations as well as argv.
+                    for line in original["run"].splitlines():
+                        if line.startswith("python3 -m unittest "):
+                            self.assertEqual(actual.count(line), 1)
+                else:
+                    self.assertIn(original["run"], self.steps[original["name"]]["run"])
         self.assertIn(historical["steps"][-1]["run"], self.steps["Remove disposable PostgreSQL"]["run"])
         self.assertEqual(self.steps["Remove disposable PostgreSQL"]["if"], "always()")
         for name in ("Run PostgreSQL migration suites", "Run disposable PostgreSQL integration suites"):
@@ -175,6 +187,53 @@ class WorkflowTests(unittest.TestCase):
             self.assertNotIn("unsafe_continuation", Path(tmp, "gate10-step-output").read_text())
             self.assertNotIn("historical_check=passed", result.stdout)
             self.assertIn("raw output withheld", result.stdout)
+
+    def test_portable_diagnostics_are_bounded_and_preserve_failure_status(self):
+        run = self.steps["Run portable repository unit suites"]["run"]
+        suites = ("runtime", "service", "worker", "architecture", "engineering", "security")
+        commands = [f"python3 -m unittest discover -s tests/{suite} -p 'test_*.py' -v"
+                    for suite in suites]
+        # Replace only historical test processes. Run the actual diagnostic wrapper.
+        # The fixture emits untrusted text on both streams; none may reach CI output.
+        for failed in (*suites, None):
+            with self.subTest(failed=failed), tempfile.TemporaryDirectory() as tmp:
+                script = run
+                for suite, command in zip(suites, commands):
+                    fixture = ("printf 'untrusted_raw_contents\\n'; "
+                               "printf 'untrusted_exception_path\\n' >&2; ")
+                    fixture += "(exit 37)" if suite == failed else "true"
+                    script = script.replace(command, fixture)
+                result = subprocess.run(["bash"], input=script, text=True, capture_output=True,
+                                        env={"PATH": os.environ["PATH"], "RUNNER_TEMP": tmp,
+                                             "portable_suite": "untrusted_inherited_state"})
+                reached = len(suites) if failed is None else suites.index(failed) + 1
+                expected = "".join(f"gate10_portable_stage={s}\n" for s in suites[:reached])
+                expected += ("historical_check=passed\n" if failed is None
+                             else f"gate10_portable_failed_suite={failed}\n")
+                self.assertEqual(result.returncode, 0 if failed is None else 37)
+                self.assertEqual(result.stdout, expected)
+                self.assertEqual(result.stderr, "")
+                self.assertIn("untrusted_raw_contents", Path(tmp, "gate10-step-output").read_text())
+        # Invalid state must select a fixed unknown token, never interpolate its value.
+        for state in ("unknown", "", "runtime\nuntrusted_state", "$(echo untrusted_state)"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as tmp:
+                script = run.replace(
+                    "portable_suite=runtime",
+                    "portable_suite=" + shlex.quote(state) + "\n        (exit 41)", 1)
+                result = subprocess.run(["bash"], input=script, text=True, capture_output=True,
+                                        env={"PATH": os.environ["PATH"], "RUNNER_TEMP": tmp})
+                self.assertEqual(result.returncode, 41)
+                self.assertEqual(result.stdout, "gate10_portable_failed_suite=unknown\n")
+                self.assertEqual(result.stderr, "")
+        # A sandbox/output setup failure also emits only the fixed unknown code.
+        with tempfile.TemporaryDirectory() as tmp:
+            blocked = Path(tmp, "untrusted_path")
+            blocked.write_text("not a directory")
+            result = subprocess.run(["bash"], input=run, text=True, capture_output=True,
+                                    env={"PATH": os.environ["PATH"], "RUNNER_TEMP": str(blocked)})
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, "gate10_portable_failed_suite=unknown\n")
+            self.assertEqual(result.stderr, "")
 
     def test_skipped_postgres_suites_cannot_record_success(self):
         # Replace only the unittest invocation with synthetic output. Execute the

@@ -1,5 +1,6 @@
 """Offline review checks: no workflow dispatch, packages, services or provider calls."""
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -32,13 +33,24 @@ class WorkflowTests(unittest.TestCase):
         self.bootstrap = self.steps["Verify exact source and record non-certified identity"]["run"]
 
     def test_manual_known_repository_first_attempt_and_least_privilege(self):
-        self.assertEqual(self.workflow["on"], {"workflow_dispatch": {}})
+        self.assertEqual(self.workflow["on"], {"workflow_dispatch": {"inputs": {
+            "expected_workflow_sha": {
+                "description": "Reviewed current main commit SHA; evidence binding only, not authorization",
+                "required": True, "type": "string",
+            },
+        }}})
         self.assertEqual(self.workflow["permissions"], {"contents": "read"})
         self.assertEqual(len(self.workflow["jobs"]), 1)
         self.assertEqual(
             self.job["if"],
             "github.repository == 'AnonymousKoo/avuhz-infra' && "
-            "github.event_name == 'workflow_dispatch' && github.run_attempt == 1",
+            "github.event_name == 'workflow_dispatch' && "
+            "github.ref == 'refs/heads/main' && "
+            "github.actor == 'AnonymousKoo' && github.actor_id == '168945054' && "
+            "github.run_attempt == 1 && "
+            "inputs.expected_workflow_sha != '' && "
+            "inputs.expected_workflow_sha == github.sha && "
+            "inputs.expected_workflow_sha == github.workflow_sha",
         )
         self.assertEqual(set(self.job), {"if", "runs-on", "timeout-minutes", "env", "steps"})
         text = WORKFLOW.read_text()
@@ -46,6 +58,54 @@ class WorkflowTests(unittest.TestCase):
                            "retention-days:", "pull_request_target:"):
             self.assertNotIn(expression, text)
         self.assertNotIn("${{", "\n".join(s.get("run", "") for s in self.job["steps"]))
+
+    def test_job_guard_rejects_unmatched_dispatch_context(self):
+        # Evaluate the actual restricted conjunction, not a second hand-written guard.
+        # GitHub comparisons are case-insensitive and coerce numeric equality;
+        # exact spelling, SHA shape and attempt spelling are rechecked by Bash.
+        context = {
+            "github.repository": "AnonymousKoo/avuhz-infra",
+            "github.event_name": "workflow_dispatch", "github.ref": "refs/heads/main",
+            "github.actor": "AnonymousKoo", "github.actor_id": "168945054",
+            "github.run_attempt": "1", "github.sha": "a" * 40,
+            "github.workflow_sha": "a" * 40, "inputs.expected_workflow_sha": "a" * 40,
+        }
+
+        def permits(values):
+            outcomes = []
+            for clause in self.job["if"].split(" && "):
+                match = re.fullmatch(
+                    r"((?:github|inputs)\.[a-z_]+) (==|!=) ('[^']*'|1|(?:github|inputs)\.[a-z_]+)",
+                    clause,
+                )
+                self.assertIsNotNone(match, "unsupported guard expression")
+                left, operator, right = match.groups()
+                lhs = values.get(left, "")
+                if right == "1":
+                    try:
+                        equal = float(lhs or 0) == 1
+                    except ValueError:
+                        equal = False
+                else:
+                    rhs = right[1:-1] if right.startswith("'") else values.get(right, "")
+                    equal = lhs.casefold() == rhs.casefold()
+                outcomes.append(equal if operator == "==" else not equal)
+            return all(outcomes)
+
+        self.assertTrue(permits(context))
+        for key, value in (
+            ("github.repository", "fork/avuhz-infra"), ("github.event_name", "push"),
+            ("github.ref", "refs/heads/feature"), ("github.ref", "refs/tags/main"),
+            ("github.actor", "reviewer"), ("github.actor_id", "168945055"),
+            ("github.run_attempt", "2"), ("github.run_attempt", "0"),
+            ("inputs.expected_workflow_sha", ""), ("inputs.expected_workflow_sha", "b" * 40),
+            ("github.sha", "b" * 40), ("github.workflow_sha", "b" * 40),
+        ):
+            with self.subTest(key=key, value=value):
+                self.assertFalse(permits({**context, key: value}))
+        for key in context:
+            with self.subTest(missing=key):
+                self.assertFalse(permits({k: v for k, v in context.items() if k != key}))
 
     def test_only_checkout_is_an_action_and_source_is_immutable(self):
         actions = [s for s in self.job["steps"] if "uses" in s]
@@ -58,6 +118,8 @@ class WorkflowTests(unittest.TestCase):
         })
         self.assertEqual(self.job["env"]["SOURCE_SHA"], SOURCE)
         self.assertEqual(self.job["env"]["WORKFLOW_SHA"], "${{ github.workflow_sha }}")
+        self.assertEqual(self.job["env"]["EXPECTED_WORKFLOW_SHA"],
+                         "${{ inputs.expected_workflow_sha }}")
         self.assertIn('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"', self.bootstrap)
 
     def test_historical_environment_and_substantive_steps_have_exact_parity(self):
@@ -114,33 +176,80 @@ class WorkflowTests(unittest.TestCase):
             self.assertNotIn("historical_check=passed", result.stdout)
             self.assertIn("raw output withheld", result.stdout)
 
+    def test_skipped_postgres_suites_cannot_record_success(self):
+        # Replace only the unittest invocation with synthetic output. Execute the
+        # real skip guard and failure wrapper; no database or historical suite runs.
+        for name in ("Run PostgreSQL migration suites", "Run disposable PostgreSQL integration suites"):
+            run = self.steps[name]["run"]
+            start = run.index("python3 -m unittest discover")
+            end = run.index(' | tee "$output"', start)
+            command = run[start:end]
+            for report, accepted in (("OK", True), ("OK (skipped=1)", False),
+                                     ("test_example ... skipped 'unavailable'", False)):
+                with self.subTest(step=name, report=report), tempfile.TemporaryDirectory() as tmp:
+                    script = run.replace(command, "printf '%s\\n' "+repr(report))
+                    self.assertNotIn("python3 -m unittest", script)
+                    result = subprocess.run(["bash"], input=script, text=True, capture_output=True,
+                                            env={"PATH": os.environ["PATH"], "RUNNER_TEMP": tmp})
+                    self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                    self.assertEqual("historical_check=passed" in result.stdout, accepted)
+
     def test_identity_and_database_denials_before_any_tool_or_service(self):
         # Only the preflight prefix runs. Stub Git HEAD; all substantive CI is excluded.
         prefix = self.bootstrap.split("cat >", 1)[0]
         with tempfile.TemporaryDirectory() as tmp:
             git = Path(tmp, "git")
-            git.write_text('#!/bin/sh\nprintf "%s\\n" "$SOURCE_SHA"\n')
+            git.write_text('#!/bin/sh\nprintf "%s\\n" "$FIXTURE_HEAD"\n')
             git.chmod(0o755)
             env = {"PATH": tmp + os.pathsep + os.environ["PATH"],
                    "GITHUB_REPOSITORY": "AnonymousKoo/avuhz-infra",
                    "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_RUN_ATTEMPT": "1",
-                   "SOURCE_SHA": SOURCE, "WORKFLOW_SHA": "a" * 40,
-                   "GITHUB_ACTOR": "reviewer", "GITHUB_RUN_ID": "123",
+                   "SOURCE_SHA": SOURCE, "FIXTURE_HEAD": SOURCE, "WORKFLOW_SHA": "a" * 40,
+                   "GITHUB_REF": "refs/heads/main", "GITHUB_SHA": "a" * 40,
+                   "EXPECTED_WORKFLOW_SHA": "a" * 40,
+                   "GITHUB_ACTOR": "AnonymousKoo", "GITHUB_ACTOR_ID": "168945054",
+                   "GITHUB_RUN_ID": "123",
                    "AVUHZ_POSTGRES_DSN": self.job["env"]["AVUHZ_POSTGRES_DSN"]}
             result = subprocess.run(["bash"], input=prefix, text=True, capture_output=True, env=env)
             self.assertEqual(result.returncode, 0, result.stderr)
             for key, value in (("GITHUB_REPOSITORY", "fork/avuhz-infra"),
                                ("GITHUB_EVENT_NAME", "push"), ("GITHUB_RUN_ATTEMPT", "2"),
-                               ("SOURCE_SHA", "b" * 40), ("WORKFLOW_SHA", SOURCE),
+                               ("GITHUB_REF", "refs/heads/feature"), ("GITHUB_REF", "refs/tags/main"),
+                               ("GITHUB_REF", "refs/heads/Main"),
+                               ("GITHUB_ACTOR", "reviewer"), ("GITHUB_ACTOR", "anonymouskoo"),
+                               ("GITHUB_ACTOR_ID", "168945055"),
+                               ("GITHUB_RUN_ATTEMPT", "0"), ("GITHUB_RUN_ATTEMPT", ""),
+                               ("EXPECTED_WORKFLOW_SHA", ""), ("EXPECTED_WORKFLOW_SHA", "b" * 40),
+                               ("EXPECTED_WORKFLOW_SHA", "A" * 40),
+                               ("EXPECTED_WORKFLOW_SHA", '$(echo unsafe_injection)'),
+                               ("GITHUB_SHA", "b" * 40), ("GITHUB_SHA", ""),
+                               ("SOURCE_SHA", "b" * 40), ("FIXTURE_HEAD", "b" * 40),
+                               ("WORKFLOW_SHA", SOURCE),
+                               ("WORKFLOW_SHA", "b" * 40), ("WORKFLOW_SHA", ""),
                                ("GITHUB_ACTOR", "bad\nactor"), ("GITHUB_RUN_ID", "1\ninjected"),
                                ("PGHOST", "hosted.invalid"), ("PGSERVICE", "hosted"),
                                ("AVUHZ_POSTGRES_DSN", "host=hosted.invalid"),
                                ("SUPABASE_URL", "hosted.invalid"),
                                ("AVUHZ_RUN_UNIFIED_LOCAL_ACCEPTANCE_PG", "1")):
-                with self.subTest(key=key):
+                with self.subTest(key=key, value=value):
                     result = subprocess.run(["bash"], input=prefix, text=True,
                                             capture_output=True, env={**env, key: value})
                     self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(result.stdout, "")
+                    expected_error = ("unexpected_database_environment\n" if key in {
+                        "PGHOST", "PGSERVICE", "SUPABASE_URL", "AVUHZ_RUN_UNIFIED_LOCAL_ACCEPTANCE_PG"
+                    } else "")
+                    self.assertEqual(result.stderr, expected_error)
+            # Missing required context also fails closed; never inherit host GitHub values.
+            for key in ("GITHUB_REF", "GITHUB_SHA", "GITHUB_ACTOR", "GITHUB_ACTOR_ID",
+                        "EXPECTED_WORKFLOW_SHA", "SOURCE_SHA", "WORKFLOW_SHA",
+                        "GITHUB_REPOSITORY", "GITHUB_EVENT_NAME", "GITHUB_RUN_ID",
+                        "GITHUB_RUN_ATTEMPT"):
+                with self.subTest(missing=key):
+                    result = subprocess.run(["bash"], input=prefix, text=True, capture_output=True,
+                                            env={k: v for k, v in env.items() if k != key})
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(result.stdout, "")
 
 
 class RawIntegrityTests(unittest.TestCase):

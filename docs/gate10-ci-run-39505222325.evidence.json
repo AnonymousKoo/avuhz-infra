@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "evidence_class": "non-certified",
+  "environment_scope": [
+    "LOCAL",
+    "TEST"
+  ],
+  "repository": "AnonymousKoo/avuhz-infra",
+  "api_observed": {
+    "observation_basis": "Connected GitHub read API; sanitized run, job steps and artifact listing only.",
+    "run_id": 39505222325,
+    "run_url": "https://github.com/AnonymousKoo/avuhz-infra/actions/runs/39505222325",
+    "event": "workflow_dispatch",
+    "attempt": 1,
+    "head_branch": "main",
+    "head_sha": "a75818522c42b0a9450ae73a706ab916dd78f14a",
+    "actor_login": "AnonymousKoo",
+    "actor_id": 168945054,
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_path": ".github/workflows/gate10-exact-merge-ci.yml",
+    "job_id": 118912347021,
+    "job_url": "https://github.com/AnonymousKoo/avuhz-infra/actions/runs/39505222325/job/118912347021",
+    "job_status": "completed",
+    "job_conclusion": "success",
+    "steps": [
+      {
+        "number": 1,
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 2,
+        "name": "Checkout immutable historical source",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 3,
+        "name": "Verify exact source and record non-certified identity",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 4,
+        "name": "Install pinned local validation dependencies",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 5,
+        "name": "Run canonical repository baseline",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 6,
+        "name": "Run portable repository unit suites",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 7,
+        "name": "Validate runtime schema representability",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 8,
+        "name": "Record cross-repository portability gap",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 9,
+        "name": "Start stable disposable PostgreSQL 17",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 10,
+        "name": "Run PostgreSQL migration suites",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 11,
+        "name": "Replay provider-neutral baseline locally",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 12,
+        "name": "Run disposable PostgreSQL integration suites",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 13,
+        "name": "Build repository wheel",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 14,
+        "name": "Verify repository wheel contents",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 15,
+        "name": "Check immutable commit diff hygiene",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 16,
+        "name": "Verify final raw checkout integrity",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 17,
+        "name": "Remove disposable PostgreSQL",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 18,
+        "name": "Record non-certified completion",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 36,
+        "name": "Post Checkout immutable historical source",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "number": 37,
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "run_artifact_count": 0,
+    "artifact_interpretation": "Zero artifacts listed by the run artifact API; no retained digest-bound wheel is established."
+  },
+  "log_reported": {
+    "observation_basis": "Allowlisted actual job output lines, excluding echoed commands; runner claims, not signed attestations.",
+    "workflow_sha": "a75818522c42b0a9450ae73a706ab916dd78f14a",
+    "source_sha": "047828fe59e743932162df7776fcb37f25647689",
+    "historical_ci_checks": "passed",
+    "evidence_class": "non-certified",
+    "provenance": "absent",
+    "cross_repo_suite_portable": false,
+    "certification_granted": false,
+    "disposable_postgres_cleanup": "passed",
+    "portable_suite_stage_markers": [
+      "runtime",
+      "service",
+      "worker",
+      "architecture",
+      "engineering",
+      "security"
+    ]
+  },
+  "workflow_declared_claims": {
+    "observation_basis": "Ref is enforced by the successful bootstrap; contact declarations occur in echoed cleanup script with output redirected, not actual exit markers.",
+    "ref": "refs/heads/main",
+    "provider_contact_attempted": false,
+    "supabase_contact_attempted": false,
+    "remote_mutation_attempted": false,
+    "independently_verified": false
+  },
+  "limitations": {
+    "historical_source_only": true,
+    "later_main_runtime_validated": false,
+    "interpretation": "Successful job steps and sanitized log claims do not prove release readiness, external provider state or later main runtime behavior.",
+    "signed_attestation": false,
+    "artifact_digest_bound": false,
+    "artifact_retention_established": false,
+    "human_reviewed_sbom_and_dependency_lock_established": false,
+    "cross_repo_portability_established": false,
+    "attributable_human_gate10_approval_established": false
+  },
+  "authority": {
+    "certification_granted": false,
+    "merge_authorized": false,
+    "production_authorized": false,
+    "provider_mutation_authorized": false,
+    "deployment_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "human_approval_granted": false
+  },
+  "unresolved_release_conditions": [
+    "Signed provenance bound to the exact reviewed source and artifact.",
+    "Immutable digest-bound artifact with established retention.",
+    "Independent human review of SBOM and dependency lock.",
+    "Cross-repository portability verification.",
+    "Attributable human Gate10 approval."
+  ]
+}

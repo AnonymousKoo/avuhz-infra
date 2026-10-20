@@ -713,9 +713,9 @@ def main() -> int:
         third["verification_state"], third["authorization_consumed"],
         third["evidence"], third["binding_assertions"],
     ) == ("BLOCKED", "NOT_STARTED", "NOT_STARTED", False, [], [])
-    assert [path.name for path in BASE.glob(EVIDENCE_GLOB)] == [
+    assert sorted(path.name for path in BASE.glob(EVIDENCE_GLOB)) == sorted([
         STEP1_EVIDENCE_PATH.name, STEP2_FAILURE_EVIDENCE_PATH.name,
-    ]
+    ])
     assert EXECUTOR_PATH.is_file()
     assert WORKFLOW_PATH.is_file()
 

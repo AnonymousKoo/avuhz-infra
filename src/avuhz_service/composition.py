@@ -5,28 +5,15 @@ import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from importlib.resources import files
-from pathlib import Path
 from typing import Mapping
 
 from avuhz_runtime.command_registry import COMMANDS
 from avuhz_runtime.guards import GuardPipeline, TrustedExecutionContext
 from avuhz_runtime.in_memory import Executor, MemoryStore, UnitOfWork
+from avuhz_runtime.schema_registry import schema_root
 from avuhz_runtime.validation import CommandValidator
 
 from .application import AvuhzApplication, QUERY_READ_CAPABILITY, QueryRouter
-
-def schema_root() -> Path:
-    repository_root = Path(__file__).resolve().parents[2] / "contracts/schemas/v1"
-    if repository_root.is_dir():
-        return repository_root
-    try:
-        installed_root = Path(str(files("avuhz_contracts").joinpath("schemas", "v1")))
-    except (ModuleNotFoundError, TypeError) as error:
-        raise RuntimeError("canonical schema catalog is unavailable") from error
-    if not installed_root.is_dir():
-        raise RuntimeError("canonical schema catalog is unavailable")
-    return installed_root
 
 
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost"})

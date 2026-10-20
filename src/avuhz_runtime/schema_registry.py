@@ -4,8 +4,23 @@ from __future__ import annotations
 
 import copy
 import json
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
+
+
+def schema_root() -> Path:
+    """Locate canonical checkout or unpacked installed-wheel schema resources."""
+    repository_root = Path(__file__).resolve().parents[2] / "contracts/schemas/v1"
+    if repository_root.is_dir():
+        return repository_root
+    try:
+        installed_root = Path(str(files("avuhz_contracts").joinpath("schemas", "v1")))
+    except (ModuleNotFoundError, TypeError) as error:
+        raise RuntimeError("canonical schema catalog is unavailable") from error
+    if not installed_root.is_dir():
+        raise RuntimeError("canonical schema catalog is unavailable")
+    return installed_root
 
 
 SCHEMA_FILES = (

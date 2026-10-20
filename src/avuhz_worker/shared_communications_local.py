@@ -20,17 +20,15 @@ import threading
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from avuhz_runtime.schema_registry import SchemaRegistry
+from avuhz_runtime.schema_registry import SchemaRegistry, schema_root
 from .outbox import DeliveryRejected, DeliveryUnavailable, PUBLISH_CAPABILITY
 
 
 _SCHEMA_ID = "urn:avuhz:schema:contracts:orchestration:lifecycle-event:v1"
-_SCHEMA_ROOT = Path(__file__).resolve().parents[2] / "contracts/schemas/v1"
 _MAX_EVENT_BYTES = 16_384
 _CHANNEL = "INTERNAL_NOTIFICATION"
 _ALLOWED_EVENTS = frozenset({"engagement.opened", "work_intake.opened"})
@@ -139,7 +137,7 @@ class DeterministicLocalCommunicationsFake:
         self._outcomes = list(bounded_outcomes)
         self._receipts: dict[str, CommunicationReceipt] = {}
         self._lock = threading.Lock()
-        registry = SchemaRegistry(_SCHEMA_ROOT)
+        registry = SchemaRegistry(schema_root())
         self._validator = Draft202012Validator(
             registry.expanded(_SCHEMA_ID), format_checker=FormatChecker()
         )

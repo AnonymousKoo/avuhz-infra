@@ -302,17 +302,50 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
         (
         set -euo pipefail
+        # Diagnostic state is local, never inherited from the runner environment.
+        portable_suite=unknown
+        exec 3>&1
+        portable_failure() {
+          status=$?
+          case "$portable_suite" in
+            runtime) printf 'gate10_portable_failed_suite=runtime\n' >&3 ;;
+            service) printf 'gate10_portable_failed_suite=service\n' >&3 ;;
+            worker) printf 'gate10_portable_failed_suite=worker\n' >&3 ;;
+            architecture) printf 'gate10_portable_failed_suite=architecture\n' >&3 ;;
+            engineering) printf 'gate10_portable_failed_suite=engineering\n' >&3 ;;
+            security) printf 'gate10_portable_failed_suite=security\n' >&3 ;;
+            *) printf 'gate10_portable_failed_suite=unknown\n' >&3 ;;
+          esac
+          exit "$status"
+        }
+        trap portable_failure ERR
+        # Keep shell/redirection errors private as well as raw unittest output.
+        {
+        {
+        portable_suite=runtime
+        printf 'gate10_portable_stage=runtime\n' >&3
         python3 -m unittest discover -s tests/runtime -p 'test_*.py' -v
+        portable_suite=service
+        printf 'gate10_portable_stage=service\n' >&3
         python3 -m unittest discover -s tests/service -p 'test_*.py' -v
+        portable_suite=worker
+        printf 'gate10_portable_stage=worker\n' >&3
         python3 -m unittest discover -s tests/worker -p 'test_*.py' -v
+        portable_suite=architecture
+        printf 'gate10_portable_stage=architecture\n' >&3
         python3 -m unittest discover -s tests/architecture -p 'test_*.py' -v
+        portable_suite=engineering
+        printf 'gate10_portable_stage=engineering\n' >&3
         python3 -m unittest discover -s tests/engineering -p 'test_*.py' -v
+        portable_suite=security
+        printf 'gate10_portable_stage=security\n' >&3
         python3 -m unittest discover -s tests/security -p 'test_*.py' -v
 
-        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        } > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        } 2>/dev/null
+        )
         echo "historical_check=passed"
     - name: Validate runtime schema representability
       shell: bash

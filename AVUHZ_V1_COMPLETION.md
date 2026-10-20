@@ -97,29 +97,128 @@ Four-lane responsibility is explicit: **Security** owns trust/tenant/approval de
 
 **Explicit next action:** prepare the repository-local infrastructure trust/state contract design in Action 1 for independent review. Do not start a provider observation or treat this specification as certification or execution approval.
 
-## Offline component evidence runner (2026-10-20)
+## R1 offline release evidence integration (2026-10-20)
 
-Status remains **NOT CERTIFIED**. At corrective-change base
-`431d5db011f393172812ab7e2da318aaa7d46277`, recovery intentionally records only
-HOLD / REVIEW_REQUIRED / NO_RETRY_AUTHORIZED. It supplies no recovery mutation,
-new recovery attempt or independent recovery-mutation verification. This does
-not satisfy literal Gate 9; the acceptance requirements above remain unchanged.
+Status remains **NOT CERTIFIED**. This section supersedes the earlier runner's
+unconditional `RECOVERY_MUTATION_GATE_UNMET` interpretation; the literal Gates
+7–10 above are unchanged. Historical source-gap tables above retain their
+`55ff37f` scope. This integration starts at exact cached PR769 merge
+`a6104c48511465c583f7f2de2fc7e38d9fa0991a`; it changes tooling/tests/docs only.
 
-From a clean checkout of the exact reviewed corrective commit, run offline:
+PR769 adds an R2 source-only fictional recovery action and fencing protocol,
+separate from non-executing HOLD / REVIEW_REQUIRED / NO_RETRY_AUTHORIZED
+reconciliation. The component's reported 336 tests and owner-reported Main PR
+Gate `39427818355` PASS are historical component/CI evidence, not an independent
+LOCAL release certificate. No GitHub result was fetched or authenticated here.
+The action remains LOCAL/TEST SQLite with all writers running the reviewed
+protocol; it does not make ambiguous effects recoverable or authorize legacy,
+mixed-version, provider, DEVELOPMENT, staging or production execution. Its
+limitations remain in `contracts/proposals/v1/local-infrastructure-recovery-action.md`.
+
+The runner explicitly loads ten canonical modules: the seven authority, trust,
+policy, execution, verification, audit and recovery suites, recovery-safety,
+recovery-action and fencing. It does not discover filenames or execute its own
+release contract suite recursively. Every module must run nonzero tests with
+zero failures, errors and skips. Successful Gate 9 assertion IDs must include
+fresh separate recovery authority, its one attempt and actual-state verification,
+missing/forged/expired authority denials, wrong actual poststate, and the new
+process fencing/replay test. Reports bind to the current exact source SHA;
+missing/stale/unverified assertions deny. Tests use controlled fictional clocks.
+
+The new subprocess test pauses an actual original executor after reservation,
+using pipes rather than sockets, semaphores or sleeps. Recovery executes in the
+parent; a fresh optimized Python process reconstructs deterministic trusted
+fixture inputs, denies replay against the original database and independently
+verifies actual state before any verifier result exists. The original then
+resumes and must return UNCERTAIN without dispatch. A separate read-only physical
+connection confirms the recovery desired state, one recovery reservation and
+ATTEMPTED event, the original fence, zero original dispatch receipts and persisted
+VERIFIED evidence after all children exit. Child start/timeout/failure is a test
+error or failure, never a skip or an inferred pass. This is a simulated trust
+boundary, not real identity or process isolation from a privileged database owner.
+
+From a clean checkout of the exact independently reviewed commit, select a new
+literal file directly under `/tmp` and use an uncredentialed local environment:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/certify-local-infrastructure-v1.py \
   --check <exact-40-character-HEAD-SHA> --output /tmp/selected-local-v1-evidence.json
 ```
 
-Select a new file outside the checkout; existing files are rejected. Use an
-uncredentialed local environment. The runner denies service sockets during the
-seven component suites and supplemental recovery suite, rejects missing/empty,
-failed, errored or skipped suites, and writes sanitized counts and exact source
-identity. Even green suites return nonzero `RECOVERY_MUTATION_GATE_UNMET`.
-Evidence write failures also return nonzero. This is component evidence, not
-release certification or provider authority. Gate 10 still requires independently
-reviewed baseline, pinned dependency and artifact evidence. Run the unchanged
-`bash scripts/check-baseline.sh` offline with `PYTHONDONTWRITEBYTECODE=1`,
-`SEMGREP_ENABLE_VERSION_CHECK=0`, `SEMGREP_SEND_METRICS=off`, and explicit
-`SEMGREP_SETTINGS_FILE` / `SEMGREP_LOG_FILE` paths under `/tmp`.
+The runner checks exact HEAD, repository identity and clean tracked/untracked
+state before and after suites. It rejects provider/service configuration and Git
+identity override variables, and denies sockets in the in-process suites.
+Children execute only reviewed local fixture code; this is not an OS network
+sandbox. It records positive assertion IDs and counts without dumping failures
+or input payloads. Output paths must be literal direct `/tmp` children, outside
+the checkout, without symlinks or traversal; no append or overwrite is permitted.
+Evidence uses O_EXCL/O_NOFOLLOW, mode 0600, file and directory fsync, readback and
+SHA256 of the exact persisted bytes. Persistence failure returns nonzero with no
+successful digest. An incomplete file after a failure must never be treated as
+accepted evidence, and cannot be overwritten by another run.
+
+Optional **candidate** release input uses `--release-input
+/tmp/selected-release-input.json --release-input-sha256 <actual-manifest-sha256>`.
+This is a bounded schema enforced by the runner, not an attestation protocol:
+
+- Exact top-level keys: `schema` = `avuhz-local-release-input-v1`, `source_sha`,
+  `reviewed_sha`, and `records`. Both commits must equal `--check`.
+- `records` has exactly `baseline`, `dependency`, `artifact`, `review`, and `ci`.
+  Each record has exactly `source_sha`, `path`, `sha256`, and `result` = `PASS`.
+  Every commit must match; every path is a literal existing regular direct
+  `/tmp` child. Digest syntax is 64 lowercase hex characters.
+- The runner hashes actual file bytes (including the purported built wheel),
+  compares each supplied digest and the manifest digest, then repeats validation
+  after suites. It never substitutes a claimed artifact digest for file bytes.
+  Only digests and bounded classifications enter output, never payloads or paths.
+- A complete manifest also checks that the baseline script is byte-identical to
+  PR769 and records actual hashes of `requirements.txt`, `package-lock.json`,
+  `pyproject.toml` and `.github/workflows/main-pr-gate.yml`. These are dependency
+  evidence sources, **not a claim of a fully hash-locked Python dependency graph**.
+
+Missing inputs are recorded as MISSING; malformed, mismatched or tampered inputs
+are denied. Even well-formed matching files are only
+`CANDIDATE_UNAUTHENTICATED`: anyone could fabricate a review/CI report or label
+arbitrary bytes as a wheel. No offline trusted signing identity or attestation
+verification policy exists in this integration. It cannot authenticate reviewer
+independence, CI results, baseline execution, artifact build provenance or a
+complete dependency lock/SBOM. It deliberately has **no CERTIFIED transition**.
+Green required suites yield nonzero `GATE10_INDEPENDENT_PROOF_UNVERIFIED`, a
+sanitized `EVIDENCE_CANDIDATE` file and its strong digest. Failed suites yield a
+durable failed candidate where possible; preflight/input/persistence errors yield
+only sanitized denial output. No success exit is possible from test green alone.
+
+Run the unchanged baseline separately offline (inspect it before execution):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 SEMGREP_ENABLE_VERSION_CHECK=0 \
+  SEMGREP_SEND_METRICS=off SEMGREP_SETTINGS_FILE=/tmp/selected-semgrep-settings.yml \
+  SEMGREP_LOG_FILE=/tmp/selected-semgrep.log bash scripts/check-baseline.sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python3 -m unittest \
+  tests.architecture.test_local_infrastructure_release_v1
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python3 -m unittest discover \
+  -s tests/architecture -p 'test_*.py'
+```
+
+The Main PR Gate additionally installs dependencies, starts disposable PG17,
+runs migration/integration gates and builds/checks a wheel. This invocation does
+none of those operations: no installs, service sockets, database migrations or
+provider access are authorized. Exact-commit authenticated CI/PG17 and built-wheel
+provenance, independently reviewed unchanged baseline and dependency lock/SBOM,
+and explicit human Gate 10 approval remain required. A prior commit's CI PASS or
+this source review cannot satisfy those requirements for a new commit. Under an
+appropriate separate approval, the wheel build command in the canonical CI is
+`python3 -m pip wheel . --no-deps --no-build-isolation --disable-pip-version-check
+-w <fresh-artifact-directory>`; this document does not authorize installs/builds
+or service starts in the present invocation.
+
+Security progress is stricter evidence denial; Infrastructure progress is bounded
+Gate 9 test integration and candidate persistence. Automation has no new dispatch
+path. Business delivery and customer readiness remain unchanged. No new executor
+privilege, policy or runtime behavior is introduced, and no R2 component is
+reclassified as production ready.
+
+**Explicit next action:** independently review the exact committed candidate and
+its locally generated evidence, then obtain authenticated same-commit baseline,
+dependency/artifact and applicable CI/PG17 proof plus explicit human Gate 10
+approval. Until that separate boundary is satisfied, LOCAL v1 remains NOT CERTIFIED.

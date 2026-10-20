@@ -254,3 +254,25 @@ Wheel inspection bounds compressed input, member count and declared/consumed
 uncompressed bytes before parsing and while streaming. These denial checks
 close source-substitution and unbounded-archive inspection gaps; they do not
 supply any missing release proof. Status remains **NOT CERTIFIED**.
+
+## Gate10 Stage 1 Python wheel-lock candidate (2026-10-20)
+
+The bounded LOCAL/TEST candidate based on cached main
+`92bd1ab9f6395a7939c6f8c2191d0ee3d6a729e7` adds separate runtime,
+build/bootstrap and verifier archive-hash locks, offline graph/archive denial
+tests and deterministic unsigned candidate CycloneDX generation. See
+[Python lock scope and reproduction](docs/local-v1-python-lock.md).
+The exact target is CPython 3.12.3 Linux x86_64 glibc 2.39; this does not claim
+glibc 2.17 compatibility or a reproducible full CI tool environment.
+
+Actual install/build/smoke results belong to the private source-bound dossier,
+not a certification assertion in this specification. No runtime or workflow
+change, push, PR, merge, service or provider action is included. Security gains
+archive/closure denial checks; Infrastructure gains isolated wheel evidence;
+Automation dispatch and Business/customer readiness are unchanged.
+
+Independent human lock/SBOM review, authenticated exact-merge CI/PG17, trusted
+signed provenance, immutable retention and explicit human Gate10 approval remain
+unmet. LOCAL v1 remains **NOT CERTIFIED**; DEVELOPMENT and production remain
+**NOT_READY**. Next action: review the exact committed candidate and private
+archive-bound evidence before authorizing the separate release-proof boundary.

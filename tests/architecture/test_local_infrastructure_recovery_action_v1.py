@@ -5,6 +5,9 @@ from dataclasses import fields, replace
 from datetime import timedelta
 from pathlib import Path
 import sqlite3
+import subprocess
+import sys
+import os
 import tempfile
 import threading
 import unittest
@@ -307,6 +310,101 @@ class RecoveryActionTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT count(*) FROM local_execution_dispatches').fetchone(), (0,))
             self.assertEqual(db.execute('SELECT count(*) FROM local_execution_fences').fetchone(), (1,))
             self.assertEqual(db.execute("SELECT count(*) FROM local_recovery_action_events WHERE state='ATTEMPTED'").fetchone(), (1,))
+
+    def test_cross_process_delayed_original_recovery_replay(self):
+        path = str(Path(self.tmp.name) / 'process.sqlite')
+        root = Path(__file__).resolve().parents[2]
+        env = dict(os.environ, PYTHONPATH=str(root / 'src') + os.pathsep + str(root),
+                   PYTHONDONTWRITEBYTECODE='1')
+        # No semaphores, sockets or timing assumptions: pipes establish ordering.
+        child = r"""
+import sys
+from unittest.mock import patch
+from avuhz_runtime.local_infrastructure_execution import LocalTestInfrastructureExecution
+from tests.architecture.test_local_infrastructure_recovery_v1 import options
+connect = LocalTestInfrastructureExecution._connect
+execute = LocalTestInfrastructureExecution.execute
+calls = 0
+def paused(instance):
+    global calls
+    calls += 1
+    if calls == 3:
+        print('RESERVED', flush=True)
+        if sys.stdin.readline() != 'RESUME\n': raise RuntimeError('BAD_RESUME')
+    return connect(instance)
+def checked(instance, *args, **kwargs):
+    result = execute(instance, *args, **kwargs)
+    if result.reason_code != 'UNCERTAIN': raise RuntimeError('ORIGINAL_NOT_BLOCKED')
+    print('BLOCKED', flush=True)
+    raise SystemExit(0)
+with patch.object(LocalTestInfrastructureExecution, '_connect', paused), patch.object(LocalTestInfrastructureExecution, 'execute', checked):
+    options(sys.argv[1], flags={})
+"""
+        process = subprocess.Popen([sys.executable, '-c', child, path], cwd=root, env=env,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                ready = pool.submit(process.stdout.readline)
+                try:
+                    self.assertEqual(ready.result(timeout=20), 'RESERVED\n')
+                    c = options(path, {})
+                    a = LocalTestRecoveryAction(**c)
+                    replay = r"""
+import sys
+from tests.architecture.test_local_infrastructure_recovery_action_v1 import options
+from avuhz_runtime.local_infrastructure_recovery_action import LocalTestRecoveryAction
+# Reconstruct deterministic trusted inputs in a private fixture, then bind
+# the adapter to the original physical database (no serialized authority).
+c = options(sys.argv[1] + '-fixture')
+c['reconciliation_sources']['audit_sources']['database_path'] = sys.argv[1]
+print('READY', flush=True)
+if sys.stdin.readline() != 'REPLAY\n': raise RuntimeError('BAD_REPLAY_SIGNAL')
+a = LocalTestRecoveryAction(**c)
+outcome = a.execute(executor_handle=a.executor_handle, authorization_handle=a.authorization_handle)
+if outcome.state != 'UNCERTAIN': raise RuntimeError('REPLAY_NOT_BLOCKED')
+verified = a.verify(verifier_handle=a.verifier_handle)
+if verified.state != 'VERIFIED': raise RuntimeError('RECOVERY_NOT_VERIFIED')
+print('REPLAY_BLOCKED_VERIFIED')
+"""
+                    other = subprocess.Popen([sys.executable, '-O', '-c', replay, path], cwd=root, env=env,
+                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    try:
+                        waiting = pool.submit(other.stdout.readline)
+                        signal = waiting.result(timeout=20)
+                        self.assertEqual(signal, 'READY\n', other.stderr.read() if not signal else '')
+                        self.assertEqual(self.execute(a).state, 'ATTEMPTED')
+                        out, err = other.communicate('REPLAY\n', timeout=20)
+                        self.assertEqual(other.returncode, 0, err)
+                        self.assertEqual(out, 'REPLAY_BLOCKED_VERIFIED\n')
+                        self.assertEqual(a.verify(verifier_handle=a.verifier_handle).state, 'VERIFIED')
+                    finally:
+                        if other.poll() is None:
+                            other.kill()
+                        other.communicate()
+                        for pipe in (other.stdin, other.stdout, other.stderr):
+                            pipe.close()
+                finally:
+                    if not ready.done():
+                        process.kill()
+            stdout, stderr = process.communicate('RESUME\n', timeout=20)
+            self.assertEqual(process.returncode, 0, 'original process failed')
+            self.assertEqual(stdout, 'BLOCKED\n')
+            self.assertEqual(stderr, '')
+        finally:
+            if process.poll() is None:
+                process.kill()
+            process.communicate()
+            for pipe in (process.stdin, process.stdout, process.stderr):
+                pipe.close()
+        # Independent physical read after every child has exited: recovery is
+        # the last and only effect, and the original never gained dispatch.
+        with sqlite3.connect('file:' + path + '?mode=ro', uri=True) as db:
+            self.assertEqual(db.execute('SELECT digest,version FROM simulated_resource_state').fetchall(), [(rec.fixtures.D, 3)])
+            self.assertEqual(db.execute('SELECT count(*) FROM local_execution_dispatches').fetchone(), (0,))
+            self.assertEqual(db.execute('SELECT count(*) FROM local_execution_fences').fetchone(), (1,))
+            self.assertEqual(db.execute('SELECT count(*) FROM local_recovery_action_reservations').fetchone(), (1,))
+            self.assertEqual(db.execute("SELECT state FROM local_recovery_action_events WHERE state='ATTEMPTED'").fetchall(), [('ATTEMPTED',)])
+            self.assertEqual(db.execute('SELECT state FROM local_recovery_action_verifications').fetchall(), [('VERIFIED',)])
 
     def test_executor_writer_cannot_forge_verification(self):
         a = self.adapter()

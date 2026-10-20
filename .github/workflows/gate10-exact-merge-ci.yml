@@ -1,0 +1,569 @@
+# R2 repository-local review candidate ONLY; no dispatch/execution authority.
+# One manual lane, first attempt only; a new dispatch is a new authorization boundary.
+# Future authorized CI uses runner network for checkout, apt, pip and digest-pinned
+# Docker image downloads. No such operations were invoked to author this candidate.
+# No signing, artifact publication or provenance: logs/summary are non-certified.
+# Historical recipe: git show 047828fe59e743932162df7776fcb37f25647689:.github/workflows/main-pr-gate.yml
+name: Gate10 exact merge CI review candidate
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  exact-merge-evidence:
+    if: github.repository == 'AnonymousKoo/avuhz-infra' && github.event_name == 'workflow_dispatch' && github.run_attempt
+      == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: src:.
+      AVUHZ_LOCAL_POSTGRES_CONTAINER: avuhz-main-pr-gate-postgres
+      AVUHZ_POSTGRES_IMAGE: docker.io/library/postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+      AVUHZ_POSTGRES_DIGEST: sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+      AVUHZ_INTEGRATION_DATABASE: avuhz_main_pr_gate
+      AVUHZ_POSTGRES_DSN: host=127.0.0.1 port=5432 dbname=avuhz_main_pr_gate user=postgres
+      SOURCE_SHA: 047828fe59e743932162df7776fcb37f25647689
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      SEMGREP_SEND_METRICS: 'off'
+      SEMGREP_ENABLE_VERSION_CHECK: '0'
+      PIP_NO_INPUT: '1'
+    steps:
+    - name: Checkout immutable historical source
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        repository: AnonymousKoo/avuhz-infra
+        ref: 047828fe59e743932162df7776fcb37f25647689
+        fetch-depth: 2
+        persist-credentials: false
+        clean: true
+        submodules: false
+        lfs: false
+    - name: Verify exact source and record non-certified identity
+      shell: bash
+      run: |
+        set -euo pipefail
+        umask 077
+        test "$GITHUB_REPOSITORY" = 'AnonymousKoo/avuhz-infra'
+        test "$GITHUB_EVENT_NAME" = 'workflow_dispatch'
+        test "$GITHUB_RUN_ATTEMPT" = '1'
+        test "$SOURCE_SHA" = '047828fe59e743932162df7776fcb37f25647689'
+        test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+        [[ "$WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+        test "$WORKFLOW_SHA" != "$SOURCE_SHA"
+        [[ "$GITHUB_ACTOR" =~ ^[A-Za-z0-9_-]+(\[bot\])?$ ]]
+        [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ ]]
+        test "$AVUHZ_POSTGRES_DSN" = 'host=127.0.0.1 port=5432 dbname=avuhz_main_pr_gate user=postgres'
+        # Never inherit hosted DSNs, libpq services, credentials, or test opt-ins.
+        python3 - <<'PYENV'
+        import os
+        allowed = {
+            "AVUHZ_LOCAL_POSTGRES_CONTAINER", "AVUHZ_POSTGRES_IMAGE",
+            "AVUHZ_POSTGRES_DIGEST", "AVUHZ_INTEGRATION_DATABASE", "AVUHZ_POSTGRES_DSN",
+        }
+        if any((k.startswith("AVUHZ_") and k not in allowed)
+               or k.startswith(("PG", "SUPABASE_")) for k in os.environ):
+            raise SystemExit("unexpected_database_environment")
+        PYENV
+        cat > "$RUNNER_TEMP/gate10-integrity.py" <<'PYINTEGRITY'
+        import hashlib
+        import os
+        from pathlib import Path
+        import stat
+        import subprocess
+
+
+        def git(root, *args, data=None):
+            return subprocess.check_output(
+                ["git", "-C", str(root), *args], input=data, stderr=subprocess.DEVNULL
+            )
+
+
+        def verify(root, source):
+            root = Path(root)
+            expected = {}
+            directories = set()
+            for record in git(root, "ls-tree", "-rz", source).split(b"\0"):
+                if not record:
+                    continue
+                metadata, name = record.split(b"\t", 1)
+                mode, kind, oid = metadata.split()
+                if kind != b"blob" or mode not in (b"100644", b"100755"):
+                    raise ValueError("unsupported_tree_entry")
+                path = os.fsdecode(name)
+                if path == ".git" or path.startswith(".git/"):
+                    raise ValueError("reserved_path")
+                expected[path] = (mode, oid)
+                directories.update(str(p) for p in Path(path).parents if str(p) != ".")
+            staged = {}
+            for record in git(root, "ls-files", "--stage", "-z").split(b"\0"):
+                if not record:
+                    continue
+                metadata, name = record.split(b"\t", 1)
+                mode, oid, stage = metadata.split()
+                if stage != b"0":
+                    raise ValueError("unmerged_index")
+                staged[os.fsdecode(name)] = (mode, oid)
+            if staged != expected:
+                raise ValueError("index_mismatch")
+            attrs = git(root, "check-attr", "-z", "--stdin", "filter",
+                        data=b"\0".join(os.fsencode(p) for p in expected) + b"\0").split(b"\0")
+            if any(value not in (b"unspecified", b"unset") for value in attrs[2::3]):
+                raise ValueError("filter_attribute")
+            seen = set()
+            for parent, dirs, files in os.walk(root, followlinks=False):
+                for name in list(dirs) + files:
+                    path = Path(parent) / name
+                    relative = str(path.relative_to(root))
+                    # Git administrative metadata is excluded; no other path is excluded.
+                    if relative == ".git":
+                        if path.is_symlink() or not path.is_dir():
+                            raise ValueError("git_metadata_shape")
+                        if name in dirs:
+                            dirs.remove(name)
+                        continue
+                    mode = path.lstat().st_mode
+                    if stat.S_ISDIR(mode):
+                        if relative not in directories:
+                            raise ValueError("extra_directory")
+                        continue
+                    if not stat.S_ISREG(mode) or relative not in expected:
+                        raise ValueError("extra_or_special_file")
+                    expected_mode, oid = expected[relative]
+                    executable = bool(mode & 0o111)
+                    if executable != (expected_mode == b"100755"):
+                        raise ValueError("file_mode_mismatch")
+                    raw = path.read_bytes()
+                    # Hash raw bytes, bypassing Git clean/smudge/text filters entirely.
+                    digest = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+                    if digest.encode() != oid:
+                        raise ValueError("raw_blob_mismatch")
+                    seen.add(relative)
+            if seen != set(expected):
+                raise ValueError("missing_file")
+            if git(root, "status", "--porcelain=v1", "--untracked-files=all"):
+                raise ValueError("dirty_source")
+
+
+        if __name__ == "__main__":
+            try:
+                verify(Path.cwd(), os.environ["SOURCE_SHA"])
+            except Exception:
+                raise SystemExit("source_integrity=failed") from None
+            print("source_integrity=passed; git_metadata_excluded=true")
+        PYINTEGRITY
+        python3 "$RUNNER_TEMP/gate10-integrity.py"
+        {
+          printf 'evidence_class=non-certified\nprovenance=absent\n'
+          printf 'workflow_sha=%s\nsource_sha=%s\n' "$WORKFLOW_SHA" "$SOURCE_SHA"
+          printf 'actor=%s\nrun_id=%s\nattempt=%s\n' "$GITHUB_ACTOR" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+          printf 'scope=LOCAL_TEST_repository_CI\nexecution_authority=absent\n'
+        } | tee -a "$GITHUB_STEP_SUMMARY"
+    - name: Install pinned local validation dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+
+        command -v git
+        command -v bash
+        command -v python3
+        command -v jq
+        command -v docker
+
+        python3 - <<'PY'
+        import sys
+        if sys.version_info < (3, 11):
+            raise SystemExit("Python 3.11 or newer is required")
+        print(sys.version.split()[0])
+        PY
+
+        sudo apt-get update
+        sudo apt-get install --yes ripgrep
+        command -v rg
+        rg --version
+
+        constraints="${RUNNER_TEMP}/avuhz-main-pr-gate-constraints.txt"
+        cat > "$constraints" <<'CONSTRAINTS'
+        semgrep==1.136.0
+        setuptools==68.1.2
+        jsonschema==4.10.3
+        psycopg==3.3.4
+        psycopg-binary==3.3.4
+        PyJWT==2.14.0
+        cryptography==50.0.1
+        boltons==21.0.0
+        bracex==3.0.1
+        click==8.1.8
+        click-option-group==0.5.9
+        defusedxml==0.7.1
+        deprecated==1.3.1
+        exceptiongroup==1.2.2
+        face==26.0.1
+        glom==22.1.0
+        googleapis-common-protos==1.75.0
+        importlib-metadata==7.1.0
+        opentelemetry-api==1.25.0
+        opentelemetry-exporter-otlp-proto-common==1.25.0
+        opentelemetry-exporter-otlp-proto-http==1.25.0
+        opentelemetry-instrumentation==0.46b0
+        opentelemetry-instrumentation-requests==0.46b0
+        opentelemetry-proto==1.25.0
+        opentelemetry-sdk==1.25.0
+        opentelemetry-semantic-conventions==0.46b0
+        opentelemetry-util-http==0.46b0
+        peewee==3.19.0
+        protobuf==4.25.9
+        rich==13.5.3
+        ruamel.yaml==0.19.1
+        tomli==2.0.2
+        wcmatch==8.5.2
+        wrapt==1.17.3
+        zipp==4.1.0
+        CONSTRAINTS
+
+        python3 -m pip install --disable-pip-version-check --no-input \
+          --constraint "$constraints" \
+          setuptools==68.1.2 \
+          jsonschema==4.10.3 \
+          psycopg==3.3.4 \
+          psycopg-binary==3.3.4 \
+          'PyJWT[crypto]==2.14.0' \
+          cryptography==50.0.1 \
+          semgrep==1.136.0
+        python3 -m pip install --disable-pip-version-check --no-input \
+          --require-hashes --only-binary=:all: --force-reinstall \
+          -r requirements/local-v1-validation.lock
+        python3 -m pip check
+
+        python3 - <<'PY'
+        from importlib.metadata import version
+
+        expected = {
+            "setuptools": "68.1.2",
+            "jsonschema": "4.10.3",
+            "psycopg": "3.3.4",
+            "psycopg-binary": "3.3.4",
+            "PyJWT": "2.14.0",
+            "cryptography": "50.0.1",
+            "semgrep": "1.136.0",
+        }
+        for package, required in expected.items():
+            installed = version(package)
+            print(f"{package}=={installed}")
+            if installed != required:
+                raise SystemExit(f"{package} does not match the pinned version")
+        PY
+
+        command -v semgrep
+        test "$(semgrep --version | tail -n1)" = "1.136.0"
+        for tool in git bash python3 jq docker rg semgrep; do
+          command -v "$tool"
+        done
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Run canonical repository baseline
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        bash ./scripts/check-baseline.sh
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Run portable repository unit suites
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        python3 -m unittest discover -s tests/runtime -p 'test_*.py' -v
+        python3 -m unittest discover -s tests/service -p 'test_*.py' -v
+        python3 -m unittest discover -s tests/worker -p 'test_*.py' -v
+        python3 -m unittest discover -s tests/architecture -p 'test_*.py' -v
+        python3 -m unittest discover -s tests/engineering -p 'test_*.py' -v
+        python3 -m unittest discover -s tests/security -p 'test_*.py' -v
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Validate runtime schema representability
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        python3 tests/schema/validate_runtime_schema_representability.py
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Record cross-repository portability gap
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        test -f tests/cross_repo/test_sekinfra_handoff.py
+        echo "cross_repo_suite_included=false"
+        echo "cross_repo_suite_portable=false"
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Start stable disposable PostgreSQL 17
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+
+        docker pull "${AVUHZ_POSTGRES_IMAGE}"
+        repo_digests="$(docker image inspect "${AVUHZ_POSTGRES_IMAGE}" --format '{{json .RepoDigests}}')"
+        python3 - "$repo_digests" "${AVUHZ_POSTGRES_DIGEST}" <<'PY'
+        import json
+        import sys
+
+        repo_digests = json.loads(sys.argv[1])
+        expected = sys.argv[2]
+        if not any(item.endswith("@" + expected) for item in repo_digests):
+            raise SystemExit("PostgreSQL RepoDigests do not contain the required digest")
+        PY
+
+        docker run --detach --rm \
+          --name "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+          --env POSTGRES_HOST_AUTH_METHOD=trust \
+          --publish 127.0.0.1:5432:5432 \
+          "${AVUHZ_POSTGRES_IMAGE}"
+        touch "${RUNNER_TEMP}/avuhz-main-pr-gate-postgres-created"
+
+        ready=false
+        consecutive_successes=0
+        stable_postmaster_start=""
+        for _ in $(seq 1 60); do
+          if postmaster_start="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+            psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+            -c 'select pg_postmaster_start_time();' 2>/dev/null)"; then
+            if [[ -n "$postmaster_start" && "$postmaster_start" == "$stable_postmaster_start" ]]; then
+              consecutive_successes=$((consecutive_successes + 1))
+            else
+              stable_postmaster_start="$postmaster_start"
+              consecutive_successes=1
+            fi
+            if (( consecutive_successes >= 3 )); then
+              ready=true
+              break
+            fi
+          else
+            consecutive_successes=0
+            stable_postmaster_start=""
+          fi
+          sleep 1
+        done
+
+        if [[ "$ready" != "true" ]]; then
+          echo "::error::Disposable PostgreSQL 17 did not reach stable readiness."
+          exit 1
+        fi
+
+        docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+          psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+          -c 'select version();'
+        server_version_num="$(docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+          psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+          -c 'show server_version_num;')"
+        case "$server_version_num" in
+          17*) ;;
+          *) echo "::error::Disposable PostgreSQL major version is not 17."; exit 1 ;;
+        esac
+        echo "disposable_postgres_ready=true"
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Run PostgreSQL migration suites
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        output="${RUNNER_TEMP}/avuhz-main-pr-gate-migration-tests.txt"
+        python3 -m unittest discover \
+          -s tests/migrations \
+          -p 'test_*.py' \
+          -v 2>&1 | tee "$output"
+        if grep -Eiq 'skipped=[1-9][0-9]*|[.][.][.] skipped ' "$output"; then
+          echo "::error::A PostgreSQL migration test was skipped."
+          exit 1
+        fi
+        echo "postgres_migration_tests_skipped=false"
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Replay provider-neutral baseline locally
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+          dropdb --if-exists -U postgres "${AVUHZ_INTEGRATION_DATABASE}"
+        docker exec "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+          createdb -U postgres "${AVUHZ_INTEGRATION_DATABASE}"
+        docker exec -i "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" \
+          psql -X -v ON_ERROR_STOP=1 -U postgres -d "${AVUHZ_INTEGRATION_DATABASE}" \
+          < supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql
+        echo "provider_neutral_baseline_replayed_locally=true"
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Run disposable PostgreSQL integration suites
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        output="${RUNNER_TEMP}/avuhz-main-pr-gate-integration-tests.txt"
+        AVUHZ_RUN_UNIFIED_LOCAL_ACCEPTANCE_PG=1 \
+        AVUHZ_REQUIRE_UNIFIED_LOCAL_ACCEPTANCE=1 \
+        python3 -m unittest discover \
+          -s tests/integration \
+          -p 'test_*.py' \
+          -v 2>&1 | tee "$output"
+        if grep -Eiq 'skipped=[1-9][0-9]*|[.][.][.] skipped ' "$output"; then
+          echo "::error::A PostgreSQL integration test was skipped."
+          exit 1
+        fi
+        echo "postgres_integration_tests_skipped=false"
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Build repository wheel
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        # setuptools writes build/ and egg-info; build from an exact disposable copy.
+        # The canonical checkout must remain raw-byte clean, including ignored paths.
+        build_source="$RUNNER_TEMP/gate10-build-source"
+        mkdir "$build_source"
+        cp -a "$GITHUB_WORKSPACE/." "$build_source/"
+        cd "$build_source"
+        python3 "$RUNNER_TEMP/gate10-integrity.py"
+        set -euo pipefail
+        wheel_dir="${RUNNER_TEMP}/avuhz-main-pr-gate-wheel"
+        mkdir "$wheel_dir"
+        python3 -m pip wheel . \
+          --no-deps \
+          --no-build-isolation \
+          --disable-pip-version-check \
+          -w "$wheel_dir"
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Verify repository wheel contents
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Historical CI check failed; raw output withheld."' ERR
+        (
+        set -euo pipefail
+        python3 - "${RUNNER_TEMP}/avuhz-main-pr-gate-wheel" <<'PY'
+        import sys
+        import tomllib
+        import zipfile
+        from pathlib import Path
+
+        root = Path.cwd()
+        wheel_dir = Path(sys.argv[1])
+        wheels = sorted(wheel_dir.glob("*.whl"))
+        if len(wheels) != 1:
+            raise SystemExit("exactly one wheel is required")
+
+        project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+        with zipfile.ZipFile(wheels[0]) as archive:
+            names = set(archive.namelist())
+            metadata_files = sorted(
+                name for name in names if name.endswith(".dist-info/METADATA")
+            )
+            if len(metadata_files) != 1:
+                raise SystemExit("exactly one wheel METADATA file is required")
+            metadata = {}
+            for line in archive.read(metadata_files[0]).decode().splitlines():
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    metadata[key] = value.strip()
+
+        if metadata.get("Name") != project["name"]:
+            raise SystemExit("wheel package Name does not match pyproject.toml")
+        if metadata.get("Version") != project["version"]:
+            raise SystemExit("wheel package Version does not match pyproject.toml")
+        if not any(name.startswith("avuhz_service/") for name in names):
+            raise SystemExit("wheel does not include avuhz_service")
+        if not any(name.startswith("avuhz_worker/") for name in names):
+            raise SystemExit("wheel does not include avuhz_worker")
+        print("wheel_content_verification=passed")
+        PY
+
+        ) > "$RUNNER_TEMP/gate10-step-output" 2>&1
+        echo "historical_check=passed"
+    - name: Check immutable commit diff hygiene
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Manual dispatch has no PR base; compare the exact source to its first parent.
+        git cat-file -e "$SOURCE_SHA^{commit}"
+        git cat-file -e "$SOURCE_SHA^1^{commit}"
+        git diff --check "$SOURCE_SHA^1" "$SOURCE_SHA" >/dev/null 2>&1
+    - name: Verify final raw checkout integrity
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+        python3 "$RUNNER_TEMP/gate10-integrity.py"
+    - name: Remove disposable PostgreSQL
+      if: always()
+      shell: bash
+      run: |
+        set -euo pipefail
+        trap 'echo "::error::Disposable PostgreSQL cleanup failed."' ERR
+        (
+        set -euo pipefail
+        command -v docker
+        container="$(docker container ls -a \
+          --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+          --format '{{.Names}}')"
+        if [[ "$container" == "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" ]]; then
+          docker rm -f "${AVUHZ_LOCAL_POSTGRES_CONTAINER}" >/dev/null
+          remaining="$(docker container ls -a \
+            --filter "name=^/${AVUHZ_LOCAL_POSTGRES_CONTAINER}$" \
+            --format '{{.Names}}')"
+          test -z "$remaining"
+          echo "disposable_postgres_removed=true"
+        elif [[ -f "${RUNNER_TEMP}/avuhz-main-pr-gate-postgres-created" ]]; then
+          echo "disposable_postgres_already_absent=true"
+        else
+          echo "disposable_postgres_was_not_created=true"
+        fi
+        echo "provider_contact_attempted=false"
+        echo "supabase_contact_attempted=false"
+        echo "remote_mutation_attempted=false"
+
+        ) > "$RUNNER_TEMP/gate10-cleanup-output" 2>&1
+        echo "disposable_postgres_cleanup=passed"
+    - name: Record non-certified completion
+      shell: bash
+      run: |
+        set -euo pipefail
+        printf 'historical_ci_checks=passed\nevidence_class=non-certified\nprovenance=absent\n' | tee -a "$GITHUB_STEP_SUMMARY"
+        printf 'cross_repo_suite_portable=false\ncertification_granted=false\n' | tee -a "$GITHUB_STEP_SUMMARY"

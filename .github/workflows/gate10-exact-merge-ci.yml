@@ -47,7 +47,7 @@ jobs:
       with:
         repository: AnonymousKoo/avuhz-infra
         ref: 047828fe59e743932162df7776fcb37f25647689
-        fetch-depth: 2
+        fetch-depth: 0
         persist-credentials: false
         clean: true
         submodules: false

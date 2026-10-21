@@ -12,34 +12,70 @@ signing or deployment is authorized or performed by this preparation.
 
 Preserve the manual exact-main-merge, repository/owner/actor, first-attempt,
 source/workflow SHA, immutable checkout, historical recipe, digest, diff and
-raw-byte integrity guards. Keep workflow-level `contents: read`; scope proposed
-`contents: read`, `id-token: write`, `attestations: write` and
-`artifact-metadata: write` permissions to the existing evidence job only.
-This is an authority-affecting R2 workflow review candidate, with no run authority.
+raw-byte integrity guards. Workflow and producer job permissions are explicitly
+ONLY `contents: read`. The producer retains all existing validation, pinned
+PostgreSQL 17, migration/replay, build, diff/integrity and cleanup stages.
+This is an authority-affecting R2 workflow correction for PR #779's HIGH broad
+permissions finding, with no run or integration authority.
 
 After successful integrity and disposable PostgreSQL cleanup, revalidate exactly
 one regular nonsymlink wheel in `RUNNER_TEMP/avuhz-main-pr-gate-wheel`. Reject
-symlinked parents, unsafe action-glob/output paths, missing or extra wheels,
-nonregular files and SHA256 mismatch against `wheel_contents.outputs.wheel_sha256`.
-Pass the absolute validated path through `GITHUB_OUTPUT`. Both subsequent actions
-use that exact path; neither rebuilds the wheel.
+symlinked parents, extra entries, unsafe names and SHA256 mismatch against
+`wheel_contents.outputs.wheel_sha256`. The expected filename is
+`avuhz_service-<numeric.version>-py3-none-any.whl`. Upload only the validated
+absolute path using the uniquely named source-SHA/run-ID/attempt artifact with
+`if-no-files-found: error` and `retention-days: 30`.
 
-The proposed required actions are pinned to the owner-supplied official v4 tag
-SHAs (not independently fetched or verified during this offline preparation):
+The producer exports the revalidated wheel SHA256 and upload action's numeric
+artifact ID. Its always-run summary requires every stage's outcome AND conclusion
+to succeed, including wheel guard and upload, validates the artifact ID and matching
+lowercase wheel digests, and reports only `exact_merge_producer_checks=passed`
+and `signing_state=pending_separate_job`. It cannot claim overall Gate10 success
+or a successful attestation. The archive's digest is not the wheel's SHA256.
 
-- `actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6` with that subject path.
-- `actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02` with the same
-  path, `if-no-files-found: error`, `retention-days: 30` and a name containing
-  source SHA, run ID and attempt.
+A separate `attest-exact-wheel` job requires producer success through `needs` and
+implicit `success()` scheduling. It uses a fresh GitHub-hosted runner and explicit
+`contents: read`, `id-token: write`, `attestations: write` and
+`artifact-metadata: write` permissions. The last permission supports the pinned
+`actions/attest` v4 artifact-metadata publication contract; independent review of
+the exact action's permission requirement remains necessary before publication.
+Build dependencies and repository tests never receive these signing permissions.
 
-Implicit success conditions prevent publication after prior failure, including
-cleanup failure. No continuation on action error is permitted. The always-run
-sanitized summary requires both outcome and conclusion success for every stage,
-including wheel revalidation, attestation and upload, plus matching wheel digests.
-A successful attestation action is a CI observation; independent provenance
-verification and human certification remain absent. The summary stays noncertifying.
-The earlier identity record's `provenance=absent` describes the pre-attestation
-stage; the final summary says `provenance=not_independently_verified`.
+The first signing step independently checks manual workflow_dispatch, exact
+repository/owner IDs, main ref, actor and ID, workflow ref, first attempt, expected
+reviewed workflow/source SHA, run ID, producer success, numeric artifact ID and
+lowercase wheel digest. Inputs enter inline Python through environment variables,
+never shell source. It rejects preexisting download paths and unsafe temp roots.
+The download selects ONLY the exact same-run artifact ID through `artifact-ids`,
+with no name/glob selection, token, cross-run or cross-repository override.
+`merge-multiple: true` places the single selected archive directly into the guarded
+signer directory, rather than relying on artifact-name directory behavior.
+
+After download, independently repeat context checks and require exactly one regular
+nonsymlink wheel, no extra files, directories or symlinks, a canonical absolute temp
+path and safe expected wheel filename. Hash actual wheel bytes and compare with the
+producer's lowercase SHA256 before passing the absolute subject path to attestation.
+No checkout, dependency installation, repository script, wheel import, wheel execution
+or artifact-provided code runs on this signer. Python runs isolated with `-B -I`.
+
+The required actions are pinned to supplied official v4 commit SHAs. No GitHub read
+or independent tag-resolution verification was performed during this offline correction;
+verify the exact pins, especially download's refs/tags/v4 binding, in the separately
+authorized GitHub connector review before publishing:
+
+- Producer: `actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02`.
+- Signer: `actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093`.
+- Signer: `actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6`.
+
+No continuation on action error is permitted. Producer failure prevents signing;
+missing artifacts and failed or ambiguous download/verification/attestation block
+workflow success. The signer always-run summary rechecks context, producer success,
+all signing stage outcomes AND conclusions, path and digest; it fails closed for
+failed, skipped, cancelled, missing or malformed evidence. Both summaries retain
+`evidence_class=non-certified`, `certification_granted=false` and
+`provenance=not_independently_verified`. Successful attestation remains a CI
+observation; independent provenance verification and human certification are absent.
+The earlier identity record's `provenance=absent` describes the pre-attestation stage.
 
 ## Distinct artifact and commit identities
 
@@ -48,6 +84,7 @@ The old LOCAL rebuilt wheel SHA256
 is **NOT** the future GitHub CI wheel identity. Do not substitute it for the
 future run's observed wheel digest or claim build equivalence. Historical
 successful CI without retained wheel bytes does not fill that gap.
+The preparation source `42708b4` is not the eventual corrected PR main merge SHA.
 A newly merged code commit needs its own exact-commit CI proof, including the
 reviewed workflow/source SHA binding and retained bytes from its authorized run.
 No historical suite result is promoted to proof for this amendment.
@@ -113,6 +150,7 @@ external lock and recovery/readback proof. Automation owns the bounded CI handof
 and failure propagation. Business owns release acceptance and client priorities;
 this preparation does not authorize intake, tenants, billing or client deployment.
 
-Next approval: owner review of this LOCAL amendment and the pending retention
-parameters. GitHub execution and external WORM operations remain separate future
+Next action: independently review and publish only the corrected three blobs into
+PR #779 via the GitHub connector under separate authorization; do not merge.
+Owner decisions on the pending retention parameters remain required. GitHub execution and external WORM operations remain separate future
 authorization boundaries. No external resource is created by this plan.

@@ -33,6 +33,7 @@ class WorkflowTests(unittest.TestCase):
     def setUp(self):
         self.workflow = load_workflow()
         self.job = self.workflow["jobs"]["exact-merge-evidence"]
+        self.signer = self.workflow["jobs"]["attest-exact-wheel"]
         self.steps = {step["name"]: step for step in self.job["steps"]}
         self.bootstrap = self.steps["Verify exact source and record non-certified identity"]["run"]
 
@@ -50,7 +51,7 @@ class WorkflowTests(unittest.TestCase):
             },
         }}})
         self.assertEqual(self.workflow["permissions"], {"contents": "read"})
-        self.assertEqual(len(self.workflow["jobs"]), 1)
+        self.assertEqual(set(self.workflow["jobs"]), {"exact-merge-evidence", "attest-exact-wheel"})
         self.assertEqual(
             self.job["if"],
             "github.repository == 'AnonymousKoo/avuhz-infra' && "
@@ -64,20 +65,30 @@ class WorkflowTests(unittest.TestCase):
             "inputs.expected_workflow_sha == github.sha && "
             "inputs.expected_workflow_sha == github.workflow_sha",
         )
-        self.assertEqual(set(self.job), {"if", "permissions", "runs-on", "timeout-minutes", "env", "steps"})
+        self.assertEqual(set(self.job), {"if", "permissions", "outputs", "runs-on", "timeout-minutes", "env", "steps"})
         text = WORKFLOW.read_text()
         for expression in ("secrets.", "environment:", "pull_request_target:"):
             self.assertNotIn(expression, text)
         self.assertNotIn("${{", "\n".join(s.get("run", "") for s in self.job["steps"]))
 
-    def assert_retention_contract(self, job):
-        self.assertEqual(job["permissions"], {
+    def assert_retention_contract(self, job, signer):
+        self.assertEqual(job["permissions"], {"contents": "read"})
+        self.assertEqual(job["outputs"], {
+            "wheel_sha256": "${{ steps.wheel_subject.outputs.wheel_sha256 }}",
+            "artifact_id": "${{ steps.upload.outputs.artifact-id }}",
+        })
+        self.assertEqual(signer["permissions"], {
             "contents": "read", "id-token": "write", "attestations": "write",
             "artifact-metadata": "write",
         })
+        self.assertEqual(signer["needs"], ["exact-merge-evidence"])
+        self.assertEqual(signer["if"], job["if"])
+        self.assertEqual(signer["runs-on"], "ubuntu-latest")
         steps = {s["id"]: s for s in job["steps"]}
+        signed = {s["id"]: s for s in signer["steps"]}
         path = "${{ steps.wheel_subject.outputs.wheel_path }}"
-        self.assertEqual(steps["attest"], {
+        self.assertNotIn("attest", steps)
+        self.assertEqual(signed["attest"], {
             "name": "Attest exact CI wheel", "id": "attest",
             "uses": "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6",
             "with": {"subject-path": path},
@@ -88,48 +99,101 @@ class WorkflowTests(unittest.TestCase):
             "with": {"name": "gate10-wheel-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}",
                      "path": path, "if-no-files-found": "error", "retention-days": 30},
         })
+        self.assertEqual(signed["download"]["uses"],
+                         "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093")
+        self.assertEqual(signed["download"]["with"], {
+            "artifact-ids": "${{ needs.exact-merge-evidence.outputs.artifact_id }}",
+            "path": "${{ runner.temp }}/gate10-signer-wheel", "merge-multiple": True,
+        })
         self.assertEqual(steps["wheel_subject"]["env"], {
             "VERIFIED_WHEEL_SHA256": "${{ steps.wheel_contents.outputs.wheel_sha256 }}",
         })
-        for stage in ("wheel_subject", "attest", "upload"):
-            self.assertNotIn("if", steps[stage])  # implicit success(), including cleanup
+        self.assertEqual(signer["env"], {
+            **{k: job["env"][k] for k in ("SOURCE_SHA", "WORKFLOW_REF", "REPOSITORY_OWNER",
+                                          "REPOSITORY_OWNER_ID", "WORKFLOW_SHA", "EXPECTED_WORKFLOW_SHA")},
+            "PRODUCER_RESULT": "${{ needs.exact-merge-evidence.result }}",
+            "ARTIFACT_ID": "${{ needs.exact-merge-evidence.outputs.artifact_id }}",
+            "VERIFIED_WHEEL_SHA256": "${{ needs.exact-merge-evidence.outputs.wheel_sha256 }}",
+            "DOWNLOAD_PATH": "${{ runner.temp }}/gate10-signer-wheel",
+        })
+        for stage in ("wheel_subject", "upload"):
+            self.assertNotIn("if", steps[stage])
             self.assertNotIn("continue-on-error", steps[stage])
+        self.assertEqual([s["id"] for s in signer["steps"]],
+                         ["signer_guard", "download", "wheel_subject", "attest", "summary"])
+        for step in signer["steps"]:
+            self.assertNotIn("continue-on-error", step)
+            if step["id"] == "summary":
+                self.assertEqual(step["if"], "always()")
+            else:
+                self.assertNotIn("if", step)
+            if "run" in step:
+                self.assertNotIn("${{", step["run"])
+                self.assertIn("python3 -B -I -", step["run"])
+                for forbidden in ("pip ", "checkout", "subprocess", "os.system", "exec(", "eval("):
+                    self.assertNotIn(forbidden, step["run"])
+        self.assertEqual([s["uses"] for s in signer["steps"] if "uses" in s],
+                         [signed["download"]["uses"], signed["attest"]["uses"]])
 
     def test_retention_contract_and_negative_permission_pin_path_upload_bypasses(self):
-        self.assert_retention_contract(self.job)
-        for stage, key, value in (
-            ("attest", "uses", "actions/attest@v4"),
-            ("upload", "uses", "actions/upload-artifact@v4"),
-            ("attest", "if", "always()"), ("upload", "continue-on-error", True),
-            ("wheel_subject", "if", "always()"),
+        self.assert_retention_contract(self.job, self.signer)
+        for target, stage, key, value in (
+            ("signer", "attest", "uses", "actions/attest@v4"),
+            ("signer", "download", "uses", "actions/download-artifact@v4"),
+            ("producer", "upload", "uses", "actions/upload-artifact@v4"),
+            ("signer", "attest", "if", "always()"),
+            ("producer", "upload", "continue-on-error", True),
+            ("producer", "wheel_subject", "if", "always()"),
+            ("signer", "download", "continue-on-error", True),
+            ("signer", "signer_guard", "if", "always()"),
         ):
-            job = copy.deepcopy(self.job)
-            next(s for s in job["steps"] if s["id"] == stage)[key] = value
-            with self.subTest(stage=stage, key=key):
+            job, signer = copy.deepcopy(self.job), copy.deepcopy(self.signer)
+            changed = signer if target == "signer" else job
+            next(s for s in changed["steps"] if s["id"] == stage)[key] = value
+            with self.subTest(target=target, stage=stage, key=key):
                 with self.assertRaises(AssertionError):
-                    self.assert_retention_contract(job)
-        for stage, key, value in (
-            ("attest", "subject-path", "*.whl"), ("upload", "path", "/tmp/substitute.whl"),
-            ("upload", "if-no-files-found", "warn"), ("upload", "retention-days", 90),
-            ("upload", "name", "gate10-wheel"),
+                    self.assert_retention_contract(job, signer)
+        for target, stage, key, value in (
+            ("signer", "attest", "subject-path", "*.whl"),
+            ("producer", "upload", "path", "/tmp/substitute.whl"),
+            ("producer", "upload", "if-no-files-found", "warn"),
+            ("producer", "upload", "retention-days", 90),
+            ("producer", "upload", "name", "gate10-wheel"),
+            ("signer", "download", "artifact-ids", "1,2"),
+            ("signer", "download", "name", "gate10-wheel-*"),
+            ("signer", "download", "path", "../escape"),
+            ("signer", "download", "run-id", "123"),
+            ("signer", "download", "github-token", "untrusted"),
+            ("signer", "download", "merge-multiple", False),
         ):
-            job = copy.deepcopy(self.job)
-            next(s for s in job["steps"] if s["id"] == stage)["with"][key] = value
-            with self.subTest(stage=stage, key=key):
+            job, signer = copy.deepcopy(self.job), copy.deepcopy(self.signer)
+            changed = signer if target == "signer" else job
+            next(s for s in changed["steps"] if s["id"] == stage)["with"][key] = value
+            with self.subTest(target=target, stage=stage, key=key):
                 with self.assertRaises(AssertionError):
-                    self.assert_retention_contract(job)
-        for key in ("contents", "id-token", "attestations", "artifact-metadata", "actions"):
-            for value in (None, "write-all"):
-                job = copy.deepcopy(self.job)
-                if value is None:
-                    job["permissions"].pop(key, None)
-                    if key == "actions":
-                        job["permissions"][key] = "write"
-                else:
-                    job["permissions"][key] = value
-                with self.subTest(permission=key, value=value):
-                    with self.assertRaises(AssertionError):
-                        self.assert_retention_contract(job)
+                    self.assert_retention_contract(job, signer)
+        for target in ("producer", "signer"):
+            for key in ("contents", "id-token", "attestations", "artifact-metadata", "actions"):
+                for value in (None, "write-all"):
+                    job, signer = copy.deepcopy(self.job), copy.deepcopy(self.signer)
+                    changed = signer if target == "signer" else job
+                    if value is None and key in changed["permissions"]:
+                        del changed["permissions"][key]
+                    else:
+                        changed["permissions"][key] = value or "write"
+                    with self.subTest(target=target, permission=key, value=value):
+                        with self.assertRaises(AssertionError):
+                            self.assert_retention_contract(job, signer)
+        for key, value in (("needs", []), ("if", "always()"), ("runs-on", "self-hosted")):
+            signer = copy.deepcopy(self.signer)
+            signer[key] = value
+            with self.assertRaises(AssertionError):
+                self.assert_retention_contract(self.job, signer)
+        for key in ("wheel_sha256", "artifact_id"):
+            job = copy.deepcopy(self.job)
+            job["outputs"][key] = "untrusted"
+            with self.assertRaises(AssertionError):
+                self.assert_retention_contract(job, self.signer)
 
     def test_wheel_subject_revalidates_bytes_and_rejects_unsafe_paths(self):
         script = next(s["run"] for s in self.job["steps"] if s["id"] == "wheel_subject")
@@ -141,7 +205,7 @@ class WorkflowTests(unittest.TestCase):
                 root = Path(tmp)
                 wheel_dir = root / "avuhz-main-pr-gate-wheel"
                 wheel_dir.mkdir()
-                wheel = wheel_dir / "fictional.whl"
+                wheel = wheel_dir / "avuhz_service-0.1.0-py3-none-any.whl"
                 data = b"synthetic wheel bytes\n"
                 wheel.write_bytes(data)
                 output = root / "outputs"
@@ -253,7 +317,6 @@ class WorkflowTests(unittest.TestCase):
         actions = [s for s in self.job["steps"] if "uses" in s]
         self.assertEqual([s["uses"] for s in actions], [
             "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-            "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6",
             "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
         ])
         self.assertEqual(actions[0]["uses"], "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683")
@@ -323,7 +386,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("runner network", WORKFLOW.read_text())
 
     def test_every_shell_script_parses_without_execution(self):
-        for step in self.job["steps"]:
+        for step in self.job["steps"] + self.signer["steps"]:
             if "run" in step:
                 with self.subTest(step=step["name"]):
                     result = subprocess.run(["bash", "-n"], input=step["run"], text=True,
@@ -489,7 +552,7 @@ class WorkflowTests(unittest.TestCase):
         expected = ["checkout", "identity", "dependencies", "baseline", "portable", "schema",
                     "portability_gap", "postgres", "migrations", "replay", "integrations",
                     "wheel_build", "wheel_contents", "diff", "integrity", "cleanup",
-                    "wheel_subject", "attest", "upload", "summary"]
+                    "wheel_subject", "upload", "summary"]
         self.assertEqual([s["id"] for s in self.job["steps"]], expected)
         summary = self.job["steps"][-1]
         self.assertEqual(summary["if"], "always()")
@@ -501,13 +564,13 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(self.job["env"]["WORKFLOW_REF"], "${{ github.workflow_ref }}")
         self.assertEqual(self.job["env"]["REPOSITORY_OWNER"], "${{ github.repository_owner }}")
         self.assertEqual(self.job["env"]["REPOSITORY_OWNER_ID"], "${{ github.repository_owner_id }}")
-        # There is a single sanitized summary writer, after disposable cleanup.
-        self.assertEqual(WORKFLOW.read_text().count('os.environ["GITHUB_STEP_SUMMARY"]'), 1)
+        # Each job writes its own sanitized summary; the producer follows cleanup.
+        self.assertEqual(WORKFLOW.read_text().count('os.environ["GITHUB_STEP_SUMMARY"]'), 2)
         self.assertNotIn("GITHUB_STEP_SUMMARY", self.bootstrap)
 
     def successful_records(self):
         records = {s["id"]: {"outcome": "success", "conclusion": "success",
-                              "outputs": {} if s["id"] in ("checkout", "wheel_subject", "attest", "upload")
+                              "outputs": {} if s["id"] in ("checkout", "wheel_subject", "upload")
                               else {"evidence_sha256": "d" * 64}}
                    for s in self.job["steps"][:-1]}
         for stage in ("identity", "integrity"):
@@ -516,6 +579,7 @@ class WorkflowTests(unittest.TestCase):
         records["wheel_contents"]["outputs"]["wheel_sha256"] = "f" * 64
         records["wheel_subject"]["outputs"]["wheel_sha256"] = "f" * 64
         records["replay"]["outputs"]["baseline_sha256"] = "a" * 64
+        records["upload"]["outputs"]["artifact-id"] = "123"
         for stage in ("migrations", "integrations"):
             records[stage]["outputs"]["required_skips"] = "0"
         return records
@@ -536,8 +600,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.stderr, "")
-        for field in ("exact_merge_ci_checks=passed", "evidence_class=non-certified",
-                      "provenance=not_independently_verified", "certification_granted=false", "cleanup_outcome=success",
+        for field in ("exact_merge_producer_checks=passed", "evidence_class=non-certified",
+                      "provenance=not_independently_verified", "certification_granted=false",
+                      "signing_state=pending_separate_job", "cleanup_outcome=success",
                       "migrations_required_skips=0", "integrations_required_skips=0",
                       "postgres_version_num=170006", "wheel_contents_wheel_sha256=" + "f" * 64,
                       "replay_baseline_sha256=" + "a" * 64):
@@ -558,8 +623,8 @@ class WorkflowTests(unittest.TestCase):
                     with self.subTest(stage=stage, field=field, status=status):
                         result, summary = self.run_summary(records)
                         self.assertNotEqual(result.returncode, 0)
-                        self.assertIn("exact_merge_ci_checks=failed_or_incomplete\n", summary)
-                        self.assertNotIn("exact_merge_ci_checks=passed", summary)
+                        self.assertIn("exact_merge_producer_checks=failed_or_incomplete\n", summary)
+                        self.assertNotIn("exact_merge_producer_checks=passed", summary)
                         self.assertNotIn("untrusted", summary + result.stdout + result.stderr)
             records = self.successful_records()
             del records[stage]
@@ -582,7 +647,7 @@ class WorkflowTests(unittest.TestCase):
                     with self.subTest(stage=stage, key=key, value=value):
                         result, summary = self.run_summary(records)
                         self.assertNotEqual(result.returncode, 0)
-                        self.assertNotIn("exact_merge_ci_checks=passed", summary)
+                        self.assertNotIn("exact_merge_producer_checks=passed", summary)
                         self.assertNotIn("untrusted", summary + result.stdout + result.stderr)
         for stage, key, value in (("migrations", "required_skips", "1"),
                                   ("integrations", "required_skips", "1"),
@@ -593,13 +658,13 @@ class WorkflowTests(unittest.TestCase):
             records[stage]["outputs"][key] = value
             result, summary = self.run_summary(records)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("exact_merge_ci_checks=failed_or_incomplete", summary)
+            self.assertIn("exact_merge_producer_checks=failed_or_incomplete", summary)
 
     def test_summary_malformed_context_and_untrusted_extra_fields_do_not_escape(self):
         for records in (None, [], {}, {"identity": None}, {"identity": {"outputs": []}}):
             result, summary = self.run_summary(records)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("exact_merge_ci_checks=failed_or_incomplete", summary)
+            self.assertIn("exact_merge_producer_checks=failed_or_incomplete", summary)
         records = self.successful_records()
         records["untrusted\n::notice::raw"] = {"outcome": "untrusted"}
         records["baseline"]["outputs"]["raw_log"] = "untrusted\n::notice::raw"
@@ -625,7 +690,7 @@ class WorkflowTests(unittest.TestCase):
             baseline.write_bytes(b"fictional baseline\n")
             wheel_dir = root / "avuhz-main-pr-gate-wheel"
             wheel_dir.mkdir()
-            wheel = wheel_dir / "fictional.whl"
+            wheel = wheel_dir / "avuhz_service-0.1.0-py3-none-any.whl"
             wheel.write_bytes(b"fictional wheel\n")
             for stage, key, data in (("baseline", "evidence_sha256", log.read_bytes()),
                                      ("cleanup", "evidence_sha256", log.read_bytes()),
@@ -661,6 +726,215 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(result.stdout, "::error::Disposable PostgreSQL cleanup failed.\n")
             self.assertNotIn("unsafe_continuation", Path(tmp, "gate10-cleanup-output").read_text())
             self.assertFalse(Path(env["GITHUB_OUTPUT"]).exists())
+
+
+    def signer_env(self, tmp):
+        return {
+            "PATH": os.environ["PATH"], "PYTHONDONTWRITEBYTECODE": "1",
+            "RUNNER_TEMP": tmp, "DOWNLOAD_PATH": str(Path(tmp, "gate10-signer-wheel")),
+            "GITHUB_OUTPUT": str(Path(tmp, "outputs")),
+            "GITHUB_STEP_SUMMARY": str(Path(tmp, "summary")),
+            "GITHUB_REPOSITORY": "AnonymousKoo/avuhz-infra",
+            "REPOSITORY_OWNER": "AnonymousKoo", "REPOSITORY_OWNER_ID": "168945054",
+            "WORKFLOW_REF": "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main",
+            "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/main",
+            "GITHUB_ACTOR": "AnonymousKoo", "GITHUB_ACTOR_ID": "168945054",
+            "GITHUB_RUN_ATTEMPT": "1", "GITHUB_RUN_ID": "1234",
+            "PRODUCER_RESULT": "success", "ARTIFACT_ID": "5678",
+            "GITHUB_SHA": "c" * 40, "SOURCE_SHA": "c" * 40,
+            "WORKFLOW_SHA": "c" * 40, "EXPECTED_WORKFLOW_SHA": "c" * 40,
+            "VERIFIED_WHEEL_SHA256": hashlib.sha256(b"synthetic wheel\n").hexdigest(),
+        }
+
+    def signer_script(self, stage):
+        return next(s["run"] for s in self.signer["steps"] if s["id"] == stage)
+
+    def signer_run(self, stage, env):
+        return subprocess.run(["bash"], input=self.signer_script(stage), env=env,
+                              capture_output=True, text=True, timeout=10)
+
+    def signer_bad_contexts(self):
+        return (
+            ("GITHUB_REPOSITORY", "fork/avuhz-infra"),
+            ("GITHUB_REPOSITORY", "anonymouskoo/avuhz-infra"),
+            ("REPOSITORY_OWNER", "fork"), ("REPOSITORY_OWNER_ID", "9"),
+            ("WORKFLOW_REF", "AnonymousKoo/avuhz-infra/.github/workflows/other.yml@refs/heads/main"),
+            ("GITHUB_EVENT_NAME", "push"), ("GITHUB_EVENT_NAME", "pull_request"),
+            ("GITHUB_EVENT_NAME", "pull_request_target"),
+            ("GITHUB_REF", "refs/heads/feature"), ("GITHUB_REF", "refs/tags/main"),
+            ("GITHUB_REF", "refs/heads/Main"),
+            ("GITHUB_ACTOR", "reviewer"), ("GITHUB_ACTOR", "anonymouskoo"),
+            ("GITHUB_ACTOR_ID", "9"), ("GITHUB_RUN_ATTEMPT", "2"),
+            ("GITHUB_RUN_ATTEMPT", "01"), ("GITHUB_RUN_ATTEMPT", "1.0"),
+            ("GITHUB_RUN_ID", "1\ninjected"), ("GITHUB_RUN_ID", "0"),
+            ("ARTIFACT_ID", "1,2"), ("ARTIFACT_ID", "0"), ("ARTIFACT_ID", "-1"),
+            ("ARTIFACT_ID", "01"), ("ARTIFACT_ID", "1\ninjected"),
+            ("VERIFIED_WHEEL_SHA256", "A" * 64),
+            ("VERIFIED_WHEEL_SHA256", "a" * 63),
+            ("VERIFIED_WHEEL_SHA256", "a" * 64 + "\ninjected"),
+            ("GITHUB_SHA", "C" * 40), ("GITHUB_SHA", "d" * 40),
+            ("SOURCE_SHA", "d" * 40), ("WORKFLOW_SHA", "d" * 40),
+            ("EXPECTED_WORKFLOW_SHA", "d" * 40),
+            ("EXPECTED_WORKFLOW_SHA", "$(echo unsafe_injection)"),
+            ("PRODUCER_RESULT", "failure"), ("PRODUCER_RESULT", "skipped"),
+            ("PRODUCER_RESULT", "cancelled"),
+            ("DOWNLOAD_PATH", "/tmp/escape"), ("DOWNLOAD_PATH", "../escape"),
+            ("RUNNER_TEMP", "relative"),
+        )
+
+    def test_signer_independent_guard_rejects_missing_or_malicious_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = self.signer_env(tmp)
+            result = self.signer_run("signer_guard", env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout + result.stderr, "")
+            root = Path(env["DOWNLOAD_PATH"])
+            self.assertTrue(root.is_dir())
+            self.assertFalse(Path(env["GITHUB_OUTPUT"]).exists())
+            self.assertNotEqual(self.signer_run("signer_guard", env).returncode, 0)
+            root.rmdir()
+            root.symlink_to(tmp, target_is_directory=True)
+            self.assertNotEqual(self.signer_run("signer_guard", env).returncode, 0)
+            root.unlink()
+            cases = [{**env, key: value} for key, value in self.signer_bad_contexts()]
+            for key in env:
+                if key not in ("PATH", "PYTHONDONTWRITEBYTECODE", "GITHUB_OUTPUT", "GITHUB_STEP_SUMMARY"):
+                    cases.append({k: v for k, v in env.items() if k != key})
+            for index, altered in enumerate(cases):
+                with self.subTest(index=index):
+                    result = self.signer_run("signer_guard", altered)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(result.stdout, "")
+                    self.assertEqual(result.stderr, "signer_context=failed\n")
+                    self.assertFalse(root.exists())
+                    self.assertFalse(Path(env["GITHUB_OUTPUT"]).exists())
+
+    def test_signer_subject_rejects_extra_files_paths_and_digest_substitution(self):
+        cases = ("valid", "missing", "extra_file", "extra_wheel", "extra_directory",
+                 "extra_symlink", "symlink", "directory", "fifo", "parent_symlink",
+                 "substitution", "digest_upper", "digest_missing", "name_wrong_prefix",
+                 "name_wrong_tags", "name_glob", "name_newline", "context_changed", "traversal")
+        for case in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
+                env = self.signer_env(tmp)
+                self.assertEqual(self.signer_run("signer_guard", env).returncode, 0)
+                root = Path(env["DOWNLOAD_PATH"])
+                wheel = root / "avuhz_service-0.1.0-py3-none-any.whl"
+                wheel.write_bytes(b"synthetic wheel\n")
+                if case == "missing":
+                    wheel.unlink()
+                elif case in ("extra_file", "extra_wheel"):
+                    (root / ("extra.txt" if case == "extra_file" else "other.whl")).write_bytes(b"extra")
+                elif case == "extra_directory":
+                    (root / "extra").mkdir()
+                elif case == "extra_symlink":
+                    (root / "extra").symlink_to(wheel)
+                elif case in ("symlink", "directory", "fifo"):
+                    wheel.unlink()
+                    if case == "symlink":
+                        target = Path(tmp, "target")
+                        target.write_bytes(b"synthetic wheel\n")
+                        wheel.symlink_to(target)
+                    elif case == "directory":
+                        wheel.mkdir()
+                    else:
+                        os.mkfifo(wheel)
+                elif case == "parent_symlink":
+                    root.rename(Path(tmp, "real"))
+                    root.symlink_to(Path(tmp, "real"), target_is_directory=True)
+                elif case == "substitution":
+                    wheel.write_bytes(b"substituted")
+                elif case == "digest_upper":
+                    env["VERIFIED_WHEEL_SHA256"] = "A" * 64
+                elif case == "digest_missing":
+                    del env["VERIFIED_WHEEL_SHA256"]
+                elif case.startswith("name_"):
+                    wheel.rename(root / {
+                        "name_wrong_prefix": "other-0.1.0-py3-none-any.whl",
+                        "name_wrong_tags": "avuhz_service-0.1.0-py2-none-any.whl",
+                        "name_glob": "bad*.whl", "name_newline": "bad\nname.whl",
+                    }[case])
+                elif case == "context_changed":
+                    env["GITHUB_ACTOR"] = "reviewer"
+                elif case == "traversal":
+                    env["DOWNLOAD_PATH"] = str(root / "..")
+                result = self.signer_run("wheel_subject", env)
+                output = Path(env["GITHUB_OUTPUT"])
+                if case == "valid":
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(output.read_text(),
+                                     f"wheel_path={wheel}\nwheel_sha256={env['VERIFIED_WHEEL_SHA256']}\n")
+                else:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(output.exists())
+                    self.assertEqual(result.stderr, "wheel_subject_verification=failed\n")
+                self.assertEqual(result.stdout, "")
+
+    def test_signer_summary_denies_failed_skipped_cancelled_missing_and_untrusted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = self.signer_env(tmp)
+            records = {s: {"outcome": "success", "conclusion": "success", "outputs": {}}
+                       for s in ("signer_guard", "download", "wheel_subject", "attest")}
+            records["wheel_subject"]["outputs"] = {
+                "wheel_sha256": env["VERIFIED_WHEEL_SHA256"],
+                "wheel_path": str(Path(env["DOWNLOAD_PATH"], "avuhz_service-0.1.0-py3-none-any.whl")),
+            }
+
+            def run(values, context=None):
+                Path(env["GITHUB_STEP_SUMMARY"]).unlink(missing_ok=True)
+                result = self.signer_run("summary", {
+                    **env, "STEP_RESULTS": json.dumps(values), **(context or {}),
+                })
+                summary = Path(env["GITHUB_STEP_SUMMARY"]).read_text()
+                self.assertEqual(result.stdout, "")
+                self.assertIn("evidence_class=non-certified\n", summary)
+                self.assertIn("provenance=not_independently_verified\n", summary)
+                self.assertIn("certification_granted=false\n", summary)
+                self.assertNotIn("untrusted", summary + result.stdout + result.stderr)
+                return result, summary
+
+            result, summary = run(records)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("exact_merge_ci_checks=passed\n", summary)
+            for stage in records:
+                for field in ("outcome", "conclusion"):
+                    for status in (None, "failure", "skipped", "cancelled", "untrusted\n::notice::raw"):
+                        altered = copy.deepcopy(records)
+                        if status is None:
+                            del altered[stage][field]
+                        else:
+                            altered[stage][field] = status
+                        with self.subTest(stage=stage, field=field, status=status):
+                            result, summary = run(altered)
+                            self.assertNotEqual(result.returncode, 0)
+                            self.assertNotIn("exact_merge_ci_checks=passed", summary)
+                altered = copy.deepcopy(records)
+                del altered[stage]
+                self.assertNotEqual(run(altered)[0].returncode, 0)
+            for values in (None, [], {}, {"attest": None}):
+                self.assertNotEqual(run(values)[0].returncode, 0)
+            for key, value in self.signer_bad_contexts():
+                with self.subTest(key=key, value=value):
+                    self.assertNotEqual(run(records, {key: value})[0].returncode, 0)
+            for key in env:
+                if key not in ("PATH", "PYTHONDONTWRITEBYTECODE", "GITHUB_OUTPUT", "GITHUB_STEP_SUMMARY"):
+                    self.assertNotEqual(run(records, {key: ""})[0].returncode, 0)
+            for key, value in (("wheel_sha256", "a" * 64), ("wheel_sha256", "A" * 64),
+                               ("wheel_sha256", None), ("wheel_sha256", "untrusted\nraw"),
+                               ("wheel_path", "/tmp/substitute.whl"),
+                               ("wheel_path", str(Path(env["DOWNLOAD_PATH"], "bad*.whl")))):
+                altered = copy.deepcopy(records)
+                altered["wheel_subject"]["outputs"][key] = value
+                self.assertNotEqual(run(altered)[0].returncode, 0)
+
+    def test_producer_summary_cannot_claim_signing_or_workflow_completion(self):
+        result, summary = self.run_summary(self.successful_records())
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("exact_merge_producer_checks=passed\n", summary)
+        self.assertIn("signing_state=pending_separate_job\n", summary)
+        self.assertNotIn("exact_merge_ci_checks=passed", summary)
+        self.assertNotIn("attest_outcome=success", summary)
+        self.assertNotIn("attest", self.successful_records())
 
 
 class RawIntegrityTests(unittest.TestCase):

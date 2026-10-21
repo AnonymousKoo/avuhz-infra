@@ -2,7 +2,8 @@
 # One manual lane, first attempt only; a new dispatch is a new authorization boundary.
 # Future authorized CI uses runner network for checkout, apt, pip and digest-pinned
 # Docker image downloads. No such operations were invoked to author this candidate.
-# No signing, artifact publication or provenance: logs/summary are non-certified.
+# Preparation invokes no signing or publication. Future separately authorized CI
+# requires attestation and temporary artifact upload; neither certifies a release.
 # Recipe comparison only (never the checkout or expected merge SHA): git show 047828fe59e743932162df7776fcb37f25647689:.github/workflows/main-pr-gate.yml
 name: Gate10 exact merge CI review candidate
 'on':
@@ -27,6 +28,11 @@ jobs:
       inputs.expected_workflow_sha != '' &&
       inputs.expected_workflow_sha == github.sha &&
       inputs.expected_workflow_sha == github.workflow_sha
+    permissions:
+      contents: read
+    outputs:
+      wheel_sha256: ${{ steps.wheel_subject.outputs.wheel_sha256 }}
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -706,6 +712,57 @@ jobs:
         ) > "$RUNNER_TEMP/gate10-cleanup-output" 2>&1
         echo "disposable_postgres_cleanup=passed"
         python3 "$RUNNER_TEMP/gate10-evidence.py" cleanup "$RUNNER_TEMP/gate10-cleanup-output"
+    - name: Revalidate exact wheel subject
+      id: wheel_subject
+      env:
+        VERIFIED_WHEEL_SHA256: ${{ steps.wheel_contents.outputs.wheel_sha256 }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -B - <<'PYSUBJECT'
+        import hashlib
+        import os
+        from pathlib import Path
+        import re
+        import stat
+
+        try:
+            expected = os.environ["VERIFIED_WHEEL_SHA256"]
+            if not re.fullmatch(r"[0-9a-f]{64}", expected):
+                raise ValueError("digest")
+            root = Path(os.environ["RUNNER_TEMP"]) / "avuhz-main-pr-gate-wheel"
+            # Reject symlinked parents and action glob/output-control characters.
+            if (not root.is_absolute() or root.resolve(strict=True) != root
+                    or not re.fullmatch(r"/[A-Za-z0-9_./+-]+", str(root))
+                    or not stat.S_ISDIR(root.lstat().st_mode)):
+                raise ValueError("directory")
+            wheels = list(root.iterdir())
+            if len(wheels) != 1:
+                raise ValueError("count")
+            wheel = wheels[0]
+            if (not re.fullmatch(r"avuhz_service-[0-9]+(?:\.[0-9]+)*-py3-none-any\.whl", wheel.name)
+                    or not stat.S_ISREG(wheel.lstat().st_mode)):
+                raise ValueError("wheel")
+            fd = os.open(wheel, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(fd, "rb") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise ValueError("type")
+                actual = hashlib.file_digest(stream, "sha256").hexdigest()
+            if actual != expected:
+                raise ValueError("substitution")
+            with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+                output.write(f"wheel_path={wheel}\nwheel_sha256={actual}\n")
+        except (OSError, ValueError, KeyError):
+            raise SystemExit("wheel_subject_verification=failed") from None
+        PYSUBJECT
+    - name: Upload exact CI wheel for temporary retrieval
+      id: upload
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: gate10-wheel-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ steps.wheel_subject.outputs.wheel_path }}
+        if-no-files-found: error
+        retention-days: 30
     - name: Record non-certified completion
       id: summary
       if: always()
@@ -723,6 +780,7 @@ jobs:
             "checkout", "identity", "dependencies", "baseline", "portable", "schema",
             "portability_gap", "postgres", "migrations", "replay", "integrations",
             "wheel_build", "wheel_contents", "diff", "integrity", "cleanup",
+            "wheel_subject", "upload",
         )
         try:
             steps = json.loads(os.environ["STEP_RESULTS"])
@@ -730,8 +788,9 @@ jobs:
                 steps = {}
         except (ValueError, KeyError):
             steps = {}
-        lines = ["evidence_class=non-certified", "provenance=absent",
-                 "certification_granted=false", "cross_repo_suite_portable=false",
+        lines = ["evidence_class=non-certified", "provenance=not_independently_verified",
+                 "certification_granted=false", "signing_state=pending_separate_job",
+                 "cross_repo_suite_portable=false",
                  "scope=LOCAL_TEST_repository_CI", "execution_authority=absent"]
         passed = True
         for stage in required:
@@ -747,10 +806,11 @@ jobs:
             outputs = record.get("outputs", {})
             if not isinstance(outputs, dict):
                 outputs = {}
-            keys = [] if stage == "checkout" else ["evidence_sha256"]
+            keys = [] if stage in ("checkout", "wheel_subject", "upload") else ["evidence_sha256"]
             keys += {"identity": ["source_tree_sha256"],
                      "integrity": ["source_tree_sha256"],
                      "wheel_contents": ["wheel_sha256"],
+                     "wheel_subject": ["wheel_sha256"],
                      "replay": ["baseline_sha256"]}.get(stage, [])
             for key in keys:
                 value = outputs.get(key, "")
@@ -768,6 +828,18 @@ jobs:
                 # This is the pinned image verified by the PostgreSQL step.
                 lines.append("postgres_expected_image=docker.io/library/postgres@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94")
                 passed &= bool(valid)
+        subject = steps.get("wheel_subject", {})
+        contents = steps.get("wheel_contents", {})
+        subject = subject.get("outputs", {}) if isinstance(subject, dict) else {}
+        contents = contents.get("outputs", {}) if isinstance(contents, dict) else {}
+        if not isinstance(subject, dict) or not isinstance(contents, dict):
+            passed = False
+        else:
+            passed &= subject.get("wheel_sha256") == contents.get("wheel_sha256")
+        upload = steps.get("upload", {})
+        upload = upload.get("outputs", {}) if isinstance(upload, dict) else {}
+        artifact_id = upload.get("artifact-id", "") if isinstance(upload, dict) else ""
+        passed &= isinstance(artifact_id, str) and bool(re.fullmatch(r"[1-9][0-9]*", artifact_id))
         # Bind the sanitized identities only after exact preflight succeeded.
         identity = steps.get("identity", {})
         if isinstance(identity, dict) and identity.get("outcome") == "success":
@@ -786,7 +858,246 @@ jobs:
             passed = False
         else:
             passed &= initial.get("source_tree_sha256") == final.get("source_tree_sha256")
-        lines.append(f"exact_merge_ci_checks={'passed' if passed else 'failed_or_incomplete'}")
+        lines.append(f"exact_merge_producer_checks={'passed' if passed else 'failed_or_incomplete'}")
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+            summary.write("\n".join(lines) + "\n")
+        if not passed:
+            raise SystemExit("exact_merge_producer_checks=failed_or_incomplete")
+        PYSUMMARY
+  # Dedicated hosted signer: no checkout, dependencies, or artifact code execution.
+  # actions/attest v4 publishes artifact metadata; its documented permission is
+  # artifact-metadata: write. Keep it confined to this signer alongside OIDC.
+  attest-exact-wheel:
+    needs:
+    - exact-merge-evidence
+    if: >-
+      github.repository == 'AnonymousKoo/avuhz-infra' &&
+      github.repository_owner == 'AnonymousKoo' && github.repository_owner_id == '168945054'
+      &&
+      github.workflow_ref == 'AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main'
+      &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'AnonymousKoo' && github.actor_id == '168945054' &&
+      github.run_attempt == 1 &&
+      inputs.expected_workflow_sha != '' &&
+      inputs.expected_workflow_sha == github.sha &&
+      inputs.expected_workflow_sha == github.workflow_sha
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+      WORKFLOW_REF: ${{ github.workflow_ref }}
+      REPOSITORY_OWNER: ${{ github.repository_owner }}
+      REPOSITORY_OWNER_ID: ${{ github.repository_owner_id }}
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      EXPECTED_WORKFLOW_SHA: ${{ inputs.expected_workflow_sha }}
+      PRODUCER_RESULT: ${{ needs.exact-merge-evidence.result }}
+      ARTIFACT_ID: ${{ needs.exact-merge-evidence.outputs.artifact_id }}
+      VERIFIED_WHEEL_SHA256: ${{ needs.exact-merge-evidence.outputs.wheel_sha256 }}
+      DOWNLOAD_PATH: ${{ runner.temp }}/gate10-signer-wheel
+    steps:
+    - name: Independently guard signing context
+      id: signer_guard
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -B -I - <<'PYGUARD'
+        import os
+        from pathlib import Path
+        import re
+        def verify_context():
+            exact = {
+                "GITHUB_REPOSITORY": "AnonymousKoo/avuhz-infra",
+                "REPOSITORY_OWNER": "AnonymousKoo", "REPOSITORY_OWNER_ID": "168945054",
+                "WORKFLOW_REF": "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main",
+                "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/main",
+                "GITHUB_ACTOR": "AnonymousKoo", "GITHUB_ACTOR_ID": "168945054",
+                "GITHUB_RUN_ATTEMPT": "1", "PRODUCER_RESULT": "success",
+            }
+            if any(os.environ.get(k) != v for k, v in exact.items()):
+                raise ValueError("context")
+            sha = os.environ["GITHUB_SHA"]
+            if not re.fullmatch(r"[0-9a-f]{40}", sha):
+                raise ValueError("source")
+            if any(os.environ.get(k) != sha for k in
+                   ("SOURCE_SHA", "WORKFLOW_SHA", "EXPECTED_WORKFLOW_SHA")):
+                raise ValueError("pin")
+            if not re.fullmatch(r"[1-9][0-9]*", os.environ["GITHUB_RUN_ID"]):
+                raise ValueError("run")
+            if not re.fullmatch(r"[1-9][0-9]*", os.environ["ARTIFACT_ID"]):
+                raise ValueError("artifact_id")
+            if not re.fullmatch(r"[0-9a-f]{64}", os.environ["VERIFIED_WHEEL_SHA256"]):
+                raise ValueError("digest")
+            temp = Path(os.environ["RUNNER_TEMP"])
+            root = Path(os.environ["DOWNLOAD_PATH"])
+            if (not temp.is_absolute() or temp.resolve(strict=True) != temp
+                    or not re.fullmatch(r"/[A-Za-z0-9_./+-]+", str(temp))
+                    or root != temp / "gate10-signer-wheel"):
+                raise ValueError("path")
+            return root
+
+        try:
+            root = verify_context()
+            if root.exists() or root.is_symlink():
+                raise ValueError("preexisting_download")
+            root.mkdir(mode=0o700)
+        except (OSError, ValueError, KeyError):
+            raise SystemExit("signer_context=failed") from None
+        PYGUARD
+    - name: Download exact same-run artifact ID
+      id: download
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        artifact-ids: ${{ needs.exact-merge-evidence.outputs.artifact_id }}
+        merge-multiple: true
+        path: ${{ runner.temp }}/gate10-signer-wheel
+    - name: Verify downloaded wheel without executing it
+      id: wheel_subject
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -B -I - <<'PYSUBJECT'
+        import hashlib
+        import os
+        from pathlib import Path
+        import re
+        import stat
+
+        def verify_context():
+            exact = {
+                "GITHUB_REPOSITORY": "AnonymousKoo/avuhz-infra",
+                "REPOSITORY_OWNER": "AnonymousKoo", "REPOSITORY_OWNER_ID": "168945054",
+                "WORKFLOW_REF": "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main",
+                "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/main",
+                "GITHUB_ACTOR": "AnonymousKoo", "GITHUB_ACTOR_ID": "168945054",
+                "GITHUB_RUN_ATTEMPT": "1", "PRODUCER_RESULT": "success",
+            }
+            if any(os.environ.get(k) != v for k, v in exact.items()):
+                raise ValueError("context")
+            sha = os.environ["GITHUB_SHA"]
+            if not re.fullmatch(r"[0-9a-f]{40}", sha):
+                raise ValueError("source")
+            if any(os.environ.get(k) != sha for k in
+                   ("SOURCE_SHA", "WORKFLOW_SHA", "EXPECTED_WORKFLOW_SHA")):
+                raise ValueError("pin")
+            if not re.fullmatch(r"[1-9][0-9]*", os.environ["GITHUB_RUN_ID"]):
+                raise ValueError("run")
+            if not re.fullmatch(r"[1-9][0-9]*", os.environ["ARTIFACT_ID"]):
+                raise ValueError("artifact_id")
+            if not re.fullmatch(r"[0-9a-f]{64}", os.environ["VERIFIED_WHEEL_SHA256"]):
+                raise ValueError("digest")
+            temp = Path(os.environ["RUNNER_TEMP"])
+            root = Path(os.environ["DOWNLOAD_PATH"])
+            if (not temp.is_absolute() or temp.resolve(strict=True) != temp
+                    or not re.fullmatch(r"/[A-Za-z0-9_./+-]+", str(temp))
+                    or root != temp / "gate10-signer-wheel"):
+                raise ValueError("path")
+            return root
+
+        try:
+            verify_context()
+            expected = os.environ["VERIFIED_WHEEL_SHA256"]
+            if not re.fullmatch(r"[0-9a-f]{64}", expected):
+                raise ValueError("digest")
+            root = Path(os.environ["DOWNLOAD_PATH"])
+            # Reject symlinked parents and action glob/output-control characters.
+            if (not root.is_absolute() or root.resolve(strict=True) != root
+                    or not re.fullmatch(r"/[A-Za-z0-9_./+-]+", str(root))
+                    or not stat.S_ISDIR(root.lstat().st_mode)):
+                raise ValueError("directory")
+            wheels = list(root.iterdir())
+            if len(wheels) != 1:
+                raise ValueError("count")
+            wheel = wheels[0]
+            if (not re.fullmatch(r"avuhz_service-[0-9]+(?:\.[0-9]+)*-py3-none-any\.whl", wheel.name)
+                    or not stat.S_ISREG(wheel.lstat().st_mode)):
+                raise ValueError("wheel")
+            fd = os.open(wheel, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(fd, "rb") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise ValueError("type")
+                actual = hashlib.file_digest(stream, "sha256").hexdigest()
+            if actual != expected:
+                raise ValueError("substitution")
+            with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+                output.write(f"wheel_path={wheel}\nwheel_sha256={actual}\n")
+        except (OSError, ValueError, KeyError):
+            raise SystemExit("wheel_subject_verification=failed") from None
+        PYSUBJECT
+    - name: Attest exact CI wheel
+      id: attest
+      uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+      with:
+        subject-path: ${{ steps.wheel_subject.outputs.wheel_path }}
+    - name: Record non-certified signer completion
+      id: summary
+      if: always()
+      env:
+        STEP_RESULTS: ${{ toJSON(steps) }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -B -I - <<'PYSUMMARY'
+        import json
+        import os
+        from pathlib import Path
+        import re
+        def verify_context():
+            exact = {
+                "GITHUB_REPOSITORY": "AnonymousKoo/avuhz-infra",
+                "REPOSITORY_OWNER": "AnonymousKoo", "REPOSITORY_OWNER_ID": "168945054",
+                "WORKFLOW_REF": "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main",
+                "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/main",
+                "GITHUB_ACTOR": "AnonymousKoo", "GITHUB_ACTOR_ID": "168945054",
+                "GITHUB_RUN_ATTEMPT": "1", "PRODUCER_RESULT": "success",
+            }
+            if any(os.environ.get(k) != v for k, v in exact.items()):
+                raise ValueError("context")
+            sha = os.environ["GITHUB_SHA"]
+            if not re.fullmatch(r"[0-9a-f]{40}", sha):
+                raise ValueError("source")
+            if any(os.environ.get(k) != sha for k in
+                   ("SOURCE_SHA", "WORKFLOW_SHA", "EXPECTED_WORKFLOW_SHA")):
+                raise ValueError("pin")
+            if not re.fullmatch(r"[1-9][0-9]*", os.environ["GITHUB_RUN_ID"]):
+                raise ValueError("run")
+            if not re.fullmatch(r"[1-9][0-9]*", os.environ["ARTIFACT_ID"]):
+                raise ValueError("artifact_id")
+            if not re.fullmatch(r"[0-9a-f]{64}", os.environ["VERIFIED_WHEEL_SHA256"]):
+                raise ValueError("digest")
+            temp = Path(os.environ["RUNNER_TEMP"])
+            root = Path(os.environ["DOWNLOAD_PATH"])
+            if (not temp.is_absolute() or temp.resolve(strict=True) != temp
+                    or not re.fullmatch(r"/[A-Za-z0-9_./+-]+", str(temp))
+                    or root != temp / "gate10-signer-wheel"):
+                raise ValueError("path")
+            return root
+
+        passed = False
+        try:
+            verify_context()
+            steps = json.loads(os.environ["STEP_RESULTS"])
+            required = ("signer_guard", "download", "wheel_subject", "attest")
+            passed = all(steps[s][f] == "success" for s in required
+                         for f in ("outcome", "conclusion"))
+            subject = steps["wheel_subject"]["outputs"]
+            digest = subject["wheel_sha256"]
+            path = Path(subject["wheel_path"])
+            passed &= (bool(re.fullmatch(r"[0-9a-f]{64}", digest))
+                       and digest == os.environ["VERIFIED_WHEEL_SHA256"]
+                       and path.parent == Path(os.environ["DOWNLOAD_PATH"])
+                       and bool(re.fullmatch(r"avuhz_service-[0-9]+(?:\.[0-9]+)*-py3-none-any\.whl", path.name)))
+        except (OSError, ValueError, KeyError, TypeError):
+            passed = False
+        lines = ["evidence_class=non-certified", "provenance=not_independently_verified",
+                 "certification_granted=false", "execution_authority=absent",
+                 "exact_merge_ci_checks=" + ("passed" if passed else "failed_or_incomplete")]
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
             summary.write("\n".join(lines) + "\n")
         if not passed:

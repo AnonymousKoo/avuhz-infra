@@ -1,5 +1,6 @@
 """Offline review checks: no workflow dispatch, packages, services or provider calls."""
 import os
+import copy
 import hashlib
 import json
 import re
@@ -63,12 +64,136 @@ class WorkflowTests(unittest.TestCase):
             "inputs.expected_workflow_sha == github.sha && "
             "inputs.expected_workflow_sha == github.workflow_sha",
         )
-        self.assertEqual(set(self.job), {"if", "runs-on", "timeout-minutes", "env", "steps"})
+        self.assertEqual(set(self.job), {"if", "permissions", "runs-on", "timeout-minutes", "env", "steps"})
         text = WORKFLOW.read_text()
-        for expression in ("secrets.", "id-token:", "environment:", "upload-artifact@",
-                           "retention-days:", "pull_request_target:"):
+        for expression in ("secrets.", "environment:", "pull_request_target:"):
             self.assertNotIn(expression, text)
         self.assertNotIn("${{", "\n".join(s.get("run", "") for s in self.job["steps"]))
+
+    def assert_retention_contract(self, job):
+        self.assertEqual(job["permissions"], {
+            "contents": "read", "id-token": "write", "attestations": "write",
+            "artifact-metadata": "write",
+        })
+        steps = {s["id"]: s for s in job["steps"]}
+        path = "${{ steps.wheel_subject.outputs.wheel_path }}"
+        self.assertEqual(steps["attest"], {
+            "name": "Attest exact CI wheel", "id": "attest",
+            "uses": "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6",
+            "with": {"subject-path": path},
+        })
+        self.assertEqual(steps["upload"], {
+            "name": "Upload exact CI wheel for temporary retrieval", "id": "upload",
+            "uses": "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "with": {"name": "gate10-wheel-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}",
+                     "path": path, "if-no-files-found": "error", "retention-days": 30},
+        })
+        self.assertEqual(steps["wheel_subject"]["env"], {
+            "VERIFIED_WHEEL_SHA256": "${{ steps.wheel_contents.outputs.wheel_sha256 }}",
+        })
+        for stage in ("wheel_subject", "attest", "upload"):
+            self.assertNotIn("if", steps[stage])  # implicit success(), including cleanup
+            self.assertNotIn("continue-on-error", steps[stage])
+
+    def test_retention_contract_and_negative_permission_pin_path_upload_bypasses(self):
+        self.assert_retention_contract(self.job)
+        for stage, key, value in (
+            ("attest", "uses", "actions/attest@v4"),
+            ("upload", "uses", "actions/upload-artifact@v4"),
+            ("attest", "if", "always()"), ("upload", "continue-on-error", True),
+            ("wheel_subject", "if", "always()"),
+        ):
+            job = copy.deepcopy(self.job)
+            next(s for s in job["steps"] if s["id"] == stage)[key] = value
+            with self.subTest(stage=stage, key=key):
+                with self.assertRaises(AssertionError):
+                    self.assert_retention_contract(job)
+        for stage, key, value in (
+            ("attest", "subject-path", "*.whl"), ("upload", "path", "/tmp/substitute.whl"),
+            ("upload", "if-no-files-found", "warn"), ("upload", "retention-days", 90),
+            ("upload", "name", "gate10-wheel"),
+        ):
+            job = copy.deepcopy(self.job)
+            next(s for s in job["steps"] if s["id"] == stage)["with"][key] = value
+            with self.subTest(stage=stage, key=key):
+                with self.assertRaises(AssertionError):
+                    self.assert_retention_contract(job)
+        for key in ("contents", "id-token", "attestations", "artifact-metadata", "actions"):
+            for value in (None, "write-all"):
+                job = copy.deepcopy(self.job)
+                if value is None:
+                    job["permissions"].pop(key, None)
+                    if key == "actions":
+                        job["permissions"][key] = "write"
+                else:
+                    job["permissions"][key] = value
+                with self.subTest(permission=key, value=value):
+                    with self.assertRaises(AssertionError):
+                        self.assert_retention_contract(job)
+
+    def test_wheel_subject_revalidates_bytes_and_rejects_unsafe_paths(self):
+        script = next(s["run"] for s in self.job["steps"] if s["id"] == "wheel_subject")
+        cases = ("valid", "missing", "multiple", "substituted", "symlink", "directory",
+                 "fifo", "parent_symlink", "digest_missing", "digest_upper", "digest_injection",
+                 "name_newline", "name_glob", "temp_newline", "temp_relative")
+        for case in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                wheel_dir = root / "avuhz-main-pr-gate-wheel"
+                wheel_dir.mkdir()
+                wheel = wheel_dir / "fictional.whl"
+                data = b"synthetic wheel bytes\n"
+                wheel.write_bytes(data)
+                output = root / "outputs"
+                env = {"PATH": os.environ["PATH"], "PYTHONDONTWRITEBYTECODE": "1",
+                       "RUNNER_TEMP": tmp, "GITHUB_OUTPUT": str(output),
+                       "VERIFIED_WHEEL_SHA256": hashlib.sha256(data).hexdigest()}
+                if case == "missing":
+                    wheel.unlink()
+                elif case == "multiple":
+                    (wheel_dir / "other.whl").write_bytes(data)
+                elif case == "substituted":
+                    wheel.write_bytes(b"substituted")
+                elif case in ("symlink", "directory", "fifo"):
+                    wheel.unlink()
+                    if case == "symlink":
+                        target = root / "target"
+                        target.write_bytes(data)
+                        wheel.symlink_to(target)
+                    elif case == "directory":
+                        wheel.mkdir()
+                    else:
+                        os.mkfifo(wheel)
+                elif case == "parent_symlink":
+                    wheel_dir.rename(root / "real")
+                    wheel_dir.symlink_to(root / "real", target_is_directory=True)
+                elif case == "digest_missing":
+                    del env["VERIFIED_WHEEL_SHA256"]
+                elif case == "digest_upper":
+                    env["VERIFIED_WHEEL_SHA256"] = "A" * 64
+                elif case == "digest_injection":
+                    env["VERIFIED_WHEEL_SHA256"] += "\ninjected=true"
+                elif case.startswith("name_"):
+                    wheel.rename(wheel_dir / ("bad\nname.whl" if case == "name_newline" else "bad*.whl"))
+                elif case == "temp_newline":
+                    nested = root / "bad\npath"
+                    nested.mkdir()
+                    wheel_dir.rename(nested / wheel_dir.name)
+                    env["RUNNER_TEMP"] = str(nested)
+                elif case == "temp_relative":
+                    env["RUNNER_TEMP"] = os.path.relpath(root)
+                result = subprocess.run(["bash"], input=script, env=env, text=True,
+                                        capture_output=True, timeout=10)
+                if case == "valid":
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(output.read_text(),
+                                     f"wheel_path={wheel}\nwheel_sha256={hashlib.sha256(data).hexdigest()}\n")
+                    self.assertEqual(result.stdout + result.stderr, "")
+                else:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(output.exists())
+                    self.assertEqual(result.stdout, "")
+                    self.assertEqual(result.stderr, "wheel_subject_verification=failed\n")
 
     def test_job_guard_rejects_unmatched_dispatch_context(self):
         # Evaluate the actual restricted conjunction, not a second hand-written guard.
@@ -124,9 +249,13 @@ class WorkflowTests(unittest.TestCase):
             with self.subTest(missing=key):
                 self.assertFalse(permits({k: v for k, v in context.items() if k != key}))
 
-    def test_only_checkout_is_an_action_and_source_is_immutable(self):
+    def test_only_pinned_checkout_attest_upload_actions_and_source_is_immutable(self):
         actions = [s for s in self.job["steps"] if "uses" in s]
-        self.assertEqual(len(actions), 1)
+        self.assertEqual([s["uses"] for s in actions], [
+            "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6",
+            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+        ])
         self.assertEqual(actions[0]["uses"], "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683")
         self.assertEqual(actions[0]["with"], {
             "repository": "AnonymousKoo/avuhz-infra", "ref": "${{ github.sha }}",
@@ -359,7 +488,8 @@ class WorkflowTests(unittest.TestCase):
     def test_required_ids_and_summary_order_are_closed(self):
         expected = ["checkout", "identity", "dependencies", "baseline", "portable", "schema",
                     "portability_gap", "postgres", "migrations", "replay", "integrations",
-                    "wheel_build", "wheel_contents", "diff", "integrity", "cleanup", "summary"]
+                    "wheel_build", "wheel_contents", "diff", "integrity", "cleanup",
+                    "wheel_subject", "attest", "upload", "summary"]
         self.assertEqual([s["id"] for s in self.job["steps"]], expected)
         summary = self.job["steps"][-1]
         self.assertEqual(summary["if"], "always()")
@@ -377,12 +507,14 @@ class WorkflowTests(unittest.TestCase):
 
     def successful_records(self):
         records = {s["id"]: {"outcome": "success", "conclusion": "success",
-                              "outputs": {"evidence_sha256": "d" * 64}}
+                              "outputs": {} if s["id"] in ("checkout", "wheel_subject", "attest", "upload")
+                              else {"evidence_sha256": "d" * 64}}
                    for s in self.job["steps"][:-1]}
         for stage in ("identity", "integrity"):
             records[stage]["outputs"]["source_tree_sha256"] = "e" * 64
         records["postgres"]["outputs"]["postgres_version_num"] = "170006"
         records["wheel_contents"]["outputs"]["wheel_sha256"] = "f" * 64
+        records["wheel_subject"]["outputs"]["wheel_sha256"] = "f" * 64
         records["replay"]["outputs"]["baseline_sha256"] = "a" * 64
         for stage in ("migrations", "integrations"):
             records[stage]["outputs"]["required_skips"] = "0"
@@ -405,7 +537,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.stderr, "")
         for field in ("exact_merge_ci_checks=passed", "evidence_class=non-certified",
-                      "provenance=absent", "certification_granted=false", "cleanup_outcome=success",
+                      "provenance=not_independently_verified", "certification_granted=false", "cleanup_outcome=success",
                       "migrations_required_skips=0", "integrations_required_skips=0",
                       "postgres_version_num=170006", "wheel_contents_wheel_sha256=" + "f" * 64,
                       "replay_baseline_sha256=" + "a" * 64):
@@ -455,7 +587,8 @@ class WorkflowTests(unittest.TestCase):
         for stage, key, value in (("migrations", "required_skips", "1"),
                                   ("integrations", "required_skips", "1"),
                                   ("postgres", "postgres_version_num", "180001"),
-                                  ("integrity", "source_tree_sha256", "b" * 64)):
+                                  ("integrity", "source_tree_sha256", "b" * 64),
+                                  ("wheel_subject", "wheel_sha256", "b" * 64)):
             records = self.successful_records()
             records[stage]["outputs"][key] = value
             result, summary = self.run_summary(records)

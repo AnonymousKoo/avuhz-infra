@@ -1,5 +1,7 @@
 """Offline review checks: no workflow dispatch, packages, services or provider calls."""
 import os
+import hashlib
+import json
 import re
 import shlex
 from pathlib import Path
@@ -33,10 +35,16 @@ class WorkflowTests(unittest.TestCase):
         self.steps = {step["name"]: step for step in self.job["steps"]}
         self.bootstrap = self.steps["Verify exact source and record non-certified identity"]["run"]
 
+    def fixture_env(self, tmp):
+        code = self.bootstrap.split("<<'PYEVIDENCE'\n", 1)[1].split("\nPYEVIDENCE", 1)[0]
+        Path(tmp, "gate10-evidence.py").write_text(code)
+        return {"PATH": os.environ["PATH"], "RUNNER_TEMP": tmp,
+                "GITHUB_OUTPUT": str(Path(tmp, "outputs"))}
+
     def test_manual_known_repository_first_attempt_and_least_privilege(self):
         self.assertEqual(self.workflow["on"], {"workflow_dispatch": {"inputs": {
             "expected_workflow_sha": {
-                "description": "Reviewed current main commit SHA; evidence binding only, not authorization",
+                "description": "Reviewed eventual main merge commit SHA; evidence binding only, not authorization",
                 "required": True, "type": "string",
             },
         }}})
@@ -45,6 +53,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(
             self.job["if"],
             "github.repository == 'AnonymousKoo/avuhz-infra' && "
+            "github.repository_owner == 'AnonymousKoo' && github.repository_owner_id == '168945054' && "
+            "github.workflow_ref == 'AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main' && "
             "github.event_name == 'workflow_dispatch' && "
             "github.ref == 'refs/heads/main' && "
             "github.actor == 'AnonymousKoo' && github.actor_id == '168945054' && "
@@ -66,6 +76,8 @@ class WorkflowTests(unittest.TestCase):
         # exact spelling, SHA shape and attempt spelling are rechecked by Bash.
         context = {
             "github.repository": "AnonymousKoo/avuhz-infra",
+            "github.repository_owner": "AnonymousKoo", "github.repository_owner_id": "168945054",
+            "github.workflow_ref": "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main",
             "github.event_name": "workflow_dispatch", "github.ref": "refs/heads/main",
             "github.actor": "AnonymousKoo", "github.actor_id": "168945054",
             "github.run_attempt": "1", "github.sha": "a" * 40,
@@ -96,6 +108,10 @@ class WorkflowTests(unittest.TestCase):
         self.assertTrue(permits(context))
         for key, value in (
             ("github.repository", "fork/avuhz-infra"), ("github.event_name", "push"),
+            ("github.event_name", "pull_request"), ("github.ref", "refs/pull/1/merge"),
+            ("github.repository_owner", "fork"), ("github.repository_owner_id", "9"),
+            ("github.workflow_ref", "AnonymousKoo/avuhz-infra/.github/workflows/other.yml@refs/heads/main"),
+            ("github.workflow_ref", "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/feature"),
             ("github.ref", "refs/heads/feature"), ("github.ref", "refs/tags/main"),
             ("github.actor", "reviewer"), ("github.actor_id", "168945055"),
             ("github.run_attempt", "2"), ("github.run_attempt", "0"),
@@ -113,11 +129,11 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0]["uses"], "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683")
         self.assertEqual(actions[0]["with"], {
-            "repository": "AnonymousKoo/avuhz-infra", "ref": SOURCE,
+            "repository": "AnonymousKoo/avuhz-infra", "ref": "${{ github.sha }}",
             "fetch-depth": 0, "persist-credentials": False,
             "clean": True, "submodules": False, "lfs": False,
         })
-        self.assertEqual(self.job["env"]["SOURCE_SHA"], SOURCE)
+        self.assertEqual(self.job["env"]["SOURCE_SHA"], "${{ github.sha }}")
         self.assertEqual(self.job["env"]["WORKFLOW_SHA"], "${{ github.workflow_sha }}")
         self.assertEqual(self.job["env"]["EXPECTED_WORKFLOW_SHA"],
                          "${{ inputs.expected_workflow_sha }}")
@@ -126,10 +142,10 @@ class WorkflowTests(unittest.TestCase):
     def test_historical_checkout_requires_full_history_and_exact_source_pin(self):
         # Release candidate validation reads an older baseline with git show;
         # depth 2 omits that object even when every checked-out byte is identical.
-        checkout = self.steps["Checkout immutable historical source"]["with"]
+        checkout = self.steps["Checkout exact main merge source"]["with"]
         self.assertEqual(checkout["fetch-depth"], 0)
-        self.assertEqual(checkout["ref"], SOURCE)
-        self.assertEqual(self.job["env"]["SOURCE_SHA"], SOURCE)
+        self.assertEqual(checkout["ref"], "${{ github.sha }}")
+        self.assertEqual(self.job["env"]["SOURCE_SHA"], "${{ github.sha }}")
         self.assertEqual(checkout["fetch-depth"],
                          historical_job()["steps"][0]["with"]["fetch-depth"])
         self.assertNotRegex(WORKFLOW.read_text(), r"(?m)^\s*fetch-depth:\s*[1-9][0-9]*\s*$")
@@ -138,7 +154,7 @@ class WorkflowTests(unittest.TestCase):
         historical = historical_job()
         for key, value in historical["env"].items():
             self.assertEqual(self.job["env"][key], value, key)
-        # The current branch is deliberately not the recipe source.
+        # The historical recipe remains a comparison; execution uses the exact merge source.
         self.assertIn("ef257d85f76e48da", self.job["env"]["AVUHZ_POSTGRES_IMAGE"])
         for original in historical["steps"][2:-3]:
             with self.subTest(step=original["name"]):
@@ -170,7 +186,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn('python3 "$RUNNER_TEMP/gate10-integrity.py"',
                       self.steps["Verify final raw checkout integrity"]["run"])
 
-    def test_evidence_is_non_certified_with_separate_provenance_identities(self):
+    def test_evidence_is_non_certified_with_bound_provenance_identities(self):
         for field in ("evidence_class=non-certified", "provenance=absent", "workflow_sha=%s",
                       "source_sha=%s", "actor=%s", "run_id=%s", "attempt=%s"):
             self.assertIn(field, self.bootstrap)
@@ -215,7 +231,7 @@ class WorkflowTests(unittest.TestCase):
                     fixture += "(exit 37)" if suite == failed else "true"
                     script = script.replace(command, fixture)
                 result = subprocess.run(["bash"], input=script, text=True, capture_output=True,
-                                        env={"PATH": os.environ["PATH"], "RUNNER_TEMP": tmp,
+                                        env={**self.fixture_env(tmp),
                                              "portable_suite": "untrusted_inherited_state"})
                 reached = len(suites) if failed is None else suites.index(failed) + 1
                 expected = "".join(f"gate10_portable_stage={s}\n" for s in suites[:reached])
@@ -232,7 +248,7 @@ class WorkflowTests(unittest.TestCase):
                     "portable_suite=runtime",
                     "portable_suite=" + shlex.quote(state) + "\n        (exit 41)", 1)
                 result = subprocess.run(["bash"], input=script, text=True, capture_output=True,
-                                        env={"PATH": os.environ["PATH"], "RUNNER_TEMP": tmp})
+                                        env=self.fixture_env(tmp))
                 self.assertEqual(result.returncode, 41)
                 self.assertEqual(result.stdout, "gate10_portable_failed_suite=unknown\n")
                 self.assertEqual(result.stderr, "")
@@ -260,7 +276,7 @@ class WorkflowTests(unittest.TestCase):
                     script = run.replace(command, "printf '%s\\n' "+repr(report))
                     self.assertNotIn("python3 -m unittest", script)
                     result = subprocess.run(["bash"], input=script, text=True, capture_output=True,
-                                            env={"PATH": os.environ["PATH"], "RUNNER_TEMP": tmp})
+                                            env=self.fixture_env(tmp))
                     self.assertEqual(result.returncode == 0, accepted, result.stderr)
                     self.assertEqual("historical_check=passed" in result.stdout, accepted)
 
@@ -274,7 +290,9 @@ class WorkflowTests(unittest.TestCase):
             env = {"PATH": tmp + os.pathsep + os.environ["PATH"],
                    "GITHUB_REPOSITORY": "AnonymousKoo/avuhz-infra",
                    "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_RUN_ATTEMPT": "1",
-                   "SOURCE_SHA": SOURCE, "FIXTURE_HEAD": SOURCE, "WORKFLOW_SHA": "a" * 40,
+                   "SOURCE_SHA": "a" * 40, "FIXTURE_HEAD": "a" * 40, "WORKFLOW_SHA": "a" * 40,
+                   "REPOSITORY_OWNER": "AnonymousKoo", "REPOSITORY_OWNER_ID": "168945054",
+                   "WORKFLOW_REF": "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main",
                    "GITHUB_REF": "refs/heads/main", "GITHUB_SHA": "a" * 40,
                    "EXPECTED_WORKFLOW_SHA": "a" * 40,
                    "GITHUB_ACTOR": "AnonymousKoo", "GITHUB_ACTOR_ID": "168945054",
@@ -282,8 +300,24 @@ class WorkflowTests(unittest.TestCase):
                    "AVUHZ_POSTGRES_DSN": self.job["env"]["AVUHZ_POSTGRES_DSN"]}
             result = subprocess.run(["bash"], input=prefix, text=True, capture_output=True, env=env)
             self.assertEqual(result.returncode, 0, result.stderr)
+            # Arbitrary future merge identities pass when every binding agrees;
+            # the historical recipe commit is never substituted for checkout.
+            for merge_sha in ("c" * 40, "de" * 20):
+                bound = {**env, **{key: merge_sha for key in (
+                    "SOURCE_SHA", "FIXTURE_HEAD", "GITHUB_SHA", "WORKFLOW_SHA",
+                    "EXPECTED_WORKFLOW_SHA")}}
+                result = subprocess.run(["bash"], input=prefix, text=True,
+                                        capture_output=True, env=bound)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout + result.stderr, "")
             for key, value in (("GITHUB_REPOSITORY", "fork/avuhz-infra"),
                                ("GITHUB_EVENT_NAME", "push"), ("GITHUB_RUN_ATTEMPT", "2"),
+                               ("GITHUB_EVENT_NAME", "pull_request"), ("GITHUB_REF", "refs/pull/1/merge"),
+                               ("REPOSITORY_OWNER", "fork"), ("REPOSITORY_OWNER_ID", "9"),
+                               ("WORKFLOW_REF", "AnonymousKoo/avuhz-infra/.github/workflows/other.yml@refs/heads/main"),
+                               ("WORKFLOW_REF", "AnonymousKoo/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/tags/main"),
+                               ("WORKFLOW_REF", "fork/avuhz-infra/.github/workflows/gate10-exact-merge-ci.yml@refs/heads/main"),
+                               ("SOURCE_SHA", SOURCE), ("FIXTURE_HEAD", SOURCE),
                                ("GITHUB_REF", "refs/heads/feature"), ("GITHUB_REF", "refs/tags/main"),
                                ("GITHUB_REF", "refs/heads/Main"),
                                ("GITHUB_ACTOR", "reviewer"), ("GITHUB_ACTOR", "anonymouskoo"),
@@ -314,12 +348,186 @@ class WorkflowTests(unittest.TestCase):
             for key in ("GITHUB_REF", "GITHUB_SHA", "GITHUB_ACTOR", "GITHUB_ACTOR_ID",
                         "EXPECTED_WORKFLOW_SHA", "SOURCE_SHA", "WORKFLOW_SHA",
                         "GITHUB_REPOSITORY", "GITHUB_EVENT_NAME", "GITHUB_RUN_ID",
-                        "GITHUB_RUN_ATTEMPT"):
+                        "GITHUB_RUN_ATTEMPT", "WORKFLOW_REF", "REPOSITORY_OWNER", "REPOSITORY_OWNER_ID"):
                 with self.subTest(missing=key):
                     result = subprocess.run(["bash"], input=prefix, text=True, capture_output=True,
                                             env={k: v for k, v in env.items() if k != key})
                     self.assertNotEqual(result.returncode, 0)
                     self.assertEqual(result.stdout, "")
+
+
+    def test_required_ids_and_summary_order_are_closed(self):
+        expected = ["checkout", "identity", "dependencies", "baseline", "portable", "schema",
+                    "portability_gap", "postgres", "migrations", "replay", "integrations",
+                    "wheel_build", "wheel_contents", "diff", "integrity", "cleanup", "summary"]
+        self.assertEqual([s["id"] for s in self.job["steps"]], expected)
+        summary = self.job["steps"][-1]
+        self.assertEqual(summary["if"], "always()")
+        self.assertEqual(summary["env"], {"STEP_RESULTS": "${{ toJSON(steps) }}"})
+        for step in self.job["steps"]:
+            self.assertNotIn("continue-on-error", step)
+            if step["id"] not in ("cleanup", "summary"):
+                self.assertNotIn("if", step)
+        self.assertEqual(self.job["env"]["WORKFLOW_REF"], "${{ github.workflow_ref }}")
+        self.assertEqual(self.job["env"]["REPOSITORY_OWNER"], "${{ github.repository_owner }}")
+        self.assertEqual(self.job["env"]["REPOSITORY_OWNER_ID"], "${{ github.repository_owner_id }}")
+        # There is a single sanitized summary writer, after disposable cleanup.
+        self.assertEqual(WORKFLOW.read_text().count('os.environ["GITHUB_STEP_SUMMARY"]'), 1)
+        self.assertNotIn("GITHUB_STEP_SUMMARY", self.bootstrap)
+
+    def successful_records(self):
+        records = {s["id"]: {"outcome": "success", "conclusion": "success",
+                              "outputs": {"evidence_sha256": "d" * 64}}
+                   for s in self.job["steps"][:-1]}
+        for stage in ("identity", "integrity"):
+            records[stage]["outputs"]["source_tree_sha256"] = "e" * 64
+        records["postgres"]["outputs"]["postgres_version_num"] = "170006"
+        records["wheel_contents"]["outputs"]["wheel_sha256"] = "f" * 64
+        records["replay"]["outputs"]["baseline_sha256"] = "a" * 64
+        for stage in ("migrations", "integrations"):
+            records[stage]["outputs"]["required_skips"] = "0"
+        return records
+
+    def run_summary(self, records, **identity):
+        with tempfile.TemporaryDirectory() as tmp:
+            summary = Path(tmp, "summary")
+            env = {"PATH": os.environ["PATH"], "GITHUB_STEP_SUMMARY": str(summary),
+                   "STEP_RESULTS": json.dumps(records), "SOURCE_SHA": "c" * 40,
+                   "GITHUB_SHA": "c" * 40, "WORKFLOW_SHA": "c" * 40,
+                   "EXPECTED_WORKFLOW_SHA": "c" * 40, **identity}
+            result = subprocess.run(["bash"], input=self.job["steps"][-1]["run"],
+                                    text=True, capture_output=True, env=env)
+            return result, summary.read_text() if summary.exists() else ""
+
+    def test_summary_accepts_only_complete_success_and_sanitized_evidence(self):
+        result, summary = self.run_summary(self.successful_records())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+        for field in ("exact_merge_ci_checks=passed", "evidence_class=non-certified",
+                      "provenance=absent", "certification_granted=false", "cleanup_outcome=success",
+                      "migrations_required_skips=0", "integrations_required_skips=0",
+                      "postgres_version_num=170006", "wheel_contents_wheel_sha256=" + "f" * 64,
+                      "replay_baseline_sha256=" + "a" * 64):
+            self.assertIn(field + "\n", summary)
+        self.assertIn(self.job["env"]["AVUHZ_POSTGRES_IMAGE"], summary)
+        self.assertLess(len(summary), 6000)
+        self.assertEqual(len(summary.splitlines()), len(set(summary.splitlines())))
+
+    def test_every_required_status_missing_skipped_failed_cancelled_denies_summary_pass(self):
+        for stage in self.successful_records():
+            for field in ("outcome", "conclusion"):
+                for status in (None, "skipped", "failure", "cancelled", "untrusted\n::notice::raw"):
+                    records = self.successful_records()
+                    if status is None:
+                        del records[stage][field]
+                    else:
+                        records[stage][field] = status
+                    with self.subTest(stage=stage, field=field, status=status):
+                        result, summary = self.run_summary(records)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn("exact_merge_ci_checks=failed_or_incomplete\n", summary)
+                        self.assertNotIn("exact_merge_ci_checks=passed", summary)
+                        self.assertNotIn("untrusted", summary + result.stdout + result.stderr)
+            records = self.successful_records()
+            del records[stage]
+            with self.subTest(missing_stage=stage):
+                result, summary = self.run_summary(records)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(stage + "_outcome=missing", summary)
+
+    def test_missing_forged_or_unbounded_hashes_versions_and_skips_deny_summary(self):
+        for stage, record in self.successful_records().items():
+            if stage == "checkout":
+                continue
+            for key in record["outputs"]:
+                for value in (None, "untrusted\n::notice::raw", "A" * 64, "a" * 65, 0):
+                    records = self.successful_records()
+                    if value is None:
+                        del records[stage]["outputs"][key]
+                    else:
+                        records[stage]["outputs"][key] = value
+                    with self.subTest(stage=stage, key=key, value=value):
+                        result, summary = self.run_summary(records)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertNotIn("exact_merge_ci_checks=passed", summary)
+                        self.assertNotIn("untrusted", summary + result.stdout + result.stderr)
+        for stage, key, value in (("migrations", "required_skips", "1"),
+                                  ("integrations", "required_skips", "1"),
+                                  ("postgres", "postgres_version_num", "180001"),
+                                  ("integrity", "source_tree_sha256", "b" * 64)):
+            records = self.successful_records()
+            records[stage]["outputs"][key] = value
+            result, summary = self.run_summary(records)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("exact_merge_ci_checks=failed_or_incomplete", summary)
+
+    def test_summary_malformed_context_and_untrusted_extra_fields_do_not_escape(self):
+        for records in (None, [], {}, {"identity": None}, {"identity": {"outputs": []}}):
+            result, summary = self.run_summary(records)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("exact_merge_ci_checks=failed_or_incomplete", summary)
+        records = self.successful_records()
+        records["untrusted\n::notice::raw"] = {"outcome": "untrusted"}
+        records["baseline"]["outputs"]["raw_log"] = "untrusted\n::notice::raw"
+        result, summary = self.run_summary(records)
+        self.assertEqual(result.returncode, 0)
+        self.assertNotIn("untrusted", summary + result.stdout + result.stderr)
+        for key in ("SOURCE_SHA", "GITHUB_SHA", "WORKFLOW_SHA", "EXPECTED_WORKFLOW_SHA"):
+            for value in ("", SOURCE, "untrusted\n::notice::raw", "C" * 40):
+                result, summary = self.run_summary(self.successful_records(), **{key: value})
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn("untrusted", summary + result.stdout + result.stderr)
+
+    def test_evidence_utility_hashes_actual_bytes_and_rejects_missing_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = self.fixture_env(tmp)
+            output = Path(env["GITHUB_OUTPUT"])
+            root = Path(tmp)
+            log = root / "private-log"
+            log.write_bytes(b"untrusted_raw_output\n")
+            # Replay and wheel hashes use actual local bytes, not echoed declarations.
+            baseline = root / "supabase/migrations/20260831120000_rebaseline_provider_neutral_avuhz.sql"
+            baseline.parent.mkdir(parents=True)
+            baseline.write_bytes(b"fictional baseline\n")
+            wheel_dir = root / "avuhz-main-pr-gate-wheel"
+            wheel_dir.mkdir()
+            wheel = wheel_dir / "fictional.whl"
+            wheel.write_bytes(b"fictional wheel\n")
+            for stage, key, data in (("baseline", "evidence_sha256", log.read_bytes()),
+                                     ("cleanup", "evidence_sha256", log.read_bytes()),
+                                     ("replay", "baseline_sha256", baseline.read_bytes()),
+                                     ("wheel_contents", "wheel_sha256", wheel.read_bytes()),
+                                     ("migrations", "required_skips", None),
+                                     ("integrations", "required_skips", None)):
+                output.unlink(missing_ok=True)
+                result = subprocess.run(["python3", str(root / "gate10-evidence.py"), stage, str(log)],
+                                        env=env, cwd=root, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                fields = dict(line.split("=", 1) for line in output.read_text().splitlines())
+                self.assertEqual(fields[key], "0" if data is None else hashlib.sha256(data).hexdigest())
+                self.assertEqual(result.stdout + result.stderr, "")
+                self.assertNotIn("untrusted", output.read_text())
+            log.unlink()
+            output.unlink()
+            result = subprocess.run(["python3", str(root / "gate10-evidence.py"), "baseline", str(log)],
+                                    env=env, cwd=root, text=True, capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stderr, "evidence_record=failed\n")
+            self.assertFalse(output.exists())
+
+    def test_cleanup_failure_cannot_record_success_or_hash(self):
+        # Replace the substantive historical cleanup with a failing synthetic process.
+        run = self.steps["Remove disposable PostgreSQL"]["run"]
+        script = run.replace(historical_job()["steps"][-1]["run"],
+                             "set -euo pipefail\n(exit 37)\necho unsafe_continuation\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            env = self.fixture_env(tmp)
+            result = subprocess.run(["bash"], input=script, text=True, capture_output=True, env=env)
+            self.assertEqual(result.returncode, 37)
+            self.assertEqual(result.stdout, "::error::Disposable PostgreSQL cleanup failed.\n")
+            self.assertNotIn("unsafe_continuation", Path(tmp, "gate10-cleanup-output").read_text())
+            self.assertFalse(Path(env["GITHUB_OUTPUT"]).exists())
 
 
 class RawIntegrityTests(unittest.TestCase):

@@ -900,11 +900,12 @@ jobs:
       PRODUCER_RESULT: ${{ needs.exact-merge-evidence.result }}
       ARTIFACT_ID: ${{ needs.exact-merge-evidence.outputs.artifact_id }}
       VERIFIED_WHEEL_SHA256: ${{ needs.exact-merge-evidence.outputs.wheel_sha256 }}
-      DOWNLOAD_PATH: ${{ runner.temp }}/gate10-signer-wheel
     steps:
     - name: Independently guard signing context
       id: signer_guard
       shell: bash
+      env:
+        DOWNLOAD_PATH: ${{ runner.temp }}/gate10-signer-wheel
       run: |
         set -euo pipefail
         python3 -B -I - <<'PYGUARD'
@@ -960,6 +961,8 @@ jobs:
     - name: Verify downloaded wheel without executing it
       id: wheel_subject
       shell: bash
+      env:
+        DOWNLOAD_PATH: ${{ runner.temp }}/gate10-signer-wheel
       run: |
         set -euo pipefail
         python3 -B -I - <<'PYSUBJECT'
@@ -1039,6 +1042,7 @@ jobs:
       id: summary
       if: always()
       env:
+        DOWNLOAD_PATH: ${{ runner.temp }}/gate10-signer-wheel
         STEP_RESULTS: ${{ toJSON(steps) }}
       shell: bash
       run: |

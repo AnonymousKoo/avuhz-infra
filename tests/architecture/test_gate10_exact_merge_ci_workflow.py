@@ -71,7 +71,46 @@ class WorkflowTests(unittest.TestCase):
             self.assertNotIn(expression, text)
         self.assertNotIn("${{", "\n".join(s.get("run", "") for s in self.job["steps"]))
 
+    def assert_runner_env_contract(self, jobs):
+        for job in jobs.values():
+            self.assertNotRegex(
+                json.dumps(job.get("env", {})), r"\brunner\b",
+            )
+        signed = {s["id"]: s for s in jobs["attest-exact-wheel"]["steps"]}
+        for stage in ("signer_guard", "wheel_subject", "summary"):
+            expected = {"DOWNLOAD_PATH": "${{ runner.temp }}/gate10-signer-wheel"}
+            if stage == "summary":
+                expected["STEP_RESULTS"] = "${{ toJSON(steps) }}"
+            self.assertEqual(signed[stage].get("env"), expected)
+        self.assertEqual(signed["download"]["with"]["path"],
+                         "${{ runner.temp }}/gate10-signer-wheel")
+
+    def test_runner_context_is_step_scoped_and_rejects_regressions(self):
+        self.assert_runner_env_contract(self.workflow["jobs"])
+        for name in self.workflow["jobs"]:
+            for expression in ("${{ runner.temp }}", "${{ runner['temp'] }}",
+                               "${{ runner }}", "${{ toJSON(runner) }}"):
+                changed = copy.deepcopy(self.workflow["jobs"])
+                changed[name].setdefault("env", {})["DOWNLOAD_PATH"] = expression
+                with self.subTest(job=name, expression=expression):
+                    with self.assertRaises(AssertionError):
+                        self.assert_runner_env_contract(changed)
+        for stage in ("signer_guard", "wheel_subject", "summary"):
+            for value in (None, "/tmp/gate10-signer-wheel"):
+                changed = copy.deepcopy(self.workflow["jobs"])
+                step = next(s for s in changed["attest-exact-wheel"]["steps"]
+                            if s["id"] == stage)
+                if value is None:
+                    del step["env"]["DOWNLOAD_PATH"]
+                else:
+                    step["env"]["DOWNLOAD_PATH"] = value
+                with self.subTest(stage=stage, value=value):
+                    with self.assertRaises(AssertionError):
+                        self.assert_runner_env_contract(changed)
+
     def assert_retention_contract(self, job, signer):
+        self.assert_runner_env_contract({"exact-merge-evidence": job,
+                                         "attest-exact-wheel": signer})
         self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertEqual(job["outputs"], {
             "wheel_sha256": "${{ steps.wheel_subject.outputs.wheel_sha256 }}",
@@ -114,7 +153,6 @@ class WorkflowTests(unittest.TestCase):
             "PRODUCER_RESULT": "${{ needs.exact-merge-evidence.result }}",
             "ARTIFACT_ID": "${{ needs.exact-merge-evidence.outputs.artifact_id }}",
             "VERIFIED_WHEEL_SHA256": "${{ needs.exact-merge-evidence.outputs.wheel_sha256 }}",
-            "DOWNLOAD_PATH": "${{ runner.temp }}/gate10-signer-wheel",
         })
         for stage in ("wheel_subject", "upload"):
             self.assertNotIn("if", steps[stage])
